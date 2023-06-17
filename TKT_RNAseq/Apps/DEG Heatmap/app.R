@@ -100,7 +100,7 @@ server <- function(input, output) {
     
     use.FDR = TKT.EdgeR[,as.numeric(input$comparison)]
     names(use.FDR) = row.names(TKT.EdgeR)
-    use.FDR = use.FDR[order(use.FDR)]
+    use.FDR = signif(use.FDR[order(use.FDR)],3)
     
     use.genes = use.FDR[1:as.numeric(input$tophits)]
     
@@ -145,6 +145,7 @@ output$DEG.Heatmap <- renderPlotly({
             col=RdYlBu(100)[100:1],
             scale="row",
             dendrogram = "both",
+            show_dendrogram = c(F,T),
             Rowv=T,
             Colv=T,
             cexRow = 1/(as.numeric(input$tophits)/25),
@@ -153,15 +154,14 @@ output$DEG.Heatmap <- renderPlotly({
             ##cexCol = col.text,
             cexCol = 1,
             key = T,
+            ##margins = c(50,350,NA,0),
+            ##row_dend_left = T,
             column_text_angle = 90,
             col_side_colors=color.groups,
             col_side_palette=Spectral,
             main=paste0("Top ",input$tophits, " DEGs for ", Titles[as.numeric(input$comparison)]),
             custom_hovertext = hover.text)
-})##, function() {
-  ##height = as.numeric(input$tophits)
-##})
-
+})
 }
 
 
