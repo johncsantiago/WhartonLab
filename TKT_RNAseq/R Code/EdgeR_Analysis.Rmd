@@ -202,6 +202,37 @@ DEout=G_X_E$table
 GRxWT.MOE=DEout
 sGRxWT.MOE=DEout[DEout$FDR<.05,]
 
+TKT.EdgeR = data.frame(GRF.CxDf = GR.F.CxDf[row.names(cpmdata),'FDR'],
+                       GRF.CxOE = GR.F.CxOE[row.names(cpmdata),'FDR'],
+                       
+                       WTF.CxDf = WT.F.CxDf[row.names(cpmdata),'FDR'],
+                       WTF.CxOE = WT.F.CxOE[row.names(cpmdata),'FDR'],
+                       
+                       GRxWT.FC = GRxWT.F[row.names(cpmdata),'FDR'],
+                       GRxWT.FDf = GRxWT.FDf[row.names(cpmdata),'FDR'],
+                       GRxWT.FOE = GRxWT.FOE[row.names(cpmdata),'FDR'],
+                       
+                       GRM.CxDf = GR.M.CxDf[row.names(cpmdata),'FDR'],
+                       GRM.CxOE = GR.M.CxOE[row.names(cpmdata),'FDR'],
+                       
+                       WTM.CxDf = WT.M.CxDf[row.names(cpmdata),'FDR'],
+                       WTM.CxOE = WT.M.CxOE[row.names(cpmdata),'FDR'],
+                       
+                       GRxWT.MC = GRxWT.M[row.names(cpmdata),'FDR'],
+                       GRxWT.MDf = GRxWT.MDf[row.names(cpmdata),'FDR'],
+                       GRxWT.MOE = GRxWT.MOE[row.names(cpmdata),'FDR'])
+
+row.names(TKT.EdgeR) = row.names(cpmdata)
+##write.csv(TKT.EdgeR, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT.EdgeR.Table.csv")
+
+Female = c(nrow(sGR.F.CxDf), nrow(sGR.F.CxOE),
+           nrow(sWT.F.CxDf), nrow(sWT.F.CxOE),
+           nrow(sGRxWT.F), nrow(sGRxWT.FDf), nrow(sGRxWT.FOE))
+
+Male = c(nrow(sGR.M.CxDf), nrow(sGR.M.CxOE),
+         nrow(sWT.M.CxDf), nrow(sWT.M.CxOE),
+         nrow(sGRxWT.M), nrow(sGRxWT.MDf), nrow(sGRxWT.MOE))
+  
 
 MDSdata = plotMDS(z, col=as.numeric(factor(gr)))
 
