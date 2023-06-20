@@ -9,6 +9,10 @@ library(edgeR)
 countdata=read.csv("/Users/johncsantiago/Documents/TKT RNAseq/CountTables/TKT.counttable.csv",row.names=1)
 groups=read.csv("/Users/johncsantiago/Documents/TKT RNAseq/CountTables/TKT.metadata.csv",row.names=1)
 
+##GR.F1.US = read.csv("/Users/johncsantiago/Downloads/GR-F1_CountTable_UnsortedBAM.txt", sep = "\t", row.names = 1, header = F)
+##countdata$GR.F1.US = GR.F1.US [row.names(countdata),1]
+##groups['GR.F1.US',] = c("GR.F1.US", "GR", "F", "4", "GR.F")
+
 ##normalize data
 countdata=countdata[, row.names(groups)]
 x <- countdata
