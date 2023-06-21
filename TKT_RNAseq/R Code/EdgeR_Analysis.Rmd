@@ -50,6 +50,9 @@ library(heatmaply)
 countdata=read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT.counttable.csv",row.names=1)
 groups=read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT.metadata.csv",row.names=1)
 
+write.csv(all.groups, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT.metadata.csv")
+
+
 convert=read.csv("https://raw.githubusercontent.com/DavidRandLab/Santiago-et-al-2021-BMC-Genomics/main/Data%20Files/FBgnConversionTable.csv",row.names=1)
 
 ##normalize data
@@ -767,6 +770,52 @@ sGRMDfxWTMDf=DEout[DEout$FDR<.05,]
 
 MDSdata4 = plotMDS(z, top = 12764, col=as.numeric(factor(gr)))
 
+all.cpmgenes = unique(c(row.names(cpmdata3),row.names(cpmdata4)))
+
+all.cpmdata = matrix(NA, ncol = 33, nrow = length(all.cpmgenes))
+colnames(all.cpmdata) = c(colnames(cpmdata3),colnames(cpmdata4))
+row.names(all.cpmdata) = all.cpmgenes
+
+all.cpmdata[row.names(cpmdata3),colnames(cpmdata3)] = cpmdata3
+all.cpmdata[row.names(cpmdata4),colnames(cpmdata4)] = cpmdata4
+
+all.groups = groups[colnames(all.cpmdata),]
+
+all.TKT.EdgeR = all.cpmdata[, 1:14]
+colnames(all.TKT.EdgeR) = c('GRF.CxDf', 'GRF.CxOE', 
+                            'WTF.CxDf', 'WTF.CxOE', 
+                            'GRxWT.FC', 'GRxWT.FDf', 'GRxWT.FOE',
+                            'GRM.CxDf', 'GRM.CxOE', 
+                            'WTM.CxDf', 'WTM.CxOE', 
+                            'GRxWT.MC', 'GRxWT.MDf', 'GRxWT.MOE')
+
+row.names(all.TKT.EdgeR) = row.names(all.cpmdata)
+
+all.TKT.EdgeR[,1] = GR.F.CxDf3[row.names(all.cpmdata),'FDR']
+all.TKT.EdgeR[,2] = GR.F.CxOE3[row.names(all.cpmdata),'FDR']
+                       
+all.TKT.EdgeR[,3] = WTF.CxDf = WT.F.CxDf3[row.names(all.cpmdata),'FDR']
+all.TKT.EdgeR[,4] = WTF.CxOE = WT.F.CxOE3[row.names(all.cpmdata),'FDR']
+                       
+all.TKT.EdgeR[,5] = GRxWT.FC = GRxWT.F3[row.names(all.cpmdata),'FDR']
+all.TKT.EdgeR[,6] = GRxWT.FDf = GRxWT.FDf3[row.names(all.cpmdata),'FDR']
+all.TKT.EdgeR[,7] = GRxWT.FOE = GRxWT.FOE3[row.names(all.cpmdata),'FDR']
+                       
+all.TKT.EdgeR[,8] = GRM.CxDf = GR.M.CxDf3[row.names(all.cpmdata),'FDR']
+all.TKT.EdgeR[,9] = GRM.CxOE = GR.M.CxOE3[row.names(all.cpmdata),'FDR']
+                       
+all.TKT.EdgeR[,10] = WTM.CxDf = WT.M.CxDf3[row.names(all.cpmdata),'FDR']
+all.TKT.EdgeR[,11] = WTM.CxOE = WT.M.CxOE3[row.names(all.cpmdata),'FDR']
+                       
+all.TKT.EdgeR[,12] = GRxWT.MC = GRxWT.M3[row.names(all.cpmdata),'FDR']
+all.TKT.EdgeR[,13] = GRxWT.MDf = GRxWT.MDf3[row.names(all.cpmdata),'FDR']
+all.TKT.EdgeR[,14] = GRxWT.MOE = GRxWT.MOE3[row.names(all.cpmdata),'FDR']
+
+
+##write.csv(all.cpmdata, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT_cpmdata.csv")
+##write.csv(all.groups, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT.metadata.csv")
+##write.csv(all.TKT.EdgeR, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT.EdgeR.Table.csv")
+
 ```
 
 
@@ -856,7 +905,14 @@ Female.trim = c(nrow(sGR.F.CxDf2), nrow(sGR.F.CxOE2),
 Male.trim = c(nrow(sGR.M.CxDf2), nrow(sGR.M.CxOE2),
          nrow(sWT.M.CxDf2), nrow(sWT.M.CxOE2),
          nrow(sGRxWT.M2), nrow(sGRxWT.MDf2), nrow(sGRxWT.MOE2))
-  
+
+Female.Only.trim = c(nrow(sGR.F.CxDf3), nrow(sGR.F.CxOE3),
+           nrow(sWT.F.CxDf3), nrow(sWT.F.CxOE3),
+           nrow(sGRxWT.F3), nrow(sGRxWT.FDf3), nrow(sGRxWT.FOE3))
+
+Male.Only.trim = c(nrow(sGR.M.CxDf3), nrow(sGR.M.CxOE3),
+         nrow(sWT.M.CxDf3), nrow(sWT.M.CxOE3),
+         nrow(sGRxWT.M3), nrow(sGRxWT.MDf3), nrow(sGRxWT.MOE3))
 
 Female = c(nrow(sGR.F.CxDf), nrow(sGR.F.CxOE),
            nrow(sWT.F.CxDf), nrow(sWT.F.CxOE),
@@ -885,12 +941,20 @@ fig <- fig %>% add_trace(y = ~Female.trim, name = 'Trim Female',
                          marker = list(color = c("pink"),
                                        line = list(color = "black", width = 1.5)))
 
+fig <- fig %>% add_trace(y = ~Female.Only.trim, name = 'Trim Only Female',
+                         marker = list(color = c("red"),
+                                       line = list(color = "black", width = 1.5)))
+
 fig <- fig %>% add_trace(y = ~Male, name = 'Males',
                          marker = list(color = c("royalblue"),
                                        line = list(color = "black", width = 1.5)))
 
 fig <- fig %>% add_trace(y = ~Male.trim, name = 'Trim Males',
                          marker = list(color = c("skyblue"),
+                                       line = list(color = "black", width = 1.5)))
+
+fig <- fig %>% add_trace(y = ~Male.Only.trim, name = 'Trim Only Males',
+                         marker = list(color = c("blue"),
                                        line = list(color = "black", width = 1.5)))
 
 fig <- fig %>% layout(yaxis = list(title ="Total DEGs"),
@@ -907,7 +971,7 @@ fig
 <br /><br /><br />
 \newpage
 
-```{r echo = F, fig.height=10, fig.cap='Heatmaps of Total DEGs in GR.FC x GR.FDf.'}
+```{r echo = F, include = F, fig.height=10, fig.cap='Heatmaps of Total DEGs in GR.FC x GR.FDf.'}
 
 
 
