@@ -98,6 +98,8 @@ server <- function(input, output) {
                                       grep(use.samples[2],colnames(cpmdata)))]
     use.cpm = cpmdata[,use.samples]
     
+    print(head(use.cpm))
+    
     use.FDR = TKT.EdgeR[,as.numeric(input$comparison)]
     names(use.FDR) = row.names(TKT.EdgeR)
     use.FDR = signif(use.FDR[order(use.FDR)],3)
@@ -107,7 +109,7 @@ server <- function(input, output) {
     use.cpm = use.cpm[names(use.genes),]
     
     use.data = cbind(use.genes, use.cpm)
-    
+
     return(use.data)
   })
 
@@ -131,7 +133,7 @@ output$DEG.Heatmap <- renderPlotly({
   
   FBgn = hmdata
   FBgn[,1:ncol(FBgn)] = row.names(FBgn)
-  
+
   i=1
   while(i<ncol(hover.text)){
     hover.text[,i] = paste("CPM = ", hover.text[,i],

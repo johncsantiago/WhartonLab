@@ -745,6 +745,31 @@ Comparisons2 = list(row.names(sGR.F.CxDf2), row.names(sGR.F.CxOE2),
                 row.names(sWT.M.CxDf2), row.names(sWT.M.CxOE2),
                 row.names(sGRxWT.M2), row.names(sGRxWT.MDf2), row.names(sGRxWT.MOE2))
 
+TKT.EdgeR2 = data.frame(GRF.CxDf = GR.F.CxDf2[row.names(cpmdata2),'FDR'],
+                        GRF.CxOE = GR.F.CxOE2[row.names(cpmdata2),'FDR'],
+                       
+                        WTF.CxDf = WT.F.CxDf2[row.names(cpmdata2),'FDR'],
+                        WTF.CxOE = WT.F.CxOE2[row.names(cpmdata2),'FDR'],
+                       
+                        GRxWT.FC = GRxWT.F2[row.names(cpmdata2),'FDR'],
+                        GRxWT.FDf = GRxWT.FDf2[row.names(cpmdata2),'FDR'],
+                        GRxWT.FOE = GRxWT.FOE2[row.names(cpmdata2),'FDR'],
+                       
+                        GRM.CxDf = GR.M.CxDf2[row.names(cpmdata2),'FDR'],
+                        GRM.CxOE = GR.M.CxOE2[row.names(cpmdata2),'FDR'],
+                       
+                        WTM.CxDf = WT.M.CxDf2[row.names(cpmdata2),'FDR'],
+                        WTM.CxOE = WT.M.CxOE2[row.names(cpmdata2),'FDR'],
+                       
+                        GRxWT.MC = GRxWT.M2[row.names(cpmdata2),'FDR'],
+                        GRxWT.MDf = GRxWT.MDf2[row.names(cpmdata2),'FDR'],
+                        GRxWT.MOE = GRxWT.MOE2[row.names(cpmdata2),'FDR'])
+
+##write.csv(cpmdata2, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT_cpmdata.csv")
+##write.csv(groups2, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT.metadata.csv")
+##write.csv(TKT.EdgeR2, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT.EdgeR.Table.csv")
+
+
 ```
 
 ## <span style="text-decoration:underline">Does processing the samples after removing the 3 outlier libraries and TEs improve sample normalization?</span> 
