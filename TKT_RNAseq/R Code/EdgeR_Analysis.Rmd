@@ -25,19 +25,40 @@ knitr::opts_chunk$set(echo = TRUE)
 
 - #### Figure \@ref(fig:fig2): Barplot of Total DEGs
 
-### Male and female samples processed together with TEs and outlier libraries removed
-- #### Figure \@ref(fig:fig3): MDS plot, all samples
+### Testing potential outlier samples
 
-- #### Figure \@ref(fig:fig4): Barplot of Total DEGs
+- #### Figure \@ref(fig:fig3): PCA of GR.F CxDf DEGs
+
+- #### Figure \@ref(fig:fig4): PCA of GR.F CxOE DEGs
+
+- #### Figure \@ref(fig:fig5): PCA of GR.FC x WT.FC DEGs
+
+- #### Figure \@ref(fig:fig6): PCA of WT.F CxDf DEGs
+
+- #### Figure \@ref(fig:fig7): PCA of WT.F CxOE DEGs
+
+- #### Figure \@ref(fig:fig8): PCA of TktDfGR.F x TktDfWT.F DEGs
+
+### Male and female samples processed together with TEs and outlier libraries removed
+- #### Figure \@ref(fig:fig9): MDS plot, all samples
+
+- #### Figure \@ref(fig:fig10): Barplot of Total DEGs
 
 ### Male and Female samples processed separately with TEs and outlier libraries removed
-- #### Figure \@ref(fig:fig5): MDS plot of female samples only
+- #### Figure \@ref(fig:fig11): MDS plot of female samples only
 
-- #### Figure \@ref(fig:fig6): MDS plot of male samples only
+- #### Figure \@ref(fig:fig12): MDS plot of male samples only
 
-- #### Figure \@ref(fig:fig7): Barplot of Total DEGs
+- #### Figure \@ref(fig:fig13): Barplot of Total DEGs
+
+- #### Figure \@ref(fig:fig14): Barplot of Total DEGs for each comparison under the different trimming conditions
 
 <br /><br /><br />
+\newpage
+
+### Conclusion: GR.F3, WT.F3 and TktDfWT.F3 are outlier libraries that should be removed before further analysis but there is no need to process male and female samples separately
+
+<br /><br /><br /><br /><br /><br />
 \newpage
 
 ```{r echo=F, include=FALSE}
@@ -48,9 +69,7 @@ library(heatmaply)
 
 ##Clean Trait Data and calculate CPMs
 countdata=read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT.counttable.csv",row.names=1)
-groups=read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT.metadata.csv",row.names=1)
-
-write.csv(all.groups, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT.metadata.csv")
+groups=read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/All.TKT.metadata.csv",row.names=1)
 
 
 convert=read.csv("https://raw.githubusercontent.com/DavidRandLab/Santiago-et-al-2021-BMC-Genomics/main/Data%20Files/FBgnConversionTable.csv",row.names=1)
@@ -230,10 +249,45 @@ Comparisons = list(row.names(sGR.F.CxDf), row.names(sGR.F.CxOE),
                 row.names(sWT.M.CxDf), row.names(sWT.M.CxOE),
                 row.names(sGRxWT.M), row.names(sGRxWT.MDf), row.names(sGRxWT.MOE))
 
+GroupsToDEGs = matrix("", nrow = 28, ncol = 3)
+
+GroupsToDEGs[,1] = c("GR.F", "TktDfGR.F",
+                     "GR.F", "TktOEGR.F",
+                     "WT.F", "TktDfWT.F",
+                     "WT.F", "TktOEWT.F",
+                     "GR.F", "WT.F",
+                     "TktDfGR.F", "TktDfWT.F",
+                     "TktOEGR.F", "TktOEWT.F",
+                     "GR.M", "TktDfGR.M",
+                     "GR.M", "TktOEGR.M",
+                     "WT.M", "TktDfWT.M",
+                     "WT.M", "TktOEWT.M",
+                     "GR.M", "WT.M",
+                     "TktDfGR.M", "TktDfWT.M",
+                     "TktOEGR.M", "TktOEWT.M")
+
+GroupsToDEGs[,2] = c("TktDfGR.F", "GR.F",
+                     "TktOEGR.F", "GR.F", 
+                     "TktDfWT.F", "WT.F", 
+                     "TktOEWT.F", "WT.F", 
+                     "WT.F", "GR.F", 
+                     "TktDfWT.F", "TktDfGR.F", 
+                     "TktOEWT.F", "TktOEGR.F", 
+                     "TktDfGR.M", "GR.M", 
+                     "TktOEGR.M", "GR.M", 
+                     "TktDfWT.M", "WT.M", 
+                     "TktOEWT.M", "WT.M", 
+                     "WT.M", "GR.M", 
+                     "TktDfWT.M", "TktDfGR.M", 
+                     "TktOEWT.M", "TktOEGR.M")
+
+GroupsToDEGs[,3] = c(1,1,2,2,3,3,4,4,5,5,6,6,7,7,
+                     8,8,9,9,10,10,11,11,12,12,13,13,14,14)
+
 ```
 
-
-```{r fig1, echo = F, warning=F, fig.height=10, fig.width=10, fig.cap= 'MDS plot, all samples.'}
+## <span style="text-decoration:underline">Do the samples group by condition?</span> 
+```{r fig1, echo = F, warning=F, fig.height=10, fig.width=10, fig.cap= 'MDS plot using all samples. Of these, samples GR.F3, WT.F3 and TktDfWT.F3 stand out as potential outliers.'}
 
 MDSplot = data.frame(x = MDSdata$x,
                      y = MDSdata$y,
@@ -273,10 +327,10 @@ fig
 ```
 
 
-<br /><br /><br />
+<br /><br /><br /><br /><br /><br />
 \newpage
 
-```{r fig2, echo = F, fig.cap='Barplot of Total DEGs, all samples.'}
+```{r fig2, echo = F, fig.cap='Barplot of Total DEGs observed with edgeR when using all samples.'}
 
 Female = c(nrow(sGR.F.CxDf), nrow(sGR.F.CxOE),
            nrow(sWT.F.CxDf), nrow(sWT.F.CxOE),
@@ -313,8 +367,239 @@ fig
 
 ```
 
+<br /><br /><br /><br /><br /><br />
+\newpage
 
-```{r, include = F}
+```{r, echo =F, include=F}
+##Supervised PCAs
+
+##Samples to plot
+##genotype = "GR"                       ##options = "GR", "WT", or "all"
+##sex      = "F"                         ##options = "M", "F", or "all"
+##tkt      = c("Control", "DF")                    ##options = "Control", "DF", "OE", or "all"
+
+                                       ##must choose genotype of first and second condition
+##DEGs.genotypes = c("GR", "GR")         ##length = 2; options = "GR", "WT", or "all"
+
+                                       ##a single sex, won't compare between sexs
+##DEGs.sex       = "F"                   ##length = 1; options = "M", "F"
+
+                                       ##choose tkt expression of first and second condition
+##DEGs.tkt       = c("Control", "DF")    ##length = 1; "Control", "DF", "OE"
+
+                                  ##must choose genotype of first and second condition
+genotypes = c("GR", "GR")         ##length = 2; options = "GR", "WT", or "all"
+
+                                  ##a single sex, won't compare between sexs
+sex       = "F"                   ##length = 1; options = "M", "F"
+
+                                  ##choose tkt expression of first and second condition
+tkt       = c("Control", "DF")    ##length = 1; "Control", "DF", "OE"
+
+
+##SupervisedPCA = function(genotype, sex, tkt, DEGs.genotypes, DEGs.sex, DEGs.tkt){
+SupervisedPCA = function(genotypes, sex, tkt){
+Group1=unique(groups[(groups$Genotype == genotypes[1] & ##DEGs.genotypes[1] &
+                      groups$Sex == sex & ##DEGs.sex &
+                      groups$TKT == tkt[1]), ##DEGs.tkt[1]), 
+                      "Group"])
+
+Group2=unique(groups[(groups$Genotype == genotypes[2] & ##DEGs.genotypes[2] &
+                      groups$Sex == sex & ##DEGs.sex &
+                      groups$TKT == tkt[2]), ##DEGs.tkt[2]), 
+                      "Group"])
+
+DEGs = GroupsToDEGs[(GroupsToDEGs[,1] == Group1 &
+                     GroupsToDEGs[,2] == Group2),
+                    3]
+
+DEGs = Comparisons[[as.numeric(DEGs)]]
+
+    use.groups =  groups[groups$Group == Group1 |
+                         groups$Group == Group2,]
+    
+    ##if(genotype == "GR" | genotype == "WT"){
+      ##use.groups = use.groups[use.groups$Genotype == genotype,]
+    ##}
+    
+
+    ##if(sex == "M" | sex == "F"){
+      ##use.groups = use.groups[use.groups$Sex == sex,]
+    ##}
+    
+
+    ##if(length(tkt) == 1 & length(intersect(tkt, "all")) == 0){
+      ##use.groups = use.groups[use.groups$TKT == tkt,]
+    ##}
+    
+    ##if(length(tkt) == 2){
+      ##use.groups = use.groups[use.groups$TKT == tkt[1]|
+                                ##use.groups$TKT == tkt[2],]
+    ##}
+
+    use.data   = cpmdata[DEGs,row.names(use.groups)]
+    pca <- prcomp(t(use.data), scale.=TRUE) 
+    gr <- as.data.frame(use.groups)
+    PC1=scale(pca$x[,1])
+    PC2=scale(pca$x[,2])
+    eigs <- pca$sdev^2
+    ve=signif(((eigs / sum(eigs))*100)[1:3],4)
+
+    pca.data=data.frame(Sample=row.names(gr),
+                        PC1=scale(pca$x[,1]),
+                        PC2=scale(pca$x[,2]),
+                        sdev=pca$sdev,
+                        Genotype=gr$Genotype, 
+                        Sex=gr$Sex, 
+                        TKT=gr$TKT,
+                        Percent1=ve[1],
+                        Percent2=ve[2],
+                        Group=gr$Group)
+
+  fig  = plot_ly(data = pca.data, 
+                 x = ~PC1, 
+                 y = ~PC2,
+                 name = ~Group,
+                 type = 'scatter',
+                 mode = 'markers',
+                 showlegend = T,
+                 color = ~Group,
+                 symbol = ~TKT,
+                 ##symbols = as.character(seq_along(unique(point.data$Set))),
+                 colors = c("firebrick","gold","deepskyblue"),
+                 marker = list(size = 25,
+                               line = list(color = "black", width = 1.5)),
+                 hoverinfo = "text",
+                 hovertext = paste("Sample:", pca.data$Sample)) %>%
+    layout(xaxis = list(title = paste0("PC1", "(", ve[1], "%)")),
+           yaxis = list(title = paste0("PC2", "(", ve[2], "%)")))
+  return(fig)
+  }
+
+
+```
+
+## <span style="text-decoration:underline">Is the expression profile for GR.F3 an outlier in genes found DE GR.FC and GR.FDf?</span> 
+```{r fig3, echo = F, warning=F, fig.height=8, fig.width=8, echo = F, fig.cap='PCA of GR.F CxDf DEGs. Testing if GR.F3 is an outlier library.'}
+##Supervised PCAs
+##Samples to plot
+                                  ##must choose genotype of first and second condition
+genotypes = c("GR", "GR")         ##length = 2; options = "GR", "WT", or "all"
+
+                                  ##a single sex, won't compare between sexs
+sex       = "F"                   ##length = 1; options = "M", "F"
+
+                                  ##choose tkt expression of first and second condition
+tkt       = c("Control", "DF")    ##length = 1; "Control", "DF", "OE"
+
+SupervisedPCA(genotypes, sex, tkt)
+
+```
+
+<br /><br /><br /><br /><br /><br />
+\newpage
+
+## <span style="text-decoration:underline">Is the expression profile for GR.F3 an outlier in genes found DE GR.FC and GR.FOE?</span> 
+```{r fig4, echo = F, warning=F, fig.height=8, fig.width=8, fig.cap='PCA of GR.F CxOE DEGs. Testing if GR.F3 is an outlier library.'}
+##Supervised PCAs
+##Samples to plot
+                                  ##must choose genotype of first and second condition
+genotypes = c("GR", "GR")         ##length = 2; options = "GR", "WT", or "all"
+
+                                  ##a single sex, won't compare between sexs
+sex       = "F"                   ##length = 1; options = "M", "F"
+
+                                  ##choose tkt expression of first and second condition
+tkt       = c("Control", "OE")    ##length = 1; "Control", "DF", "OE"
+
+SupervisedPCA(genotypes, sex, tkt)
+
+```
+
+<br /><br /><br /><br /><br /><br />
+\newpage
+
+## <span style="text-decoration:underline">Are the expression profiles for GR.F3 and WT.F3 outliers in genes found DE GR.FC and WT.FC?</span> 
+```{r fig5, echo = F, warning=F, fig.height=8, fig.width=8, fig.cap='PCA of GR.FC x WT.FC DEGs. Testing if GR.F3 and WT.F3 are outlier libraries.'}
+##Supervised PCAs
+##Samples to plot
+                                  ##must choose genotype of first and second condition
+genotypes = c("GR", "WT")         ##length = 2; options = "GR", "WT", or "all"
+
+                                  ##a single sex, won't compare between sexs
+sex       = "F"                   ##length = 1; options = "M", "F"
+
+                                  ##choose tkt expression of first and second condition
+tkt       = c("Control", "Control")    ##length = 1; "Control", "DF", "OE"
+
+SupervisedPCA(genotypes, sex, tkt)
+
+```
+
+<br /><br /><br /><br /><br /><br />
+\newpage
+
+## <span style="text-decoration:underline">Are the expression profiles for WT.F3 and TktDfWT.F3 outliers in genes found WT.FC and TktDfWT.F?</span> 
+```{r fig6, echo = F, warning=F, fig.height=8, fig.width=8, fig.cap='PCA of WT.F CxDf DEGs. Testing if WT.F3 and TktDfWT.F3 are outlier libraries.'}
+##Supervised PCAs
+##Samples to plot
+                                  ##must choose genotype of first and second condition
+genotypes = c("WT", "WT")         ##length = 2; options = "GR", "WT", or "all"
+
+                                  ##a single sex, won't compare between sexs
+sex       = "F"                   ##length = 1; options = "M", "F"
+
+                                  ##choose tkt expression of first and second condition
+tkt       = c("Control", "DF")    ##length = 1; "Control", "DF", "OE"
+
+SupervisedPCA(genotypes, sex, tkt)
+
+```
+
+<br /><br /><br /><br /><br /><br />
+\newpage
+
+## <span style="text-decoration:underline">Is the expression profile for WT.F3 an outlier in genes found DE WT.FC and WT.FOE?</span> 
+```{r fig7, echo = F, warning=F, fig.height=8, fig.width=8, fig.cap='PCA of WT.F CxOE DEGs. Testing if WT.F3 is an outlier library.'}
+##Supervised PCAs
+##Samples to plot
+                                  ##must choose genotype of first and second condition
+genotypes = c("WT", "WT")         ##length = 2; options = "GR", "WT", or "all"
+
+                                  ##a single sex, won't compare between sexs
+sex       = "F"                   ##length = 1; options = "M", "F"
+
+                                  ##choose tkt expression of first and second condition
+tkt       = c("Control", "OE")    ##length = 1; "Control", "DF", "OE"
+
+SupervisedPCA(genotypes, sex, tkt)
+
+```
+
+<br /><br /><br /><br /><br /><br />
+\newpage
+
+## <span style="text-decoration:underline">Is the expression profile for TktDfWT.F3 an outlier in genes found DE TktDfGR.F and TktDfWT.F?</span> 
+```{r fig8, echo = F, warning=F, fig.height=8, fig.width=8, fig.cap='PCA of TktDfGR.F x TktDfWT.F DEGs. Testing if TktDfWT.F3 is an outlier library.'}
+##Supervised PCAs
+##Samples to plot
+                                  ##must choose genotype of first and second condition
+genotypes = c("GR", "WT")         ##length = 2; options = "GR", "WT", or "all"
+
+                                  ##a single sex, won't compare between sexs
+sex       = "F"                   ##length = 1; options = "M", "F"
+
+                                  ##choose tkt expression of first and second condition
+tkt       = c("DF", "DF")    ##length = 1; "Control", "DF", "OE"
+
+SupervisedPCA(genotypes, sex, tkt)
+
+```
+
+<br /><br /><br /><br /><br /><br />
+\newpage
+
+```{r, echo = F, include = F}
 ###EdgeR with TEs and outlier libraries removed
 
 groups2 = groups[setdiff(row.names(groups), c("GR.F3", "TktDfWT.F3")),]##"WT.F3",
@@ -462,8 +747,8 @@ Comparisons2 = list(row.names(sGR.F.CxDf2), row.names(sGR.F.CxOE2),
 
 ```
 
-
-```{r fig3, echo = F, warning=F, fig.height=10, fig.width=10, fig.cap= 'MDS plot, all samples, TEs and outlier libraries removed.'}
+## <span style="text-decoration:underline">Does processing the samples after removing the 3 outlier libraries and TEs improve sample normalization?</span> 
+```{r fig9, echo = F, warning=F, fig.height=10, fig.width=10, fig.cap= 'MDS plot using all samples, with the TEs and outlier libraries removed.'}
 
 MDSplot = data.frame(x = MDSdata2$x,
                      y = MDSdata2$y,
@@ -502,11 +787,10 @@ fig
 
 ```
 
-<br /><br /><br />
+<br /><br /><br /><br /><br /><br />
 \newpage
 
-
-```{r fig4, echo = F, fig.cap='Barplot of Total DEGs, all samples, TEs and outlier libraries removed.'}
+```{r fig10, echo = F, fig.cap='Barplot of Total DEGs found when using all samples with the TEs and outlier libraries removed.'}
 
 Female = c(nrow(sGR.F.CxDf2), nrow(sGR.F.CxOE2),
            nrow(sWT.F.CxDf2), nrow(sWT.F.CxOE2),
@@ -543,6 +827,8 @@ fig
 
 ```
 
+<br /><br /><br /><br /><br /><br />
+\newpage
 
 ```{r, include = F}
 ###EdgeR with TEs and outlier libraries removed, Females only
@@ -633,7 +919,8 @@ MDSdata3 = plotMDS(z, top = 10968, col=as.numeric(factor(gr)))
 
 ```
 
-```{r fig5, echo = F, warning=F, fig.height=10, fig.width=10, fig.cap= 'MDS plot, females only, TEs and outliers removed.'}
+## <span style="text-decoration:underline">Does sex specifically processing the samples after removing the 3 outlier libraries and TEs improve sample normalization?</span> 
+```{r fig11, echo = F, warning=F, fig.height=10, fig.width=10, fig.cap= 'MDS plot when the female samples are processed alone. The TEs and outlier libraries are removed.'}
 
 MDSplot = data.frame(x = MDSdata3$x,
                      y = MDSdata3$y,
@@ -670,6 +957,8 @@ fig
 
 ```
 
+<br /><br /><br /><br /><br /><br />
+\newpage
 
 ```{r, include = F}
 ###EdgeR with TEs and outlier libraries removed, Males only
@@ -819,7 +1108,7 @@ all.TKT.EdgeR[,14] = GRxWT.MOE = GRxWT.MOE3[row.names(all.cpmdata),'FDR']
 ```
 
 
-```{r fig6, echo = F, warning=F, fig.height=10, fig.width=10, fig.cap= 'MDS plot, males, TEs and outlier libraries removed.'}
+```{r fig12, echo = F, warning=F, fig.height=10, fig.width=10, fig.cap= 'MDS plot when the male samples are process alone only. The TEs are removed.'}
 
 MDSplot = data.frame(x = MDSdata4$x,
                      y = MDSdata4$y,
@@ -856,8 +1145,10 @@ fig
 
 ```
 
+<br /><br /><br /><br /><br /><br />
+\newpage
 
-```{r fig7, echo = F, fig.cap='Barplot of Total DEGs, males and females processed separately, TEs and outlier libraries removed.'}
+```{r fig13, echo = F, fig.cap='Barplot of Total DEGs when male and female samples are processed separately. The TEs and outlier libraries were removed.'}
 
 Female = c(nrow(sGR.F.CxDf3), nrow(sGR.F.CxOE3),
            nrow(sWT.F.CxDf3), nrow(sWT.F.CxOE3),
@@ -894,9 +1185,11 @@ fig
 
 ```
 
+<br /><br /><br /><br /><br /><br />
+\newpage
 
-
-```{r echo = F, fig.cap='Barplot of Total DEGs excluding TEs.'}
+## <span style="text-decoration:underline">How do the different processing methods alter the number of total DEGs?</span> 
+```{r fig14, echo = F, fig.cap='Barplot of Total DEGs for each comparison under the different trimming conditions. Different trimming conditions were: (1) all samples processed together with no TEs or outlier libraries removed; (2) trimmed data with TEs and outlier libraries removed, male and female samples processed together; (3) trimmed data with TEs and outlier libraries removed, male and female samples processed separately.'}
 
 Female.trim = c(nrow(sGR.F.CxDf2), nrow(sGR.F.CxOE2),
            nrow(sWT.F.CxDf2), nrow(sWT.F.CxOE2),
@@ -938,23 +1231,23 @@ fig <- plot_ly(data,
                              line = list(color = "black", width = 1.5)))
 
 fig <- fig %>% add_trace(y = ~Female.trim, name = 'Trim Female',
-                         marker = list(color = c("pink"),
-                                       line = list(color = "black", width = 1.5)))
-
-fig <- fig %>% add_trace(y = ~Female.Only.trim, name = 'Trim Only Female',
                          marker = list(color = c("red"),
                                        line = list(color = "black", width = 1.5)))
 
+fig <- fig %>% add_trace(y = ~Female.Only.trim, name = 'Trim Only Female',
+                         marker = list(color = c("pink"),
+                                       line = list(color = "black", width = 1.5)))
+
 fig <- fig %>% add_trace(y = ~Male, name = 'Males',
-                         marker = list(color = c("royalblue"),
+                         marker = list(color = c("blue"),
                                        line = list(color = "black", width = 1.5)))
 
 fig <- fig %>% add_trace(y = ~Male.trim, name = 'Trim Males',
-                         marker = list(color = c("skyblue"),
+                         marker = list(color = c("cornflowerblue"),
                                        line = list(color = "black", width = 1.5)))
 
 fig <- fig %>% add_trace(y = ~Male.Only.trim, name = 'Trim Only Males',
-                         marker = list(color = c("blue"),
+                         marker = list(color = c("skyblue"),
                                        line = list(color = "black", width = 1.5)))
 
 fig <- fig %>% layout(yaxis = list(title ="Total DEGs"),
@@ -966,10 +1259,6 @@ fig
 ```
 
 
-
-
-<br /><br /><br />
-\newpage
 
 ```{r echo = F, include = F, fig.height=10, fig.cap='Heatmaps of Total DEGs in GR.FC x GR.FDf.'}
 
