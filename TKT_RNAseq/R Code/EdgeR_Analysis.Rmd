@@ -602,7 +602,7 @@ SupervisedPCA(genotypes, sex, tkt)
 ```{r, echo = F, include = F}
 ###EdgeR with TEs and outlier libraries removed
 
-groups2 = groups[setdiff(row.names(groups), c("GR.F3", "TktDfWT.F3")),]##"WT.F3",
+groups2 = groups[setdiff(row.names(groups), c("GR.F3", "WT.F3", "TktDfWT.F3")),]
 
 countdata2 = countdata[, row.names(groups2)]
 
