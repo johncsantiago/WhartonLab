@@ -82,7 +82,7 @@ ui <- fluidPage(
     
     
     mainPanel(
-      plotlyOutput(outputId = "DEG.Heatmap", , height = 1000),
+      plotlyOutput(outputId = "DEG.Heatmap", height = 1000),
       ),
   )
 )
@@ -135,7 +135,7 @@ output$DEG.Heatmap <- renderPlotly({
   FBgn[,1:ncol(FBgn)] = row.names(FBgn)
 
   i=1
-  while(i<ncol(hover.text)){
+  while(i<=ncol(hover.text)){
     hover.text[,i] = paste("CPM = ", hover.text[,i],
                            "\nFDR = ", FDR[,i],
                            "\nFBgn = ", FBgn[,i])

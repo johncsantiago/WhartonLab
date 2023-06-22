@@ -765,6 +765,8 @@ TKT.EdgeR2 = data.frame(GRF.CxDf = GR.F.CxDf2[row.names(cpmdata2),'FDR'],
                         GRxWT.MDf = GRxWT.MDf2[row.names(cpmdata2),'FDR'],
                         GRxWT.MOE = GRxWT.MOE2[row.names(cpmdata2),'FDR'])
 
+row.names(TKT.EdgeR2) = row.names(cpmdata2)
+
 ##write.csv(cpmdata2, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT_cpmdata.csv")
 ##write.csv(groups2, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT.metadata.csv")
 ##write.csv(TKT.EdgeR2, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT.EdgeR.Table.csv")
