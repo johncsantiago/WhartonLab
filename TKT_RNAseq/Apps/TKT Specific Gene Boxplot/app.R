@@ -72,7 +72,9 @@ ui <- fluidPage(
                                         
                                         "GR.MC~WT.MC"     = "GRxWT.MC",
                                         "GR.MDf~WT.MDf"   = "GRxWT.MDf",
-                                        "GR.MOE~WT.MOE"   = "GRxWT.MOE"),
+                                        "GR.MOE~WT.MOE"   = "GRxWT.MOE",
+                                        "GR.FC~GR.MC"     = "GR.FxM",
+                                        "WT.FC~WT.MC"     = "WT.FxM"),
                          selected="GRF.CxDf"),
              p("Choose Signifigance Order: Organize the 'Select Gene' drop down menu order by FDR observed for a comparison between specific conditions"),
              br(),
@@ -138,7 +140,7 @@ ui <- fluidPage(
     
     mainPanel(
       plotlyOutput(outputId = "plot",
-                   height=700, width=1300),
+                   height=600, width=1300),
       br(),
       DTOutput('data'),
       tableOutput("data1"),
