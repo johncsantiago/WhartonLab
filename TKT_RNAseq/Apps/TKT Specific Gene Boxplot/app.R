@@ -144,7 +144,7 @@ ui <- fluidPage(
       br(),
       DTOutput('data'),
       tableOutput("data1"),
-      p("Table of FDR values generated in the indicated comparison")
+      p("Table of FDR values generated in the indicated comparison. NOTE: Since many genes were not expressed in females only, their FDRs were altered to reduce emphasis in DEG order. Expression cutoff was mean(GR.F1, GR.F2, WT.F1, Wt.F2) < 4")
 
     ),
 ),)
@@ -241,16 +241,16 @@ server <- function(input, output) {
     Table.names = Table.names[order(Table.names$Genotype),]
     Table.names = Table.names[order(Table.names$Sex),]
     
-    FDR.table = data.frame(GR.F      = FDR[c(NA, "GRF.CxDf", "GRF.CxOE", "GRxWT.FC", NA, NA)],
+    FDR.table = data.frame(GR.F      = FDR[c("GR.FxM", "GRF.CxDf", "GRF.CxOE", "GRxWT.FC", NA, NA)],
                            TktDfGR.F = FDR[c("GRF.CxDf", NA, NA, NA, "GRxWT.FDf", NA)],
                            TktOEGR.F = FDR[c("GRF.CxOE", NA, NA, NA, "GRxWT.FOE", NA)],
-                           WT.F      = FDR[c("GRxWT.FC", NA, NA, NA, "WTF.CxDf", "WTF.CxOE")],
+                           WT.F      = FDR[c("GRxWT.FC", NA, NA, "WT.FxM", "WTF.CxDf", "WTF.CxOE")],
                            TktDfWT.F = FDR[c(NA, "GRxWT.FDf", NA, "WTF.CxDf", NA, NA)],
                            TktOEWT.F = FDR[c(NA, NA, "GRxWT.FOE", "WTF.CxOE", NA, NA)],
-                           GR.M      = FDR[c(NA, "GRF.CxDf", "GRF.CxOE", "GRxWT.FC", NA, NA)],
+                           GR.M      = FDR[c("GR.FxM", "GRF.CxDf", "GRF.CxOE", "GRxWT.FC", NA, NA)],
                            TktDfGR.M = FDR[c("GRF.CxDf", NA, NA, NA, "GRxWT.FDf", NA)],
                            TktOEGR.M = FDR[c("GRF.CxOE", NA, NA, NA, "GRxWT.FOE", NA)],
-                           WT.M      = FDR[c("GRxWT.MC", NA, NA, NA, "WTM.CxDf", "WTM.CxOE")],
+                           WT.M      = FDR[c("GRxWT.MC", NA, NA, "WT.FxM", "WTM.CxDf", "WTM.CxOE")],
                            TktDfWT.M = FDR[c(NA, "GRxWT.MDf", NA, "WTM.CxDf", NA, NA)],
                            TktOEWT.M = FDR[c(NA, NA, "GRxWT.MOE", "WTM.CxOE", NA, NA)])
     
