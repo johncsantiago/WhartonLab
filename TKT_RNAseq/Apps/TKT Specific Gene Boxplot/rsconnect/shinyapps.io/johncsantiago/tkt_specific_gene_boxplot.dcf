@@ -5,7 +5,7 @@ account: johncsantiago
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 9349706
-bundleId: 7380245
+bundleId: 7381233
 url: https://johncsantiago.shinyapps.io/tkt_specific_gene_boxplot/
-when: 1687531815.4437
-lastSyncTime: 1687531815.44371
+when: 1687547987.17687
+lastSyncTime: 1687547987.17688

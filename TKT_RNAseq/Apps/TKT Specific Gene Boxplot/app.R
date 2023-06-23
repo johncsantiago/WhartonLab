@@ -41,6 +41,10 @@ colnames(temp2)        = colnames(temp)
 FBgn2Symbol            = rbind(temp,temp2)
 colnames(FBgn2Symbol)  = c("FBgn", "Symbol")
 
+filter1.genes = row.names(TKT.EdgeR)
+filter2.genes = row.names(TKT.EdgeR)
+url = "flybase.org"
+
 # Define UI for app that draws a histogram ----
 ui <- fluidPage(
   titlePanel("TKT RNAseq Experiment: Custom PCA Figure"),
@@ -49,8 +53,8 @@ ui <- fluidPage(
     br(),
     uiOutput("geneControls"),
     p("Select Gene: Use gene symbol if available. autocompletes"),
-    ##br(), 
-    
+    uiOutput("url"),
+
     fluidRow(
       column(6,
              selectInput("choice.order", h5("DEG Order"),
@@ -79,6 +83,7 @@ ui <- fluidPage(
              p("Choose Signifigance Order: Organize the 'Select Gene' drop down menu order by FDR observed for a comparison between specific conditions"),
              br(),
       ),
+      
       column(6,
              
              checkboxGroupInput("cond.select", h5("Select Conditions to Exclude"), 
@@ -91,7 +96,110 @@ ui <- fluidPage(
                                                "TKT OE"           = 8)),
              ##p("Select Any Conditions to Exclude"),
              ##br(), 
-      ),),
+      ),
+      
+      ),
+
+    fluidRow(
+      column(12,
+      h4("Select a Significance Filter Condition")
+    ),),
+    
+    
+    fluidRow(
+    
+    column(6,
+           radioButtons("fdr.filter1",
+                        h5(""),
+                        choices = list("none"                = 1,
+                                       "Significant in"      = 2,
+                                       "Not Significant in"  = 3),
+                        selected = 1),
+    ),
+    
+    column(6,
+           selectInput("deg.condition1", h5(""),
+                       choices = list("No Filter"       = "none",
+                                      "GR.FC~GR.FDf"    = "GRF.CxDf",
+                                      "GR.FC~GR.FOE"    = "GRF.CxOE",
+                                      
+                                      "WT.FC~WT.FDf"    = "WTF.CxDf",
+                                      "WT.FC~WT.FOE"    = "WTF.CxOE",
+                                      
+                                      "GR.FC~WT.FC"     = "GRxWT.FC",
+                                      "GR.FDf~WT.FDf"   = "GRxWT.FDf",
+                                      "GR.FOE~WT.FOE"   = "GRxWT.FOE",
+                                      
+                                      "GR.MC~GR.MDf"    = "GRM.CxDf",
+                                      "GR.MC~GR.MOE"    = "GRM.CxOE",
+                                      
+                                      "WT.MC~WT.MDf"    = "WTM.CxDf",
+                                      "WT.MC~WT.MOE"    = "WTM.CxOE",
+                                      
+                                      "GR.MC~WT.MC"     = "GRxWT.MC",
+                                      "GR.MDf~WT.MDf"   = "GRxWT.MDf",
+                                      "GR.MOE~WT.MOE"   = "GRxWT.MOE",
+                                      "GR.FC~GR.MC"     = "GR.FxM",
+                                      "WT.FC~WT.MC"     = "WT.FxM"),
+                       selected="No Filter"),
+           p(""),
+           br(),
+    ),
+  ),
+    
+  fluidRow(
+    column(12,
+           h4("Select a Second Significance Filter Condition")
+    ),),
+  
+  fluidRow(
+
+    
+    column(6,
+           radioButtons("fdr.filter2",
+                        h5(""),
+                        choices = list("none"                = 1,
+                                       "Significant in"      = 2,
+                                       "Not Significant in"  = 3),
+                        selected = 1),
+    ),
+  
+    
+    column(6,
+           selectInput("deg.condition2", h5(""),
+                       choices = list("No Filter"       = "none",
+                                      "GR.FC~GR.FDf"    = "GRF.CxDf",
+                                      "GR.FC~GR.FOE"    = "GRF.CxOE",
+                                      
+                                      "WT.FC~WT.FDf"    = "WTF.CxDf",
+                                      "WT.FC~WT.FOE"    = "WTF.CxOE",
+                                      
+                                      "GR.FC~WT.FC"     = "GRxWT.FC",
+                                      "GR.FDf~WT.FDf"   = "GRxWT.FDf",
+                                      "GR.FOE~WT.FOE"   = "GRxWT.FOE",
+                                      
+                                      "GR.MC~GR.MDf"    = "GRM.CxDf",
+                                      "GR.MC~GR.MOE"    = "GRM.CxOE",
+                                      
+                                      "WT.MC~WT.MDf"    = "WTM.CxDf",
+                                      "WT.MC~WT.MOE"    = "WTM.CxOE",
+                                      
+                                      "GR.MC~WT.MC"     = "GRxWT.MC",
+                                      "GR.MDf~WT.MDf"   = "GRxWT.MDf",
+                                      "GR.MOE~WT.MOE"   = "GRxWT.MOE",
+                                      "GR.FC~GR.MC"     = "GR.FxM",
+                                      "WT.FC~WT.MC"     = "WT.FxM"),
+                       selected="No Filter"),
+           p(""),
+           br(),
+    ),
+  ),
+  
+  
+  fluidRow(
+    column(12,
+           h4("Customize Colors")
+    ),),
     
     fluidRow(
       column(6,
@@ -142,6 +250,8 @@ ui <- fluidPage(
       plotlyOutput(outputId = "plot",
                    height=600, width=1300),
       br(),
+
+      br(),
       DTOutput('data'),
       tableOutput("data1"),
       p("Table of FDR values generated in the indicated comparison. NOTE: Since many genes were not expressed in females only, their FDRs were altered to reduce emphasis in DEG order. Expression cutoff was mean(GR.F1, GR.F2, WT.F1, Wt.F2) < 4")
@@ -154,18 +264,59 @@ ui <- fluidPage(
 server <- function(input, output) {
   
   output$geneControls =  renderUI({
-    gene.choices<<-FBgn2Symbol[row.names(TKT.EdgeR)[order(TKT.EdgeR[,input$choice.order])],"Symbol"]
+    
+    if(input$fdr.filter1 == 1 & input$deg.condition1 != "none"){
+      filter1.genes <<- row.names(TKT.EdgeR)
+    } 
+    
+    if(input$fdr.filter1 == 2 & input$deg.condition1 != "none"){
+      filter1.genes <<- row.names(TKT.EdgeR[TKT.EdgeR[,input$deg.condition1] <= .05,])
+    } 
+    if(input$fdr.filter1 == 3 & input$deg.condition1 != "none"){
+      filter1.genes <<- row.names(TKT.EdgeR[TKT.EdgeR[,input$deg.condition1] > .05,])
+    } 
+
+        
+    if(input$fdr.filter2 == 1 & input$deg.condition2 != "none"){
+      filter2.genes <<- row.names(TKT.EdgeR)
+    }
+    
+    if(input$fdr.filter2 == 2 & input$deg.condition2 != "none"){
+      filter2.genes <<- row.names(TKT.EdgeR[TKT.EdgeR[,input$deg.condition2] <= .05,])
+    }
+    if(input$fdr.filter2 == 3 & input$deg.condition2 != "none"){
+      filter2.genes <<- row.names(TKT.EdgeR[TKT.EdgeR[,input$deg.condition2] > .05,])
+    } 
+    
+    
+    gene.choices   <<- intersect(row.names(TKT.EdgeR)[order(TKT.EdgeR[,input$choice.order])],
+                                 intersect(filter1.genes, filter2.genes))
+    
+    gene.choices <<- as.character(FBgn2Symbol[gene.choices,"Symbol"])
+    
+    
     selectizeInput("gene", label = "Select Gene", 
                    choices = gene.choices,
                    options = list(create = TRUE,
                                   ##maxOptions = 5,
                                   placeholder = 'select a gene name'),
                    selected=gene.choices[1])
+
   })  
 
+
+    output$url <- renderUI({
+      page = a(paste0("Flybase Page for ", input$gene), href = paste0("http://flybase.org/reports/",FBgn2Symbol[FBgn2Symbol[,"Symbol"]==input$gene,"FBgn"] ))
+      tagList(page)
+    })
+  
+  ##print(output$url)
+  
   output$plot <- renderPlotly({
     
     gene.name = FBgn2Symbol[FBgn2Symbol[,"Symbol"]==input$gene, "FBgn"]
+    print(FBgn2Symbol[FBgn2Symbol[,"Symbol"]==input$gene,"FBgn"])
+    
     minlim    = min(as.numeric(na.omit(cpmdata[gene.name,])))
     maxlim    = max(as.numeric(na.omit(cpmdata[gene.name,])))
       
@@ -247,9 +398,9 @@ server <- function(input, output) {
                            WT.F      = FDR[c("GRxWT.FC", NA, NA, "WT.FxM", "WTF.CxDf", "WTF.CxOE")],
                            TktDfWT.F = FDR[c(NA, "GRxWT.FDf", NA, "WTF.CxDf", NA, NA)],
                            TktOEWT.F = FDR[c(NA, NA, "GRxWT.FOE", "WTF.CxOE", NA, NA)],
-                           GR.M      = FDR[c("GR.FxM", "GRF.CxDf", "GRF.CxOE", "GRxWT.FC", NA, NA)],
-                           TktDfGR.M = FDR[c("GRF.CxDf", NA, NA, NA, "GRxWT.FDf", NA)],
-                           TktOEGR.M = FDR[c("GRF.CxOE", NA, NA, NA, "GRxWT.FOE", NA)],
+                           GR.M      = FDR[c("GR.FxM", "GRM.CxDf", "GRM.CxOE", "GRxWT.MC", NA, NA)],
+                           TktDfGR.M = FDR[c("GRM.CxDf", NA, NA, NA, "GRxWT.MDf", NA)],
+                           TktOEGR.M = FDR[c("GRM.CxOE", NA, NA, NA, "GRxWT.MOE", NA)],
                            WT.M      = FDR[c("GRxWT.MC", NA, NA, "WT.FxM", "WTM.CxDf", "WTM.CxOE")],
                            TktDfWT.M = FDR[c(NA, "GRxWT.MDf", NA, "WTM.CxDf", NA, NA)],
                            TktOEWT.M = FDR[c(NA, NA, "GRxWT.MOE", "WTM.CxOE", NA, NA)])
@@ -295,6 +446,7 @@ server <- function(input, output) {
                   backgroundColor = styleRow(c(6),c('darkgrey'))) %>%
       
       formatStyle(colnames(df)[1:ncol(df)], border = styleRow(c(1:6),'2px solid black'))
+
   })
 
 }
