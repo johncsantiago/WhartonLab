@@ -53,6 +53,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 - #### Figure \@ref(fig:fig14): Barplot of Total DEGs for each comparison under the different trimming conditions
 
+- #### Figure \@ref(fig:fig15): Venn Diagram of total DEGs between male and female samples
+
+Venn Diagram of total DEGs between male and female samples
 <br /><br /><br />
 \newpage
 
