@@ -66,6 +66,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(edgeR)
 library(plotly)
 library(heatmaply)
+library(VennDiagram)
 
 ##Clean Trait Data and calculate CPMs
 countdata=read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT.counttable.csv",row.names=1)
@@ -736,6 +737,20 @@ DEout=G_X_E$table
 GRxWT.MOE2=DEout
 sGRxWT.MOE2=DEout[DEout$FDR<.05,]
 
+compare = makeContrasts(GR.F-GR.M, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+GR.FxM=DEout
+sGR.FxM=DEout[DEout$FDR<.05,]
+
+compare = makeContrasts(WT.F-WT.M, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+WT.FxM=DEout
+sWT.FxM=DEout[DEout$FDR<.05,]
+
 MDSdata2 = plotMDS(z, top = 13086, col=as.numeric(factor(gr)))
 
 Comparisons2 = list(row.names(sGR.F.CxDf2), row.names(sGR.F.CxOE2),
@@ -763,7 +778,10 @@ TKT.EdgeR2 = data.frame(GRF.CxDf = GR.F.CxDf2[row.names(cpmdata2),'FDR'],
                        
                         GRxWT.MC = GRxWT.M2[row.names(cpmdata2),'FDR'],
                         GRxWT.MDf = GRxWT.MDf2[row.names(cpmdata2),'FDR'],
-                        GRxWT.MOE = GRxWT.MOE2[row.names(cpmdata2),'FDR'])
+                        GRxWT.MOE = GRxWT.MOE2[row.names(cpmdata2),'FDR'],
+                        
+                        GR.FxM = GR.FxM[row.names(cpmdata2),'FDR'],
+                        WT.FxM = WT.FxM[row.names(cpmdata2),'FDR'])
 
 row.names(TKT.EdgeR2) = row.names(cpmdata2)
 
@@ -1286,49 +1304,30 @@ fig
 ```
 
 
+```{r fig15, echo = F, fig.cap='Venn Diagram of total DEGs between male and female samples in a G85R and WT background.'}
 
-```{r echo = F, include = F, fig.height=10, fig.cap='Heatmaps of Total DEGs in GR.FC x GR.FDf.'}
+GR.Up   = row.names(GR.FxM)[GR.FxM$logFC > 0 & GR.FxM$FDR <= .05]
+GR.Down = row.names(GR.FxM)[GR.FxM$logFC < 0 & GR.FxM$FDR <= .05]
+WT.Up   = row.names(WT.FxM)[WT.FxM$logFC > 0 & WT.FxM$FDR <= .05]
+WT.Down = row.names(WT.FxM)[WT.FxM$logFC < 0 & WT.FxM$FDR <= .05]
 
+##Sample titles as strings. Only fill in up to your number of selected categories
+set1="G85R - F > M"
+set2="G85R - M > F"
+set3="WT - F > M"
+set4="WT - F < M"
+  
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1=GR.Up
+s2=GR.Down
+s3=WT.Up
+s4=WT.Down
 
-
-Samples = row.names(groups2)[groups2$Sex =='M'
-                            & groups2$Genotype == 'GR']
-
-hmdata = cpmdata2[Comparisons2[[8]],Samples]
-
-hmdata=hmdata[2500:3000,]
-
-hmdata=hmdata[intersect(row.names(hmdata),row.names(cpmdata)),]
-
-hmdata=cbind(hmdata, cpmdata[row.names(hmdata),colnames(hmdata)])
-
-colnames(hmdata)[10:18] = paste0("Old.",colnames(hmdata)[10:18])
-
-row.names(hmdata) = convert[row.names(hmdata)]
-
-cpm.text = round(hmdata,1)
-i=1
-while(i<=ncol(cpm.text)){
-  cpm.text[,i] = paste0("CPM: ", cpm.text[,i])
-  i = i+1
-}
-
-  heatmaply(hmdata,
-            trace="none",
-            col=RdYlBu(100)[100:1],
-            scale="row",
-            dendrogram = "both",
-            Rowv=T,
-            Colv=T,
-            cexRow = .75, 
-            na.color="grey",
-            cexCol = .75,
-            labRow = as.character(row.names(hmdata)),
-            key = T,
-            column_text_angle = 90,
-            ##col_side_colors=groups[Samples,1:3],
-            ##col_side_palette=Spectral,
-            main= "GR.FC x GR.FDf",
-            custom_hovertext = cpm.text)
+#Quad Venn
+grid.newpage()
+tempvenn=draw.quad.venn(area1=length(s1),area2=length(s2),area3=length(s3),area4=length(s4), n12=length(intersect(s1,s2)),n13 = length(intersect(s1,s3)),n14 = length(intersect(s1,s4)),n23 = length(intersect(s2,s3)),n24 = length(intersect(s2,s4)),n34 = length(intersect(s3,s4)),n123 =  length(intersect(s1,intersect(s2,s3))),n124 =  length(intersect(s1,intersect(s2,s4))), n134 = length(intersect(s1,intersect(s3,s4))),n234 = length(intersect(s2,intersect(s3,s4))),n1234 = length(intersect(s1,intersect(s2,intersect(s3,s4)))),category =c(set1,set2,set3,set4),fill = c("blue", "red","green","yellow"),cex=2,cat.cex = 1)
 
 ```
+
+
+
