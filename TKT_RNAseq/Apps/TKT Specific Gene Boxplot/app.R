@@ -11,6 +11,7 @@ library(heatmaply)
 library(plotly)
 library(colourpicker)
 library(DT)
+library(rclipboard)
 
 git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/TKT_RNAseq/CountTables/"
 cpmdata = read.csv(paste0(git.dir,"TKT_cpmdata.csv"),row.names = 1)
@@ -41,8 +42,20 @@ colnames(temp2)        = colnames(temp)
 FBgn2Symbol            = rbind(temp,temp2)
 colnames(FBgn2Symbol)  = c("FBgn", "Symbol")
 
+temp=FBgn2Symbol[,"Symbol"]
+i=2
+temp2=paste0(temp[1],"\n")
+while(i<=length(temp)){
+  temp2=paste0(temp2,paste0(temp[i],"\n"))
+  i=i+1
+}
+temp2
+
+all.genes = temp2
+
 filter1.genes = row.names(TKT.EdgeR)
 filter2.genes = row.names(TKT.EdgeR)
+filter3.genes = row.names(TKT.EdgeR)
 url = "flybase.org"
 
 # Define UI for app that draws a histogram ----
@@ -50,10 +63,13 @@ ui <- fluidPage(
   titlePanel("TKT RNAseq Experiment: Custom PCA Figure"),
   sidebarLayout(position="left", sidebarPanel(
     
-    br(),
+    ##br(),
     uiOutput("geneControls"),
     p("Select Gene: Use gene symbol if available. autocompletes"),
     uiOutput("url"),
+    
+    br(),
+
 
     fluidRow(
       column(6,
@@ -81,7 +97,7 @@ ui <- fluidPage(
                                         "WT.FC~WT.MC"     = "WT.FxM"),
                          selected="GRF.CxDf"),
              p("Choose Signifigance Order: Organize the 'Select Gene' drop down menu order by FDR observed for a comparison between specific conditions"),
-             br(),
+             ##br(),
       ),
       
       column(6,
@@ -99,107 +115,12 @@ ui <- fluidPage(
       ),
       
       ),
-
-    fluidRow(
-      column(12,
-      h4("Select a Significance Filter Condition")
-    ),),
     
-    
-    fluidRow(
-    
-    column(6,
-           radioButtons("fdr.filter1",
-                        h5(""),
-                        choices = list("none"                = 1,
-                                       "Significant in"      = 2,
-                                       "Not Significant in"  = 3),
-                        selected = 1),
-    ),
-    
-    column(6,
-           selectInput("deg.condition1", h5(""),
-                       choices = list("No Filter"       = "none",
-                                      "GR.FC~GR.FDf"    = "GRF.CxDf",
-                                      "GR.FC~GR.FOE"    = "GRF.CxOE",
-                                      
-                                      "WT.FC~WT.FDf"    = "WTF.CxDf",
-                                      "WT.FC~WT.FOE"    = "WTF.CxOE",
-                                      
-                                      "GR.FC~WT.FC"     = "GRxWT.FC",
-                                      "GR.FDf~WT.FDf"   = "GRxWT.FDf",
-                                      "GR.FOE~WT.FOE"   = "GRxWT.FOE",
-                                      
-                                      "GR.MC~GR.MDf"    = "GRM.CxDf",
-                                      "GR.MC~GR.MOE"    = "GRM.CxOE",
-                                      
-                                      "WT.MC~WT.MDf"    = "WTM.CxDf",
-                                      "WT.MC~WT.MOE"    = "WTM.CxOE",
-                                      
-                                      "GR.MC~WT.MC"     = "GRxWT.MC",
-                                      "GR.MDf~WT.MDf"   = "GRxWT.MDf",
-                                      "GR.MOE~WT.MOE"   = "GRxWT.MOE",
-                                      "GR.FC~GR.MC"     = "GR.FxM",
-                                      "WT.FC~WT.MC"     = "WT.FxM"),
-                       selected="No Filter"),
-           p(""),
-           br(),
-    ),
-  ),
-    
-  fluidRow(
-    column(12,
-           h4("Select a Second Significance Filter Condition")
-    ),),
-  
-  fluidRow(
-
-    
-    column(6,
-           radioButtons("fdr.filter2",
-                        h5(""),
-                        choices = list("none"                = 1,
-                                       "Significant in"      = 2,
-                                       "Not Significant in"  = 3),
-                        selected = 1),
-    ),
-  
-    
-    column(6,
-           selectInput("deg.condition2", h5(""),
-                       choices = list("No Filter"       = "none",
-                                      "GR.FC~GR.FDf"    = "GRF.CxDf",
-                                      "GR.FC~GR.FOE"    = "GRF.CxOE",
-                                      
-                                      "WT.FC~WT.FDf"    = "WTF.CxDf",
-                                      "WT.FC~WT.FOE"    = "WTF.CxOE",
-                                      
-                                      "GR.FC~WT.FC"     = "GRxWT.FC",
-                                      "GR.FDf~WT.FDf"   = "GRxWT.FDf",
-                                      "GR.FOE~WT.FOE"   = "GRxWT.FOE",
-                                      
-                                      "GR.MC~GR.MDf"    = "GRM.CxDf",
-                                      "GR.MC~GR.MOE"    = "GRM.CxOE",
-                                      
-                                      "WT.MC~WT.MDf"    = "WTM.CxDf",
-                                      "WT.MC~WT.MOE"    = "WTM.CxOE",
-                                      
-                                      "GR.MC~WT.MC"     = "GRxWT.MC",
-                                      "GR.MDf~WT.MDf"   = "GRxWT.MDf",
-                                      "GR.MOE~WT.MOE"   = "GRxWT.MOE",
-                                      "GR.FC~GR.MC"     = "GR.FxM",
-                                      "WT.FC~WT.MC"     = "WT.FxM"),
-                       selected="No Filter"),
-           p(""),
-           br(),
-    ),
-  ),
-  
-  
-  fluidRow(
-    column(12,
-           h4("Customize Colors")
-    ),),
+    ##br(),  
+    ##fluidRow(
+      ##column(12,
+             ##h4("Customize Colors")
+      ##),),
     
     fluidRow(
       column(6,
@@ -244,17 +165,177 @@ ui <- fluidPage(
       colourInput("color4", "Color 4",
                   "darkgoldenrod1",showColour = 'background')),
     
+br(),
+    fluidRow(
+      column(12,
+      ##h5("Select a Significance Filter Condition")
+      h4("Filter Genes by Significance")
+    ),),
+    
+    
+    fluidRow(
+    
+    column(6,
+           radioButtons("fdr.filter1",
+                        h5(""),
+                        choices = list(##"none"                = 1,
+                                       "Significant in"      = 2,
+                                       "Not Significant in"  = 3),
+                        selected = 2),
+    ),
+    
+    column(6,
+           selectInput("deg.condition1", h5(""),
+                       choices = list("No Filter"       = "none",
+                                      "GR.FC~GR.FDf"    = "GRF.CxDf",
+                                      "GR.FC~GR.FOE"    = "GRF.CxOE",
+                                      
+                                      "WT.FC~WT.FDf"    = "WTF.CxDf",
+                                      "WT.FC~WT.FOE"    = "WTF.CxOE",
+                                      
+                                      "GR.FC~WT.FC"     = "GRxWT.FC",
+                                      "GR.FDf~WT.FDf"   = "GRxWT.FDf",
+                                      "GR.FOE~WT.FOE"   = "GRxWT.FOE",
+                                      
+                                      "GR.MC~GR.MDf"    = "GRM.CxDf",
+                                      "GR.MC~GR.MOE"    = "GRM.CxOE",
+                                      
+                                      "WT.MC~WT.MDf"    = "WTM.CxDf",
+                                      "WT.MC~WT.MOE"    = "WTM.CxOE",
+                                      
+                                      "GR.MC~WT.MC"     = "GRxWT.MC",
+                                      "GR.MDf~WT.MDf"   = "GRxWT.MDf",
+                                      "GR.MOE~WT.MOE"   = "GRxWT.MOE",
+                                      "GR.FC~GR.MC"     = "GR.FxM",
+                                      "WT.FC~WT.MC"     = "WT.FxM"),
+                       selected="No Filter"),
+           p(""),
+           ##br(),
+    ),
+  ),
+    
+  ##fluidRow(
+    ##column(12,
+           ##h5("Select a Second Significance Filter Condition")
+    ##),),
+  
+  fluidRow(
+
+    
+    column(6,
+           radioButtons("fdr.filter2",
+                        h5(""),
+                        choices = list(##"none"                = 1,
+                                       "Significant in"      = 2,
+                                       "Not Significant in"  = 3),
+                        selected = 2),
+    ),
+  
+    
+    column(6,
+           selectInput("deg.condition2", h5(""),
+                       choices = list("No Filter"       = "none",
+                                      "GR.FC~GR.FDf"    = "GRF.CxDf",
+                                      "GR.FC~GR.FOE"    = "GRF.CxOE",
+                                      
+                                      "WT.FC~WT.FDf"    = "WTF.CxDf",
+                                      "WT.FC~WT.FOE"    = "WTF.CxOE",
+                                      
+                                      "GR.FC~WT.FC"     = "GRxWT.FC",
+                                      "GR.FDf~WT.FDf"   = "GRxWT.FDf",
+                                      "GR.FOE~WT.FOE"   = "GRxWT.FOE",
+                                      
+                                      "GR.MC~GR.MDf"    = "GRM.CxDf",
+                                      "GR.MC~GR.MOE"    = "GRM.CxOE",
+                                      
+                                      "WT.MC~WT.MDf"    = "WTM.CxDf",
+                                      "WT.MC~WT.MOE"    = "WTM.CxOE",
+                                      
+                                      "GR.MC~WT.MC"     = "GRxWT.MC",
+                                      "GR.MDf~WT.MDf"   = "GRxWT.MDf",
+                                      "GR.MOE~WT.MOE"   = "GRxWT.MOE",
+                                      "GR.FC~GR.MC"     = "GR.FxM",
+                                      "WT.FC~WT.MC"     = "WT.FxM"),
+                       selected="No Filter"),
+           p(""),
+           ##br(),
+    ),
+  ),
+
+
+fluidRow(
+  
+  
+  column(6,
+         radioButtons("fdr.filter3",
+                      h5(""),
+                      choices = list(##"none"                = 1,
+                        "Significant in"      = 2,
+                        "Not Significant in"  = 3),
+                      selected = 2),
+  ),
+  
+  
+  column(6,
+         selectInput("deg.condition3", h5(""),
+                     choices = list("No Filter"       = "none",
+                                    "GR.FC~GR.FDf"    = "GRF.CxDf",
+                                    "GR.FC~GR.FOE"    = "GRF.CxOE",
+                                    
+                                    "WT.FC~WT.FDf"    = "WTF.CxDf",
+                                    "WT.FC~WT.FOE"    = "WTF.CxOE",
+                                    
+                                    "GR.FC~WT.FC"     = "GRxWT.FC",
+                                    "GR.FDf~WT.FDf"   = "GRxWT.FDf",
+                                    "GR.FOE~WT.FOE"   = "GRxWT.FOE",
+                                    
+                                    "GR.MC~GR.MDf"    = "GRM.CxDf",
+                                    "GR.MC~GR.MOE"    = "GRM.CxOE",
+                                    
+                                    "WT.MC~WT.MDf"    = "WTM.CxDf",
+                                    "WT.MC~WT.MOE"    = "WTM.CxOE",
+                                    
+                                    "GR.MC~WT.MC"     = "GRxWT.MC",
+                                    "GR.MDf~WT.MDf"   = "GRxWT.MDf",
+                                    "GR.MOE~WT.MOE"   = "GRxWT.MOE",
+                                    "GR.FC~GR.MC"     = "GR.FxM",
+                                    "WT.FC~WT.MC"     = "WT.FxM"),
+                     selected="No Filter"),
+         p(""),
+         ##br(),
+  ),
+),
+
+  br(),
+  fluidRow(
+    column(12,
+           h4("GO term Enrichment Analysis in GOrilla")
+    ),),
+  
+  uiOutput("GOrilla"),
+  
+  rclipboardSetup(),
+  
+  # UI ouputs for the copy-to-clipboard buttons
+  uiOutput("clip"),
+  
+  rclipboardSetup(),
+  
+  # UI ouputs for the copy-to-clipboard buttons
+  uiOutput("clip2"),
+  
+  
     width = 3),
     
     mainPanel(
       plotlyOutput(outputId = "plot",
-                   height=600, width=1300),
+                   height=600, width=1250),
       br(),
 
       br(),
       DTOutput('data'),
       tableOutput("data1"),
-      p("Table of FDR values generated in the indicated comparison. NOTE: Since many genes were not expressed in females only, their FDRs were altered to reduce emphasis in DEG order. Expression cutoff was mean(GR.F1, GR.F2, WT.F1, Wt.F2) < 4")
+      p("Table of FDR values generated in the indicated comparison.")
 
     ),
 ),)
@@ -265,32 +346,43 @@ server <- function(input, output) {
   
   output$geneControls =  renderUI({
     
-    if(input$fdr.filter1 == 1 & input$deg.condition1 != "none"){
+    if(input$deg.condition1 == "none"){
       filter1.genes <<- row.names(TKT.EdgeR)
     } 
     
     if(input$fdr.filter1 == 2 & input$deg.condition1 != "none"){
-      filter1.genes <<- row.names(TKT.EdgeR[TKT.EdgeR[,input$deg.condition1] <= .05,])
+      filter1.genes <<- row.names(TKT.EdgeR[TKT.EdgeR[,input$deg.condition1] < .05,])
     } 
     if(input$fdr.filter1 == 3 & input$deg.condition1 != "none"){
-      filter1.genes <<- row.names(TKT.EdgeR[TKT.EdgeR[,input$deg.condition1] > .05,])
+      filter1.genes <<- row.names(TKT.EdgeR[TKT.EdgeR[,input$deg.condition1] >= .05,])
     } 
-
-        
-    if(input$fdr.filter2 == 1 & input$deg.condition2 != "none"){
+      
+      
+    if(input$deg.condition2 == "none"){
       filter2.genes <<- row.names(TKT.EdgeR)
     }
     
     if(input$fdr.filter2 == 2 & input$deg.condition2 != "none"){
-      filter2.genes <<- row.names(TKT.EdgeR[TKT.EdgeR[,input$deg.condition2] <= .05,])
+      filter2.genes <<- row.names(TKT.EdgeR[TKT.EdgeR[,input$deg.condition2] < .05,])
     }
     if(input$fdr.filter2 == 3 & input$deg.condition2 != "none"){
-      filter2.genes <<- row.names(TKT.EdgeR[TKT.EdgeR[,input$deg.condition2] > .05,])
+      filter2.genes <<- row.names(TKT.EdgeR[TKT.EdgeR[,input$deg.condition2] >= .05,])
+    } 
+    
+    if(input$deg.condition3 == "none"){
+      filter3.genes <<- row.names(TKT.EdgeR)
+    }
+    
+    if(input$fdr.filter3 == 2 & input$deg.condition3 != "none"){
+      filter3.genes <<- row.names(TKT.EdgeR[TKT.EdgeR[,input$deg.condition3] < .05,])
+    }
+    if(input$fdr.filter3 == 3 & input$deg.condition3 != "none"){
+      filter3.genes <<- row.names(TKT.EdgeR[TKT.EdgeR[,input$deg.condition3] >= .05,])
     } 
     
     
     gene.choices   <<- intersect(row.names(TKT.EdgeR)[order(TKT.EdgeR[,input$choice.order])],
-                                 intersect(filter1.genes, filter2.genes))
+                                 intersect(intersect(filter1.genes, filter2.genes),filter3.genes))
     
     gene.choices <<- as.character(FBgn2Symbol[gene.choices,"Symbol"])
     
@@ -300,22 +392,101 @@ server <- function(input, output) {
                    options = list(create = TRUE,
                                   ##maxOptions = 5,
                                   placeholder = 'select a gene name'),
-                   selected=gene.choices[1])
+                   selected="gbb")
 
   })  
 
-
+  
+  output$clip <- renderUI({
+    output$clip <- renderUI({
+     
+      
+      if(input$deg.condition1 == "none"){
+        filter1.genes <<- row.names(TKT.EdgeR)
+      } 
+      
+      if(input$fdr.filter1 == 2 & input$deg.condition1 != "none"){
+        filter1.genes <<- row.names(TKT.EdgeR[TKT.EdgeR[,input$deg.condition1] < .05,])
+      } 
+      if(input$fdr.filter1 == 3 & input$deg.condition1 != "none"){
+        filter1.genes <<- row.names(TKT.EdgeR[TKT.EdgeR[,input$deg.condition1] >= .05,])
+      } 
+      
+      
+      if(input$deg.condition2 == "none"){
+        filter2.genes <<- row.names(TKT.EdgeR)
+      }
+      
+      if(input$fdr.filter2 == 2 & input$deg.condition2 != "none"){
+        filter2.genes <<- row.names(TKT.EdgeR[TKT.EdgeR[,input$deg.condition2] < .05,])
+      }
+      if(input$fdr.filter2 == 3 & input$deg.condition2 != "none"){
+        filter2.genes <<- row.names(TKT.EdgeR[TKT.EdgeR[,input$deg.condition2] >= .05,])
+      } 
+      
+      if(input$deg.condition3 == "none"){
+        filter3.genes <<- row.names(TKT.EdgeR)
+      }
+      
+      if(input$fdr.filter3 == 2 & input$deg.condition3 != "none"){
+        filter3.genes <<- row.names(TKT.EdgeR[TKT.EdgeR[,input$deg.condition3] < .05,])
+      }
+      if(input$fdr.filter3 == 3 & input$deg.condition3 != "none"){
+        filter3.genes <<- row.names(TKT.EdgeR[TKT.EdgeR[,input$deg.condition3] >= .05,])
+      } 
+      
+      
+      gene.choices   <<- intersect(row.names(TKT.EdgeR)[order(TKT.EdgeR[,input$choice.order])],
+                                   intersect(intersect(filter1.genes, filter2.genes),filter3.genes))
+      
+      gene.choices <<- as.character(FBgn2Symbol[gene.choices,"Symbol"])
+      
+      temp=gene.choices
+      i=2
+      temp2=paste0(temp[1],"\n")
+      while(i<=length(temp)){
+        temp2=paste0(temp2,paste0(temp[i],"\n"))
+        i=i+1
+      }
+      temp2
+      
+      gene.choices <<- temp2
+      
+      rclipButton(
+        inputId = "clipbtn",
+        label = "Copy Target Geneset to Clipboard",
+        clipText = gene.choices, 
+        icon = icon("clipboard")
+      )
+    })
+  })
+  
+  output$clip2 <- renderUI({
+    output$clip2 <- renderUI({
+      rclipButton(
+        inputId = "clipbtn",
+        label = "Copy Background Geneset to Clipboard",
+        clipText = all.genes, 
+        icon = icon("clipboard")
+      )
+    })
+  })
+  
+  
     output$url <- renderUI({
-      page = a(paste0("Flybase Page for ", input$gene), href = paste0("http://flybase.org/reports/",FBgn2Symbol[FBgn2Symbol[,"Symbol"]==input$gene,"FBgn"] ))
+      page = a(paste0("Flybase Page for ", input$gene), href = paste0("http://flybase.org/reports/",FBgn2Symbol[FBgn2Symbol[,"Symbol"]==input$gene,"FBgn"]), target="_blank")
       tagList(page)
     })
-  
-  ##print(output$url)
+    
+    output$GOrilla <- renderUI({
+      page = a("GOrilla Homepage", href = "https://cbl-gorilla.cs.technion.ac.il", target="_blank")
+      tagList(page)
+    })
+    
   
   output$plot <- renderPlotly({
     
     gene.name = FBgn2Symbol[FBgn2Symbol[,"Symbol"]==input$gene, "FBgn"]
-    print(FBgn2Symbol[FBgn2Symbol[,"Symbol"]==input$gene,"FBgn"])
     
     minlim    = min(as.numeric(na.omit(cpmdata[gene.name,])))
     maxlim    = max(as.numeric(na.omit(cpmdata[gene.name,])))
@@ -385,7 +556,7 @@ server <- function(input, output) {
     
     FDR = as.numeric(TKT.EdgeR[gene.name,])
     names(FDR) = colnames(TKT.EdgeR)
-    FDR = signif(FDR,2)
+    FDR = signif(FDR,3)
     
     Table.names = groups[use.samples,]
     Table.names = Table.names[order(Table.names$TKT),]
@@ -417,7 +588,7 @@ server <- function(input, output) {
     df = FDR.table
     
     datatable(df, options = list(dom = 't', autoHideNavigation=T)) %>%
-      formatStyle(colnames(df),color='black', fontSize = '100%') %>%
+      formatStyle(colnames(df),color='black', fontSize = '75%') %>%
       
       formatStyle(na.omit(colnames(df)[df[1,]<.05]), 
                   backgroundColor = styleRow(c(1),c('yellow'))) %>% 
