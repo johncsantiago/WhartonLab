@@ -1,0 +1,145 @@
+---
+title: "Lean Top PC1 Function Figures"
+author: "John Santiago"
+date: "11/28/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(rgl)
+knitr::opts_chunk$set(echo = FALSE, fig.align="center")
+knitr::knit_hooks$set(webgl = hook_webgl)
+```
+
+```{r include=F}
+##Load Libraries
+
+library(biomaRt)
+
+library(org.Dm.eg.db)
+
+library(GO.db)
+
+```
+
+```{r}
+##FB2Ensembl
+x1=as.list(org.Dm.egENSEMBL2EG)
+##Ensembl2Symbol
+x2=as.list(org.Dm.egSYMBOL)
+##Symbol2Ensembl
+x3=as.list(org.Dm.egSYMBOL2EG)
+##Ensembl2FB
+x4=as.list(org.Dm.egENSEMBL)
+##ensembl to FBgn
+x5=as.list(org.Dm.egFLYBASE)
+
+##load all files from github
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/TKT_RNAseq/CountTables/"
+cpmdata = read.csv(paste0(git.dir,"TKT_cpmdata.csv"),row.names = 1)
+groups  = read.csv(paste0(git.dir,"TKT.metadata.csv"),row.names = 1)
+TKT.EdgeR = read.csv(paste0(git.dir,"TKT.EdgeR.Table.csv"),row.names = 1)
+convert=read.csv("https://raw.githubusercontent.com/DavidRandLab/Santiago-et-al-2021-BMC-Genomics/main/Data%20Files/FBgnConversionTable.csv",row.names=1)
+
+
+FBgn2ensembl = row.names(cpmdata)
+names(FBgn2ensembl) = row.names(cpmdata)
+tempEG = unlist(x1[lengths(x1)==1][row.names(cpmdata)])
+FBgn2ensembl[names(tempEG)]=tempEG
+
+ensembl2symbol = row.names(cpmdata)
+names(ensembl2symbol) = FBgn2ensembl
+tempSymbol = unlist(x2[FBgn2ensembl])
+ensembl2symbol[names(tempSymbol)]=tempSymbol
+symbol2ensembl = names(ensembl2symbol)
+names(symbol2ensembl) = ensembl2symbol
+
+extras = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/UnknownIDGenes.csv")
+row.names(extras)=extras$Symbol
+extras$ensembl = extras$FBgn
+tempExtras = unlist(x3[extras$Symbol])
+extras[names(tempExtras), "ensembl"] = tempExtras
+row.names(extras) = extras$FBgn
+
+ensembl = FBgn2ensembl
+ensembl[row.names(extras)] = extras$ensembl
+
+symbol = ensembl2symbol
+symbol[row.names(extras)] = extras$Symbol
+
+
+
+
+KEY = data.frame(FBgn = row.names(cpmdata),
+                 Symbol = symbol,
+                 ensembl = ensembl)
+row.names(KEY) = KEY$FBgn
+
+##write.csv(KEY,"/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneIDKey.csv")
+
+
+
+ccpar=as.list(GOCCPARENTS)
+ccchild=as.list(GOCCCHILDREN)
+
+bppar=as.list(GOBPPARENTS)
+bpchild=as.list(GOBPCHILDREN)
+
+mfpar=as.list(GOMFPARENTS)
+mfchild=as.list(GOMFCHILDREN)
+
+term=as.list(GOTERM)
+
+genesingo=as.list(org.Dm.egGO2ALLEGS)
+
+
+
+GOi = names(genesingo)[1]
+genesingoi = intersect(row.names(KEY),unlist(x4[genesingo[[1]]]))
+
+GO2FBgn = data.frame(FB.ID = genesingoi,
+                     Symbol = KEY[genesingoi,"Symbol"],
+                     GO.ID = GOi,
+                     GO.Term = term[[names(genesingo)[1]]]@'Term',
+                     Ontology = term[[names(genesingo)[1]]]@'Ontology',
+                     GO.Definition = term[[names(genesingo)[1]]]@'Definition')
+
+i=2
+while(i<=length(genesingo)){
+  GOi = names(genesingo)[i]
+  genesingoi = intersect(row.names(KEY),unlist(x4[genesingo[[i]]]))
+  
+  if(length(genesingoi) > 0){
+    tempGO2FBgn = data.frame(FB.ID = genesingoi,
+                             Symbol = KEY[genesingoi,"Symbol"],
+                             GO.ID = GOi,
+                             GO.Term = term[[names(genesingo)[i]]]@'Term',
+                             Ontology = term[[names(genesingo)[i]]]@'Ontology',
+                             GO.Definition = term[[names(genesingo)[i]]]@'Definition')
+    GO2FBgn = rbind(GO2FBgn, tempGO2FBgn)
+  }
+  i=i+1
+}
+
+##write.csv(GO2FBgn, "/Users/johncsantiago/Documents/GitHub/WhartonLab/GenesInGOTerms.csv")
+
+
+Key = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GeneIDKey.csv", row.names = 1)
+
+
+kegg=keggLink("pathway","dme")
+names(kegg)=gsub("dme:Dmel_","",names(kegg))
+i=1
+temp = as.list(kegg[(unique(names(kegg)))])
+while(i<=length(temp)){
+  temp[[i]] = as.character(kegg[grep(names(temp)[i], names(kegg))])
+  i = i+1
+}
+kegg = temp
+x=as.list(org.Dm.egFLYBASECG2EG)
+xx=as.list(org.Dm.egSYMBOL)
+names(kegg)=as.vector(unlist(xx[unlist(x[names(kegg)])]))
+
+##saveRDS(kegg, "/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/kegg.symbol2path.RData")
+
+```

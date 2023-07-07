@@ -5,6 +5,7 @@ if(length(new.packages)>0){
   install.packages("ggfortify")
 }
 
+##Load necessary libraries
 library(shiny)
 library(ggfortify)
 library(heatmaply)
@@ -13,15 +14,27 @@ library(colourpicker)
 library(DT)
 library(rclipboard)
 
+##load all files from github
 git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/TKT_RNAseq/CountTables/"
 cpmdata = read.csv(paste0(git.dir,"TKT_cpmdata.csv"),row.names = 1)
 groups  = read.csv(paste0(git.dir,"TKT.metadata.csv"),row.names = 1)
 TKT.EdgeR = read.csv(paste0(git.dir,"TKT.EdgeR.Table.csv"),row.names = 1)
 convert=read.csv("https://raw.githubusercontent.com/DavidRandLab/Santiago-et-al-2021-BMC-Genomics/main/Data%20Files/FBgnConversionTable.csv",row.names=1)
 
+##Add additional groups for color factors
 groups$GxS = paste0(groups$Genotype, groups$Sex)
 groups$GxTKT = paste0(groups$Genotype, groups$TKT)
 
+##FBgn2Symbol; Variable for converting FBgn to symbol
+temp                   = convert[,c("updated.FBgn","Symbol")]
+temp2                  = setdiff(row.names(cpmdata),row.names(convert))
+temp2                  = matrix(rep(temp2,2), ncol=2)
+row.names(temp2)       = temp2[,1]
+colnames(temp2)        = colnames(temp)
+FBgn2Symbol            = rbind(temp,temp2)
+colnames(FBgn2Symbol)  = c("FBgn", "Symbol")
+
+##groups. use; Variable used by the "Filter gene set" options 
 groups.use = matrix(0,nrow = nrow(groups), ncol = 8)
 row.names(groups.use) = row.names(groups)
 colnames(groups.use) = c("ALL","GR", "WT", "M", "F", "C", "DF", "OE")
@@ -34,14 +47,7 @@ groups.use[groups$TKT      == "Control", "C"]   = 1
 groups.use[groups$TKT      == "DF",      "DF"]  = 1
 groups.use[groups$TKT      == "OE",      "OE"]  = 1
 
-temp                   = convert[,c("updated.FBgn","Symbol")]
-temp2                  = setdiff(row.names(cpmdata),row.names(convert))
-temp2                  = matrix(rep(temp2,2), ncol=2)
-row.names(temp2)       = temp2[,1]
-colnames(temp2)        = colnames(temp)
-FBgn2Symbol            = rbind(temp,temp2)
-colnames(FBgn2Symbol)  = c("FBgn", "Symbol")
-
+##all.genes; Variable used to copy gene set to clipboard so each gene is on a new line
 temp=FBgn2Symbol[,"Symbol"]
 i=2
 temp2=paste0(temp[1],"\n")
@@ -50,27 +56,43 @@ while(i<=length(temp)){
   i=i+1
 }
 temp2
-
 all.genes = temp2
 
+##mean.cpm; Mean cpm for each gene in each condition (groups$Group). Used for filtering
+mean.cpm = matrix(0, ncol = length(unique(groups$Group)), nrow = nrow(cpmdata))
+colnames(mean.cpm) = unique(groups$Group)
+row.names(mean.cpm) = row.names(cpmdata)
+i=1
+while(i<=ncol(mean.cpm)){
+  mean.cpm[,i]= apply(cpmdata[,row.names(groups[groups$Group == colnames(mean.cpm)[i],])], 1, mean)
+  i=i+1
+}
+
+##filter1-4.genes; Variable for filter conditions, set to no filter as default
 filter1.genes = row.names(TKT.EdgeR)
 filter2.genes = row.names(TKT.EdgeR)
 filter3.genes = row.names(TKT.EdgeR)
-url = "flybase.org"
+filter4.genes = row.names(TKT.EdgeR)
 
-# Define UI for app that draws a histogram ----
+
+##Starts the code for user interface. Sidebar controls and Main panel display
 ui <- fluidPage(
+  
+##Sidebar control code 
   titlePanel("TKT RNAseq Experiment: Custom PCA Figure"),
   sidebarLayout(position="left", sidebarPanel(
     
-    ##br(),
+##General plot customization tools 
+    ##gene.Controls; Gene selection tool. Uses a reactive variable
     uiOutput("geneControls"),
     p("Select Gene: Use gene symbol if available. autocompletes"),
-    uiOutput("url"),
     
+    ##url; Link to selected gene flybase summary page. Uses a reactive variable
+    uiOutput("url"),
     br(),
+    
 
-
+    ##choice. order; A drop down tab used to select the EdgeR comparison of interest when sorting the gene list used in "geneControls" 
     fluidRow(
       column(6,
              selectInput("choice.order", h5("DEG Order"),
@@ -96,12 +118,10 @@ ui <- fluidPage(
                                         "GR.FC~GR.MC"     = "GR.FxM",
                                         "WT.FC~WT.MC"     = "WT.FxM"),
                          selected="GRF.CxDf"),
-             p("Choose Signifigance Order: Organize the 'Select Gene' drop down menu order by FDR observed for a comparison between specific conditions"),
-             ##br(),
-      ),
+             p("Choose Signifigance Order: Organize the 'Select Gene' drop down menu order by FDR observed for a comparison between specific conditions"),),
       
+    ##cond.select; A a checkbox selection with multiple selections allowed. Used to select conditions to exclude when creating the boxplot
       column(6,
-             
              checkboxGroupInput("cond.select", h5("Select Conditions to Exclude"), 
                                 choices = list("G85R"             = 2, 
                                                "Wild Type"        = 3,
@@ -110,19 +130,12 @@ ui <- fluidPage(
                                                "TKT Control"      = 6,
                                                "TKT Df"           = 7,
                                                "TKT OE"           = 8)),
-             ##p("Select Any Conditions to Exclude"),
-             ##br(), 
-      ),
-      
-      ),
+             ),
+    ),
     
-    ##br(),  
-    ##fluidRow(
-      ##column(12,
-             ##h4("Customize Colors")
-      ##),),
-    
-    fluidRow(
+##This section is used to customize the colors of the box plots 
+  fluidRow(
+    ##colfactor; A drop down tab used to select the factor to differentiate by color
       column(6,
              selectInput("colfactor", h5("Select Factor for Color"), 
                          choices = list("Genotype x Sex" = "GxS",
@@ -131,16 +144,17 @@ ui <- fluidPage(
                                         "TKT"       = "TKT", 
                                         "Sex"       = "Sex",
                                         "Genotype x TKT" = "GxTKT"),
-                         selected = "Genotype x Sex"),
-      ),
+                         selected = "Genotype x Sex"),),
+      
+    ##colselect; A drop down tab that lets you select a color to change. Can only customize up to 4 factor colors. Once selected, a new tab will open that can be selected which will open up a color pallette to choose from.
       column(6,
              
              selectInput("colselect", h5("Select Color"), 
                          choices = list("Choose Condition" = 0,
-                                        "Color 1"            = 1, 
-                                        "Color 2"             = 2,
-                                        "Color 3"              = 3,
-                                        "Color 4"           = 4),
+                                        "Color 1"          = 1, 
+                                        "Color 2"          = 2,
+                                        "Color 3"          = 3,
+                                        "Color 4"          = 4),
                          selected = 0),
       ),),
     
@@ -166,25 +180,27 @@ ui <- fluidPage(
                   "darkgoldenrod1",showColour = 'background')),
     
 br(),
-    fluidRow(
-      column(12,
-      ##h5("Select a Significance Filter Condition")
-      h4("Filter Genes by Significance")
+
+##This section is used to filter the gene set used in geneControls 
+  fluidRow(
+    ##Header for the "Filter Genes Set" section
+    column(12,
+      h4("Filter Genes Set")
     ),),
     
     
-    fluidRow(
-    
-    column(6,
+  fluidRow(
+  ##This section will be used to filter the gene set used in geneControls by EdgeR significance
+    ##fdr.filter1; single selection buttons. Used to select the choice of significance used with deg.condition1 
+      column(6,
            radioButtons("fdr.filter1",
                         h5(""),
-                        choices = list(##"none"                = 1,
-                                       "Significant in"      = 2,
+                        choices = list("Significant in"      = 2,
                                        "Not Significant in"  = 3),
-                        selected = 2),
-    ),
-    
-    column(6,
+                        selected = 2),),
+
+    ##deg.condtion1; drop down menu used to select the EdgeR comparison that will be use fdr.filter1 to filter genes by significance 
+      column(6,
            selectInput("deg.condition1", h5(""),
                        choices = list("No Filter"       = "none",
                                       "GR.FC~GR.FDf"    = "GRF.CxDf",
@@ -209,29 +225,18 @@ br(),
                                       "GR.FC~GR.MC"     = "GR.FxM",
                                       "WT.FC~WT.MC"     = "WT.FxM"),
                        selected="No Filter"),
-           p(""),
-           ##br(),
-    ),
-  ),
-    
-  ##fluidRow(
-    ##column(12,
-           ##h5("Select a Second Significance Filter Condition")
-    ##),),
-  
-  fluidRow(
+           p(""),),),
 
-    
+  fluidRow(
+  ##fdr.filter2; single selection buttons. Used to select the choice of significance used with deg.condition2 
     column(6,
            radioButtons("fdr.filter2",
                         h5(""),
-                        choices = list(##"none"                = 1,
-                                       "Significant in"      = 2,
+                        choices = list("Significant in"      = 2,
                                        "Not Significant in"  = 3),
-                        selected = 2),
-    ),
-  
+                        selected = 2),),
     
+    ##deg.condtion2; drop down menu used to select the EdgeR comparison that will be use fdr.filter2 to filter genes by significance 
     column(6,
            selectInput("deg.condition2", h5(""),
                        choices = list("No Filter"       = "none",
@@ -257,26 +262,19 @@ br(),
                                       "GR.FC~GR.MC"     = "GR.FxM",
                                       "WT.FC~WT.MC"     = "WT.FxM"),
                        selected="No Filter"),
-           p(""),
-           ##br(),
-    ),
-  ),
+           p(""),),),
 
-
-fluidRow(
-  
-  
-  column(6,
+  fluidRow(
+  ##fdr.filter3; single selection buttons. Used to select the choice of significance used with deg.condition3 
+    column(6,
          radioButtons("fdr.filter3",
                       h5(""),
-                      choices = list(##"none"                = 1,
-                        "Significant in"      = 2,
-                        "Not Significant in"  = 3),
-                      selected = 2),
-  ),
+                      choices = list("Significant in"      = 2,
+                                     "Not Significant in"  = 3),
+                      selected = 2),),
   
-  
-  column(6,
+  ##deg.condtion3; drop down menu used to select the EdgeR comparison that will be use fdr.filter3 to filter genes by significance 
+    column(6,
          selectInput("deg.condition3", h5(""),
                      choices = list("No Filter"       = "none",
                                     "GR.FC~GR.FDf"    = "GRF.CxDf",
@@ -301,44 +299,81 @@ fluidRow(
                                     "GR.FC~GR.MC"     = "GR.FxM",
                                     "WT.FC~WT.MC"     = "WT.FxM"),
                      selected="No Filter"),
-         p(""),
-         ##br(),
-  ),
-),
+         p(""),),),
 
-  br(),
   fluidRow(
+  ##Filter gene set by a minimal expression level
+  ##min.value; A numeric input used with min.cond to filter genes with a minimal mean cpm cutoff using mean.cpm
+    column(6,
+         numericInput("min.value",
+                      h5("Minimum CPM level"),
+                      min = 0,
+                      max = 1000,
+                      value = 0),),
+  
+  ##min.cond; Drop down box used to choose the experimental condition (groups$Group) that will be used with min.value to filter genes
+    br(),
+    column(6,
+         selectInput("min.cond", h5(""),
+                     choices = list("Any Condition" = "all",
+                                    "GR.FC"         = "GR.F",
+                                    "TktDfGR.F"     = "TktDfGR.F",
+                                    "TktOEGR.F"     = "TktOEGR.F",
+                                    
+                                    "WT.FC"         = "WT.F",
+                                    "TktDfWT.F"     = "TktDfWT.F",
+                                    "TktOEWT.F"     = "TktOEWT.F",
+                                    
+                                    "GR.MC"         = "GR.M",
+                                    "TktDfGR.M"     = "TktDfGR.M",
+                                    "TktOEGR.M"     = "TktOEGR.M",
+                                    
+                                    "WT.MC"         = "WT.M",
+                                    "TktDfWT.M"     = "TktDfWT.M",
+                                    "TktOEWT.M"     = "TktOEWT.M"),
+                     selected="Any Condition"),
+         p(""),),),
+  br(),
+
+##This section is used to allow functional analysis of the filtered gene sets 
+  fluidRow(
+  ##Header for the "Gene Function Analysis" section
     column(12,
-           h4("GO term Enrichment Analysis in GOrilla")
+           h4("Gene Function Analysis")
     ),),
   
-  uiOutput("GOrilla"),
+  ##GOrilla; Link to GOrilla home page
+    uiOutput("GOrilla"),
   
-  rclipboardSetup(),
-  
-  # UI ouputs for the copy-to-clipboard buttons
-  uiOutput("clip"),
-  
-  rclipboardSetup(),
-  
-  # UI ouputs for the copy-to-clipboard buttons
-  uiOutput("clip2"),
-  
+  ##Pangea; Link to PANGEA home page
+    uiOutput("Pangea"),
+
+  ##Provides a button to copy the filtered gene set to the user clipboard
+    rclipboardSetup(),
+    ##clip; reactive function that stores the list of filtered genes
+      uiOutput("clip"),
+
+##Provides a button to copy the full gene set to the user clipboard  
+    rclipboardSetup(),
+    ##clip2; stores the full list of genes
+      uiOutput("clip2"),
   
     width = 3),
+
+##Figure display settings    
+  mainPanel(
+    ##Display the boxplot
+    plotlyOutput(outputId = "plot",
+                 height=600, width=1250),
+    br(),
     
-    mainPanel(
-      plotlyOutput(outputId = "plot",
-                   height=600, width=1250),
-      br(),
-
-      br(),
-      DTOutput('data'),
-      tableOutput("data1"),
-      p("Table of FDR values generated in the indicated comparison.")
-
-    ),
-),)
+    br(),
+    
+    ##Display the FDR table
+    DTOutput('data', width =1100),
+    p("Table of FDR values generated in the indicated comparison.")
+    ),),
+)
 
 
 # Define server logic required to draw a histogram ----
@@ -380,9 +415,17 @@ server <- function(input, output) {
       filter3.genes <<- row.names(TKT.EdgeR[TKT.EdgeR[,input$deg.condition3] >= .05,])
     } 
     
+    if(input$min.cond == "all"){
+      filter4.genes = row.names(mean.cpm)[apply(mean.cpm,1,min)>input$min.value]
+    }
+    
+    if(input$min.cond != "all"){
+      filter4.genes = row.names(mean.cpm)[mean.cpm[,input$min.cond] > input$min.value]
+    }
     
     gene.choices   <<- intersect(row.names(TKT.EdgeR)[order(TKT.EdgeR[,input$choice.order])],
-                                 intersect(intersect(filter1.genes, filter2.genes),filter3.genes))
+                                 intersect(intersect(filter1.genes, filter2.genes),
+                                           intersect(filter3.genes,filter4.genes)))
     
     gene.choices <<- as.character(FBgn2Symbol[gene.choices,"Symbol"])
     
@@ -392,7 +435,7 @@ server <- function(input, output) {
                    options = list(create = TRUE,
                                   ##maxOptions = 5,
                                   placeholder = 'select a gene name'),
-                   selected="gbb")
+                   selected="CG8036")
 
   })  
 
@@ -435,9 +478,17 @@ server <- function(input, output) {
         filter3.genes <<- row.names(TKT.EdgeR[TKT.EdgeR[,input$deg.condition3] >= .05,])
       } 
       
+      if(input$min.cond == "all"){
+        filter4.genes = row.names(mean.cpm)[apply(mean.cpm,1,min)>input$min.value]
+      }
+      
+      if(input$min.cond != "all"){
+        filter4.genes = row.names(mean.cpm)[mean.cpm[,input$min.cond] > input$min.value]
+      }
       
       gene.choices   <<- intersect(row.names(TKT.EdgeR)[order(TKT.EdgeR[,input$choice.order])],
-                                   intersect(intersect(filter1.genes, filter2.genes),filter3.genes))
+                                   intersect(intersect(filter1.genes, filter2.genes),
+                                             intersect(filter3.genes,filter4.genes)))
       
       gene.choices <<- as.character(FBgn2Symbol[gene.choices,"Symbol"])
       
@@ -483,7 +534,12 @@ server <- function(input, output) {
       tagList(page)
     })
     
-  
+    output$Pangea <- renderUI({
+      page = a("PANGEA Homepage", href = " https://www.flyrnai.org/tools/pangea/web/home/7227", target="_blank")
+      tagList(page)
+    })
+    
+    
   output$plot <- renderPlotly({
     
     gene.name = FBgn2Symbol[FBgn2Symbol[,"Symbol"]==input$gene, "FBgn"]
