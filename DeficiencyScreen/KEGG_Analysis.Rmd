@@ -6,56 +6,47 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-library(rgl)
-knitr::opts_chunk$set(echo = FALSE, fig.align="center")
-knitr::knit_hooks$set(webgl = hook_webgl)
+knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r echo = F, include=F}
 ##Load Libraries
-
-library(biomaRt)
-library(org.Dm.eg.db)
-library(goseq)
-library(GO.db)
-library(visNetwork)
-library(rrvgo)
 library(plotly)
-library(KEGGREST)
 library(pathview)
-##library(RColorBrewer)
 ```
 
 ```{r echo = F, include =F}
 ##load all files from github
-GeneIDKey = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GeneIDKey.csv", row.names = 1)
-
-Df.data = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/DeficiencyModifierGenes.csv", row.names = 1)
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"
+GeneIDKey = read.csv(paste0(git.dir,"GeneralDataFiles/GeneIDKey.csv"),row.names = 1)
+Df.data = read.csv(paste0(git.dir,"GeneralDataFiles/DeficiencyModifierGenes.csv"),row.names = 1)
 Df.data$CG = GeneIDKey[row.names(Df.data),"CG"]
+Df.data$Repress = 0
+Df.data$Repress[Df.data$Moderate == 1|Df.data$Strong == 1] = 1
+kegg = readRDS(gzcon(url(paste0(git.dir,"DeficiencyScreen/DataFiles/kegg.symbol2path.RData"))))
+kegg.names = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/KEGG.names.csv"), row.names = 1)
 
-kegg = readRDS("/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/kegg.symbol2path.RData")
-
-keggID=keggConv("dme","ncbi-geneid")
-
-kegg.names = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/KEGG.names.csv", row.names = 1)
-
-Moderate.KEGG = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/ModerateKEGGAnalysis.csv", row.names = 1)
-
-Strong.KEGG = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/StrongKEGGAnalysis.csv", row.names = 1)
-
-Repress.KEGG = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/RepressorKEGGAnalysis.csv", row.names = 1)
-
-Lethal.KEGG = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/LethalKEGGAnalysis.csv", row.names = 1)
-
-Enhance.KEGG = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/EnhancerKEGGAnalysis.csv", row.names = 1)
+Moderate.KEGG = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/ModerateKEGGAnalysis.csv"), row.names = 1)
+Strong.KEGG = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/StrongKEGGAnalysis.csv"), row.names = 1)
+Repress.KEGG = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/RepressorKEGGAnalysis.csv"), row.names = 1)
+Lethal.KEGG = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/LethalKEGGAnalysis.csv"), row.names = 1)
+Enhancer.KEGG = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/EnhancerKEGGAnalysis.csv"), row.names = 1)
 
 ```
 
 ```{r, include = F, echo = F}
 
+if(intersect(list.files(), "KEGG_Image_Files") != "KEGG_Image_Files"){
+  dir.create(paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/KEGG_Image_Files/"))
+}
+
+Home = dirname(rstudioapi::getSourceEditorContext()$path)
+OutputDir = paste0(Home, "/KEGG_Image_Files/")
+
 ShowKEGG = function(PathwayID){
-download.kegg(pathway.id= PathwayID, species = "dme")
-xml.file=paste0("dme",PathwayID,".xml")
+  
+download.kegg(pathway.id= PathwayID, species = "dme", kegg.dir = OutputDir)
+xml.file=paste0(OutputDir, "dme",PathwayID,".xml")
 node.data=node.info(xml.file)
 
 all.path = names(kegg[grep(PathwayID,kegg)])
@@ -116,12 +107,14 @@ cols.ts.gene[row.names(color.combos)[color.combos$Lethal   == 1]] = "cornflowerb
 cols.ts.gene[row.names(color.combos)[(color.combos$Moderate   == 1 | color.combos$Strong   == 1) & (color.combos$Enhancer   == 1 | color.combos$Lethal   == 1) ]] = "grey60"
 
 
+setwd(OutputDir)
 pv.pars= keggview.native(plot.data.gene=plot.data.gene,
                          cols.ts.gene=cols.ts.gene, 
                          node.data=node.data,
                          pathway.name=paste0("dme", PathwayID),
-                         same.layer=T, plot.col.key=F, out.suffix = kegg.names[paste0("dme", PathwayID),1])
-
+                         same.layer=T, plot.col.key=F, out.suffix = kegg.names[paste0("dme", PathwayID),1],
+                         kegg.dir = OutputDir)
+setwd(Home)
 }
 
 ```
@@ -173,9 +166,10 @@ return(fig)
 
 ```
 
-
+  
 ```{r fig.width=10}
 
+##Options: Moderate.KEGG, Strong.KEGG, Repress.KEGG, Lethal.KEGG, Enhancer.KEGG
 data = Repress.KEGG
 
 KEGG20(data)
@@ -183,12 +177,24 @@ KEGG20(data)
 ```
 
 ```{r echo = F, include = F}
-PathwayID = "04814"
+
+PathwayID = "04141"
 
 ShowKEGG(PathwayID)
 
 ```
 
-```{r}
-knitr::include_graphics(paste0("/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/dme",PathwayID, ".", kegg.names[paste0("dme", PathwayID),1], ".png"))
+```{r echo = F}
+
+knitr::include_graphics(paste0(OutputDir, "dme",PathwayID, ".", kegg.names[paste0("dme", PathwayID),1], ".png"))
+
+```
+
+
+
+```{r include = F, echo = F}
+
+GenesInKEGG = Df.data[Df.data$Symbol %in% names(kegg[grep(PathwayID, kegg)]),]
+write.csv(GenesInKEGG, paste0(OutputDir,"GenesInKEGG_dme", PathwayID,".csv"))
+
 ```
