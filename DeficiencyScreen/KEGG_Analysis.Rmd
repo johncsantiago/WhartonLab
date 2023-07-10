@@ -167,7 +167,7 @@ return(fig)
 ```{r echo = F, fig.width=10}
 
 ##Options: Moderate.KEGG, Strong.KEGG, Repress.KEGG, Lethal.KEGG, Enhancer.KEGG
-data = Repress.KEGG
+data = Strong.KEGG
 
 KEGG20(data)
 
@@ -175,7 +175,7 @@ KEGG20(data)
 
 ```{r echo = F, include = F}
 
-PathwayID = "04141"
+PathwayID = "04150"
 
 ShowKEGG(PathwayID)
 

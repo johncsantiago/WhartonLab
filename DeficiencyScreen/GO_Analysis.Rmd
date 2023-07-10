@@ -14,16 +14,10 @@ knitr::knit_hooks$set(webgl = hook_webgl)
 ```{r echo = F, include=F}
 ##Load Libraries
 
-##library(biomaRt)
-##library(org.Dm.eg.db)
+library(org.Dm.eg.db)
 ##library(goseq)
-##library(GO.db)
-##library(visNetwork)
 library(rrvgo)
 library(plotly)
-##library(KEGGREST)
-##library(pathview)
-##library(RColorBrewer)
 ```
 
 
@@ -42,19 +36,21 @@ Repress.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/RepressorGOAna
 Lethal.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/LethalGOAnalysis.csv"), row.names = 1)
 Enhancer.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/EnhancerGOAnalysis.csv"), row.names = 1)
 
+genesingo=as.list(org.Dm.egGO2ALLEGS)
+
 ```
 
 ```{r include=F, echo=F}
 
-##sigs = Df.data[Df.data$Strong == 1 | Df.data$Moderate == 1 , "Symbol"]
-##genes = setNames(rep(0, nrow(Df.data)), Df.data$Symbol)
+##sigs = unique(Df.data[Df.data$Strong == 1 | Df.data$Moderate == 1 , "Symbol"])
+##genes = setNames(rep(0, length(unique(Df.data$Symbol))), unique(Df.data$Symbol))
 ##genes[sigs] = 1
 ##pwf=nullp(genes,"dm3","geneSymbol")
 ##GO.wall=goseq(pwf,"dm3","geneSymbol")
 ##GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
 ##row.names(GO.wall) = GO.wall$category
 ##Repress.GO = GO.wall
-##write.csv(Repress.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/RepressorGOAnalysis.csv")
+##write.csv(Repress.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/RepressorGOAnalysis.csv")
 
 ##KEGG term enrichment is KEGG
 ##KEGG=goseq(pwf,gene2cat=kegg)
@@ -62,7 +58,7 @@ Enhancer.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/EnhancerGOAna
 ##row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
 ##KEGG$Name=kegg.names[row.names(KEGG),1]
 ##Repress.KEGG = KEGG
-##write.csv(Repress.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/RepressorKEGGAnalysis.csv")
+##write.csv(Repress.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/RepressorKEGGAnalysis.csv")
 
 ##sigs = Df.data[Df.data$Moderate == 1 , "Symbol"]
 ##genes = setNames(rep(0, nrow(Df.data)), Df.data$Symbol)
@@ -72,15 +68,15 @@ Enhancer.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/EnhancerGOAna
 ##GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
 ##row.names(GO.wall) = GO.wall$category
 ##Moderate.GO = GO.wall
-##write.csv(Moderate.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/ModerateGOAnalysis.csv")
+##write.csv(Moderate.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/ModerateGOAnalysis.csv")
 
-##KEGG term enrichment is KEGG
+
 ##KEGG=goseq(pwf,gene2cat=kegg)
 ##KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
 ##row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
 ##KEGG$Name=kegg.names[row.names(KEGG),1]
 ##Moderate.KEGG = KEGG
-##write.csv(Moderate.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/ModerateKEGGAnalysis.csv")
+##write.csv(Moderate.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/ModerateKEGGAnalysis.csv")
 
 
 ##sigs = Df.data[Df.data$Strong == 1 , "Symbol"]
@@ -91,15 +87,15 @@ Enhancer.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/EnhancerGOAna
 ##GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
 ##row.names(GO.wall) = GO.wall$category
 ##Strong.GO = GO.wall
-##write.csv(Strong.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/StrongGOAnalysis.csv")
+##write.csv(Strong.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/StrongGOAnalysis.csv")
 
-##KEGG term enrichment is KEGG
+
 ##KEGG=goseq(pwf,gene2cat=kegg)
 ##KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
 ##row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
 ##KEGG$Name=kegg.names[row.names(KEGG),1]
 ##Strong.KEGG = KEGG
-##write.csv(Strong.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/StrongKEGGAnalysis.csv")
+##write.csv(Strong.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/StrongKEGGAnalysis.csv")
 
 ##sigs = Df.data[Df.data$Lethal == 1, "Symbol"]
 ##genes = setNames(rep(0, nrow(Df.data)), Df.data$Symbol)
@@ -109,15 +105,15 @@ Enhancer.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/EnhancerGOAna
 ##GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
 ##row.names(GO.wall) = GO.wall$category
 ##Lethal.GO = GO.wall
-##write.csv(Lethal.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/LethalGOAnalysis.csv")
+##write.csv(Lethal.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/LethalGOAnalysis.csv")
 
-##KEGG term enrichment is KEGG
+
 ##KEGG=goseq(pwf,gene2cat=kegg)
 ##KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
 ##row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
 ##KEGG$Name=kegg.names[row.names(KEGG),1]
 ##Lethal.KEGG = KEGG
-##write.csv(Lethal.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/LethalKEGGAnalysis.csv")
+##write.csv(Lethal.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/LethalKEGGAnalysis.csv")
 
 ##sigs = Df.data[Df.data$Enhancer == 1, "Symbol"]
 ##genes = setNames(rep(0, nrow(Df.data)), Df.data$Symbol)
@@ -127,15 +123,15 @@ Enhancer.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/EnhancerGOAna
 ##GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
 ##row.names(GO.wall) = GO.wall$category
 ##Enhance.GO = GO.wall
-##write.csv(Enhance.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/EnhancerGOAnalysis.csv")
+##write.csv(Enhance.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/EnhancerGOAnalysis.csv")
 
-##KEGG term enrichment is KEGG
+
 ##KEGG=goseq(pwf,gene2cat=kegg)
 ##KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
 ##row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
-##EGG$Name=kegg.names[row.names(KEGG),1]
+##KEGG$Name=kegg.names[row.names(KEGG),1]
 ##Enhance.KEGG = KEGG
-##write.csv(Enhance.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/EnhancerKEGGAnalysis.csv")
+##write.csv(Enhance.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/EnhancerKEGGAnalysis.csv")
 
 ```
 
@@ -204,8 +200,7 @@ GO.fig
 
 ```{r include=F, echo=F}
 
-
-go_analysis = GO.data$category[GO.data$adjp <= .05]
+go_analysis = GO.data$category[GO.data$adjp <= .05 & GO.data$ontology == GO.ontology]
 scores = setNames(-log10(GO.data$adjp), go_analysis)
 
 simMatrix <- calculateSimMatrix(go_analysis,
@@ -293,7 +288,14 @@ treemapPlot(reducedTerms)
 
 
 
+```{r include = F, echo = F}
 
+GOID = "0006334"
+GenesInGO = genesingo[paste0("GO:", GOID)]
+
+GenesInGO = Df.data[Df.data$ensembl %in% GenesInGO[[1]],]
+
+```
 
 
 
