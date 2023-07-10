@@ -14,116 +14,37 @@ knitr::knit_hooks$set(webgl = hook_webgl)
 ```{r echo = F, include=F}
 ##Load Libraries
 
-library(biomaRt)
-library(org.Dm.eg.db)
-library(goseq)
-library(GO.db)
-library(visNetwork)
+##library(biomaRt)
+##library(org.Dm.eg.db)
+##library(goseq)
+##library(GO.db)
+##library(visNetwork)
 library(rrvgo)
 library(plotly)
-library(KEGGREST)
-library(pathview)
+##library(KEGGREST)
+##library(pathview)
 ##library(RColorBrewer)
 ```
 
+
+
 ```{r echo = F, include =F}
 ##load all files from github
-git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/TKT_RNAseq/CountTables/"
-cpmdata = read.csv(paste0(git.dir,"TKT_cpmdata.csv"),row.names = 1)
-groups  = read.csv(paste0(git.dir,"TKT.metadata.csv"),row.names = 1)
-TKT.EdgeR = read.csv(paste0(git.dir,"TKT.EdgeR.Table.csv"),row.names = 1)
-GeneIDKey = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GeneIDKey.csv", row.names = 1)
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"
+GeneIDKey = read.csv(paste0(git.dir,"GeneralDataFiles/GeneIDKey.csv"),row.names = 1)
+Df.data = read.csv(paste0(git.dir,"DeficiencyScreen/DataFiles/DeficiencyModifierGenes.csv"),row.names = 1)
+##kegg = readRDS(gzcon(url(paste0(git.dir,"DeficiencyScreen/DataFiles/kegg.symbol2path.RData"))))
+##kegg.names = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/KEGG.names.csv"), row.names = 1)
 
-##CamiData = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/Genes by Df Modifier.csv")
-
-##background = setNames(unique(CamiData$Background), unique(CamiData$Background))
-
-##moderate = setNames(rep(0, length(background)), names(background))
-
-##moderate[unique(CamiData$Moderate)] = 1
-
-##strong = setNames(rep(0, length(background)), names(background))
-
-##strong[unique(CamiData$Strong)] = 1
-
-##lethal = setNames(rep(0, length(background)), names(background))
-
-##lethal[unique(CamiData$Lethal)] = 1
-
-##enhancer = setNames(rep(0, length(background)), names(background))
-
-##enhancer[unique(CamiData$Enhancers)] = 1
-
-##no.effect = setNames(rep(0, length(background)), names(background))
-
-##no.effect[unique(CamiData$No.Effect)] = 1
-
-
-
-##FB2Ensembl
-##x1=as.list(org.Dm.egENSEMBL2EG)
-##Ensembl2Symbol
-##x2=as.list(org.Dm.egSYMBOL)
-##Symbol2Ensembl
-##x3=as.list(org.Dm.egSYMBOL2EG)
-##Ensembl2FB
-##x4=as.list(org.Dm.egENSEMBL)
-##ensembl to FBgn
-##x5=as.list(org.Dm.egFLYBASE)
-
-##FBgn2ensembl = row.names(CamiData)
-##names(FBgn2ensembl) = row.names(CamiData)
-##tempEG = unlist(x1[lengths(x1)==1][row.names(CamiData)])
-##FBgn2ensembl[names(tempEG)]=tempEG
-
-##ensembl2symbol = row.names(CamiData)
-##names(ensembl2symbol) = FBgn2ensembl
-##tempSymbol = unlist(x2[FBgn2ensembl])
-##ensembl2symbol[names(tempSymbol)]=tempSymbol
-##symbol2ensembl = names(ensembl2symbol)
-##names(symbol2ensembl) = ensembl2symbol
-
-##write.csv(names(symbol2ensembl)[grep("FBgn", names(symbol2ensembl))], "/Users/johncsantiago/Documents/CamiExtraGenes.csv")
-
-##extras = read.csv("/Users/johncsantiago/Downloads/FlyBase_Symbol_download.csv", row.names = 1)
-##ensembl2symbol[row.names(extras)] = extras$SYMBOL
-
-
-##symbol = ensembl2symbol
-
-##symbol = background
-
-##symbol[intersect(GeneIDKey$FBgn, background)] = 
-##  GeneIDKey[intersect(GeneIDKey$FBgn, background), "Symbol"]
-
-##CamiData = data.frame(FBgn       = background[1:14674],
-##                      Symbol     = symbol[1:14674],
-##                      Moderate   = moderate[1:14674],
-##                      Strong     = strong[1:14674],
-##                      Lethal     = lethal[1:14674],
-##                      Enhancer   = enhancer[1:14674],
-##                      No.Effect  = no.effect[1:14674])
-
-
-
-
-##write.csv(CamiData, "/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/DeficiencyModifierGenes.csv")
-
-
-Df.data = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/DeficiencyModifierGenes.csv", row.names = 1)
+Moderate.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/ModerateGOAnalysis.csv"), row.names = 1)
+Strong.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/StrongGOAnalysis.csv"), row.names = 1)
+Repress.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/RepressorGOAnalysis.csv"), row.names = 1)
+Lethal.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/LethalGOAnalysis.csv"), row.names = 1)
+Enhancer.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/EnhancerGOAnalysis.csv"), row.names = 1)
 
 ```
 
 ```{r include=F, echo=F}
-
-
-##write.csv(kegg.names, "/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/KEGG.names.csv")
-kegg.names = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/KEGG.names.csv", row.names = 1)
-
-keggID=keggConv("dme","ncbi-geneid")
-
-kegg = readRDS("/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/kegg.symbol2path.RData")
-
 
 ##sigs = Df.data[Df.data$Strong == 1 | Df.data$Moderate == 1 , "Symbol"]
 ##genes = setNames(rep(0, nrow(Df.data)), Df.data$Symbol)
@@ -216,22 +137,13 @@ kegg = readRDS("/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Scre
 ##Enhance.KEGG = KEGG
 ##write.csv(Enhance.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/EnhancerKEGGAnalysis.csv")
 
-Moderate.GO = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/ModerateGOAnalysis.csv", row.names = 1)
-Strong.GO = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/StrongGOAnalysis.csv", row.names = 1)
-
-Repress.GO = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/RepressorGOAnalysis.csv", row.names = 1)
-Lethal.GO = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/LethalGOAnalysis.csv", row.names = 1)
-Enhance.GO = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/EnhancerGOAnalysis.csv", row.names = 1)
-
-
-
 ```
 
 
-```{r, fig.width= 10}
+```{r echo = F, include =F}
 
-GO.data = Moderate.GO
-GO.data = GO.data[GO.data$ontology == 'BP',
+GO20 = function(GO.data, GO.ontology){
+GO.data = GO.data[GO.data$ontology == GO.ontology,
                   c("category", "term","adjp", "numDEInCat", "numInCat")]
 
 
@@ -270,11 +182,25 @@ fig <- plot_ly(data,
            title = "Top 20 Most Enriched GO Terms",
            margin = m)
 
-fig
+  return(fig)
+}
 
 ```
 
+```{r echo = F, include =F}
 
+GO.data = Repress.GO
+GO.ontology = "BP"
+
+GO.fig = GO20(GO.data, GO.ontology)
+
+```
+
+```{r, fig.width= 10}
+
+GO.fig
+
+```
 
 ```{r include=F, echo=F}
 
@@ -284,19 +210,13 @@ scores = setNames(-log10(GO.data$adjp), go_analysis)
 
 simMatrix <- calculateSimMatrix(go_analysis,
                                 orgdb="org.Dm.eg.db",
-                                ont="BP",
+                                ont=GO.ontology,
                                 method="Rel")
-
-##write.csv(simMatrix, "/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/Repressor.BP.simMatrix.csv")
 
 reducedTerms <- reduceSimMatrix(simMatrix,
                                 scores,
                                 threshold=0.7,
                                 orgdb="org.Dm.eg.db")
-##write.csv(reducedTerms,"/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/Repressor.BP.reducedTerms.csv")
-
-##simMatrix = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/Repressor.BP.simMatrix.csv", row.names = 1)
-##reducedTerms = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/Repressor.BP.reducedTerms.csv", row.names = 1)
 
 ```
 
@@ -311,13 +231,6 @@ heatmapPlot(simMatrix,
             annotationLabel="parentTerm",
             fontsize=6,
             main = "Repressor Gene Enriched Biological Process GO terms")
-
-```
-
-
-```{r, fig.align='left', include=F}
-
-scatterPlot(simMatrix, reducedTerms)
 
 ```
 
@@ -393,96 +306,5 @@ treemapPlot(reducedTerms)
 
 
 
-
-
-
-
-```{r, include=F, echo=F}
-GO2Gene   = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GenesInGOTerms.csv", row.names = 1)
-
-ccpar=as.list(GOCCPARENTS)
-ccchild=as.list(GOCCCHILDREN)
-
-bppar=as.list(GOBPPARENTS)
-bpchild=as.list(GOBPCHILDREN)
-
-mfpar=as.list(GOMFPARENTS)
-mfchild=as.list(GOMFCHILDREN)
-```
-
-```{r, include=F, echo=F}
-
-compare = "GRM.CxDf"
-filter.samples = c("GR.M", "TktDfGR.M")
-
-sigs = row.names(TKT.EdgeR)[TKT.EdgeR[,compare]<=.05]
-sigs = sigs[apply(cpmdata[sigs,groups$Group %in% filter.samples], 1, min) > 10]
-
-genes=c(rep(0, nrow(cpmdata)))
-names(genes) = row.names(cpmdata)
-genes[sigs] = 1
-names(genes) = GeneIDKey[names(genes), "Symbol"]
-
-pwf=nullp(genes,"dm3","geneSymbol")
-
-GO.wall=goseq(pwf,"dm3","geneSymbol")
-GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
-row.names(GO.wall) = GO.wall$category
-
-GO.wall$Significant = "not"
-GO.wall[GO.wall$adjp <= .05, "Significant"] = "sig"
-sigGO = GO.wall[GO.wall$adjp<.05,]
-
-
-##Biological Processes
-bpGO = sigGO[sigGO$ontology == 'BP',]
-
-##parent terms are those directly above in hierarchy
-## isa implies a defining relationship; part of implies they contribute to the category
-
-parents = bppar[bpGO$category]
-
-parents = data.frame(from = unlist(parents),
-                     label = substring(names(unlist(parents)),12),
-                     to = substring(names(unlist(parents)),1,10))
-
-parents = parents[parents$to %in% row.names(GO.wall),]
-
-children = bpchild[bpGO$category]
-
-children = data.frame(from = substring(names(unlist(children)),1,10),
-                      label = substring(names(unlist(children)),12),
-                      to = unlist(children))
-
-children = children[children$to %in% row.names(GO.wall),]
-
-edges = rbind(parents, children)
-edges = edges[edges$label == "isa",]
-edges = unique(edges)
-
-edges = edges[GO.wall[edges$to, "numDEInCat"]>0,]
-
-node.id = unique(c(edges$from, edges$to))
-node.label = GO.wall[node.id, "term"]
-node.group = GO.wall[node.id, "Significant"]
-node.value = 100*(GO.wall[node.id, "numDEInCat"]/GO.wall[node.id, "numInCat"])
-
-nodes = data.frame(id = node.id,
-                   label = node.label,
-                   group = node.group,
-                   value = node.value)
-```
-
-```{r include=F}
-
-visNetwork(nodes, edges)%>%
-  visLayout(hierarchical=F, improvedLayout=T)%>%
-  visPhysics(solver="forceAtlas2Based", forceAtlas2Based = list(gravitationalConstant=-70),enabled=T)%>%
-  visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE)%>%
-  visEdges(arrows='to')%>%
-  visGroups(groupname = "sig", shape = "box", color = list(background = "gold", border="black", groupname="black"),physics=F,font=list(color="black"))%>%
-  visGroups(groupname = "not", shape = "dot", color = list(background = "grey", border="black", groupname="black"),physics=T,font=list(color="black"))
-
-```
 
 

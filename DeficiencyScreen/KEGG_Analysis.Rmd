@@ -19,10 +19,7 @@ library(pathview)
 ##load all files from github
 git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"
 GeneIDKey = read.csv(paste0(git.dir,"GeneralDataFiles/GeneIDKey.csv"),row.names = 1)
-Df.data = read.csv(paste0(git.dir,"GeneralDataFiles/DeficiencyModifierGenes.csv"),row.names = 1)
-Df.data$CG = GeneIDKey[row.names(Df.data),"CG"]
-Df.data$Repress = 0
-Df.data$Repress[Df.data$Moderate == 1|Df.data$Strong == 1] = 1
+Df.data = read.csv(paste0(git.dir,"DeficiencyScreen/DataFiles/DeficiencyModifierGenes.csv"),row.names = 1)
 kegg = readRDS(gzcon(url(paste0(git.dir,"DeficiencyScreen/DataFiles/kegg.symbol2path.RData"))))
 kegg.names = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/KEGG.names.csv"), row.names = 1)
 
@@ -167,7 +164,7 @@ return(fig)
 ```
 
   
-```{r fig.width=10}
+```{r echo = F, fig.width=10}
 
 ##Options: Moderate.KEGG, Strong.KEGG, Repress.KEGG, Lethal.KEGG, Enhancer.KEGG
 data = Repress.KEGG
@@ -184,7 +181,7 @@ ShowKEGG(PathwayID)
 
 ```
 
-```{r echo = F}
+```{r echo = F, fig.align='center'}
 
 knitr::include_graphics(paste0(OutputDir, "dme",PathwayID, ".", kegg.names[paste0("dme", PathwayID),1], ".png"))
 
