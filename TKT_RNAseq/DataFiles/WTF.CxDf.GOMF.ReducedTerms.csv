@@ -1,0 +1,8 @@
+"","go","cluster","parent","parentSimScore","score","size","term","parentTerm"
+"GO:0016491","GO:0016491",1,"GO:0016491",0.958,3.66571413132782,108,"oxidoreductase activity","oxidoreductase activity"
+"GO:0003824","GO:0003824",2,"GO:0003824",0.73,3.66571413132782,5,"catalytic activity","catalytic activity"
+"GO:0016615","GO:0016615",1,"GO:0016491",0.593,3.59682113000046,1,"malate dehydrogenase activity","oxidoreductase activity"
+"GO:0004866","GO:0004866",3,"GO:0004866",0.996,3.44840550699181,8,"endopeptidase inhibitor activity","endopeptidase inhibitor activity"
+"GO:0061135","GO:0061135",3,"GO:0004866",0.992,3.29484936077433,0,"endopeptidase regulator activity","endopeptidase inhibitor activity"
+"GO:0030414","GO:0030414",3,"GO:0004866",0.993,2.87142254201109,4,"peptidase inhibitor activity","endopeptidase inhibitor activity"
+"GO:0016772","GO:0016772",2,"GO:0003824",0.414,2.8542932373403,0,"transferase activity, transferring phosphorus-containing groups","catalytic activity"

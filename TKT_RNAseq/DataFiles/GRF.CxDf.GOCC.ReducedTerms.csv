@@ -1,0 +1,7 @@
+"","go","cluster","parent","parentSimScore","score","size","term","parentTerm"
+"GO:0000502","GO:0000502",1,"GO:0000502",0.993,6.13386933550637,34,"proteasome complex","proteasome complex"
+"GO:1905369","GO:1905369",1,"GO:0000502",0.987,5.84347169285632,0,"endopeptidase complex","proteasome complex"
+"GO:1905368","GO:1905368",1,"GO:0000502",0.965,4.5509781214267,0,"peptidase complex","proteasome complex"
+"GO:0005838","GO:0005838",1,"GO:0000502",0.912,4.48656782950032,38,"proteasome regulatory particle","proteasome complex"
+"GO:0022624","GO:0022624",1,"GO:0000502",0.912,4.41690363512912,0,"proteasome accessory complex","proteasome complex"
+"GO:0140535","GO:0140535",1,"GO:0000502",0.75,3.58838504614503,0,"intracellular protein-containing complex","proteasome complex"

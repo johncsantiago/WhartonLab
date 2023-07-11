@@ -1,0 +1,4 @@
+"","go","cluster","parent","parentSimScore","score","size","term","parentTerm"
+"GO:0060089","GO:0060089",1,"GO:0060089",0.964,10.0824850655124,0,"molecular transducer activity","molecular transducer activity"
+"GO:0038023","GO:0038023",1,"GO:0060089",0.964,10.0824850655124,52,"signaling receptor activity","molecular transducer activity"
+"GO:0004888","GO:0004888",1,"GO:0060089",0.926,9.92238149472497,38,"transmembrane signaling receptor activity","molecular transducer activity"
