@@ -1,0 +1,8 @@
+"","go","cluster","parent","parentSimScore","score","size","term","parentTerm"
+"GO:0015453","GO:0015453",1,"GO:0015453",0.999,3.91248937552823,1,"oxidoreduction-driven active transmembrane transporter activity","oxidoreduction-driven active transmembrane transporter activity"
+"GO:0009055","GO:0009055",2,"GO:0009055",0.998,3.74399500771601,17,"electron transfer activity","electron transfer activity"
+"GO:0016491","GO:0016491",2,"GO:0009055",0.63,2.38174295028648,108,"oxidoreductase activity","electron transfer activity"
+"GO:0004129","GO:0004129",2,"GO:0009055",0.842,2.16696141908056,4,"cytochrome-c oxidase activity","electron transfer activity"
+"GO:0016675","GO:0016675",2,"GO:0009055",0.396,2.16696141908056,0,"oxidoreductase activity, acting on a heme group of donors","electron transfer activity"
+"GO:0003954","GO:0003954",2,"GO:0009055",0.45,1.92438554122004,8,"NADH dehydrogenase activity","electron transfer activity"
+"GO:0003824","GO:0003824",3,"GO:0003824",0.73,1.43139307390887,5,"catalytic activity","catalytic activity"
