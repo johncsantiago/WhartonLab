@@ -28,45 +28,90 @@ library(pathview)
 
 ```{r echo = F, include =F}
 ##load all files from github
-git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/TKT_RNAseq/CountTables/"
-cpmdata = read.csv(paste0(git.dir,"TKT_cpmdata.csv"),row.names = 1)
-groups  = read.csv(paste0(git.dir,"TKT.metadata.csv"),row.names = 1)
-TKT.EdgeR = read.csv(paste0(git.dir,"TKT.EdgeR.Table.csv"),row.names = 1)
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"
+cpmdata = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT_cpmdata.csv"),row.names = 1)
+groups  = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.metadata.csv"),row.names = 1)
+TKT.EdgeR = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.Table.csv"),row.names = 1)
 GeneIDKey = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GeneIDKey.csv", row.names = 1)
-kegg.names = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/KEGG.names.csv", row.names = 1)
-kegg = readRDS("/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/kegg.symbol2path.RData")
+kegg = readRDS(gzcon(url(paste0(git.dir,"GeneralDataFiles/kegg.symbol2path.RData"))))
+kegg.names = read.csv(paste0(git.dir, "GeneralDataFiles/KEGG.names.csv"), row.names = 1)
 
-##i=1
-##kegg.names=unique(substr(kegg,6,13))
-##names(kegg.names)=as.vector(kegg.names)
-##while(i<=length(kegg.names)){
-##  kegg.names[i] <- strsplit(keggGet(kegg.names[i])[[1]]$NAME," - ")[[1]][1]
-##  i=i+1
-##}
+##keggID=keggConv("dme","ncbi-geneid")
 
-##write.csv(kegg.names, "/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/KEGG.names.csv")
+datadir = "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/"
 
-keggID=keggConv("dme","ncbi-geneid")
+GRF.CxDf.GO  = read.csv(paste0(datadir, "GRF.CxDf.GOAnalysis.csv"), row.names =1)
+GRF.CxOE.GO  = read.csv(paste0(datadir, "GRF.CxOE.GOAnalysis.csv"), row.names =1)
+WTF.CxDf.GO  = read.csv(paste0(datadir, "WTF.CxDf.GOAnalysis.csv"), row.names =1)
+WTF.CxOE.GO  = read.csv(paste0(datadir, "WTF.CxOE.GOAnalysis.csv"), row.names =1)
 
+GRM.CxDf.GO  = read.csv(paste0(datadir, "GRM.CxDf.GOAnalysis.csv"), row.names =1)
+GRM.CxOE.GO  = read.csv(paste0(datadir, "GRM.CxOE.GOAnalysis.csv"), row.names =1)
+WTM.CxDf.GO  = read.csv(paste0(datadir, "WTM.CxDf.GOAnalysis.csv"), row.names =1)
+WTM.CxOE.GO  = read.csv(paste0(datadir, "WTM.CxOE.GOAnalysis.csv"), row.names =1)
 
+GR.FxM.GO    = read.csv(paste0(datadir, "GR.FxM.GOAnalysis.csv"), row.names =1)
+WT.FxM.GO    = read.csv(paste0(datadir, "WT.FxM.GOAnalysis.csv"), row.names =1)
+
+GRxWT.FC.GO  = read.csv(paste0(datadir, "GRxWT.FC.GOAnalysis.csv"), row.names =1)
+GRxWT.FDf.GO = read.csv(paste0(datadir, "GRxWT.FDf.GOAnalysis.csv"), row.names =1)
+GRxWT.FOE.GO = read.csv(paste0(datadir, "GRxWT.FOE.GOAnalysis.csv"), row.names =1)
+
+GRxWT.MC.GO  = read.csv(paste0(datadir, "GRxWT.MC.GOAnalysis.csv"), row.names =1)
+GRxWT.MDf.GO = read.csv(paste0(datadir, "GRxWT.MDf.GOAnalysis.csv"), row.names =1)
+GRxWT.MOE.GO = read.csv(paste0(datadir, "GRxWT.MOE.GOAnalysis.csv"), row.names =1)
+
+SigDEGs = TKT.EdgeR
+SigDEGs[,] = 0
+
+SigDEGs[row.names(TKT.EdgeR)[(TKT.EdgeR$GRF.CxDf <= .05) & (apply(cpmdata[,groups$Group == "GR.F" | groups$Group == "TktDfGR.F"],1,min) > 5)], "GRF.CxDf"] = 1
+
+SigDEGs[row.names(TKT.EdgeR)[(TKT.EdgeR$GRF.CxOE <= .05) & (apply(cpmdata[,groups$Group == "GR.F" | groups$Group == "TktOEGR.F"],1,min) > 5)], "GRF.CxOE"] = 1
+
+SigDEGs[row.names(TKT.EdgeR)[(TKT.EdgeR$WTF.CxDf <= .05) & (apply(cpmdata[,groups$Group == "WT.F" | groups$Group == "TktDfWT.F"],1,min) > 5)], "WTF.CxDf"] = 1
+
+SigDEGs[row.names(TKT.EdgeR)[(TKT.EdgeR$WTF.CxOE <= .05) & (apply(cpmdata[,groups$Group == "WT.F" | groups$Group == "TktOEWT.F"],1,min) > 5)], "WTF.CxOE"] = 1
+
+SigDEGs[row.names(TKT.EdgeR)[(TKT.EdgeR$GRxWT.FC <= .05) & (apply(cpmdata[,groups$Group == "GR.F" | groups$Group == "WT.F"],1,min) > 5)], "GRxWT.FC"] = 1
+
+SigDEGs[row.names(TKT.EdgeR)[(TKT.EdgeR$GRxWT.FDf <= .05) & (apply(cpmdata[,groups$Group == "TktDfGR.F" | groups$Group == "TktDfWT.F"],1,min) > 5)], "GRxWT.FDf"] = 1
+
+SigDEGs[row.names(TKT.EdgeR)[(TKT.EdgeR$GRxWT.FOE <= .05) & (apply(cpmdata[,groups$Group == "TktOEGR.F" | groups$Group == "TktOEWT.F"],1,min) > 5)], "WTF.CxOE"] =1
+                     
+SigDEGs[row.names(TKT.EdgeR)[(TKT.EdgeR$GRM.CxDf <= .05) & (apply(cpmdata[,groups$Group == "GR.M" | groups$Group == "TktDfGR.M"],1,min) > 5)], "GRM.CxDf"] = 1
+
+SigDEGs[row.names(TKT.EdgeR)[(TKT.EdgeR$GRM.CxOE <= .05) & (apply(cpmdata[,groups$Group == "GR.M" | groups$Group == "TktOEGR.M"],1,min) > 5)], "GRM.CxOE"] = 1
+
+SigDEGs[row.names(TKT.EdgeR)[(TKT.EdgeR$WTM.CxDf <= .05) & (apply(cpmdata[,groups$Group == "WT.M" | groups$Group == "TktDfWT.M"],1,min) > 5)], "WTM.CxDf"] = 1
+
+SigDEGs[row.names(TKT.EdgeR)[(TKT.EdgeR$WTM.CxOE <= .05) & (apply(cpmdata[,groups$Group == "WT.M" | groups$Group == "TktOEWT.M"],1,min) > 5)], "WTM.CxOE"] = 1
+
+SigDEGs[row.names(TKT.EdgeR)[(TKT.EdgeR$GRxWT.MC <= .05) & (apply(cpmdata[,groups$Group == "GR.M" | groups$Group == "WT.F"],1,min) > 5)], "GRxWT.MC"] = 1
+
+SigDEGs[row.names(TKT.EdgeR)[(TKT.EdgeR$GRxWT.MDf <= .05) & (apply(cpmdata[,groups$Group == "TktDfGR.M" | groups$Group == "TktDfWT.M"],1,min) > 5)], "GRxWT.MDf"] = 1
+
+SigDEGs[row.names(TKT.EdgeR)[(TKT.EdgeR$GRxWT.MOE <= .05) & (apply(cpmdata[,groups$Group == "TktOEGR.M" | groups$Group == "TktOEWT.M"],1,min) > 5)], "GRxWT.MOE"] = 1
+SigDEGs[row.names(TKT.EdgeR)[(TKT.EdgeR$GR.FxM  <= .05)], "GR.FxM"] = 1
+SigDEGs[row.names(TKT.EdgeR)[(TKT.EdgeR$WT.FxM  <= .05)], "WT.FxM"] = 1
 ```
 
-```{r include=F, echo=F}
+##GOterm and KEGG enrichment analysis for all EdgeR comparisons
+##```{r include=F, echo=F}
 
-sigs = GeneIDKey[row.names(TKT.EdgeR)[TKT.EdgeR$GRF.CxDf <= .05], "Symbol"]
-sigs = GeneIDKey[intersect(row.names(TKT.EdgeR)[TKT.EdgeR$GRF.CxDf <= .05],
-                           row.names(cpmdata)[apply(cpmdata[,c("GR.F1","GR.F2","TktDfGR.F1","TktDfGR.F2","TktDfGR.F3")], 1, min) >5]), 
-                           "Symbol"]
-genes = setNames(rep(0, nrow(TKT.EdgeR)), GeneIDKey[row.names(TKT.EdgeR), "Symbol"])
+
+##############
+## GRF.CxDf ##
+##############
+sigs = GeneIDKey[row.names(TKT.EdgeR)[(TKT.EdgeR$GRF.CxDf <= .05) & (apply(cpmdata[,groups$Group == "GR.F" | groups$Group == "TktDfGR.F"],1,min) > 5)], "Symbol"]
+genes = setNames(rep(0, nrow(cpmdata)), GeneIDKey[row.names(cpmdata), "Symbol"])
 genes[sigs] = 1
 pwf=nullp(genes,"dm3","geneSymbol")
 GO.wall=goseq(pwf,"dm3","geneSymbol")
 GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
 row.names(GO.wall) = GO.wall$category
 GRF.CxDf.GO = GO.wall
-write.csv(GRF.CxDf.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq//DataFiles/GRF.CxDf.GOAnalysis.csv")
+write.csv(GRF.CxDf.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/GRF.CxDf.GOAnalysis.csv")
 
-##KEGG term enrichment is KEGG
 KEGG=goseq(pwf,gene2cat=kegg)
 KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
 row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
@@ -74,34 +119,330 @@ KEGG$Name=kegg.names[row.names(KEGG),1]
 GRF.CxDf.KEGG = KEGG
 write.csv(GRF.CxDf.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/GRF.CxDf.KEGGAnalysis.csv")
 
-sigs = GeneIDKey[row.names(TKT.EdgeR)[TKT.EdgeR$GRF.CxDf <= .05], "Symbol"]
-sigs = GeneIDKey[intersect(row.names(TKT.EdgeR)[TKT.EdgeR$GRF.CxDf <= .05],
-                           row.names(cpmdata)[apply(cpmdata[,c("GR.F1","GR.F2","TktDfGR.F1","TktDfGR.F2","TktDfGR.F3")], 1, min) >5]), 
-                           "Symbol"]
-genes = setNames(rep(0, nrow(TKT.EdgeR)), GeneIDKey[row.names(TKT.EdgeR), "Symbol"])
+
+##############
+## GRF.CxOE ##
+##############
+sigs = GeneIDKey[row.names(TKT.EdgeR)[(TKT.EdgeR$GRF.CxOE <= .05) & (apply(cpmdata[,groups$Group == "GR.F" | groups$Group == "TktOEGR.F"],1,min) > 5)], "Symbol"]
+genes = setNames(rep(0, nrow(cpmdata)), GeneIDKey[row.names(cpmdata), "Symbol"])
 genes[sigs] = 1
 pwf=nullp(genes,"dm3","geneSymbol")
 GO.wall=goseq(pwf,"dm3","geneSymbol")
 GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
 row.names(GO.wall) = GO.wall$category
-GRF.CxDf.GO = GO.wall
-write.csv(GRF.CxDf.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq//DataFiles/GRF.CxDf.GOAnalysis.csv")
+GRF.CxOE.GO = GO.wall
+write.csv(GRF.CxOE.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/GRF.CxOE.GOAnalysis.csv")
 
-##KEGG term enrichment is KEGG
 KEGG=goseq(pwf,gene2cat=kegg)
 KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
 row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
 KEGG$Name=kegg.names[row.names(KEGG),1]
-GRF.CxDf.KEGG = KEGG
-write.csv(GRF.CxDf.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/GRF.CxDf.KEGGAnalysis.csv")
-
-```
+GRF.CxOE.KEGG = KEGG
+write.csv(GRF.CxOE.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/GRF.CxOE.KEGGAnalysis.csv")
 
 
-```{r, fig.width= 10}
+##############
+## WTF.CxDf ##
+##############
+sigs = GeneIDKey[row.names(TKT.EdgeR)[(TKT.EdgeR$WTF.CxDf <= .05) & (apply(cpmdata[,groups$Group == "WT.F" | groups$Group == "TktDfWT.F"],1,min) > 5)], "Symbol"]
+genes = setNames(rep(0, nrow(cpmdata)), GeneIDKey[row.names(cpmdata), "Symbol"])
+genes[sigs] = 1
+pwf=nullp(genes,"dm3","geneSymbol")
+GO.wall=goseq(pwf,"dm3","geneSymbol")
+GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+row.names(GO.wall) = GO.wall$category
+WTF.CxDf.GO = GO.wall
+write.csv(WTF.CxDf.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/WTF.CxDf.GOAnalysis.csv")
 
-GO.data = GRF.CxDf.GO
-GO.data = GO.data[GO.data$ontology == 'BP',
+KEGG=goseq(pwf,gene2cat=kegg)
+KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
+row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
+KEGG$Name=kegg.names[row.names(KEGG),1]
+WTF.CxDf.KEGG = KEGG
+write.csv(WTF.CxDf.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/WTF.CxDf.KEGGAnalysis.csv")
+
+
+##############
+## WTF.CxOE ##
+##############
+sigs = GeneIDKey[row.names(TKT.EdgeR)[(TKT.EdgeR$WTF.CxOE <= .05) & (apply(cpmdata[,groups$Group == "WT.F" | groups$Group == "TktOEWT.F"],1,min) > 5)], "Symbol"]
+genes = setNames(rep(0, nrow(cpmdata)), GeneIDKey[row.names(cpmdata), "Symbol"])
+genes[sigs] = 1
+pwf=nullp(genes,"dm3","geneSymbol")
+GO.wall=goseq(pwf,"dm3","geneSymbol")
+GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+row.names(GO.wall) = GO.wall$category
+WTF.CxOE.GO = GO.wall
+write.csv(WTF.CxOE.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/WTF.CxOE.GOAnalysis.csv")
+
+KEGG=goseq(pwf,gene2cat=kegg)
+KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
+row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
+KEGG$Name=kegg.names[row.names(KEGG),1]
+WTF.CxOE.KEGG = KEGG
+write.csv(WTF.CxOE.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/WTF.CxOE.KEGGAnalysis.csv")
+
+
+##############
+## GRM.CxDf ##
+##############
+sigs = GeneIDKey[row.names(TKT.EdgeR)[(TKT.EdgeR$GRM.CxDf <= .05) & (apply(cpmdata[,groups$Group == "GR.M" | groups$Group == "TktDfGR.M"],1,min) > 5)], "Symbol"]
+genes = setNames(rep(0, nrow(cpmdata)), GeneIDKey[row.names(cpmdata), "Symbol"])
+genes[sigs] = 1
+pwf=nullp(genes,"dm3","geneSymbol")
+GO.wall=goseq(pwf,"dm3","geneSymbol")
+GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+row.names(GO.wall) = GO.wall$category
+GRM.CxDf.GO = GO.wall
+write.csv(GRM.CxDf.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/GRM.CxDf.GOAnalysis.csv")
+
+KEGG=goseq(pwf,gene2cat=kegg)
+KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
+row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
+KEGG$Name=kegg.names[row.names(KEGG),1]
+GRM.CxDf.KEGG = KEGG
+write.csv(GRM.CxDf.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/GRM.CxDf.KEGGAnalysis.csv")
+
+
+##############
+## GRM.CxOE ##
+##############
+sigs = GeneIDKey[row.names(TKT.EdgeR)[(TKT.EdgeR$GRM.CxOE <= .05) & (apply(cpmdata[,groups$Group == "GR.M" | groups$Group == "TktOEGR.M"],1,min) > 5)], "Symbol"]
+genes = setNames(rep(0, nrow(cpmdata)), GeneIDKey[row.names(cpmdata), "Symbol"])
+genes[sigs] = 1
+pwf=nullp(genes,"dm3","geneSymbol")
+GO.wall=goseq(pwf,"dm3","geneSymbol")
+GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+row.names(GO.wall) = GO.wall$category
+GRM.CxOE.GO = GO.wall
+write.csv(GRM.CxOE.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/GRM.CxOE.GOAnalysis.csv")
+
+KEGG=goseq(pwf,gene2cat=kegg)
+KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
+row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
+KEGG$Name=kegg.names[row.names(KEGG),1]
+GRM.CxOE.KEGG = KEGG
+write.csv(GRM.CxOE.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/GRM.CxOE.KEGGAnalysis.csv")
+
+
+##############
+## WTM.CxDf ##
+##############
+sigs = GeneIDKey[row.names(TKT.EdgeR)[(TKT.EdgeR$WTM.CxDf <= .05) & (apply(cpmdata[,groups$Group == "WT.M" | groups$Group == "TktDfWT.M"],1,min) > 5)], "Symbol"]
+genes = setNames(rep(0, nrow(cpmdata)), GeneIDKey[row.names(cpmdata), "Symbol"])
+genes[sigs] = 1
+pwf=nullp(genes,"dm3","geneSymbol")
+GO.wall=goseq(pwf,"dm3","geneSymbol")
+GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+row.names(GO.wall) = GO.wall$category
+WTM.CxDf.GO = GO.wall
+write.csv(WTM.CxDf.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/WTM.CxDf.GOAnalysis.csv")
+
+KEGG=goseq(pwf,gene2cat=kegg)
+KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
+row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
+KEGG$Name=kegg.names[row.names(KEGG),1]
+WTM.CxDf.KEGG = KEGG
+write.csv(WTM.CxDf.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/WTM.CxDf.KEGGAnalysis.csv")
+
+
+##############
+## WTM.CxOE ##
+##############
+sigs = GeneIDKey[row.names(TKT.EdgeR)[(TKT.EdgeR$WTM.CxOE <= .05) & (apply(cpmdata[,groups$Group == "WT.M" | groups$Group == "TktOEWT.M"],1,min) > 5)], "Symbol"]
+genes = setNames(rep(0, nrow(cpmdata)), GeneIDKey[row.names(cpmdata), "Symbol"])
+genes[sigs] = 1
+pwf=nullp(genes,"dm3","geneSymbol")
+GO.wall=goseq(pwf,"dm3","geneSymbol")
+GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+row.names(GO.wall) = GO.wall$category
+WTM.CxOE.GO = GO.wall
+write.csv(WTM.CxOE.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/WTM.CxOE.GOAnalysis.csv")
+
+KEGG=goseq(pwf,gene2cat=kegg)
+KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
+row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
+KEGG$Name=kegg.names[row.names(KEGG),1]
+WTM.CxOE.KEGG = KEGG
+write.csv(WTM.CxOE.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/WTM.CxOE.KEGGAnalysis.csv")
+
+
+##############
+## GRxWT.FC ##
+##############
+sigs = GeneIDKey[row.names(TKT.EdgeR)[(TKT.EdgeR$GRxWT.FC <= .05) & (apply(cpmdata[,groups$Group == "GR.F" | groups$Group == "WT.F"],1,min) > 5)], "Symbol"]
+genes = setNames(rep(0, nrow(cpmdata)), GeneIDKey[row.names(cpmdata), "Symbol"])
+genes[sigs] = 1
+pwf=nullp(genes,"dm3","geneSymbol")
+GO.wall=goseq(pwf,"dm3","geneSymbol")
+GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+row.names(GO.wall) = GO.wall$category
+GRxWT.FC.GO = GO.wall
+write.csv(GRxWT.FC.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/GRxWT.FC.GOAnalysis.csv")
+
+KEGG=goseq(pwf,gene2cat=kegg)
+KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
+row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
+KEGG$Name=kegg.names[row.names(KEGG),1]
+GRxWT.FC.KEGG = KEGG
+write.csv(GRxWT.FC.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/GRxWT.FC.KEGGAnalysis.csv")
+
+
+###############
+## GRxWT.FDf ##
+###############
+sigs = GeneIDKey[row.names(TKT.EdgeR)[(TKT.EdgeR$GRxWT.FDf <= .05) & (apply(cpmdata[,groups$Group == "TktDfGR.F" | groups$Group == "TktDfWT.F"],1,min) > 5)], "Symbol"]
+genes = setNames(rep(0, nrow(cpmdata)), GeneIDKey[row.names(cpmdata), "Symbol"])
+genes[sigs] = 1
+pwf=nullp(genes,"dm3","geneSymbol")
+GO.wall=goseq(pwf,"dm3","geneSymbol")
+GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+row.names(GO.wall) = GO.wall$category
+GRxWT.FDf.GO = GO.wall
+write.csv(GRxWT.FDf.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/GRxWT.FDf.GOAnalysis.csv")
+
+KEGG=goseq(pwf,gene2cat=kegg)
+KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
+row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
+KEGG$Name=kegg.names[row.names(KEGG),1]
+GRxWT.FDf.KEGG = KEGG
+write.csv(GRxWT.FDf.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/GRxWT.FDf.KEGGAnalysis.csv")
+
+
+###############
+## GRxWT.FOE ##
+###############
+sigs = GeneIDKey[row.names(TKT.EdgeR)[(TKT.EdgeR$GRxWT.FOE <= .05) & (apply(cpmdata[,groups$Group == "TktOEGR.F" | groups$Group == "TktOEWT.F"],1,min) > 5)], "Symbol"]
+genes = setNames(rep(0, nrow(cpmdata)), GeneIDKey[row.names(cpmdata), "Symbol"])
+genes[sigs] = 1
+pwf=nullp(genes,"dm3","geneSymbol")
+GO.wall=goseq(pwf,"dm3","geneSymbol")
+GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+row.names(GO.wall) = GO.wall$category
+GRxWT.FOE.GO = GO.wall
+write.csv(GRxWT.FOE.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/GRxWT.FOE.GOAnalysis.csv")
+
+KEGG=goseq(pwf,gene2cat=kegg)
+KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
+row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
+KEGG$Name=kegg.names[row.names(KEGG),1]
+GRxWT.FOE.KEGG = KEGG
+write.csv(GRxWT.FOE.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/GRxWT.FOE.KEGGAnalysis.csv")
+
+
+##############
+## GRxWT.MC ##
+##############
+sigs = GeneIDKey[row.names(TKT.EdgeR)[(TKT.EdgeR$GRxWT.MC <= .05) & (apply(cpmdata[,groups$Group == "GR.M" | groups$Group == "WT.M"],1,min) > 5)], "Symbol"]
+genes = setNames(rep(0, nrow(cpmdata)), GeneIDKey[row.names(cpmdata), "Symbol"])
+genes[sigs] = 1
+pwf=nullp(genes,"dm3","geneSymbol")
+GO.wall=goseq(pwf,"dm3","geneSymbol")
+GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+row.names(GO.wall) = GO.wall$category
+GRxWT.MC.GO = GO.wall
+write.csv(GRxWT.MC.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/GRxWT.MC.GOAnalysis.csv")
+
+KEGG=goseq(pwf,gene2cat=kegg)
+KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
+row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
+KEGG$Name=kegg.names[row.names(KEGG),1]
+GRxWT.MC.KEGG = KEGG
+write.csv(GRxWT.MC.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/GRxWT.MC.KEGGAnalysis.csv")
+
+
+###############
+## GRxWT.MDf ##
+###############
+sigs = GeneIDKey[row.names(TKT.EdgeR)[(TKT.EdgeR$GRxWT.MDf  <= .05) & (apply(cpmdata[,groups$Group == "TktDfGR.M" | groups$Group == "TktDfWT.M"],1,min) > 5)], "Symbol"]
+genes = setNames(rep(0, nrow(cpmdata)), GeneIDKey[row.names(cpmdata), "Symbol"])
+genes[sigs] = 1
+pwf=nullp(genes,"dm3","geneSymbol")
+GO.wall=goseq(pwf,"dm3","geneSymbol")
+GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+row.names(GO.wall) = GO.wall$category
+GRxWT.MDf.GO = GO.wall
+write.csv(GRxWT.MDf.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/GRxWT.MDf.GOAnalysis.csv")
+
+KEGG=goseq(pwf,gene2cat=kegg)
+KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
+row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
+KEGG$Name=kegg.names[row.names(KEGG),1]
+GRxWT.MDf.KEGG = KEGG
+write.csv(GRxWT.MDf.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/GRxWT.MDf.KEGGAnalysis.csv")
+
+
+###############
+## GRxWT.MOE ##
+###############
+sigs = GeneIDKey[row.names(TKT.EdgeR)[(TKT.EdgeR$GRxWT.MOE  <= .05) & (apply(cpmdata[,groups$Group == "TktOEGR.M" | groups$Group == "TktOEWT.M"],1,min) > 5)], "Symbol"]
+genes = setNames(rep(0, nrow(cpmdata)), GeneIDKey[row.names(cpmdata), "Symbol"])
+genes[sigs] = 1
+pwf=nullp(genes,"dm3","geneSymbol")
+GO.wall=goseq(pwf,"dm3","geneSymbol")
+GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+row.names(GO.wall) = GO.wall$category
+GRxWT.MOE.GO = GO.wall
+write.csv(GRxWT.MOE.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/GRxWT.MOE.GOAnalysis.csv")
+
+KEGG=goseq(pwf,gene2cat=kegg)
+KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
+row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
+KEGG$Name=kegg.names[row.names(KEGG),1]
+GRxWT.MOE.KEGG = KEGG
+write.csv(GRxWT.MOE.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/GRxWT.MOE.KEGGAnalysis.csv")
+
+
+############
+## GR.FxM ##
+############
+sigs = GeneIDKey[row.names(TKT.EdgeR)[(TKT.EdgeR$GR.FxM  <= .05)], "Symbol"]
+genes = setNames(rep(0, nrow(cpmdata)), GeneIDKey[row.names(cpmdata), "Symbol"])
+genes[sigs] = 1
+pwf=nullp(genes,"dm3","geneSymbol")
+GO.wall=goseq(pwf,"dm3","geneSymbol")
+GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+row.names(GO.wall) = GO.wall$category
+GR.FxM.GO = GO.wall
+write.csv(GR.FxM.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/GR.FxM.GOAnalysis.csv")
+
+KEGG=goseq(pwf,gene2cat=kegg)
+KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
+row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
+KEGG$Name=kegg.names[row.names(KEGG),1]
+GR.FxM.KEGG = KEGG
+write.csv(GR.FxM.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/GR.FxM.KEGGAnalysis.csv")
+
+
+############
+## WT.FxM ##
+############
+sigs = GeneIDKey[row.names(TKT.EdgeR)[(TKT.EdgeR$WT.FxM  <= .05)], "Symbol"]
+genes = setNames(rep(0, nrow(cpmdata)), GeneIDKey[row.names(cpmdata), "Symbol"])
+genes[sigs] = 1
+pwf=nullp(genes,"dm3","geneSymbol")
+GO.wall=goseq(pwf,"dm3","geneSymbol")
+GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+row.names(GO.wall) = GO.wall$category
+WT.FxM.GO = GO.wall
+write.csv(WT.FxM.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/WT.FxM.GOAnalysis.csv")
+
+KEGG=goseq(pwf,gene2cat=kegg)
+KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
+row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
+KEGG$Name=kegg.names[row.names(KEGG),1]
+WT.FxM.KEGG = KEGG
+write.csv(WT.FxM.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/WT.FxM.KEGGAnalysis.csv")
+
+
+##```
+
+
+##GO20 Function
+```{r echo = F, include =F}
+
+GO20 = function(GO.data, GO.ontology){
+GO.data = GO.data[GO.data$ontology == GO.ontology,
                   c("category", "term","adjp", "numDEInCat", "numInCat")]
 
 
@@ -140,10 +481,12 @@ fig <- plot_ly(data,
            title = "Top 20 Most Enriched GO Terms",
            margin = m)
 
-fig
+  return(fig)
+}
 
 ```
 
+##KEGG20 Function
 ```{r, echo = F, include = F}
 
 KEGG20 = function(data){
@@ -191,160 +534,181 @@ return(fig)
 
 ```
 
+##Pathview function
+```{r, include = F, echo = F}
 
-```{r fig.width=10}
+if(length(intersect(list.files(), "KEGG_Image_Files") != "KEGG_Image_Files") == 0){
+  dir.create(paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/KEGG_Image_Files/"))
+}
 
-data = GRF.CxDf.KEGG
+Home = dirname(rstudioapi::getSourceEditorContext()$path)
+OutputDir = paste0(Home, "/KEGG_Image_Files/")
 
-KEGG20(data)
+ShowKEGG = function(PathwayID, DEG1, DEG2){
 
-```
+  if(length(intersect(list.files(OutputDir), paste0("dme",PathwayID,".xml")))==0){
+    download.kegg(pathway.id= PathwayID, species = "dme", kegg.dir = OutputDir)
+  }  
+  xml.file=paste0(OutputDir, "dme",PathwayID,".xml")
+  node.data=node.info(xml.file)
 
-```{r echo = F, include = F}
-PathwayID = "03050"
+  all.path = names(kegg[grep(PathwayID,kegg)])
+  all.path = intersect(GeneIDKey[row.names(TKT.EdgeR),"Symbol"],all.path)
+  
+  
+  DEG1 = GeneIDKey[row.names(SigDEGs)[SigDEGs[,DEG1] == 1], "Symbol"]
+  DEG1 = intersect(DEG1, all.path)
+  DEG1 = paste("Dmel_", GeneIDKey[GeneIDKey$Symbol %in% DEG1, "CG"],sep="")
 
-download.kegg(pathway.id= PathwayID, species = "dme")
-xml.file=paste0("dme",PathwayID,".xml")
-node.data=node.info(xml.file)
+  if(length(intersect(DEG2, colnames(SigDEGs))) ==1 ){
+  DEG2 = GeneIDKey[row.names(SigDEGs)[SigDEGs[,DEG2] == 1], "Symbol"]
+  DEG2 = intersect(DEG2, all.path)
+  DEG2 = paste("Dmel_", GeneIDKey[GeneIDKey$Symbol %in% DEG2, "CG"],sep="")    
+  }
 
-all.path = names(kegg[grep(PathwayID,kegg)])
-
-Df = GeneIDKey[intersect(row.names(TKT.EdgeR)[TKT.EdgeR$GRF.CxDf <= .05],
-                         row.names(cpmdata)[apply(cpmdata[,c("GR.F1","GR.F2","TktDfGR.F1","TktDfGR.F2","TktDfGR.F3")], 1, min) >5]), 
-                         "Symbol"]
-Df = intersect(Df, all.path)
-Df = paste("Dmel_", GeneIDKey[GeneIDKey$Symbol %in% Df, "CG"],sep="")
-
-OE = GeneIDKey[intersect(row.names(TKT.EdgeR)[TKT.EdgeR$GRF.CxOE <= .05],
-                         row.names(cpmdata)[apply(cpmdata[,c("GR.F1","GR.F2","TktOEGR.F1","TktOEGR.F2","TktOEGR.F3")], 1, min) >5]), 
-                         "Symbol"]
-OE = intersect(OE, all.path)
-OE = paste("Dmel_", GeneIDKey[GeneIDKey$Symbol %in% OE, "CG"],sep="")
-
-
-plot.data.gene=node.map(mol.data=c(Moderate, Strong, Enhancer, Lethal), node.data, node.types="gene")
+ 
+plot.data.gene=node.map(mol.data=c(DEG1, DEG2), node.data, node.types="gene")
 cols.ts.gene = node.color(plot.data.gene, limit=2, bins=2)
 cols.ts.gene[1:length(cols.ts.gene)] = 0
 
-pdg.moderate=node.map(mol.data=Moderate, node.data, node.types="gene")
-temp = node.color(pdg.moderate, limit=2, bins=2)
-ctg.moderate = cols.ts.gene
-ctg.moderate[temp!="#FFFFFF"]= 1 ##"gold2"
+pdg.DEG1 = node.map(mol.data = DEG1, node.data, node.types="gene")
+temp = node.color(pdg.DEG1, limit=2, bins=2)
+ctg.DEG1 = cols.ts.gene
+ctg.DEG1[temp!="#FFFFFF"]= 1
 
-pdg.strong=node.map(mol.data=Strong, node.data, node.types="gene")
-temp = node.color(pdg.strong, limit=2, bins=2)
-ctg.strong = cols.ts.gene
-ctg.strong[temp!="#FFFFFF"]= 1 ##"brown2"
-
-pdg.enhancer=node.map(mol.data=Enhancer, node.data, node.types="gene")
-temp = node.color(pdg.enhancer, limit=2, bins=2)
-ctg.enhancer = cols.ts.gene
-ctg.enhancer[temp!="#FFFFFF"]= 1 ##"deepskyblue"
-
-pdg.lethal=node.map(mol.data=Lethal, node.data, node.types="gene")
-temp = node.color(pdg.lethal, limit=2, bins=2)
-ctg.lethal = cols.ts.gene
-ctg.lethal[temp!="#FFFFFF"]= 1 ##"navyblue"
+pdg.DEG2 = node.map(mol.data = DEG2, node.data, node.types="gene")
+temp = node.color(pdg.DEG2, limit=2, bins=2)
+ctg.DEG2 = cols.ts.gene
+ctg.DEG2[temp!="#FFFFFF"]= 1
 
 
-color.combos = data.frame(Moderate = as.numeric(ctg.moderate),
-                          Strong = as.numeric(ctg.strong),
-                          Enhancer = as.numeric(ctg.enhancer),
-                          Lethal = as.numeric(ctg.lethal))
+color.combos = data.frame(DEG1 = as.numeric(ctg.DEG1),
+                          DEG2 = as.numeric(ctg.DEG2))
 row.names(color.combos)= names(cols.ts.gene)
 
-cols.ts.gene[cols.ts.gene=="0"]="darkseagreen1"
+cols.ts.gene[cols.ts.gene=="0"]="gainsboro"
 
-cols.ts.gene[row.names(color.combos)[color.combos$Moderate == 1]] = "gold2"
-cols.ts.gene[row.names(color.combos)[color.combos$Strong   == 1]] = "brown1"
-cols.ts.gene[row.names(color.combos)[color.combos$Enhancer   == 1]] = "lightsteelblue"
-cols.ts.gene[row.names(color.combos)[color.combos$Lethal   == 1]] = "cornflowerblue"
-cols.ts.gene[row.names(color.combos)[(color.combos$Moderate   == 1 | color.combos$Strong   == 1) & (color.combos$Enhancer   == 1 | color.combos$Lethal   == 1) ]] = "grey60"
+cols.ts.gene[row.names(color.combos)[color.combos$DEG1 == 1]] = "cornflowerblue"
+cols.ts.gene[row.names(color.combos)[color.combos$DEG2   == 1]] = "firebrick"
+cols.ts.gene[row.names(color.combos)[color.combos$DEG2   == 1 & color.combos$DEG1 == 1]] = "gold"
 
-
+setwd(OutputDir)
 pv.pars= keggview.native(plot.data.gene=plot.data.gene,
                          cols.ts.gene=cols.ts.gene, 
                          node.data=node.data,
                          pathway.name=paste0("dme", PathwayID),
-                         same.layer=T, plot.col.key=F, out.suffix = kegg.names[paste0("dme", PathwayID),1])
-
+                         same.layer=T, plot.col.key=F, out.suffix = kegg.names[paste0("dme", PathwayID),1],
+                         kegg.dir = OutputDir)
+setwd(Home)
+}
 
 ```
 
-```{r}
-knitr::include_graphics(paste0("/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/dme",PathwayID, ".", kegg.names[paste0("dme", PathwayID),1], ".png"))
-```
 
-```{r include=F, echo=F}
+```{r echo = F, include =F}
 
+GO.data = GRF.CxDf.GO
+GO.ontology = "BP"
+BP.GO.fig = GO20(GO.data, GO.ontology)
 
-go_analysis = GO.data$category[GO.data$adjp <= .05]
-scores = setNames(-log10(GO.data$adjp), go_analysis)
+GO.ontology = "CC"
+CC.GO.fig = GO20(GO.data, GO.ontology)
 
-simMatrix <- calculateSimMatrix(go_analysis,
-                                orgdb="org.Dm.eg.db",
-                                ont="BP",
-                                method="Rel")
+GO.ontology = "MF"
+MF.GO.fig = GO20(GO.data, GO.ontology)
 
-##write.csv(simMatrix, "/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/Repressor.BP.simMatrix.csv")
-
-reducedTerms <- reduceSimMatrix(simMatrix,
-                                scores,
-                                threshold=0.7,
-                                orgdb="org.Dm.eg.db")
-##write.csv(reducedTerms,"/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/Repressor.BP.reducedTerms.csv")
-
-##simMatrix = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/Repressor.BP.simMatrix.csv", row.names = 1)
-##reducedTerms = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/Repressor.BP.reducedTerms.csv", row.names = 1)
+KEGG.data = GRxWT.FDf.KEGG
+KEGG.fig = KEGG20(KEGG.data)
 
 ```
 
 ```{r, fig.width= 10}
 
-data = GO.data[,c("term","adjp","numDEInCat", "numInCat", "category")]
-data = data[order(data$adjp, decreasing = T),]
-data$Score = -log10(data$adjp)
-data$term = factor(data$term, levels = c(unique(data$term)))
+BP.GO.fig
 
-m <- list(
-  l = 50,
-  r = 50,
-  b = 100,
-  t = 100,
-  pad = 4
-)
+```
 
-fig <- plot_ly(data, 
-               x = ~numDEInCat, y = ~term, 
-               type = 'bar',
-               name = "term",
-               marker = list(colorscale = list(c(0,.5,1), c("brown","gold", "steelblue")),
-    reversescale =T,
-                             colorbar = list(title = "-log10(FDR)",
-                                      len = .8, outlinewidth = 0,
-                                      tickformat = ".2f",
-                                      tick0 = 0),##, dtick = .01),
-                             color = ~Score,
-                             line = list(color = "black", width = 1.5)),
-    hoverinfo = "text",
-    hovertext = paste("Sample:", data$term,
-                      "\nGO ID: ", data$category,
-                      "\nTotal DE: ", data$numDEInCat,
-                      "\nTotal in Cat.: ", data$numInCat,
-                      "\nFDR: ", signif(data$adjp, 3))) %>%
-    layout(xaxis = list(title = "Number of Genes"),
-           yaxis = list(title = ""),
-           title = "Significantly Enriched GO term Summary",
-           margin = m)
+```{r, fig.width= 10}
 
-fig
+CC.GO.fig
+
+```
+
+```{r, fig.width= 10}
+
+MF.GO.fig
+
+```
+
+```{r fig.width=10}
+
+KEGG.fig
+
+```
+
+```{r echo = F, include = F}
+PathwayID = "04310"
+PathwayID = "00480" ##Glutathione Metabolism
+PathwayID = "00230" ##Purine metabolism
+DEG1 = "GRF.CxDf"
+DEG2 = "GRF.CxOE"
+ShowKEGG(PathwayID, DEG1, DEG2)
 
 ```
 
 
+```{r}
+knitr::include_graphics(paste0(OutputDir,"/dme",PathwayID, ".", kegg.names[paste0("dme", PathwayID),1], ".png"))
+```
 
+
+```{r  echo = F}
+
+geneset = GeneIDKey[row.names(TKT.EdgeR)[TKT.EdgeR$GRF.CxDf <= .05],]
+
+GenesInKEGG = geneset[geneset$Symbol %in% names(kegg[grep(PathwayID, kegg)]), ]
+
+hmdata = cpmdata[row.names(GenesInKEGG), groups$Group %in% c("GR.F",  "TktDfGR.F")]##, "TktDfGR.F","TktDfWT.F")]
+
+heatmaply(hmdata,
+            trace="none",
+            col=RdYlBu(100)[100:1],
+            scale="row",
+            dendrogram = "both",
+            show_dendrogram = c(F,T),
+            Rowv=T,
+            Colv=T,
+            na.color="grey",
+            labRow = GeneIDKey[row.names(hmdata), "Symbol"],
+            cexCol = 1,
+            key = T,
+            column_text_angle = 90)
+
+```
+
+```{r echo =F, include =F}
+
+GO.data = GRxWT.FC.GO
+GO.ontology = "BP"
+
+go_analysis = GO.data$category[GO.data$adjp <= .05 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$adjp), go_analysis)
+
+simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
 
 ```{r fig.height=7, fig.width=10}
+
+
 
 heatmapPlot(simMatrix,
             reducedTerms,
@@ -418,112 +782,4 @@ scatterPlot(simMatrix, reducedTerms)
 treemapPlot(reducedTerms)
 
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-```{r, include=F, echo=F}
-GO2Gene   = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GenesInGOTerms.csv", row.names = 1)
-
-ccpar=as.list(GOCCPARENTS)
-ccchild=as.list(GOCCCHILDREN)
-
-bppar=as.list(GOBPPARENTS)
-bpchild=as.list(GOBPCHILDREN)
-
-mfpar=as.list(GOMFPARENTS)
-mfchild=as.list(GOMFCHILDREN)
-```
-
-```{r, include=F, echo=F}
-
-compare = "GRM.CxDf"
-filter.samples = c("GR.M", "TktDfGR.M")
-
-sigs = row.names(TKT.EdgeR)[TKT.EdgeR[,compare]<=.05]
-sigs = sigs[apply(cpmdata[sigs,groups$Group %in% filter.samples], 1, min) > 10]
-
-genes=c(rep(0, nrow(cpmdata)))
-names(genes) = row.names(cpmdata)
-genes[sigs] = 1
-names(genes) = GeneIDKey[names(genes), "Symbol"]
-
-pwf=nullp(genes,"dm3","geneSymbol")
-
-GO.wall=goseq(pwf,"dm3","geneSymbol")
-GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
-row.names(GO.wall) = GO.wall$category
-
-GO.wall$Significant = "not"
-GO.wall[GO.wall$adjp <= .05, "Significant"] = "sig"
-sigGO = GO.wall[GO.wall$adjp<.05,]
-
-
-##Biological Processes
-bpGO = sigGO[sigGO$ontology == 'BP',]
-
-##parent terms are those directly above in hierarchy
-## isa implies a defining relationship; part of implies they contribute to the category
-
-parents = bppar[bpGO$category]
-
-parents = data.frame(from = unlist(parents),
-                     label = substring(names(unlist(parents)),12),
-                     to = substring(names(unlist(parents)),1,10))
-
-parents = parents[parents$to %in% row.names(GO.wall),]
-
-children = bpchild[bpGO$category]
-
-children = data.frame(from = substring(names(unlist(children)),1,10),
-                      label = substring(names(unlist(children)),12),
-                      to = unlist(children))
-
-children = children[children$to %in% row.names(GO.wall),]
-
-edges = rbind(parents, children)
-edges = edges[edges$label == "isa",]
-edges = unique(edges)
-
-edges = edges[GO.wall[edges$to, "numDEInCat"]>0,]
-
-node.id = unique(c(edges$from, edges$to))
-node.label = GO.wall[node.id, "term"]
-node.group = GO.wall[node.id, "Significant"]
-node.value = 100*(GO.wall[node.id, "numDEInCat"]/GO.wall[node.id, "numInCat"])
-
-nodes = data.frame(id = node.id,
-                   label = node.label,
-                   group = node.group,
-                   value = node.value)
-```
-
-```{r include=F}
-
-visNetwork(nodes, edges)%>%
-  visLayout(hierarchical=F, improvedLayout=T)%>%
-  visPhysics(solver="forceAtlas2Based", forceAtlas2Based = list(gravitationalConstant=-70),enabled=T)%>%
-  visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE)%>%
-  visEdges(arrows='to')%>%
-  visGroups(groupname = "sig", shape = "box", color = list(background = "gold", border="black", groupname="black"),physics=F,font=list(color="black"))%>%
-  visGroups(groupname = "not", shape = "dot", color = list(background = "grey", border="black", groupname="black"),physics=T,font=list(color="black"))
-
-```
-
 
