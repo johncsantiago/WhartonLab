@@ -1,0 +1,53 @@
+---
+title: "Metaboanalyst"
+author: "John Santiago"
+date: "2023-07-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo = F, include = F}
+
+library("MetaboAnalystR")
+
+mSet<-InitDataObjects("pktable", "stat", FALSE)
+
+mSet = Read.TextData(mSet, "/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/MetabolomicsForMetaboanalyst.txt", "colu", "disc")
+
+mSet = SanityCheckData(mSet)
+
+mSet<-ReplaceMin(mSet)
+mSet<-SanityCheckData(mSet)
+mSet<-FilterVariable(mSet, "none", -1, "F", 25, F)
+mSet<-PreparePrenormData(mSet)
+
+
+mSet<-Normalization(mSet, "CompNorm", "NULL", "NULL", "TIC", ratio=FALSE, ratioNum=20)
+##mSet<-PlotNormSummary(mSet, "norm_0_", "png", 72, width=NA)
+##mSet<-PlotSampleNormSummary(mSet, "snorm_0_", "png", 72, width=NA)
+
+
+
+```
+
+
+
+```{r}
+
+mSet<-GetGroupNames(mSet, "")
+feature.nm.vec <- c("")
+smpl.nm.vec <- c("")
+grp.nm.vec <- c("C","E")
+mSet<-UpdateData(mSet)
+mSet<-PreparePrenormData(mSet)
+mSet<-Normalization(mSet, "CompNorm", "NULL", "NULL", "TIC", ratio=FALSE, ratioNum=20)
+##mSet<-PlotNormSummary(mSet, "norm_1_", "png", 72, width=NA)
+##mSet<-PlotSampleNormSummary(mSet, "snorm_1_", "png", 72, width=NA)
+mSet<-FC.Anal(mSet, 2.0, 0, FALSE)
+##mSet<-PlotFC(mSet, "fc_0_", "png", 72, width=NA)
+
+mSet$analSet$fc
+```

@@ -31,15 +31,42 @@ library(heatmaply)
 git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"
 cpmdata = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT_cpmdata.csv"),row.names = 1)
 groups  = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.metadata.csv"),row.names = 1)
-TKT.EdgeR = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.Table.csv"),row.names = 1)
+TKT.EdgeR = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FDRTable.csv"),row.names = 1)
+TKT.EdgeR.FC = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FCTable.csv"),row.names = 1)
+
 GeneIDKey = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GeneIDKey.csv", row.names = 1)
 kegg = readRDS(gzcon(url(paste0(git.dir,"GeneralDataFiles/kegg.symbol2path.RData"))))
 kegg.names = read.csv(paste0(git.dir, "GeneralDataFiles/KEGG.names.csv"), row.names = 1)
 
 genesingo=as.list(org.Dm.egGO2ALLEGS)
 
-Enrichment = function(sigs){
-  genes = setNames(rep(0, nrow(cpmdata)), GeneIDKey[row.names(cpmdata), "Symbol"])
+
+##mean.cpm; Mean cpm for each gene in each condition (groups$Group). Used for filtering
+mean.cpm = matrix(0, ncol = length(unique(groups$Group)), nrow = nrow(cpmdata))
+colnames(mean.cpm) = unique(groups$Group)
+row.names(mean.cpm) = row.names(cpmdata)
+i=1
+while(i<=ncol(mean.cpm)){
+  mean.cpm[,i]= apply(cpmdata[,row.names(groups[groups$Group == colnames(mean.cpm)[i],])], 1, mean)
+  i=i+1
+}
+
+i=1
+for(i in 1:ncol(TKT.EdgeR)){
+  TKT.EdgeR[TKT.EdgeR[,i] == 0,i] = 2
+  i=i+1
+}
+
+
+```
+
+
+##GO and KEGG Enrichment function
+
+```{r echo = F, include = F}
+
+Enrichment = function(sigs, bg){
+  genes = setNames(rep(0, length(bg)), bg)
   genes[sigs] = 1
   pwf=nullp(genes,"dm3","geneSymbol")
   GO.wall=goseq(pwf,"dm3","geneSymbol")
@@ -208,26 +235,24 @@ return(fig)
   
 ```{r echo = F, include = F}
 
-comparison1 = "GRxWT.FC"
-comparison2 = "GRxWT.MC"
+##GR vs WT Females
 
-sigs1 = row.names(TKT.EdgeR)[TKT.EdgeR[,comparison1] <= .05]
+sigs1 = row.names(TKT.EdgeR)[TKT.EdgeR[,"GRxWT.FC"] <= .05]
+bg1 = row.names(TKT.EdgeR)[TKT.EdgeR[, "GRxWT.FC"]<= 1]
 
-sigs1 = sigs1[apply(cpmdata[sigs1,groups$Group == "GR.F" | groups$Group == "WT.F"], 1, min) > 5] 
+sigs2 = row.names(TKT.EdgeR)[TKT.EdgeR[,"GRxWT.MC"] <= .05]
+bg2 = row.names(TKT.EdgeR)[TKT.EdgeR[, "GRxWT.MC"]<= 1]
 
-sigs2 = row.names(TKT.EdgeR)[TKT.EdgeR[,comparison2] <= .05]
-
-sigs2 = sigs2[apply(cpmdata[sigs2,groups$Group == "GR.M" | groups$Group == "WT.M"], 1, min) > 5] 
-
-sigs= intersect(sigs1, sigs2)
-
-##sigs = row.names(TKT.EdgeR)[TKT.EdgeR[,"GRF.CxDf"]<=.05]
+sigs = intersect(sigs1, sigs2)
+bg = unique(c(bg1, bg2))
 
 sigsKEY = GeneIDKey[sigs,]
-
 sigs = sigsKEY$Symbol
+bgKEY = GeneIDKey[bg,]
+bg = bgKEY$Symbol
 
-sig.cats = Enrichment(sigs)
+
+sig.cats = Enrichment(sigs, bg)
 
 ```
 

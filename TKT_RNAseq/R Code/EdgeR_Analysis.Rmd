@@ -1100,64 +1100,22 @@ compare = makeContrasts(TktDfGR.M-WT.M, levels=design)
 lrt = glmQLFTest(fit,contrast=as.vector(compare))
 G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
 DEout=G_X_E$table
-GRMDfxWTM=DEout
-sGRMDfxWTM=DEout[DEout$FDR<.05,]
+GRMDfxWTM3=DEout
+sGRMDfxWTM3=DEout[DEout$FDR<.05,]
 
 compare = makeContrasts(TktDfGR.M-TktDfWT.M, levels=design)
 lrt = glmQLFTest(fit,contrast=as.vector(compare))
 G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
 DEout=G_X_E$table
-GRMDfxWTMDf=DEout
-sGRMDfxWTMDf=DEout[DEout$FDR<.05,]
+GRMDfxWTMDf3=DEout
+sGRMDfxWTMDf3=DEout[DEout$FDR<.05,]
 
 
 MDSdata4 = plotMDS(z, top = 12764, col=as.numeric(factor(gr)))
 
-all.cpmgenes = unique(c(row.names(cpmdata3),row.names(cpmdata4)))
-
-all.cpmdata = matrix(NA, ncol = 33, nrow = length(all.cpmgenes))
-colnames(all.cpmdata) = c(colnames(cpmdata3),colnames(cpmdata4))
-row.names(all.cpmdata) = all.cpmgenes
-
-all.cpmdata[row.names(cpmdata3),colnames(cpmdata3)] = cpmdata3
-all.cpmdata[row.names(cpmdata4),colnames(cpmdata4)] = cpmdata4
-
-all.groups = groups[colnames(all.cpmdata),]
-
-all.TKT.EdgeR = all.cpmdata[, 1:14]
-colnames(all.TKT.EdgeR) = c('GRF.CxDf', 'GRF.CxOE', 
-                            'WTF.CxDf', 'WTF.CxOE', 
-                            'GRxWT.FC', 'GRxWT.FDf', 'GRxWT.FOE',
-                            'GRM.CxDf', 'GRM.CxOE', 
-                            'WTM.CxDf', 'WTM.CxOE', 
-                            'GRxWT.MC', 'GRxWT.MDf', 'GRxWT.MOE')
-
-row.names(all.TKT.EdgeR) = row.names(all.cpmdata)
-
-all.TKT.EdgeR[,1] = GR.F.CxDf3[row.names(all.cpmdata),'FDR']
-all.TKT.EdgeR[,2] = GR.F.CxOE3[row.names(all.cpmdata),'FDR']
-                       
-all.TKT.EdgeR[,3] = WTF.CxDf = WT.F.CxDf3[row.names(all.cpmdata),'FDR']
-all.TKT.EdgeR[,4] = WTF.CxOE = WT.F.CxOE3[row.names(all.cpmdata),'FDR']
-                       
-all.TKT.EdgeR[,5] = GRxWT.FC = GRxWT.F3[row.names(all.cpmdata),'FDR']
-all.TKT.EdgeR[,6] = GRxWT.FDf = GRxWT.FDf3[row.names(all.cpmdata),'FDR']
-all.TKT.EdgeR[,7] = GRxWT.FOE = GRxWT.FOE3[row.names(all.cpmdata),'FDR']
-                       
-all.TKT.EdgeR[,8] = GRM.CxDf = GR.M.CxDf3[row.names(all.cpmdata),'FDR']
-all.TKT.EdgeR[,9] = GRM.CxOE = GR.M.CxOE3[row.names(all.cpmdata),'FDR']
-                       
-all.TKT.EdgeR[,10] = WTM.CxDf = WT.M.CxDf3[row.names(all.cpmdata),'FDR']
-all.TKT.EdgeR[,11] = WTM.CxOE = WT.M.CxOE3[row.names(all.cpmdata),'FDR']
-                       
-all.TKT.EdgeR[,12] = GRxWT.MC = GRxWT.M3[row.names(all.cpmdata),'FDR']
-all.TKT.EdgeR[,13] = GRxWT.MDf = GRxWT.MDf3[row.names(all.cpmdata),'FDR']
-all.TKT.EdgeR[,14] = GRxWT.MOE = GRxWT.MOE3[row.names(all.cpmdata),'FDR']
 
 
-##write.csv(all.cpmdata, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT_cpmdata.csv")
-##write.csv(all.groups, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT.metadata.csv")
-##write.csv(all.TKT.EdgeR, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT.EdgeR.Table.csv")
+
 
 ```
 
@@ -1236,6 +1194,89 @@ fig <- fig %>% layout(yaxis = list(title ="Total DEGs"),
                       title = "Total DEGs")
 
 fig
+
+```
+
+
+```{r echo = F, include = F}
+###Generating new CPM, FDR and FC tables with males and females processed seperately
+
+combined.cpmdata = matrix(0, ncol = ncol(cpmdata2), nrow = nrow(cpmdata2))
+colnames(combined.cpmdata) = colnames(cpmdata2)
+row.names(combined.cpmdata) = row.names(cpmdata2)
+
+combined.cpmdata[row.names(cpmdata3), colnames(cpmdata3)] = cpmdata3
+combined.cpmdata[row.names(cpmdata4), colnames(cpmdata4)] = cpmdata4
+
+combined.FDR = matrix(0, ncol = 14, nrow = nrow(combined.cpmdata))
+row.names(combined.FDR) = row.names(combined.cpmdata)
+
+colnames(combined.FDR) = c('GRF.CxDf', 'GRF.CxOE', 
+                           'WTF.CxDf', 'WTF.CxOE', 
+                           'GRxWT.FC', 'GRxWT.FDf', 'GRxWT.FOE',
+                           'GRM.CxDf', 'GRM.CxOE', 
+                           'WTM.CxDf', 'WTM.CxOE', 
+                           'GRxWT.MC', 'GRxWT.MDf', 'GRxWT.MOE')
+
+
+combined.FDR[row.names(GR.F.CxDf3), 1] = GR.F.CxDf3[,'FDR']
+combined.FDR[row.names(GR.F.CxOE3), 2] = GR.F.CxOE3[,'FDR']
+
+combined.FDR[row.names(WT.F.CxDf3), 3] = WT.F.CxDf3[,'FDR']
+combined.FDR[row.names(WT.F.CxOE3), 4] = WT.F.CxOE3[,'FDR']
+
+combined.FDR[row.names(GRxWT.F3), 5] = GRxWT.F3[,'FDR']
+combined.FDR[row.names(GRxWT.FDf3), 6] = GRxWT.FDf3[,'FDR']
+combined.FDR[row.names(GRxWT.FOE3), 7] = GRxWT.FOE3[,'FDR']
+
+combined.FDR[row.names(GR.M.CxDf3), 8] = GR.M.CxDf3[,'FDR']
+combined.FDR[row.names(GR.M.CxOE3), 9] = GR.M.CxOE3[,'FDR']
+
+combined.FDR[row.names(WT.M.CxDf3), 10] = WT.M.CxDf3[,'FDR']
+combined.FDR[row.names(WT.M.CxOE3), 11] = WT.M.CxOE3[,'FDR']
+
+combined.FDR[row.names(GRxWT.M3), 12] = GRxWT.M3[,'FDR']
+combined.FDR[row.names(GRxWT.MDf3), 13] = GRxWT.MDf3[,'FDR']
+combined.FDR[row.names(GRxWT.MOE3), 14] = GRxWT.MOE3[,'FDR']
+
+
+
+combined.FC = matrix(0, ncol = 14, nrow = nrow(combined.cpmdata))
+row.names(combined.FC) = row.names(combined.cpmdata)
+
+colnames(combined.FC) = c('GRF.CxDf', 'GRF.CxOE', 
+                          'WTF.CxDf', 'WTF.CxOE', 
+                          'GRxWT.FC', 'GRxWT.FDf', 'GRxWT.FOE',
+                          'GRM.CxDf', 'GRM.CxOE', 
+                          'WTM.CxDf', 'WTM.CxOE', 
+                          'GRxWT.MC', 'GRxWT.MDf', 'GRxWT.MOE')
+
+
+combined.FC[row.names(GR.F.CxDf3), 1] = GR.F.CxDf3[,'logFC']
+combined.FC[row.names(GR.F.CxOE3), 2] = GR.F.CxOE3[,'logFC']
+
+combined.FC[row.names(WT.F.CxDf3), 3] = WT.F.CxDf3[,'logFC']
+combined.FC[row.names(WT.F.CxOE3), 4] = WT.F.CxOE3[,'logFC']
+
+combined.FC[row.names(GRxWT.F3), 5] = GRxWT.F3[,'logFC']
+combined.FC[row.names(GRxWT.FDf3), 6] = GRxWT.FDf3[,'logFC']
+combined.FC[row.names(GRxWT.FOE3), 7] = GRxWT.FOE3[,'logFC']
+
+combined.FC[row.names(GR.M.CxDf3), 8] = GR.M.CxDf3[,'logFC']
+combined.FC[row.names(GR.M.CxOE3), 9] = GR.M.CxOE3[,'logFC']
+
+combined.FC[row.names(WT.M.CxDf3), 10] = WT.M.CxDf3[,'logFC']
+combined.FC[row.names(WT.M.CxOE3), 11] = WT.M.CxOE3[,'logFC']
+
+combined.FC[row.names(GRxWT.M3), 12] = GRxWT.M3[,'logFC']
+combined.FC[row.names(GRxWT.MDf3), 13] = GRxWT.MDf3[,'logFC']
+combined.FC[row.names(GRxWT.MOE3), 14] = GRxWT.MOE3[,'logFC']
+
+
+##write.csv(combined.cpmdata, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT_cpmdata.csv")
+##write.csv(combined.FDR, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT.EdgeR.FDRTable.csv")
+##write.csv(combined.FC, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT.EdgeR.FCTable.csv")
+
 
 ```
 
