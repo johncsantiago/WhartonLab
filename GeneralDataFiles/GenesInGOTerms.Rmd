@@ -78,6 +78,53 @@ row.names(KEY) = KEY$FBgn
 ##write.csv(KEY,"/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneIDKey.csv")
 
 
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"
+GeneIDKey = read.csv(paste0(git.dir,"GeneralDataFiles/GeneIDKey.csv"),row.names = 1)
+Df.data = read.csv(paste0(git.dir,"DeficiencyScreen/DataFiles/DeficiencyModifierGenes.csv"),row.names = 1)
+unknown = setdiff(row.names(Df.data),row.names(GeneIDKey))
+
+
+FBgn2ensembl = (unknown)
+names(FBgn2ensembl) = (unknown)
+tempEG = unlist(x1[lengths(x1)==1][(unknown)])
+FBgn2ensembl[names(tempEG)]=tempEG
+
+ensembl2symbol = (unknown)
+names(ensembl2symbol) = FBgn2ensembl
+tempSymbol = unlist(x2[FBgn2ensembl])
+ensembl2symbol[names(tempSymbol)]=tempSymbol
+symbol2ensembl = names(ensembl2symbol)
+names(symbol2ensembl) = ensembl2symbol
+
+unknowns.forFlybase = symbol2ensembl[grep("FBgn", names(symbol2ensembl))]
+unknown.key = read.csv("/Users/johncsantiago/Documents/CamiExtraGenes.csv", header = F, row.names = 1)
+
+KEY2 = data.frame(FBgn = unknown, Symbol = ensembl2symbol, ensembl = FBgn2ensembl)
+row.names(KEY2) = unknown
+KEY2[row.names(unknown.key),"Symbol"]= unknown.key[,1]
+
+unknown.sym2ens = unlist(x3[KEY2[grep("FBgn",KEY2$ensembl),"Symbol"]])
+
+unknown.KEY2 = KEY2[grep("FBgn",KEY2$ensembl),] 
+
+unknown.KEY2[unknown.KEY2$Symbol %in% names(unknown.sym2ens), "ensembl"] = unknown.sym2ens
+
+KEY2[row.names(unknown.KEY2), "ensembl"] = unknown.KEY2$ensembl
+
+KEY2$CG = row.names(KEY2)
+
+x=as.list(org.Dm.egFLYBASECG)
+
+temp = (x[KEY2$ensembl])
+
+temp2 = unlist(temp[lengths(temp)==1])
+
+KEY2[KEY2$ensembl %in% names(temp2), "CG"] = temp2
+
+KEY = rbind(GeneIDKey, KEY2)
+
+write.csv(KEY, "/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GeneIDKey.csv")
+
 
 ccpar=as.list(GOCCPARENTS)
 ccchild=as.list(GOCCCHILDREN)

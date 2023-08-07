@@ -1,0 +1,327 @@
+---
+title: "Defficiency Screen Functional Analysis"
+author: "John Santiago"
+date: "11/28/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(rgl)
+knitr::opts_chunk$set(echo = FALSE, fig.align="center")
+knitr::knit_hooks$set(webgl = hook_webgl)
+```
+
+```{r echo = F, include=F}
+##Load Libraries
+
+library(org.Dm.eg.db)
+##library(goseq)
+library(rrvgo)
+library(plotly)
+```
+
+
+
+```{r echo = F, include =F}
+##load all files from github
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"
+GeneIDKey = read.csv(paste0(git.dir,"GeneralDataFiles/GeneIDKey.csv"),row.names = 1)
+Df.data = read.csv(paste0(git.dir,"DeficiencyScreen/DataFiles/DeficiencyModifierGenes.csv"),row.names = 1)
+##kegg = readRDS(gzcon(url(paste0(git.dir,"DeficiencyScreen/DataFiles/kegg.symbol2path.RData"))))
+##kegg.names = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/KEGG.names.csv"), row.names = 1)
+
+Moderate.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/ModerateGOAnalysis.csv"), row.names = 1)
+Strong.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/StrongGOAnalysis.csv"), row.names = 1)
+Repress.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/RepressorGOAnalysis.csv"), row.names = 1)
+Lethal.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/LethalGOAnalysis.csv"), row.names = 1)
+Enhancer.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/EnhancerGOAnalysis.csv"), row.names = 1)
+
+genesingo=as.list(org.Dm.egGO2ALLEGS)
+
+```
+
+
+```{r echo = F}
+
+sigGO = Repress.GO[Repress.GO$adjp<=.05,]
+sigGO = sigGO[order(sigGO$ontology),]
+sigGO = sigGO[row.names(sigGO)!="GO:0032991",]
+
+sigGO = sigGO[, c("category", "term","adjp", "numDEInCat", "numInCat", "ontology")]
+
+sigGO$notInCat = sigGO$numInCat - sigGO$numDEInCat
+
+data = sigGO[nrow(sigGO):1,c("term","adjp","numDEInCat", "numInCat", "category", "ontology", "notInCat")]
+data$Score = -log10(data$adjp)
+data$term = factor(data$term, levels = c(unique(data$term)))
+
+m <- list(
+  l = 50,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 10
+)
+
+
+
+fig <- plot_ly(data, 
+               x = ~numDEInCat, y = ~term, 
+               type = 'bar',
+               name = "Suppressor",
+               marker = list(colorscale = list(c(0,.9,1), c("brown","gold", "steelblue")),
+    reversescale =T,
+                             colorbar = list(title = "-log10(FDR)",
+                                      len = .8, outlinewidth = 0,
+                                      tickformat = ".2f",
+                                      tick0 = 0, xpad = 10),
+                             color = ~Score,
+                             line = list(color = "black", width = 1.5)),
+    hoverinfo = "text",
+    hovertext = paste("Sample:", data$term,
+                      "\nGO ID: ", data$category,
+                      "\nTotal DE: ", data$numDEInCat,
+                      "\nTotal in Cat.: ", data$numInCat,
+                      "\nFDR: ", signif(data$adjp, 3)))
+
+
+fig2 <- fig %>% add_trace(fig, data, x = ~notInCat, y = ~term,
+                       type = 'bar',
+                       name = "Total",
+                       ##colors = rep("lightgrey", nrow(data)),
+                       marker = list(color = "lightgrey",line = list(color = "black", width = 1.5), colorbar = F),
+               hoverinfo = "text",
+               hovertext = "")
+
+
+
+fig3 <- fig2 %>% layout(xaxis = list(title = "Number of Genes"),
+           yaxis = list(title = ""),
+           title = "Suppressor Enriched GO Terms",
+           margin = m,
+           barmode = 'stack',
+           shapes = list(
+                         list(type = "rect",
+                              fillcolor = "coral", 
+                              line = list(color = "black", width = 2.5), 
+                              opacity = 1,
+                              x0 = -30, x1 = -5, xref = "x",
+                              y0 = -.5, y1 = 15.5, yref = "y",
+                              layer = "below"),
+                         list(type = "rect",
+                              fillcolor = "lightblue", 
+                              line = list(color = "black", width = 2.5), 
+                              opacity = 1,
+                              x0 = -30, x1 = -5, xref = "x",
+                              y0 = 15.5, y1 = 22.5, yref = "y"),
+                         list(type = "rect",
+                              fillcolor = "lightgreen", 
+                              line = list(color = "black", width = 2.5), 
+                              opacity = 1,
+                              x0 = -30, x1 = -5, xref = "x",
+                              y0 = 22.5, y1 = 35.5, yref = "y")
+                         ))
+
+fig4 <- fig3 %>% add_annotations(x = -17.5,
+                        y = 7.5,
+                        text = "Molecular Function",
+                        showarrow = F,
+                        textangle = -90,
+                        font = list(size = 15))
+
+fig5 <- fig4 %>% add_annotations(x = -17.5,
+                        y = 19,
+                        text = "Cellular Component",
+                        showarrow = F,
+                        textangle = -90,
+                        font = list(size = 15))
+
+fig6 <- fig5 %>% add_annotations(x = -17.5,
+                        y = 29,
+                        text = "Biological Process",
+                        showarrow = F,
+                        textangle = -90,
+                        font = list(size = 15))
+```
+
+```{r fig.height=12, fig.width=15, fig.align='left'}
+
+fig6
+
+```
+
+
+```{r echo = F}
+
+sigGO = Enhancer.GO[Enhancer.GO$adjp<=.05,]
+sigGO = sigGO[order(sigGO$ontology),]
+##sigGO = sigGO[row.names(sigGO)!="GO:0032991",]
+
+sigGO = sigGO[, c("category", "term","adjp", "numDEInCat", "numInCat", "ontology")]
+
+sigGO$notInCat = sigGO$numInCat - sigGO$numDEInCat
+
+data = sigGO[nrow(sigGO):1,c("term","adjp","numDEInCat", "numInCat", "category", "ontology", "notInCat")]
+data$Score = -log10(data$adjp)
+data$term = factor(data$term, levels = c(unique(data$term)))
+
+m <- list(
+  l = 50,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 10
+)
+
+
+
+fig <- plot_ly(data, 
+               x = ~numDEInCat, y = ~term, 
+               type = 'bar',
+               name = "Enhancer",
+               marker = list(colorscale = list(c(0,.9,1), c("brown","gold", "steelblue")),
+    reversescale =T,
+                             colorbar = list(title = "-log10(FDR)",
+                                      len = .8, outlinewidth = 0,
+                                      tickformat = ".2f",
+                                      tick0 = 0),##, dtick = .01),
+                             color = ~Score,
+                             line = list(color = "black", width = 1.5)),
+    hoverinfo = "text",
+    hovertext = paste("Sample:", data$term,
+                      "\nGO ID: ", data$category,
+                      "\nTotal DE: ", data$numDEInCat,
+                      "\nTotal in Cat.: ", data$numInCat,
+                      "\nFDR: ", signif(data$adjp, 3)))
+
+
+fig2 <- fig %>% add_trace(fig, data, x = ~notInCat, y = ~term,
+                       type = 'bar',
+                       name = "Total",
+                       marker = list(color = "lightgrey",line = list(color = "black", width = 1.5), colorbar = F),
+               hoverinfo = "text",
+               hovertext = "")
+
+
+
+fig3 <- fig2 %>% layout(xaxis = list(title = "Number of Genes"),
+           yaxis = list(title = ""),
+           title = "Enhancer Enriched GO Terms",
+           margin = m,
+           barmode = 'stack',
+           shapes = list(
+                         list(type = "rect",
+                              fillcolor = "coral", 
+                              line = list(color = "black", width = 2.5), 
+                              opacity = 1,
+                              x0 = -10, x1 = -2.5, xref = "x",
+                              y0 = -.5, y1 = 2.5, yref = "y",
+                              layer = "below"),
+                         list(type = "rect",
+                              fillcolor = "lightblue", 
+                              line = list(color = "black", width = 2.5), 
+                              opacity = 1,
+                              x0 = -10, x1 = -2.5, xref = "x",
+                              y0 = 2.5, y1 = 5.5, yref = "y"),
+                         list(type = "rect",
+                              fillcolor = "lightgreen", 
+                              line = list(color = "black", width = 2.5), 
+                              opacity = 1,
+                              x0 = -10, x1 = -2.5, xref = "x",
+                              y0 = 5.5, y1 = 9.5, yref = "y")
+                         ))
+
+fig4 <- fig3 %>% add_annotations(x = -6.5,
+                        y = 1,
+                        text = "Molecular Function",
+                        showarrow = F,
+                        textangle = -90,
+                        font = list(size = 15))
+
+fig5 <- fig4 %>% add_annotations(x = -6.5,
+                        y = 4,
+                        text = "Cellular Component",
+                        showarrow = F,
+                        textangle = -90,
+                        font = list(size = 15))
+
+fig6 <- fig5 %>% add_annotations(x = -6.5,
+                        y = 7.5,
+                        text = "Biological Process",
+                        showarrow = F,
+                        textangle = -90,
+                        font = list(size = 15))
+
+```
+
+```{r fig.height=8, fig.width=15, fig.align='left'}
+
+fig6
+
+```
+
+```{r echo=F, include=F}
+
+GO.data = Enhancer.GO
+GO.ontology = "BP"
+
+go_analysis = GO.data$category[GO.data$adjp <= .05 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$adjp), go_analysis)
+
+simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+Sup.BP.SM = simMatrix
+Sup.BP.RT = reducedTerms
+
+GO.ontology = "CC"
+
+go_analysis = GO.data$category[GO.data$adjp <= .05 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$adjp), go_analysis)
+
+simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+Sup.CC.SM = simMatrix
+Sup.CC.RT = reducedTerms
+
+GO.ontology = "MF"
+
+go_analysis = GO.data$category[GO.data$adjp <= .05 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$adjp), go_analysis)
+
+simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+Sup.MF.SM = simMatrix
+Sup.MF.RT = reducedTerms
+
+```
+
+
+
+
+
+
+

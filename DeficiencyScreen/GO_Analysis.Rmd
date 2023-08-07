@@ -185,20 +185,41 @@ fig <- plot_ly(data,
 
 ```{r echo = F, include =F}
 
-GO.data = Repress.GO
+GO.data = Enhancer.GO
 GO.ontology = "BP"
+GOBP.fig = GO20(GO.data, GO.ontology)
 
-GO.fig = GO20(GO.data, GO.ontology)
+GO.ontology = "CC"
+GOCC.fig = GO20(GO.data, GO.ontology)
+
+GO.ontology = "MF"
+GOMF.fig = GO20(GO.data, GO.ontology)
+
 
 ```
 
 ```{r, fig.width= 10}
 
-GO.fig
+GOBP.fig
+
+```
+
+```{r, fig.width= 10}
+
+GOCC.fig
+
+```
+
+```{r, fig.width= 10}
+
+GOMF.fig
 
 ```
 
 ```{r include=F, echo=F}
+
+GO.data = Enhancer.GO
+GO.ontology = "BP"
 
 go_analysis = GO.data$category[GO.data$adjp <= .05 & GO.data$ontology == GO.ontology]
 scores = setNames(-log10(GO.data$adjp), go_analysis)
@@ -229,6 +250,11 @@ heatmapPlot(simMatrix,
 
 ```
 
+```{r}
+
+scatterPlot(simMatrix, reducedTerms)
+
+```
 
 ```{r, fig.width=10}
  use.data   = simMatrix
@@ -298,6 +324,20 @@ GenesInGO = Df.data[Df.data$ensembl %in% GenesInGO[[1]],]
 ```
 
 
+
+
+```{r}
+
+
+go2gene = setNames(list(as.character(genesingo[[1]])), names(genesingo)[1])
+i=2
+while(i<=length(genesingo)){
+  temp = setNames(list(as.character(genesingo[[i]])), names(genesingo)[i])
+  go2gene = c(go2gene, temp)
+  i=i+1
+}
+
+```
 
 
 

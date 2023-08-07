@@ -13,9 +13,13 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library("MetaboAnalystR")
 
+rm(mSet)
+
 mSet<-InitDataObjects("pktable", "stat", FALSE)
 
 mSet = Read.TextData(mSet, "/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/MetabolomicsForMetaboanalyst.txt", "colu", "disc")
+
+
 
 mSet = SanityCheckData(mSet)
 
@@ -24,12 +28,10 @@ mSet<-SanityCheckData(mSet)
 mSet<-FilterVariable(mSet, "none", -1, "F", 25, F)
 mSet<-PreparePrenormData(mSet)
 
-
+##Normalization just takes the value, divides by TIC and multiply by 1000
 mSet<-Normalization(mSet, "CompNorm", "NULL", "NULL", "TIC", ratio=FALSE, ratioNum=20)
 ##mSet<-PlotNormSummary(mSet, "norm_0_", "png", 72, width=NA)
 ##mSet<-PlotSampleNormSummary(mSet, "snorm_0_", "png", 72, width=NA)
-
-
 
 ```
 
@@ -46,8 +48,154 @@ mSet<-PreparePrenormData(mSet)
 mSet<-Normalization(mSet, "CompNorm", "NULL", "NULL", "TIC", ratio=FALSE, ratioNum=20)
 ##mSet<-PlotNormSummary(mSet, "norm_1_", "png", 72, width=NA)
 ##mSet<-PlotSampleNormSummary(mSet, "snorm_1_", "png", 72, width=NA)
+
+##FC.Anal takes the mean for the group and divides by the mean from the other group
 mSet<-FC.Anal(mSet, 2.0, 0, FALSE)
 ##mSet<-PlotFC(mSet, "fc_0_", "png", 72, width=NA)
 
-mSet$analSet$fc
+
+mSet<-Ttests.Anal(mSet, F, .05, F, T, "fdr", F)
+
+##can use t.test(x= cond1 ,y = cond2, paired = F, var.equal = T) to get the t and p values
+tempt = function(data){
+  p = t.test(data[1:4], data[5:8], paired = F, var.equal = T)
+  return(p[[3]])
+}
+temp = apply(tempdata, 2, tempt)
+tempfdr = p.adjust(temp, "BH", length(temp))
+
+
+```
+
+```{r}
+
+rawdata = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/MetabolomicsForMetaboanalyst.txt", sep = "\t", row.names = 1)
+
+KEGG.Key = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/RawMetabolomicData.csv", row.names = 1)
+KEGG.Key = setNames(KEGG.Key[-c(1:2), 2], row.names(KEGG.Key)[-c(1:2)])
+
+genotypes = setNames(c("WT", "GR", "TktOEWT", "TktOEGR", "TktDfWT", "TktDfGR"), c("C", "E", "A", "F", "B", "D"))
+
+metadata = data.frame(Sample = colnames(rawdata), 
+                      Group = as.character(rawdata[1,]), 
+                      TIC = as.numeric(rawdata[2,]), 
+                      Genotypes = genotypes[as.character(rawdata[1,])])
+
+
+
+norm.func = function(data){
+  nd = (as.numeric(data)/metadata$TIC)*1000
+  return(nd)
+}
+
+norm.data = t(apply(rawdata[3:nrow(rawdata),], 1, norm.func))
+colnames(norm.data) = colnames(rawdata)
+
+group.mean=function(data){
+  gm = mean(na.omit(data))
+}
+
+mean.data = matrix(0, nrow=nrow(norm.data), ncol = length(genotypes))
+row.names(mean.data) = row.names(norm.data)
+colnames(mean.data) = unique(metadata$Group)
+
+i=1
+while(i<=ncol(mean.data)){
+  mean.data[,i] = apply(norm.data[,metadata[metadata$Group == colnames(mean.data)[i], "Sample"]], 1, group.mean)
+  i = i+1
+}
+
+compare.conditions = function(condition1, condition2){
+  columns1 = metadata[metadata$Group == condition1, "Sample"]
+  columns2 = metadata[metadata$Group == condition2, "Sample"]
+  p=setNames(rep(NA, nrow(norm.data)), row.names(norm.data))
+  i=1
+  while(i<=length(p)){
+    if(length(na.omit(norm.data[i,columns1]))>2 & 
+       length(na.omit(norm.data[i,columns2]))>2){
+      temp = t.test(na.omit(norm.data[i,columns1]),
+                    na.omit(norm.data[i,columns2]), paired = F, var.equal = T)
+      p[i] = temp[[3]]
+      }
+    i=i+1
+    }
+
+  fdr = p.adjust(p, "BH", length(p))
+
+  fc = mean.data[,condition1]/mean.data[,condition2]
+
+  comparison.table = data.frame(p = p, 
+                                FDR = fdr, 
+                                FC = fc, 
+                                KEGG = KEGG.Key[row.names(mean.data)])
+  
+  comparison.table = comparison.table[order(comparison.table$FDR),]
+}
+
+GRxWT.C = compare.conditions("E", "C")
+GRxWT.Df = compare.conditions("D", "B")
+GRxWT.OE = compare.conditions("F", "A")
+
+KEGGID = na.omit(GRxWT.C[GRxWT.C$FDR<=.1, "KEGG"])
+KEGGID.C = KEGGID[-grep(" / ", KEGGID)]
+
+
+KEGGID = na.omit(GRxWT.Df[GRxWT.Df$FDR<=.1, "KEGG"])
+KEGGID.Df = KEGGID[-grep(" / ", KEGGID)]
+
+KEGGID = na.omit(GRxWT.OE[GRxWT.OE$FDR<=.1, "KEGG"])
+KEGGID.OE = KEGGID[-grep(" / ", KEGGID)]
+
+```
+
+
+```{r echo = F}
+KEGGID = KEGGID.Df
+
+rm(mSet)
+mSet<-InitDataObjects("conc", "pathora", FALSE)
+cmpd.vec<-KEGGID
+mSet<-Setup.MapData(mSet, cmpd.vec)
+mSet<-CrossReferencing(mSet, "kegg")
+mSet<-CreateMappingResultTable(mSet)
+mSet<-SetKEGG.PathLib(mSet, "dme", "current")
+mSet<-SetMetabolomeFilter(mSet, F)
+mSet<-CalculateOraScore(mSet, "rbc", "hyperg")
+
+##pathway plot data
+ppd = mSet$api$ora.results
+colnames(ppd)[4:5] = c("p","neg.log.p")
+
+ppd = as.data.frame(ppd)
+ppd$Pathway = row.names(ppd)    
+ppd$Pathway = factor(ppd$Pathway, levels= unique(ppd$Pathway))
+ppd$Size = 5*log(100*ppd$Impact +1)+10
+
+col.gradient=colorRampPalette(c("white", "yellow","red", "red3"), space = "Lab", bias = 3)
+
+  fig  = plot_ly(data = ppd, 
+                 x = ~Impact, 
+                 y = ~neg.log.p,
+                 name = ~Pathway,
+                 type = 'scatter',
+                 mode = 'markers',
+                 showlegend = F,
+                 color = ~neg.log.p,
+                 colors = col.gradient(nrow(ppd)),
+                 marker = list(size = as.numeric(ppd$Size), opacity = 0.75, line = list(color = "black", width = 1)),
+                 hoverinfo = "text",
+                 hovertext = paste("Pathway:", ppd$Pathway, 
+                                   "\nHits: ", ppd$Hits, 
+                                   "\nTotal in Cat.: ", ppd$Total, 
+                                   "\nFDR: ", ppd$FDR)) %>%
+    hide_colorbar()
+
+fig
+```
+
+
+```{r}
+
+
+
 ```
