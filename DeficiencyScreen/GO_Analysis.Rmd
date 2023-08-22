@@ -46,14 +46,17 @@ genesingo=as.list(org.Dm.egGO2ALLEGS)
 ##genes = setNames(rep(0, length(unique(Df.data$Symbol))), unique(Df.data$Symbol))
 ##genes[sigs] = 1
 ##pwf=nullp(genes,"dm3","geneSymbol")
-##GO.wall=goseq(pwf,"dm3","geneSymbol")
+  ##GO.wall=goseq(pwf,"dm3","geneSymbol")
+##GO.wall=goseq(pwf,"dm3","geneSymbol", method = "Hypergeometric")
+
 ##GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
 ##row.names(GO.wall) = GO.wall$category
 ##Repress.GO = GO.wall
 ##write.csv(Repress.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/RepressorGOAnalysis.csv")
 
-##KEGG term enrichment is KEGG
-##KEGG=goseq(pwf,gene2cat=kegg)
+  ##KEGG=goseq(pwf,gene2cat=kegg)
+##KEGG=goseq(pwf,gene2cat=kegg, method = "Hypergeometric")
+
 ##KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
 ##row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
 ##KEGG$Name=kegg.names[row.names(KEGG),1]
@@ -64,14 +67,18 @@ genesingo=as.list(org.Dm.egGO2ALLEGS)
 ##genes = setNames(rep(0, nrow(Df.data)), Df.data$Symbol)
 ##genes[sigs] = 1
 ##pwf=nullp(genes,"dm3","geneSymbol")
-##GO.wall=goseq(pwf,"dm3","geneSymbol")
+  ##GO.wall=goseq(pwf,"dm3","geneSymbol")
+##GO.wall=goseq(pwf,"dm3","geneSymbol", method = "Hypergeometric")
+
 ##GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
 ##row.names(GO.wall) = GO.wall$category
 ##Moderate.GO = GO.wall
 ##write.csv(Moderate.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/ModerateGOAnalysis.csv")
 
 
-##KEGG=goseq(pwf,gene2cat=kegg)
+  ##KEGG=goseq(pwf,gene2cat=kegg)
+##KEGG=goseq(pwf,gene2cat=kegg, method = "Hypergeometric")
+
 ##KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
 ##row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
 ##KEGG$Name=kegg.names[row.names(KEGG),1]
@@ -83,14 +90,18 @@ genesingo=as.list(org.Dm.egGO2ALLEGS)
 ##genes = setNames(rep(0, nrow(Df.data)), Df.data$Symbol)
 ##genes[sigs] = 1
 ##pwf=nullp(genes,"dm3","geneSymbol")
-##GO.wall=goseq(pwf,"dm3","geneSymbol")
+  ##GO.wall=goseq(pwf,"dm3","geneSymbol")
+##GO.wall=goseq(pwf,"dm3","geneSymbol", method = "Hypergeometric")
+
 ##GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
 ##row.names(GO.wall) = GO.wall$category
 ##Strong.GO = GO.wall
 ##write.csv(Strong.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/StrongGOAnalysis.csv")
 
 
-##KEGG=goseq(pwf,gene2cat=kegg)
+  ##KEGG=goseq(pwf,gene2cat=kegg)
+##KEGG=goseq(pwf,gene2cat=kegg, method = "Hypergeometric")
+
 ##KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
 ##row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
 ##KEGG$Name=kegg.names[row.names(KEGG),1]
@@ -101,14 +112,18 @@ genesingo=as.list(org.Dm.egGO2ALLEGS)
 ##genes = setNames(rep(0, nrow(Df.data)), Df.data$Symbol)
 ##genes[sigs] = 1
 ##pwf=nullp(genes,"dm3","geneSymbol")
-##GO.wall=goseq(pwf,"dm3","geneSymbol")
+  ##GO.wall=goseq(pwf,"dm3","geneSymbol")
+##GO.wall=goseq(pwf,"dm3","geneSymbol", method = "Hypergeometric")
+
 ##GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
 ##row.names(GO.wall) = GO.wall$category
 ##Lethal.GO = GO.wall
 ##write.csv(Lethal.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/LethalGOAnalysis.csv")
 
 
-##KEGG=goseq(pwf,gene2cat=kegg)
+  ##KEGG=goseq(pwf,gene2cat=kegg)
+##KEGG=goseq(pwf,gene2cat=kegg, method = "Hypergeometric")
+
 ##KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
 ##row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
 ##KEGG$Name=kegg.names[row.names(KEGG),1]
@@ -119,14 +134,18 @@ genesingo=as.list(org.Dm.egGO2ALLEGS)
 ##genes = setNames(rep(0, nrow(Df.data)), Df.data$Symbol)
 ##genes[sigs] = 1
 ##pwf=nullp(genes,"dm3","geneSymbol")
-##GO.wall=goseq(pwf,"dm3","geneSymbol")
+  ##GO.wall=goseq(pwf,"dm3","geneSymbol")
+##GO.wall=goseq(pwf,"dm3","geneSymbol", method = "Hypergeometric")
+
 ##GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
 ##row.names(GO.wall) = GO.wall$category
 ##Enhance.GO = GO.wall
 ##write.csv(Enhance.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/EnhancerGOAnalysis.csv")
 
 
-##KEGG=goseq(pwf,gene2cat=kegg)
+  ##KEGG=goseq(pwf,gene2cat=kegg)
+##KEGG=goseq(pwf,gene2cat=kegg, method = "Hypergeometric")
+
 ##KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
 ##row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
 ##KEGG$Name=kegg.names[row.names(KEGG),1]
