@@ -60,9 +60,7 @@ for(i in 1:ncol(TKT.EdgeR)){
 
 ```
 
-
 ##GO and KEGG Enrichment function
-
 ```{r echo = F, include = F}
 
 Enrichment = function(sigs, bg){
@@ -136,7 +134,6 @@ GO.Sim.PCA = function(use.data){
 
 ```
 
-
 ##GO20 Function
 ```{r echo = F, include =F}
 
@@ -192,9 +189,14 @@ KEGG20 = function(data){
   
   data = data[1:20, c("category", "Name","adjp", "numDEInCat", "numInCat")]
   
+data$term = data$Name
+if(length(unique(data$term)) < length(data$term)){
+  data$term[duplicated(data$term)] = paste(data$term[duplicated(data$term)], "2")
+}  
 data = data[20:1,]
 data$Score = -log10(data$adjp)
-data$term = factor(data$Name, levels = c(unique(data$Name)))
+data$term = factor(data$term, levels = c(unique(data$term)))
+
 
 m <- list(
   l = 50,
@@ -236,7 +238,6 @@ return(fig)
 ```{r echo = F, include = F}
 
 ##GR vs WT Females
-
 sigs1 = row.names(TKT.EdgeR)[TKT.EdgeR[,"GRxWT.FC"] <= .05]
 bg1 = row.names(TKT.EdgeR)[TKT.EdgeR[, "GRxWT.FC"]<= 1]
 
@@ -250,7 +251,6 @@ sigsKEY = GeneIDKey[sigs,]
 sigs = sigsKEY$Symbol
 bgKEY = GeneIDKey[bg,]
 bg = bgKEY$Symbol
-
 
 sig.cats = Enrichment(sigs, bg)
 
@@ -342,545 +342,212 @@ treemapPlot(reducedTerms)
 
 ```
 
-```{r include = F, echo = F}
+```{r}
 
-GOID = "GO:0005634"
-GenesInGO = genesingo[GOID]
+##GR.F vs WT.F specific volcano
 
-GenesInGO = sigsKEY[sigsKEY$ensembl %in% GenesInGO[[1]], "FBgn"]
+specific.cat = c('none', 'parent.category', 'specific.kegg', 'specific.go')
 
-```
+specific.cat = specific.cat[2]
+parent.category = 'neurogenesis'
+specific.kegg = "DNA replication"
+specific.go =  '32553'
 
-```{r include = F, echo = F}
-
-ParentID = "GO:0044271"
-GOIDs = row.names(reducedTerms)[reducedTerms$parent == ParentID]
-GOID = GOIDs[1]
-GenesInParent= unique(genesingo[[GOID]])
-i=2
-while(i<=length(GOIDs)){
-  GOID = GOIDs[i]
-  GenesInParent= unique(GenesInParent, genesingo[[GOID]])
-  i=i+1
-}
-
-GenesInGO = sigsKEY[sigsKEY$ensembl %in% GenesInParent, "FBgn"]
-
-```
-
-```{r echo =F, warnings = F}
-
-comparison = "GRxWT.FC"
-comparison2 = "GRxWT.MC"
-
-hmdata = cpmdata[GenesInGO, groups$Group == "GR.F" | groups$Group == "WT.F"]
-hmdata = cpmdata[sigsKEY$FBgn, groups$Group == "GR.F" | groups$Group == "WT.F"]
-
-hover.text = round(hmdata, digits = 1)
-
-FDR = hmdata
-FDR[,1:ncol(FDR)] = TKT.EdgeR[row.names(hmdata), comparison]
-
-FBgn = hmdata
-FBgn[,1:ncol(FBgn)] = row.names(FBgn)
-
-i=1
-while(i<=ncol(hover.text)){
-  hover.text[,i] = paste("CPM = ", hover.text[,i],
-                         "\nFDR = ", FDR[,i],
-                         "\nFBgn = ", FBgn[,i])
-  i=i+1
-}
-
-
-hmdata2 = cpmdata[GenesInGO, groups$Group == "GR.M" | groups$Group == "WT.M"]
-hmdata2 = cpmdata[sigsKEY$FBgn, groups$Group == "GR.M" | groups$Group == "WT.M"]
-
-hover.text2 = round(hmdata2, digits = 1)
-
-FDR2 = hmdata2
-FDR2[,1:ncol(FDR2)] = TKT.EdgeR[row.names(hmdata2), comparison2]
-
-FBgn2 = hmdata2
-FBgn2[,1:ncol(FBgn2)] = row.names(FBgn2)
-
-
-i=1
-while(i<=ncol(hover.text2)){
-  hover.text2[,i] = paste("CPM = ", hover.text2[,i],
-                         "\nFDR = ", FDR2[,i],
-                         "\nFBgn = ", FBgn2[,i])
-  i=i+1
-}
-
-hmdata = cbind(hmdata, hmdata2)
-hover.text = cbind(hover.text, hover.text2)
-
-heatmaply(hmdata,
-            trace="none",
-            col=RdYlBu(100)[100:1],
-            scale="row",
-            dendrogram = "both",
-            show_dendrogram = c(F,T),
-            Rowv=T,
-            Colv=T,
-            ##cexRow = 1/(as.numeric(input$tophits)/25),
-            na.color="grey",
-            labRow = GeneIDKey[row.names(hmdata), "Symbol"],
-            ##cexCol = col.text,
-            cexCol = 1,
-            key = T,
-            ##margins = c(50,350,NA,0),
-            ##row_dend_left = T,
-            column_text_angle = 90,
-            
-            ##col_side_colors=color.groups,
-            ##col_side_palette=Spectral,
-            ##main= "",
-            custom_hovertext = hover.text)
-
-
-```
-
-##############
-## GRxWT Df ##
-##############
-
-```{r echo = F, include = F}
-
-comparison1 = "GRxWT.FDf"
-comparison2 = "GRxWT.MDf"
-
-sigs1 = row.names(TKT.EdgeR)[TKT.EdgeR[,comparison1] <= .05]
-
-sigs1 = sigs1[apply(cpmdata[sigs1,groups$Group == "TktDfGR.F" | groups$Group == "TktDfWT.F"], 1, min) > 5] 
-
-sigs2 = row.names(TKT.EdgeR)[TKT.EdgeR[,comparison2] <= .05]
-
-sigs2 = sigs2[apply(cpmdata[sigs2,groups$Group == "TktDfGR.M" | groups$Group == "TktDfGR.M"], 1, min) > 5] 
-
-sigs= intersect(sigs1, sigs2)
-
-sigsKEY = GeneIDKey[sigs,]
-
-sigs = sigsKEY$Symbol
-
-sig.cats = Enrichment(sigs)
-
-```
-
-
-```{r echo = F, include =F}
-
-GO.data = sig.cats[["GO"]]
-GO.ontology = "BP"
-BP.GO.fig = GO20(GO.data, GO.ontology)
-
-GO.ontology = "CC"
-CC.GO.fig = GO20(GO.data, GO.ontology)
-
-GO.ontology = "MF"
-MF.GO.fig = GO20(GO.data, GO.ontology)
-
-KEGG.fig = KEGG20(sig.cats[["KEGG"]])
-
-```
-
-```{r, fig.width= 10}
-
-BP.GO.fig
-
-```
-
-```{r, fig.width= 10}
-
-CC.GO.fig
-
-```
-
-```{r, fig.width= 10}
-
-MF.GO.fig
-
-```
-
-```{r, fig.width= 10}
-
-KEGG.fig
-
-```
-
-```{r echo =F, warnings = F}
-
-comparison = "GRxWT.FDf"
-comparison2 = "GRxWT.MDf"
-
-##hmdata = cpmdata[GenesInGO, groups$Group == "GR.F" | groups$Group == "WT.F"]
-hmdata = cpmdata[sigsKEY$FBgn, groups$Group == "GR.F" | groups$Group == "WT.F"]
-
-hover.text = round(hmdata, digits = 1)
-
-FDR = hmdata
-FDR[,1:ncol(FDR)] = TKT.EdgeR[row.names(hmdata), comparison]
-
-FBgn = hmdata
-FBgn[,1:ncol(FBgn)] = row.names(FBgn)
-
-i=1
-while(i<=ncol(hover.text)){
-  hover.text[,i] = paste("CPM = ", hover.text[,i],
-                         "\nFDR = ", FDR[,i],
-                         "\nFBgn = ", FBgn[,i])
-  i=i+1
-}
-
-
-##hmdata2 = cpmdata[GenesInGO, groups$Group == "GR.M" | groups$Group == "WT.M"]
-hmdata2 = cpmdata[sigsKEY$FBgn, groups$Group == "GR.M" | groups$Group == "WT.M"]
-
-hover.text2 = round(hmdata2, digits = 1)
-
-FDR2 = hmdata2
-FDR2[,1:ncol(FDR2)] = TKT.EdgeR[row.names(hmdata2), comparison2]
-
-FBgn2 = hmdata2
-FBgn2[,1:ncol(FBgn2)] = row.names(FBgn2)
-
-
-i=1
-while(i<=ncol(hover.text2)){
-  hover.text2[,i] = paste("CPM = ", hover.text2[,i],
-                         "\nFDR = ", FDR2[,i],
-                         "\nFBgn = ", FBgn2[,i])
-  i=i+1
-}
-
-hmdata = cbind(hmdata, hmdata2)
-hover.text = cbind(hover.text, hover.text2)
-
-heatmaply(hmdata,
-            trace="none",
-            col=RdYlBu(100)[100:1],
-            scale="row",
-            dendrogram = "both",
-            show_dendrogram = c(F,T),
-            Rowv=T,
-            Colv=T,
-            ##cexRow = 1/(as.numeric(input$tophits)/25),
-            na.color="grey",
-            labRow = GeneIDKey[row.names(hmdata), "Symbol"],
-            ##cexCol = col.text,
-            cexCol = 1,
-            key = T,
-            ##margins = c(50,350,NA,0),
-            ##row_dend_left = T,
-            column_text_angle = 90,
-            
-            ##col_side_colors=color.groups,
-            ##col_side_palette=Spectral,
-            ##main= "",
-            custom_hovertext = hover.text)
-
-
-```
-
-
-##############
-## GRxWT OE ##
-##############
-
-```{r echo = F, include = F}
-
-comparison1 = "GRxWT.FOE"
-comparison2 = "GRxWT.MOE"
-
-sigs1 = row.names(TKT.EdgeR)[TKT.EdgeR[,comparison1] <= .05]
-
-sigs1 = sigs1[apply(cpmdata[sigs1,groups$Group == "TktOEGR.F" | groups$Group == "TktOEWT.F"], 1, min) > 5] 
-
-sigs2 = row.names(TKT.EdgeR)[TKT.EdgeR[,comparison2] <= .05]
-
-sigs2 = sigs2[apply(cpmdata[sigs2,groups$Group == "TktOEGR.M" | groups$Group == "TktOEGR.M"], 1, min) > 5] 
-
-sigs= intersect(sigs1, sigs2)
-
-sigsKEY = GeneIDKey[sigs,]
-
-sigs = sigsKEY$Symbol
-
-sig.cats = Enrichment(sigs)
-
-```
-
-```{r echo =F, include =F}
-
-GO.data = sig.cats[["GO"]]
-GO.ontology = "BP"
-go_analysis = GO.data$category[GO.data$adjp <= .05 & GO.data$ontology == GO.ontology]
-scores = setNames(-log10(GO.data$adjp), go_analysis)
-
-simMatrix <- calculateSimMatrix(go_analysis,
-                                orgdb="org.Dm.eg.db",
-                                ont=GO.ontology,
-                                method="Rel")
-
-reducedTerms <- reduceSimMatrix(simMatrix,
-                                scores,
-                                threshold=0.7,
-                                orgdb="org.Dm.eg.db")
-
-```
-
-
-```{r echo = F, include =F}
-
-GO.data = sig.cats[["GO"]]
-GO.ontology = "BP"
-BP.GO.fig = GO20(GO.data, GO.ontology)
-
-GO.ontology = "CC"
-CC.GO.fig = GO20(GO.data, GO.ontology)
-
-GO.ontology = "MF"
-MF.GO.fig = GO20(GO.data, GO.ontology)
-
-KEGG.fig = KEGG20(sig.cats[["KEGG"]])
-
-```
-
-```{r, fig.width= 10}
-
-BP.GO.fig
-
-```
-
-```{r, fig.width= 10}
-
-CC.GO.fig
-
-```
-
-```{r, fig.width= 10}
-
-MF.GO.fig
-
-```
-
-```{r, fig.width= 10}
-
-KEGG.fig
-
-```
-
-```{r fig.height=7, fig.width=10}
-
-heatmapPlot(simMatrix,
-            reducedTerms,
-            annotateParent=TRUE,
-            annotationLabel="parentTerm",
-            fontsize=6,
-            main = "Repressor Gene Enriched Biological Process GO terms")
-
-```
-
-
-```{r warning=F, fig.width=10}
-
-use.data   = simMatrix
-GO.Sim.PCA(use.data)
-
-```
-
-
-```{r fig.align='left'}
-
-treemapPlot(reducedTerms)
-
-```
-
-```{r include = F, echo = F}
-
-GOID = "GO:0003723"
-GenesInGO = genesingo[GOID]
-
-GenesInGO = sigsKEY[sigsKEY$ensembl %in% GenesInGO[[1]], "FBgn"]
-
-```
-
-```{r include = F, echo = F}
-ParentID = "GO:0034249"
-GOIDs = row.names(reducedTerms)[reducedTerms$parent == ParentID]
-GOID = GOIDs[1]
-GenesInParent= unique(genesingo[[GOID]])
-i=2
-while(i<=length(GOIDs)){
-  GOID = GOIDs[i]
-  GenesInParent= unique(GenesInParent, genesingo[[GOID]])
-  i=i+1
-}
-
-GenesInGO = sigsKEY[sigsKEY$ensembl %in% GenesInParent, "FBgn"]
-
-```
-
-```{r echo =F, warnings = F}
-
-comparison = "GRxWT.FOE"
-comparison2 = "GRxWT.MOE"
-
-hmdata = cpmdata[GenesInGO, groups$Group == "TktOEGR.F" | groups$Group == "TktOEWT.F"]
-hmdata = cpmdata[sigsKEY$FBgn, groups$Group == "TktOEGR.F" | groups$Group == "TktOEWT.F"]
-
-hover.text = round(hmdata, digits = 1)
-
-FDR = hmdata
-FDR[,1:ncol(FDR)] = TKT.EdgeR[row.names(hmdata), comparison]
-
-FBgn = hmdata
-FBgn[,1:ncol(FBgn)] = row.names(FBgn)
-
-i=1
-while(i<=ncol(hover.text)){
-  hover.text[,i] = paste("CPM = ", hover.text[,i],
-                         "\nFDR = ", FDR[,i],
-                         "\nFBgn = ", FBgn[,i])
-  i=i+1
-}
-
-
-hmdata2 = cpmdata[GenesInGO, groups$Group == "TktOEGR.M" | groups$Group == "TktOEWT.M"]
-hmdata2 = cpmdata[sigsKEY$FBgn, groups$Group == "TktOEGR.M" | groups$Group == "TktOEWT.M"]
-
-hover.text2 = round(hmdata2, digits = 1)
-
-FDR2 = hmdata2
-FDR2[,1:ncol(FDR2)] = TKT.EdgeR[row.names(hmdata2), comparison2]
-
-FBgn2 = hmdata2
-FBgn2[,1:ncol(FBgn2)] = row.names(FBgn2)
-
-
-i=1
-while(i<=ncol(hover.text2)){
-  hover.text2[,i] = paste("CPM = ", hover.text2[,i],
-                         "\nFDR = ", FDR2[,i],
-                         "\nFBgn = ", FBgn2[,i])
-  i=i+1
-}
-
-hmdata = cbind(hmdata, hmdata2)
-hover.text = cbind(hover.text, hover.text2)
-
-heatmaply(hmdata,
-            trace="none",
-            col=RdYlBu(100)[100:1],
-            scale="row",
-            dendrogram = "both",
-            show_dendrogram = c(F,T),
-            Rowv=T,
-            Colv=T,
-            ##cexRow = 1/(as.numeric(input$tophits)/25),
-            na.color="grey",
-            labRow = GeneIDKey[row.names(hmdata), "Symbol"],
-            ##cexCol = col.text,
-            cexCol = 1,
-            key = T,
-            ##margins = c(50,350,NA,0),
-            ##row_dend_left = T,
-            column_text_angle = 90,
-            
-            ##col_side_colors=color.groups,
-            ##col_side_palette=Spectral,
-            ##main= "",
-            custom_hovertext = hover.text)
-
-```
-
-#########################
-## Comparing the three ##
-#########################
-
-```{r include = F, echo = F}
-
-comparison1 = "GRxWT.FC"
-comparison2 = "GRxWT.MC"
-
-sigs1 = row.names(TKT.EdgeR)[TKT.EdgeR[,comparison1] <= .05]
-
-sigs1 = sigs1[apply(cpmdata[sigs1,groups$Group == "GR.F" | groups$Group == "WT.F"], 1, min) > 5] 
-
-sigs2 = row.names(TKT.EdgeR)[TKT.EdgeR[,comparison2] <= .05]
-
-sigs2 = sigs2[apply(cpmdata[sigs2,groups$Group == "GR.M" | groups$Group == "GR.M"], 1, min) > 5] 
-
-sigs= intersect(sigs1, sigs2)
-
-sigsKEY = GeneIDKey[sigs,]
-
-C.sigs = sigsKEY$Symbol
-
-comparison1 = "GRxWT.FDf"
-comparison2 = "GRxWT.MDf"
-
-sigs1 = row.names(TKT.EdgeR)[TKT.EdgeR[,comparison1] <= .05]
-
-sigs1 = sigs1[apply(cpmdata[sigs1,groups$Group == "TktDfGR.F" | groups$Group == "TktDfWT.F"], 1, min) > 5] 
-
-sigs2 = row.names(TKT.EdgeR)[TKT.EdgeR[,comparison2] <= .05]
-
-sigs2 = sigs2[apply(cpmdata[sigs2,groups$Group == "TktDfGR.M" | groups$Group == "TktDfGR.M"], 1, min) > 5] 
-
-sigs= intersect(sigs1, sigs2)
-
-sigsKEY = GeneIDKey[sigs,]
-
-Df.sigs = sigsKEY$Symbol
-
-comparison1 = "GRxWT.FOE"
-comparison2 = "GRxWT.MOE"
-
-sigs1 = row.names(TKT.EdgeR)[TKT.EdgeR[,comparison1] <= .05]
-
-sigs1 = sigs1[apply(cpmdata[sigs1,groups$Group == "TktOEGR.F" | groups$Group == "TktOEWT.F"], 1, min) > 5] 
-
-sigs2 = row.names(TKT.EdgeR)[TKT.EdgeR[,comparison2] <= .05]
-
-sigs2 = sigs2[apply(cpmdata[sigs2,groups$Group == "TktOEGR.M" | groups$Group == "TktOEGR.M"], 1, min) > 5] 
-
-sigs= intersect(sigs1, sigs2)
-
-sigsKEY = GeneIDKey[sigs,]
-
-OE.sigs = sigsKEY$Symbol
-
-
-
-##Sample titles as strings. Only fill in up to your number of selected categories
-set1="Control"
-set2="Defficient"
-set3="Over Expression"
-##set4="GSC2.Stem"
+set.size = F
   
-##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
-s1 = C.sigs
-s2 = Df.sigs
-s3 = OE.sigs
-##s4=row.names(temp)[temp[,4]==1]
+GOterm.genes = vector('list', length = length(unique(reducedTerms$parent)))
+names(GOterm.genes) = unique(reducedTerms$parent)
+i=1
+while(i<=length(GOterm.genes)){
+  goinparent = reducedTerms[grep(names(GOterm.genes)[i], reducedTerms$parent),'go']
+  genesinparent = unlist(genesingo[goinparent])
+  GOterm.genes[[i]] = GeneIDKey[GeneIDKey$ensembl %in% genesinparent, 'FBgn']
+  i = i +1
+}
 
+volcano.data = data.frame(Symbol = GeneIDKey[row.names(TKT.EdgeR), "Symbol"], 
+                          FDR = -log2(TKT.EdgeR[, 'GRxWT.FC']),
+                          FC = TKT.EdgeR.FC[row.names(TKT.EdgeR), 'GRxWT.FC'],
+                          ##Color = 0)
+                          Color = 'grey',
+                          size = 5*log(mean.cpm[row.names(TKT.EdgeR),"GR.F"]),
+                          GR.F.cpm = mean.cpm[row.names(TKT.EdgeR),"GR.F"],
+                          WT.F.cpm = mean.cpm[row.names(TKT.EdgeR),"WT.F"],
+                          GO.terms = "none")
+
+main.title = "Significant DEG in G85R Females vs. WT Females"
+
+volcano.data$Color[volcano.data$FDR >= -log2(.05) & volcano.data$FC < 0] = 'lightblue'
+volcano.data$Color[volcano.data$FDR >= -log2(.0001) & volcano.data$FC < 0] = 'steelblue'
+volcano.data$Color[volcano.data$FDR >= -log2(.000001) & volcano.data$FC < 0] = 'dodgerblue'
+
+volcano.data$Color[volcano.data$FDR >= -log2(.05) & volcano.data$FC > 0] = 'lightcoral'
+volcano.data$Color[volcano.data$FDR >= -log2(.0001) & volcano.data$FC > 0] = 'tomato'
+volcano.data$Color[volcano.data$FDR >= -log2(.000001) & volcano.data$FC > 0] = 'firebrick'
+
+volcano.data$size[volcano.data$FDR <= -log2(.05)] = 3
+
+if(set.size == T){
+  volcano.data$size = 15
+  volcano.data$size[volcano.data$FDR <= -log2(.05)] = 5
+}
+
+
+if(specific.cat == 'parent.category'){
+  parent.genes = GOterm.genes[[intersect(reducedTerms[reducedTerms$parentTerm == parent.category, "go"], names(GOterm.genes))]]
+  volcano.data$Color = 'honeydew'
+  volcano.data[parent.genes, 'Color'] = 'deeppink'
+  volcano.data = volcano.data[order(volcano.data$Color, decreasing = T),]
+  main.title = sig.cats$GO[c(grep(parent.category, sig.cats$GO$term), grep(parent.category, sig.cats$GO$category)), 'term']
+}
+
+
+if(specific.cat == 'specific.kegg'){
+  kegg.id = sig.cats$KEGG[c(grep(specific.kegg, sig.cats$KEGG$Name), grep(specific.kegg, sig.cats$KEGG$category)), 'category']
+  kegg.genes = names(kegg[grep(kegg.id, kegg)])
+  volcano.data$Color = 'honeydew'
+  row.names(volcano.data) = volcano.data$Symbol
+    volcano.data[kegg.genes, 'Color'] = 'deeppink'
+  volcano.data = volcano.data[order(volcano.data$Color, decreasing = T),]
+  main.title = sig.cats$KEGG[c(grep(specific.kegg, sig.cats$KEGG$Name), grep(specific.kegg, sig.cats$KEGG$category)), 'Name']
+}
+
+
+if(specific.cat == 'specific.go'){
+  go.id = sig.cats$GO[c(grep(specific.go, sig.cats$GO$term), grep(specific.go, sig.cats$GO$category)), 'category']
+  volcano.data$Color = 'honeydew'
+  go.genes = genesingo[[go.id]]
+  go.genes = GeneIDKey[GeneIDKey$ensembl %in% go.genes, "FBgn"]
+  go.genes = intersect(go.genes, row.names(volcano.data))
+  volcano.data[go.genes, 'Color'] = 'deeppink'
+  volcano.data = volcano.data[order(volcano.data$Color, decreasing = T),]
+  main.title = sig.cats$GO[c(grep(specific.go, sig.cats$GO$term), grep(specific.go, sig.cats$GO$category)), 'term']
+}
+
+##volcano.data
+
+
+fig = plot_ly(data = volcano.data,
+              x = ~FC,
+              y = ~FDR,
+              type = 'scatter',
+              mode = 'markers',
+              marker = list(color = ~Color, colors = ~Color, size = volcano.data$size,
+                            line = list(color = 'black', width = .5)),
+              hoverinfo = "text",
+              hovertext = paste("Gene:", volcano.data$Symbol,
+                      "\n-log2(FDR): ", round(volcano.data$FDR,2),
+                      "\nFC: ", round(volcano.data$FC,2),
+                      "\nG85R mean cpm: ", round(volcano.data$GR.F.cpm, 1),
+                      "\nWT mean cpm: ", round(volcano.data$WT.F.cpm, 1)))
+fig = fig %>% layout(title = main.title)
+
+              ##color = ~Color,
+              ##colors = 'Spectral')
+              ##color = ~Color,
+              ##colors = ~Color)
+              ##marker = list(colorscale = list(c(0,.5,1), c("blue","yellow", "red")), color = ~Color))
+
+fig
 
 ```
 
 ```{r}
+specific.cat = c('none', 'parent.category', 'specific.kegg', 'specific.go')
 
-data = data.frame(Condition = c("Control", "Defficient", "Over Expression"), DEGs = c(length(C.sigs), length(Df.sigs), length(OE.sigs)))
+specific.cat = specific.cat[1]
+parent.category = 'chromosome organization'
+specific.kegg = "DNA replication"
+specific.go =  '006457'
 
-fig <- plot_ly(data, 
-               x = ~Condition, y = ~DEGs, 
-               type = 'bar',
-               name = ~Condition,
-               color = ~Condition,
-               colors = c("coral3","gold2", "steelblue3"),
-               marker = list(line = list(color = "black", width = 1.5)))
+set.size = F
+  
+GOterm.genes = vector('list', length = length(unique(reducedTerms$parent)))
+names(GOterm.genes) = unique(reducedTerms$parent)
+i=1
+while(i<=length(GOterm.genes)){
+  goinparent = reducedTerms[grep(names(GOterm.genes)[i], reducedTerms$parent),'go']
+  genesinparent = unlist(genesingo[goinparent])
+  GOterm.genes[[i]] = GeneIDKey[GeneIDKey$ensembl %in% genesinparent, 'FBgn']
+  i = i +1
+}
+
+volcano.data = data.frame(Symbol = GeneIDKey[row.names(TKT.EdgeR), "Symbol"], 
+                          FDR = -log2(TKT.EdgeR[, 'GRxWT.MC']),
+                          FC = TKT.EdgeR.FC[row.names(TKT.EdgeR), 'GRxWT.MC'],
+                          ##Color = 0)
+                          Color = 'grey',
+                          size = 5*log(mean.cpm[row.names(TKT.EdgeR),"GR.M"]),
+                          GR.F.cpm = mean.cpm[row.names(TKT.EdgeR),"GR.M"],
+                          WT.F.cpm = mean.cpm[row.names(TKT.EdgeR),"WT.M"],
+                          GO.terms = "none")
+
+main.title = "Significant DEG in G85R Males vs. WT Males"
+
+volcano.data$Color[volcano.data$FDR >= -log2(.05) & volcano.data$FC < 0] = 'lightblue'
+volcano.data$Color[volcano.data$FDR >= -log2(.0001) & volcano.data$FC < 0] = 'steelblue'
+volcano.data$Color[volcano.data$FDR >= -log2(.000001) & volcano.data$FC < 0] = 'dodgerblue'
+
+volcano.data$Color[volcano.data$FDR >= -log2(.05) & volcano.data$FC > 0] = 'lightcoral'
+volcano.data$Color[volcano.data$FDR >= -log2(.0001) & volcano.data$FC > 0] = 'tomato'
+volcano.data$Color[volcano.data$FDR >= -log2(.000001) & volcano.data$FC > 0] = 'firebrick'
+
+volcano.data$size[volcano.data$FDR <= -log2(.05)] = 3
+
+if(set.size == T){
+  volcano.data$size = 15
+  volcano.data$size[volcano.data$FDR <= -log2(.05)] = 5
+}
+
+
+if(specific.cat == 'parent.category'){
+  parent.genes = GOterm.genes[[intersect(reducedTerms[reducedTerms$parentTerm == parent.category, "go"], names(GOterm.genes))]]
+  volcano.data$Color = 'honeydew'
+  volcano.data[parent.genes, 'Color'] = 'deeppink'
+  volcano.data = volcano.data[order(volcano.data$Color, decreasing = T),]
+  main.title = sig.cats$GO[c(grep(parent.category, sig.cats$GO$term), grep(parent.category, sig.cats$GO$category)), 'term']
+}
+
+
+if(specific.cat == 'specific.kegg'){
+  kegg.id = sig.cats$KEGG[c(grep(specific.kegg, sig.cats$KEGG$Name), grep(specific.kegg, sig.cats$KEGG$category)), 'category']
+  kegg.genes = names(kegg[grep(kegg.id, kegg)])
+  volcano.data$Color = 'honeydew'
+  row.names(volcano.data) = volcano.data$Symbol
+    volcano.data[kegg.genes, 'Color'] = 'deeppink'
+  volcano.data = volcano.data[order(volcano.data$Color, decreasing = T),]
+  main.title = sig.cats$KEGG[c(grep(specific.kegg, sig.cats$KEGG$Name), grep(specific.kegg, sig.cats$KEGG$category)), 'Name']
+}
+
+
+if(specific.cat == 'specific.go'){
+  go.id = sig.cats$GO[c(grep(specific.go, sig.cats$GO$term), grep(specific.go, sig.cats$GO$category)), 'category']
+  volcano.data$Color = 'honeydew'
+  go.genes = genesingo[[go.id]]
+  go.genes = GeneIDKey[GeneIDKey$ensembl %in% go.genes, "FBgn"]
+  go.genes = intersect(go.genes, row.names(volcano.data))
+  volcano.data[go.genes, 'Color'] = 'deeppink'
+  volcano.data = volcano.data[order(volcano.data$Color, decreasing = T),]
+  main.title = sig.cats$GO[c(grep(specific.go, sig.cats$GO$term), grep(specific.go, sig.cats$GO$category)), 'term']
+}
+
+##volcano.data
+
+
+fig = plot_ly(data = volcano.data,
+              x = ~FC,
+              y = ~FDR,
+              type = 'scatter',
+              mode = 'markers',
+              marker = list(color = ~Color, colors = ~Color, size = volcano.data$size,
+                            line = list(color = 'black', width = .5)),
+              hoverinfo = "text",
+              hovertext = paste("Gene:", volcano.data$Symbol,
+                      "\n-log2(FDR): ", round(volcano.data$FDR,2),
+                      "\nFC: ", round(volcano.data$FC,2),
+                      "\nG85R mean cpm: ", round(volcano.data$GR.F.cpm, 1),
+                      "\nWT mean cpm: ", round(volcano.data$WT.F.cpm, 1)))
+fig = fig %>% layout(title = main.title)
 
 fig
 
@@ -889,8 +556,224 @@ fig
 
 ```{r}
 
-##Triple Venn
-grid.newpage()
-draw.triple.venn(area1=length(s1),area2=length(s2),area3=length(s3),n12=length(intersect(s1,s2)),n23 = length(intersect(s2,s3)),n13 = length(intersect(s1,s3)),n123 = length(intersect(intersect(s1,s2),s3)),category=c(set1,set2,set3),fill = c("brown1","gold2", "steelblue2"),cex=1.5,cat.cex = 1)
+rawdata = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/MetabolomicsForMetaboanalyst.txt", sep = "\t", row.names = 1)
+
+KEGG.Key = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/RawMetabolomicData.csv", row.names = 1)
+KEGG.Key = setNames(KEGG.Key[-c(1:2), 2], row.names(KEGG.Key)[-c(1:2)])
+
+genotypes = setNames(c("WT", "GR", "TktOEWT", "TktOEGR", "TktDfWT", "TktDfGR"), c("C", "E", "A", "F", "B", "D"))
+
+metadata = data.frame(Sample = colnames(rawdata), 
+                      Group = as.character(rawdata[1,]), 
+                      TIC = as.numeric(rawdata[2,]), 
+                      Genotypes = genotypes[as.character(rawdata[1,])])
+
+
+
+norm.func = function(data){
+  nd = (as.numeric(data)/metadata$TIC)*1000
+  return(nd)
+}
+
+norm.data = t(apply(rawdata[3:nrow(rawdata),], 1, norm.func))
+colnames(norm.data) = colnames(rawdata)
+
+group.mean=function(data){
+  gm = mean(na.omit(data))
+}
+
+mean.data = matrix(0, nrow=nrow(norm.data), ncol = length(genotypes))
+row.names(mean.data) = row.names(norm.data)
+colnames(mean.data) = unique(metadata$Group)
+
+i=1
+while(i<=ncol(mean.data)){
+  mean.data[,i] = apply(norm.data[,metadata[metadata$Group == colnames(mean.data)[i], "Sample"]], 1, group.mean)
+  i = i+1
+}
+
+compare.conditions = function(condition1, condition2){
+  columns1 = metadata[metadata$Group == condition1, "Sample"]
+  columns2 = metadata[metadata$Group == condition2, "Sample"]
+  p=setNames(rep(NA, nrow(norm.data)), row.names(norm.data))
+  i=1
+  while(i<=length(p)){
+    if(length(na.omit(norm.data[i,columns1]))>2 & 
+       length(na.omit(norm.data[i,columns2]))>2){
+      temp = t.test(na.omit(norm.data[i,columns1]),
+                    na.omit(norm.data[i,columns2]), paired = F, var.equal = T)
+      p[i] = temp[[3]]
+      }
+    i=i+1
+    }
+
+  fdr = p.adjust(p, "BH", length(p))
+
+  fc = mean.data[,condition1]/mean.data[,condition2]
+
+  comparison.table = data.frame(p = p, 
+                                FDR = fdr, 
+                                FC = fc, 
+                                KEGG = KEGG.Key[row.names(mean.data)])
+  
+  comparison.table = comparison.table[order(comparison.table$FDR),]
+}
+d
+GRxWT.C = compare.conditions("E", "C")
+GRxWT.Df = compare.conditions("D", "B")
+GRxWT.OE = compare.conditions("F", "A")
+
+```
+
+
+```{r}
+
+set.size == F
+volcano.data = data.frame(Symbol = row.names(GRxWT.C), 
+                          FDR = -log2(GRxWT.C$FDR),
+                          FC = log2(GRxWT.C$FC),
+                          Color = 'honeydew',
+                          size = log(mean.data[row.names(GRxWT.C),'E']),
+                          GR.Level = mean.data[row.names(GRxWT.C), "E"],
+                          WT.Level = mean.data[row.names(GRxWT.C), "C"],
+                          GO.terms = "none")
+
+main.title = "Metabolites in G85R Males vs. WT Males"
+
+volcano.data$Color[volcano.data$FDR >= -log2(.05) & volcano.data$FC < 0] = 'lightblue'
+volcano.data$Color[volcano.data$FDR >= -log2(.0001) & volcano.data$FC < 0] = 'steelblue'
+volcano.data$Color[volcano.data$FDR >= -log2(.000001) & volcano.data$FC < 0] = 'dodgerblue'
+
+volcano.data$Color[volcano.data$FDR >= -log2(.05) & volcano.data$FC > 0] = 'lightcoral'
+volcano.data$Color[volcano.data$FDR >= -log2(.0001) & volcano.data$FC > 0] = 'tomato'
+volcano.data$Color[volcano.data$FDR >= -log2(.000001) & volcano.data$FC > 0] = 'firebrick'
+
+##volcano.data$size[volcano.data$FDR <= -log2(.05)] = 3
+
+if(set.size == T){
+  volcano.data$size = 15
+  volcano.data$size[volcano.data$FDR <= -log2(.05)] = 5
+}
+
+fig = plot_ly(data = volcano.data,
+              x = ~FC,
+              y = ~FDR,
+              type = 'scatter',
+              mode = 'markers',
+              marker = list(color = ~Color, colors = ~Color, size = volcano.data$size,
+                            line = list(color = 'black', width = .5)),
+              hoverinfo = "text",
+              hovertext = paste("Metabolite:", volcano.data$Symbol,
+                      "\n-log2(FDR): ", round(volcano.data$FDR,2),
+                      "\nFC: ", round(volcano.data$FC,2),
+                      "\nG85R mean cpm: ", round(volcano.data$GR.Level, 1),
+                      "\nWT mean cpm: ", round(volcano.data$WT.Level, 1)))
+fig = fig %>% layout(title = main.title)
+
+fig
+
+```
+
+
+
+```{r, include = F, echo = F}
+
+if(intersect(list.files(), "KEGG_Image_Files") != "KEGG_Image_Files"){
+  dir.create(paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/KEGG_Image_Files/"))
+}
+
+Home = dirname(rstudioapi::getSourceEditorContext()$path)
+OutputDir = paste0(Home, "/KEGG_Image_Files/")
+
+ShowKEGG = function(PathwayID){
+  
+download.kegg(pathway.id= PathwayID, species = "dme", kegg.dir = OutputDir)
+xml.file=paste0(OutputDir, "dme",PathwayID,".xml")
+node.data=node.info(xml.file)
+
+all.path = names(kegg[grep(PathwayID,kegg)])
+
+up = TKT.EdgeR.FC[TKT.EdgeR.FC$Moderate == 1, "Symbol"]
+Moderate = intersect(Moderate, all.path)
+Moderate = paste("Dmel_", GeneIDKey[GeneIDKey$Symbol %in% Moderate, "CG"],sep="")
+
+Strong = Df.data[Df.data$Strong == 1, "Symbol"]
+Strong = intersect(Strong, all.path)
+Strong = paste("Dmel_", GeneIDKey[GeneIDKey$Symbol %in% Strong, "CG"],sep="")
+
+Enhancer = Df.data[Df.data$Enhancer == 1, "Symbol"]
+Enhancer = intersect(Enhancer, all.path)
+Enhancer = paste("Dmel_", GeneIDKey[GeneIDKey$Symbol %in% Enhancer, "CG"],sep="")
+
+Lethal = Df.data[Df.data$Lethal == 1, "Symbol"]
+Lethal = intersect(Lethal, all.path)
+Lethal = paste("Dmel_", GeneIDKey[GeneIDKey$Symbol %in% Strong, "CG"],sep="")
+
+plot.data.gene=node.map(mol.data=c(Moderate, Strong, Enhancer, Lethal), node.data, node.types="gene")
+cols.ts.gene = node.color(plot.data.gene, limit=2, bins=2)
+cols.ts.gene[1:length(cols.ts.gene)] = 0
+
+pdg.moderate=node.map(mol.data=Moderate, node.data, node.types="gene")
+temp = node.color(pdg.moderate, limit=2, bins=2)
+ctg.moderate = cols.ts.gene
+ctg.moderate[temp!="#FFFFFF"]= 1 ##"gold2"
+
+pdg.strong=node.map(mol.data=Strong, node.data, node.types="gene")
+temp = node.color(pdg.strong, limit=2, bins=2)
+ctg.strong = cols.ts.gene
+ctg.strong[temp!="#FFFFFF"]= 1 ##"brown2"
+
+pdg.enhancer=node.map(mol.data=Enhancer, node.data, node.types="gene")
+temp = node.color(pdg.enhancer, limit=2, bins=2)
+ctg.enhancer = cols.ts.gene
+ctg.enhancer[temp!="#FFFFFF"]= 1 ##"deepskyblue"
+
+pdg.lethal=node.map(mol.data=Lethal, node.data, node.types="gene")
+temp = node.color(pdg.lethal, limit=2, bins=2)
+ctg.lethal = cols.ts.gene
+ctg.lethal[temp!="#FFFFFF"]= 1 ##"navyblue"
+
+
+color.combos = data.frame(Moderate = as.numeric(ctg.moderate),
+                          Strong = as.numeric(ctg.strong),
+                          Enhancer = as.numeric(ctg.enhancer),
+                          Lethal = as.numeric(ctg.lethal))
+row.names(color.combos)= names(cols.ts.gene)
+
+cols.ts.gene[cols.ts.gene=="0"]="darkseagreen1"
+
+cols.ts.gene[row.names(color.combos)[color.combos$Moderate == 1]] = "gold2"
+cols.ts.gene[row.names(color.combos)[color.combos$Strong   == 1]] = "brown1"
+cols.ts.gene[row.names(color.combos)[color.combos$Enhancer   == 1]] = "lightsteelblue"
+cols.ts.gene[row.names(color.combos)[color.combos$Lethal   == 1]] = "cornflowerblue"
+cols.ts.gene[row.names(color.combos)[(color.combos$Moderate   == 1 | color.combos$Strong   == 1) & (color.combos$Enhancer   == 1 | color.combos$Lethal   == 1) ]] = "grey60"
+
+
+setwd(OutputDir)
+pv.pars= keggview.native(plot.data.gene=plot.data.gene,
+                         cols.ts.gene=cols.ts.gene, 
+                         node.data=node.data,
+                         pathway.name=paste0("dme", PathwayID),
+                         same.layer=T, plot.col.key=F, out.suffix = kegg.names[paste0("dme", PathwayID),1],
+                         kegg.dir = OutputDir)
+setwd(Home)
+}
+
+```
+
+
+
+
+```{r echo = F, include = F}
+
+PathwayID = "04150"
+
+ShowKEGG(PathwayID)
+
+```
+
+```{r echo = F, fig.align='center'}
+
+knitr::include_graphics(paste0(OutputDir, "dme",PathwayID, ".", kegg.names[paste0("dme", PathwayID),1], ".png"))
 
 ```

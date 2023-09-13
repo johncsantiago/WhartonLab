@@ -1,3 +1,6 @@
+##library(rsconnect)
+
+
 library(shiny)
 library(plotly)
 
@@ -183,12 +186,14 @@ plot.gene = function(gene.symbol, start.range, end.range){
   }
   
   bar.data = Dfir
-  if(min(bar.data$Start) < range.min){
-    bar.data$x1[bar.data$Start < range.min] = range.min
-  }
-  
-  if(max(bar.data$End) > range.max){
-    bar.data$x2[bar.data$End > range.max] = range.max
+  if(nrow(Dfir)>0){
+    if(min(bar.data$Start) < range.min){
+      bar.data$x1[bar.data$Start < range.min] = range.min
+    }
+    
+    if(max(bar.data$End) > range.max){
+      bar.data$x2[bar.data$End > range.max] = range.max
+    }
   }
   
   line.data$Strand = line.data$Strand/10
@@ -242,7 +247,9 @@ plot.gene = function(gene.symbol, start.range, end.range){
                        dfStart = NA,
                        dfEnd = NA)
   pdata = rbind(p1.data,p2.data)
-  df.line[1:nrow(pdata),] = pdata
+  if(nrow(pdata)>0){
+    df.line[1:nrow(pdata),] = pdata
+  }
   data = cbind(data,df.line)
   data$Symbol = factor(data$Symbol, levels = unique(data$Symbol))
   
@@ -284,7 +291,13 @@ plot.gene = function(gene.symbol, start.range, end.range){
   
   fig = layout(fig,
                xaxis = list(title = goi$CHR, range = c(range.min, range.max)),
-               yaxis = list(title = "Mean Lifespan Extension", range = c(-4,6)))##,
+               yaxis = list(title = "Mean Lifespan Extension", range = c(-4,6)),
+               shapes = list(
+                 type = "rect",
+                 line = list(color = "green", dash = 'dash', width = 2),
+                 x0 = data[data$Symbol == gene.symbol, "Start"][1], 
+                 x1 = data[data$Symbol == gene.symbol, "End"][1],
+                 y0 = -5, y1 = 7))##,
   ##hovermode = "x unified")
   
   return(fig)

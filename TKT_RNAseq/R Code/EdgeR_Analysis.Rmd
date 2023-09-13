@@ -754,6 +754,8 @@ DEout=G_X_E$table
 WT.FxM=DEout
 sWT.FxM=DEout[DEout$FDR<.05,]
 
+
+
 ##Removing genes that are too low expressed in Females frome the FxM DEGs
 temp = apply(cpmdata2[, c(1:2,29:30)], 1, mean)
 temp = temp[temp<4]
