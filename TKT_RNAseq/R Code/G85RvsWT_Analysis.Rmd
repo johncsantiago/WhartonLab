@@ -38,6 +38,8 @@ GeneIDKey = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDa
 kegg = readRDS(gzcon(url(paste0(git.dir,"GeneralDataFiles/kegg.symbol2path.RData"))))
 kegg.names = read.csv(paste0(git.dir, "GeneralDataFiles/KEGG.names.csv"), row.names = 1)
 
+Synaptic = read.csv("/Users/johncsantiago/Documents/SynapticGenesandTFs.csv")
+
 genesingo=as.list(org.Dm.egGO2ALLEGS)
 
 
@@ -348,10 +350,11 @@ treemapPlot(reducedTerms)
 
 specific.cat = c('none', 'parent.category', 'specific.kegg', 'specific.go')
 
-specific.cat = specific.cat[2]
+specific.cat = specific.cat[1]
 parent.category = 'neurogenesis'
 specific.kegg = "DNA replication"
 specific.go =  '32553'
+Synaptic.genes = F
 
 set.size = F
   
@@ -392,6 +395,8 @@ if(set.size == T){
   volcano.data$size[volcano.data$FDR <= -log2(.05)] = 5
 }
 
+volcano.data$Color = 'grey'
+volcano.data$Color[volcano.data$Symbol %in% Synaptic$Symbol] = 'deeppink'
 
 if(specific.cat == 'parent.category'){
   parent.genes = GOterm.genes[[intersect(reducedTerms[reducedTerms$parentTerm == parent.category, "go"], names(GOterm.genes))]]
@@ -618,7 +623,7 @@ compare.conditions = function(condition1, condition2){
   
   comparison.table = comparison.table[order(comparison.table$FDR),]
 }
-d
+
 GRxWT.C = compare.conditions("E", "C")
 GRxWT.Df = compare.conditions("D", "B")
 GRxWT.OE = compare.conditions("F", "A")
@@ -638,7 +643,7 @@ volcano.data = data.frame(Symbol = row.names(GRxWT.C),
                           WT.Level = mean.data[row.names(GRxWT.C), "C"],
                           GO.terms = "none")
 
-main.title = "Metabolites in G85R Males vs. WT Males"
+main.title = "FC for metabolites in G85R vs. WT"
 
 volcano.data$Color[volcano.data$FDR >= -log2(.05) & volcano.data$FC < 0] = 'lightblue'
 volcano.data$Color[volcano.data$FDR >= -log2(.0001) & volcano.data$FC < 0] = 'steelblue'
@@ -758,22 +763,5 @@ pv.pars= keggview.native(plot.data.gene=plot.data.gene,
                          kegg.dir = OutputDir)
 setwd(Home)
 }
-
-```
-
-
-
-
-```{r echo = F, include = F}
-
-PathwayID = "04150"
-
-ShowKEGG(PathwayID)
-
-```
-
-```{r echo = F, fig.align='center'}
-
-knitr::include_graphics(paste0(OutputDir, "dme",PathwayID, ".", kegg.names[paste0("dme", PathwayID),1], ".png"))
 
 ```
