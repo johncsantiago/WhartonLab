@@ -1,0 +1,901 @@
+---
+title: "TKT_MetabPaper_Analyses"
+author: "John Santiago"
+date: "2023-09-29"
+output: 
+  bookdown::html_document2:
+    number_sections: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+- #### Figure \@ref(fig:fig1): GR.FC vs WT.FC
+
+- #### Figure \@ref(fig:fig2): GR.MC vs WT.MC
+
+- #### Figure \@ref(fig:fig3): GR.FDf vs WT.FDf
+
+- #### Figure \@ref(fig:fig4): GR.MDf vs WT.MDf
+
+- #### Figure \@ref(fig:fig5): GR.FOE vs WT.FOE
+
+- #### Figure \@ref(fig:fig6): GR.MOE vs WT.MOE
+
+- #### Figure \@ref(fig:fig7): GRF: C vs Df
+
+- #### Figure \@ref(fig:fig8): GRM: C vs Df
+
+- #### Figure \@ref(fig:fig9): WTF: C vs Df
+
+- #### Figure \@ref(fig:fig10): WTM: C vs Df
+
+- #### Figure \@ref(fig:fig11): GRF: C vs OE
+
+- #### Figure \@ref(fig:fig12): GRM: C vs OE
+
+- #### Figure \@ref(fig:fig13): WTF: C vs OE
+
+- #### Figure \@ref(fig:fig14): WTM: C vs OE
+
+
+
+```{r echo = F, include = F}
+library(plotly)
+library(org.Dm.eg.db)
+library(ggpubr)
+library(performance)
+
+##load all files from github
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"
+cpmdata = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT_cpmdata.csv"),row.names = 1)
+groups  = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.metadata.csv"),row.names = 1)
+TKT.EdgeR = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FDRTable.csv"),row.names = 1)
+TKT.EdgeR.FC = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FCTable.csv"),row.names = 1)
+
+GeneIDKey = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GeneIDKey.csv", row.names = 1)
+kegg = readRDS(gzcon(url(paste0(git.dir,"GeneralDataFiles/kegg.symbol2path.RData"))))
+kegg.names = read.csv(paste0(git.dir, "GeneralDataFiles/KEGG.names.csv"), row.names = 1)
+
+Synaptic = read.csv("/Users/johncsantiago/Documents/SynapticGenesandTFs.csv")
+
+genesingo=as.list(org.Dm.egGO2ALLEGS)
+
+
+##mean.cpm; Mean cpm for each gene in each condition (groups$Group). Used for filtering
+mean.cpm = matrix(0, ncol = length(unique(groups$Group)), nrow = nrow(cpmdata))
+colnames(mean.cpm) = unique(groups$Group)
+row.names(mean.cpm) = row.names(cpmdata)
+i=1
+while(i<=ncol(mean.cpm)){
+  mean.cpm[,i]= apply(cpmdata[,row.names(groups[groups$Group == colnames(mean.cpm)[i],])], 1, mean)
+  i=i+1
+}
+
+i=1
+for(i in 1:ncol(TKT.EdgeR)){
+  TKT.EdgeR[TKT.EdgeR[,i] == 0,i] = 2
+  i=i+1
+}
+
+
+
+rawdata = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/MetabolomicsForMetaboanalyst.txt", sep = "\t", row.names = 1)
+
+KEGG.Key = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/RawMetabolomicData.csv", row.names = 1)
+KEGG.Key = setNames(KEGG.Key[-c(1:2), 2], row.names(KEGG.Key)[-c(1:2)])
+
+genotypes = setNames(c("WT", "GR", "TktOEWT", "TktOEGR", "TktDfWT", "TktDfGR"), c("C", "E", "A", "F", "B", "D"))
+
+metadata = data.frame(Sample = colnames(rawdata), 
+                      Group = as.character(rawdata[1,]), 
+                      TIC = as.numeric(rawdata[2,]), 
+                      Genotypes = genotypes[as.character(rawdata[1,])])
+
+row.names(metadata) = metadata$Sample
+
+norm.func = function(data){
+  nd = (as.numeric(data)/metadata$TIC)*1000
+  return(nd)
+}
+
+norm.data = t(apply(rawdata[3:nrow(rawdata),], 1, norm.func))
+colnames(norm.data) = colnames(rawdata)
+
+group.mean=function(data){
+  gm = mean(na.omit(data))
+}
+
+mean.data = matrix(0, nrow=nrow(norm.data), ncol = length(genotypes))
+row.names(mean.data) = row.names(norm.data)
+colnames(mean.data) = unique(metadata$Group)
+
+i=1
+while(i<=ncol(mean.data)){
+  mean.data[,i] = apply(norm.data[,metadata[metadata$Group == colnames(mean.data)[i], "Sample"]], 1, group.mean)
+  i = i+1
+}
+
+mean.cpm = as.data.frame(mean.cpm)
+
+compare.conditions = function(condition1, condition2){
+  columns1 = metadata[metadata$Group == condition1, "Sample"]
+  columns2 = metadata[metadata$Group == condition2, "Sample"]
+  p=setNames(rep(NA, nrow(norm.data)), row.names(norm.data))
+  i=1
+  while(i<=length(p)){
+    if(length(na.omit(norm.data[i,columns1]))>2 & 
+       length(na.omit(norm.data[i,columns2]))>2){
+      temp = t.test(na.omit(norm.data[i,columns1]),
+                    na.omit(norm.data[i,columns2]), paired = F, var.equal = T)
+      p[i] = temp[[3]]
+      }
+    i=i+1
+    }
+
+  fdr = p.adjust(p, "BH", length(p))
+
+  fc = mean.data[,condition1]/mean.data[,condition2]
+
+  comparison.table = data.frame(p = p, 
+                                FDR = fdr, 
+                                FC = fc, 
+                                KEGG = KEGG.Key[row.names(mean.data)])
+  
+  comparison.table = comparison.table[order(comparison.table$FDR),]
+}
+
+GRxWT.C = compare.conditions("E", "C")
+GRxWT.Df = compare.conditions("D", "B")
+GRxWT.OE = compare.conditions("F", "A")
+
+GR.CxDf = compare.conditions("D", "E")
+WT.CxDf = compare.conditions("B", "C")
+
+GR.CxOE = compare.conditions("F", "E")
+WT.CxOE = compare.conditions("A", "C")
+
+```
+
+
+
+```{r echo = F, include = F}
+
+
+tempF = apply(mean.cpm[,c("GR.F", "WT.F")], MARGIN = 1, mean)
+tempM = apply(mean.cpm[,c("GR.M", "WT.M")], MARGIN = 1, mean)
+tempF = names(tempF)[tempF>10]
+tempM = names(tempM)[tempM>10]
+cutoff.genes = unique(c(tempF, tempM))
+
+subset.genes = row.names(TKT.EdgeR)[TKT.EdgeR$GRxWT.FC < .05 | TKT.EdgeR$GRxWT.MC < .05]
+subset.genes = setdiff(subset.genes, row.names(TKT.EdgeR)[TKT.EdgeR$GRxWT.FC < .05 & TKT.EdgeR$GRxWT.MC < .05])
+subset.genes = intersect(subset.genes, cutoff.genes)
+
+FCx = TKT.EdgeR.FC[subset.genes, "GRxWT.FC"]
+FCy = TKT.EdgeR.FC[subset.genes, "GRxWT.MC"]
+
+
+set.size = F
+
+volcano.data = data.frame(Symbol = GeneIDKey[subset.genes, "Symbol"], 
+                          FCx = FCx,
+                          FCy = FCy,
+                          Color = 'grey',
+                          size = 2.5,
+                          FDR.F = TKT.EdgeR[subset.genes, "GRxWT.FC"],
+                          FDR.M = TKT.EdgeR[subset.genes, "GRxWT.MC"],
+                          GR.FC.cpm = mean.cpm[subset.genes, "GR.F"],
+                          WT.FC.cpm = mean.cpm[subset.genes, "WT.F"],
+                          GR.MC.cpm = mean.cpm[subset.genes, "GR.M"],
+                          WT.MC.cpm = mean.cpm[subset.genes, "WT.M"],
+                          tempcolor = FCx - FCy)
+
+row.names(volcano.data) = subset.genes
+
+volcano.data$Symbol[is.na(volcano.data$Symbol)] = row.names(volcano.data)[is.na(volcano.data$Symbol)]
+
+main.title = "Female and Male G85R/WT FC, Sig. DEG in Males and Females G85R vs WT"
+
+maxx= max(c(abs(min(FCx)),abs(max(FCx))))
+maxy= max(c(abs(min(FCy)),abs(max(FCy))))
+
+fig = plot_ly(data = volcano.data,
+              x = ~FCx,
+              y = ~FCy,
+              type = 'scatter',
+              mode = 'markers',
+              marker = list(colorscale = list(c(0,.7,1), c("firebrick","ivory", "royalblue")),
+                            reversescale =T,
+                             colorbar = list(title = "delta FC",
+                                      len = .8, outlinewidth = 0,
+                                      tickformat = ".2f",
+                                      tick0 = 0),##, dtick = .01),
+                            color = ~tempcolor,
+                            line = list(color = "black", width = 1.5),
+                            size = 5*volcano.data$size),
+              hoverinfo = "text",
+              hovertext = paste("Gene:", volcano.data$Symbol,
+                      "\nFemale FDR: ", round(volcano.data$FDR.F,4),
+                      "\nMale FDR: ", round(volcano.data$FDR.M,4),
+                      "\nFemale mean cpm (G85R/WT): ", round(volcano.data$GR.FC.cpm, 1),
+                      "/", round(volcano.data$WT.FC.cpm, 1),
+                      "\nMale mean cpm(G85R/WT): ", round(volcano.data$GR.MC.cpm, 1),
+                      "/", round(volcano.data$WT.MC.cpm, 1)))
+fig = fig %>% layout(xaxis = list(title = "Female log2(FC)"),
+                     yaxis = list(title = "Male log2(FC)"),
+                     title = main.title,
+                     shapes = list(
+                       type = "line",
+                       line = list(color = "black", dash = 'dash', width = 2),
+                       x0 = floor(-maxx),
+                       x1 = ceiling(maxx),
+                       y0 = floor(-maxy),
+                       y1 = ceiling(maxy)))
+
+fig
+
+```
+
+
+
+```{r include = F}
+
+library(visNetwork)
+library(org.Dm.eg.db)
+keggpath = as.list(org.Dm.egPATH2EG)
+nodeID = as.list(org.Dm.egENZYME)
+nodeID['40528'] = '3.5.4.3'
+nodeID['41318'] = '2.7.4.10'
+nodeID['42273'] = '2.7.1.145'
+nodeID['33924'] = '3.1.3.89'
+nodeID[['31309']] = c("3.1.4.17", '3.1.4.53')
+nodeID['37741'] = '3.1.4.53'
+
+purine.path = data.frame(enzyme = c('1.17.1.4', '1.17.3.2'),
+                         from = c('xanthine', 'xanthine'),
+                         to = c(rep('uric acid',2)))
+
+xanthine = data.frame(enzyme = c('1.17.1.4', '1.17.3.2', '2.4.2.1', '3.5.4.3'),
+                      from = c('hypoxanthine', 'hypoxanthine', 'xanthosine', 'guanine'),
+                      to = c(rep('xanthine',4)))
+purine.path = rbind(purine.path, xanthine)
+
+hypoxanthine = data.frame(enzyme = c('2.4.2.1', '2.4.2.1'),
+                          from = c('deoxyinosine', 'inosine'),
+                          to = c(rep('hypoxanthine', 2)))
+purine.path = rbind(purine.path, hypoxanthine)
+
+xanthosine = data.frame(enzyme = c('3.1.3.5'),
+                        from = c('XMP'),
+                        to = 'xanthosine')
+purine.path = rbind(purine.path, xanthosine)
+
+XMP = data.frame(enzyme = c('1.1.1.205'),
+                 from = c('IMP'),
+                 to = 'XMP')
+purine.path = rbind(purine.path, XMP)
+
+IMP = data.frame(enzyme = c('3.6.1.6', '3.5.4.6'),
+                 from = c('IDP', 'AMP'),
+                 to = c(rep('IMP', 2)))
+purine.path = rbind(purine.path, IMP)
+
+adenylosuccinate = data.frame(enzyme = c('6.3.4.4'),
+                              from = c('IMP'),
+                              to = 'adenylosuccinate')
+purine.path = rbind(purine.path, adenylosuccinate)
+
+inosine = data.frame(enzyme = c('2.4.2.1', '3.5.4.4', '3.1.3.5'),
+                     from = c('hypoxanthine', 'adenosine', 'IMP'),
+                     to = c(rep('inosine', 3)))
+purine.path = rbind(purine.path, inosine)
+
+deoxyinosine = data.frame(enzyme = c('2.4.2.1', '3.5.4.4'),
+                          from = c('hypoxanthine', 'deoxyadenosine'),
+                          to = c(rep('deoxyinosine', 2)))
+purine.path = rbind(purine.path, deoxyinosine)
+
+adenosine = data.frame(enzyme = c('2.4.2.1', '3.1.3.5', '2.7.1.20'),
+                       from = c('adenine', 'AMP', 'AMP'),
+                       to = c(rep('adenosine', 3)))
+purine.path = rbind(purine.path, adenosine)
+
+AMP = data.frame(enzyme = c('4.3.2.2', '2.7.1.20', '2.4.2.7', '2.7.4.3', '2.7.4.10', '3.1.4.17', '3.1.4.53'),
+                 from = c('adenylosuccinate', 'adenosine', 'adenine', 'ADP', 'ADP', 'cAMP', 'cAMP'),
+                 to = c(rep('AMP', 7)))
+purine.path = rbind(purine.path, AMP)
+
+adenine = data.frame(enzyme = c('2.4.2.1', '2.4.2.7', '2.4.2.1'),
+                     from = c('adenosine', 'AMP', 'deoxyadenosine'),
+                     to = c(rep('adenine', 3)))
+purine.path = rbind(purine.path, adenine)
+
+ATP = data.frame(enzyme = c('2.7.4.6'),
+                 from = c('ADP'),
+                 to = c(rep('ATP', 1)))
+purine.path = rbind(purine.path, ATP)
+
+dATP = data.frame(enzyme = c('2.7.4.6'),
+                  from = c('dADP'),
+                  to = c(rep('dATP', 1)))
+purine.path = rbind(purine.path, dATP)
+
+ADP = data.frame(enzyme = c('2.7.4.3', '2.7.4.10', '2.7.4.6', '3.6.1.15'),
+                 from = c('AMP', 'AMP', 'ATP', 'ATP'),
+                 to = c(rep('ADP', 4)))
+purine.path = rbind(purine.path, ADP)
+
+dADP = data.frame(enzyme = c('2.7.4.3', '1.17.4.1', '2.7.4.6'),
+                  from = c('dAMP', 'ADP', 'dATP'),
+                  to = c(rep('dADP', 3)))
+purine.path = rbind(purine.path, dADP)
+
+dAMP = data.frame(enzyme = c('2.7.1.145', '2.7.4.3'),
+                  from = c('deoxyadenosine', 'dADP'),
+                  to = c(rep('dAMP', 2)))
+purine.path = rbind(purine.path, dAMP)
+
+deoxyadenosine = data.frame(enzyme = c('2.4.2.1', '3.1.3.5', '3.1.3.89'),
+                            from = c('adenine', 'dAMP', 'dAMP'),
+                            to = c(rep('deoxyadenosine', 3)))
+purine.path = rbind(purine.path, deoxyadenosine)
+
+dGTP = data.frame(enzyme = c('2.7.4.6'),
+                  from = c('dGDP'),
+                  to = c('dGTP'))
+purine.path = rbind(purine.path, dGTP)
+
+guanine = data.frame(enzyme = c('2.4.2.1', '2.4.2.1'),
+                     from = c('guanosine', 'deoxyguanosine'),
+                     to = c(rep('guanine', 2)))
+purine.path = rbind(purine.path, guanine)
+
+dGDP = data.frame(enzyme = c('2.7.4.6', '1.17.4.1', '2.7.4.8'),
+                  from = c('dGTP', 'GDP', 'dGMP'),
+                  to = c(rep('dGDP', 3)))
+purine.path = rbind(purine.path, dGDP)
+
+guanosine = data.frame(enzyme = c('2.4.2.1', '3.1.3.5'),
+                       from = c('guanine', 'GMP'),
+                       to = c(rep('guanosine', 2)))
+purine.path = rbind(purine.path, guanosine)
+
+GTP = data.frame(enzyme = c('2.7.4.6'),
+                 from = c('GDP'),
+                 to = c(rep('GTP', 1)))
+purine.path = rbind(purine.path, GTP)
+
+GDP = data.frame(enzyme = c('2.7.4.6', '2.7.4.8'),
+                 from = c('GTP', 'GMP'),
+                 to = c(rep('GDP', 2)))
+purine.path = rbind(purine.path, GDP)
+
+GMP = data.frame(enzyme = c('6.3.5.2','3.6.1.6', '2.7.4.8'),
+                 from = c('XMP', 'GDP', 'GDP'),
+                 to = c(rep('GMP', 3)))
+purine.path = rbind(purine.path, GMP)
+
+dGMP = data.frame(enzyme = c('2.7.4.8', '2.7.1.145'),
+                  from = c('dGDP', 'deoxyguanosine'),
+                  to = c(rep('dGMP', 2)))
+purine.path = rbind(purine.path, dGMP)
+
+cAMP = data.frame(enzyme = '4.6.1.1',
+                  from = 'ATP',
+                  to = 'cAMP')
+purine.path = rbind(purine.path, cAMP)
+
+FGAM = data.frame(c(),
+               c())
+
+
+purine.path$arrows = 'to'
+temp = purine.path
+temp[,5] = paste0(purine.path[,1], purine.path[,2], purine.path[,3])
+temp[,6] = paste0(purine.path[,1], purine.path[,3], purine.path[,2])
+temp$keep = TRUE
+
+i=1
+while(i<=nrow(temp)){
+  if(length(intersect(temp[i,6], temp[temp$keep==TRUE,5]))==1){
+        temp$keep[i] = FALSE
+        temp[temp[,5] == temp[i,6], 'arrows'] = 'to;from'
+  }
+  i=i+1
+}
+
+
+
+purine.path = temp[temp$keep, 1:4]
+purine.path$FBgn = ''
+
+temp.purine.path = purine.path
+
+i=1
+while(i<=nrow(purine.path)){  
+  enzymeID = purine.path$enzyme[i]
+  temp = names(nodeID[grep(enzymeID, nodeID)])
+  temp = setNames(unlist(nodeID[temp], use.names = F), rep(names(nodeID[temp]), lengths(nodeID[temp])))
+  temp = names(temp[temp == enzymeID])
+  temp = row.names(GeneIDKey[GeneIDKey$ensembl %in% temp, ])
+  temp2 = purine.path[rep(i, length(temp)),]
+  temp2$FBgn = temp
+  temp.purine.path = rbind(temp.purine.path,temp2)
+  i = i +1
+}
+
+purine.path = temp.purine.path[(nrow(purine.path)+1):nrow(temp.purine.path),]
+purine.path = purine.path[!duplicated(purine.path[,2:5]),]
+
+
+TerminalPoints = data.frame(enzyme = "Excretion",
+                            from = 'uric acid',
+                            to = 'Excretion')
+ 
+
+DNA.A = data.frame(enzyme = c('DNA.A'),
+                 from = c('dATP'),
+                 to = c('DNA.A'))
+TerminalPoints = rbind(TerminalPoints, DNA.A)
+
+DNA.G = data.frame(enzyme = c('DNA.G'),
+                 from = c('dGTP'),
+                 to = c('DNA.G'))
+TerminalPoints = rbind(TerminalPoints, DNA.G)
+
+RNA.A = data.frame(enzyme = c('RNA.A'),
+                 from = c('ATP'),
+                 to = c('RNA.A'))
+TerminalPoints = rbind(TerminalPoints, RNA.A)
+
+RNA.G = data.frame(enzyme = c('RNA.G'),
+                 from = c('GTP'),
+                 to = c('RNA.G'))
+TerminalPoints = rbind(TerminalPoints, RNA.G)
+
+Riboflavin.Metabolism = data.frame(enzyme = c('Riboflavin.Metabolism'),
+                 from = c('GTP'),
+                 to = c('Riboflavin.Metabolism'))
+TerminalPoints = rbind(TerminalPoints, Riboflavin.Metabolism)
+
+Folate.Biosynthesis = data.frame(enzyme = c('Folate.Biosynthesis'),
+                 from = c('GTP'),
+                 to = c('Folate.Biosynthesis'))
+TerminalPoints = rbind(TerminalPoints, Folate.Biosynthesis)
+
+PPP = data.frame(enzyme = c('Pentose Phosphate'),
+                 from = c('Pentose Phosphate'),
+                 to = c('IMP'))
+TerminalPoints = rbind(TerminalPoints, PPP)
+
+
+
+TerminalPoints = data.frame(enzyme = TerminalPoints$enzyme,
+                            from = TerminalPoints$from,
+                            to = TerminalPoints$to,
+                            arrows = 'to',
+                            FBgn = NA,
+                            color = 'black',
+                            width = 1,
+                            symbol = NA,
+                            fdr = NA,
+                            GR = NA,
+                            WT = NA,
+                            title = '')
+
+```
+
+```{r include = F}
+
+network.fun = function(comparison.T, comparison.M, cond1, cond2){
+temp = colorRampPalette(c('royalblue',"dodgerblue",'red', "firebrick"))(401)
+
+visedges = purine.path
+visedges$color = round(TKT.EdgeR.FC[purine.path$FBgn, comparison.T],2)
+##visedges$width = .5 + abs(visedges$color)
+visedges$color[visedges$color < (-2)] = -2
+visedges$color[visedges$color > (2)] = 2
+visedges$color = (visedges$color * 100) +201
+visedges$color = temp[visedges$color]
+visedges$symbol = GeneIDKey[visedges$FBgn, 'Symbol']
+visedges$fdr = signif(TKT.EdgeR[visedges$FBgn, comparison.T], 2)
+visedges$GR = round(mean.cpm[visedges$FBgn, cond1],1)
+visedges$WT = round(mean.cpm[visedges$FBgn, cond2],1)
+visedges$width = .01 + (1*abs(log10(visedges$WT)))
+
+visedges$title = paste0(visedges$symbol,
+                        "<br>FDR: ", visedges$fdr, 
+                        "<br>",cond1," CPM: ", visedges$GR, 
+                        "<br>",cond2," CPM: ", visedges$WT)
+visedges = na.omit(visedges)
+visedges = rbind(visedges, TerminalPoints)
+
+node.names = unique(c(visedges$from, visedges$to))
+node.data = data.frame(id = node.names,
+                       color = 'dimgrey',
+                       size = 10,
+                       FC = NA,
+                       pval = NA,
+                       row.names = node.names)
+
+
+row.names(comparison.M)[row.names(comparison.M) == "cAMP(2',3') / cAMP(3',5')"] = 'cAMP'
+
+node.colors = na.omit(comparison.M[intersect(row.names(comparison.M), node.names),])
+node.pval = setNames(signif((node.colors$p),2), row.names(node.colors))
+node.data[names(node.pval), 'pval'] = node.pval
+node.colors = setNames(round(log2(node.colors$FC),2), row.names(node.colors))
+node.data[names(node.colors), "FC"] = node.colors
+node.data[names(node.colors),'size'] = 
+  node.data[names(node.colors),'size'] + 7.5*abs(node.colors)
+node.colors[node.colors < (-2)] = -2
+node.colors[node.colors>2] = 2
+
+
+node.colors = (node.colors*100)+201
+
+
+
+node.colors = setNames(temp[node.colors], names(node.colors)) 
+node.data[names(node.colors), 'color'] = node.colors
+
+node.data$title = paste0(node.data$id,
+                         "<br>FC: ", node.data$FC,
+                         "<br>pval: ", node.data$pval)
+
+node.data[unique(TerminalPoints$enzyme), 'color'] = 'black'
+
+node.data$group = 'metabolite'
+node.data[node.data$color == 'black', 'group'] = "Outside Path"
+node.data[node.data$color == 'dimgrey', 'group'] = "no data"
+
+node.data$x = 1
+node.data$y = 1
+node.data["Excretion", 'x'] = -200
+node.data["Excretion", 'y'] = 500
+
+node.data["Pentose Phosphate" , 'x'] = 50
+node.data["Pentose Phosphate" , 'y'] = -400
+
+node.data["RNA.A", 'x'] = 850
+node.data["RNA.A", 'y'] = -250
+
+node.data["RNA.G", 'x'] = -1000
+node.data["RNA.G", 'y'] = -250
+
+node.data["Folate.Biosynthesis", 'x'] = -1000
+node.data["Folate.Biosynthesis", 'y'] = -350
+
+node.data["Riboflavin.Metabolism", 'x'] = -1000
+node.data["Riboflavin.Metabolism", 'y'] = -150
+
+node.data["DNA.A", 'x'] = 850
+node.data["DNA.A", 'y'] = 250
+
+node.data["DNA.G", 'x'] = -1000
+node.data["DNA.G", 'y'] = 250
+
+# passing custom nodes and/or edges
+lnodes <- data.frame(label = c("Increased", "Decreased", "No Data"), 
+shape = 'dot', color = c("firebrick", "royalblue",'dimgrey'),
+ title = "") 
+
+
+nodes = node.data
+visedges = visedges[,c('from', 'to', 'arrows', 'color', 'width', 'title')]
+
+visNetwork(nodes,visedges,
+                  main = paste0(cond1, " vs ", cond2))%>%
+  visNodes(physics = T)%>%
+  visLayout(hierarchical=F, improvedLayout=T)%>%
+  ##visPhysics(solver="forceAtlas2Based", forceAtlas2Based = list(gravitationalConstant=-50),enabled=T, minVelocity = .5)%>%
+  visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE)%>%
+  visEdges(arrows = visedges$arrows)%>%
+  visGroups(groupname = "Outside Path", shape = 'box', physics=F, size = 25, font=list(color="white"))%>%
+    visLegend(addNodes = lnodes, useGroups = FALSE, width = .115)
+
+}
+
+```
+
+
+```{r echo = F}
+
+
+##tempF = apply(mean.cpm[,c("GR.F", "WT.F")], MARGIN = 1, mean)
+##tempM = apply(mean.cpm[,c("GR.M", "WT.M")], MARGIN = 1, mean)
+##tempF = names(tempF)[tempF>10]
+##tempM = names(tempM)[tempM>10]
+##cutoff.genes = unique(c(tempF, tempM))
+
+##subset.genes = row.names(TKT.EdgeR)[TKT.EdgeR$GRxWT.FC < .05 | TKT.EdgeR$GRxWT.MC < .05]
+##subset.genes = setdiff(subset.genes, row.names(TKT.EdgeR)[TKT.EdgeR$GRxWT.FC < .05 & TKT.EdgeR$GRxWT.MC < .05])
+##subset.genes = intersect(subset.genes, cutoff.genes)
+
+subset.genes = intersect(row.names(TKT.EdgeR.FC), unique(purine.path$FBgn))
+
+FCx = TKT.EdgeR.FC[subset.genes, "GRxWT.FC"]
+FCy = TKT.EdgeR.FC[subset.genes, "GRxWT.MC"]
+
+
+set.size = F
+
+volcano.data = data.frame(Symbol = GeneIDKey[subset.genes, "Symbol"], 
+                          FCx = FCx,
+                          FCy = FCy,
+                          Color = 'grey',
+                          size = 2.5,
+                          FDR.F = TKT.EdgeR[subset.genes, "GRxWT.FC"],
+                          FDR.M = TKT.EdgeR[subset.genes, "GRxWT.MC"],
+                          GR.FC.cpm = mean.cpm[subset.genes, "GR.F"],
+                          WT.FC.cpm = mean.cpm[subset.genes, "WT.F"],
+                          GR.MC.cpm = mean.cpm[subset.genes, "GR.M"],
+                          WT.MC.cpm = mean.cpm[subset.genes, "WT.M"],
+                          tempcolor = FCx - FCy)
+
+row.names(volcano.data) = subset.genes
+
+volcano.data$Symbol[is.na(volcano.data$Symbol)] = row.names(volcano.data)[is.na(volcano.data$Symbol)]
+
+main.title = "Female and Male G85R/WT FC, Sig. DEG in Males and Females G85R vs WT"
+
+maxx= max(c(abs(min(FCx)),abs(max(FCx))))
+maxy= max(c(abs(min(FCy)),abs(max(FCy))))
+
+fig = plot_ly(data = volcano.data,
+              x = ~FCx,
+              y = ~FCy,
+              type = 'scatter',
+              mode = 'markers',
+              marker = list(colorscale = list(c(0,.7,1), c("firebrick","ivory", "royalblue")),
+                            reversescale =T,
+                             colorbar = list(title = "delta FC",
+                                      len = .8, outlinewidth = 0,
+                                      tickformat = ".2f",
+                                      tick0 = 0),##, dtick = .01),
+                            color = ~tempcolor,
+                            line = list(color = "black", width = 1.5),
+                            size = 5*volcano.data$size),
+              hoverinfo = "text",
+              hovertext = paste("Gene:", volcano.data$Symbol,
+                      "\nFemale FDR: ", round(volcano.data$FDR.F,4),
+                      "\nMale FDR: ", round(volcano.data$FDR.M,4),
+                      "\nFemale mean cpm (G85R/WT): ", round(volcano.data$GR.FC.cpm, 1),
+                      "/", round(volcano.data$WT.FC.cpm, 1),
+                      "\nMale mean cpm(G85R/WT): ", round(volcano.data$GR.MC.cpm, 1),
+                      "/", round(volcano.data$WT.MC.cpm, 1)))
+fig = fig %>% layout(xaxis = list(title = "Female log2(FC)"),
+                     yaxis = list(title = "Male log2(FC)"),
+                     title = main.title,
+                     shapes = list(
+                       type = "line",
+                       line = list(color = "black", dash = 'dash', width = 2),
+                       x0 = floor(-maxx),
+                       x1 = ceiling(maxx),
+                       y0 = floor(-maxy),
+                       y1 = ceiling(maxy)))
+
+fig
+
+```
+
+```{r echo = F, fig.height=9, fig.width=12, fig.align='left', fig1, fig.cap = 'G85R relative to WT. Transcriptomic data is from females and metabolomic data is from both sexes. Node and arrow size and color '}
+
+
+comparison.T = "GRxWT.FC"
+cond1 = 'GR.F'
+cond2 = "WT.F"
+comparison.M = GRxWT.C
+
+network.fun(comparison.T, comparison.M, cond1, cond2)
+
+```
+
+<br><br><br>
+
+```{r echo = F, fig.height=9, fig.width=12, fig.align='left', fig2, fig.cap = 'G85R relative to WT. Transcriptomic data is from males and metabolomic data is from both sexes. Node and arrow size and color '}
+
+
+comparison.T = "GRxWT.MC"
+cond1 = 'GR.M'
+cond2 = "WT.M"
+comparison.M = GRxWT.C
+
+network.fun(comparison.T, comparison.M, cond1, cond2)
+
+
+
+```
+
+<br><br><br>
+
+```{r echo = F, fig.height=9, fig.width=12, fig.align='left', fig3, fig.cap = 'G85R TKT-Df relative to WT TKT-Df. Transcriptomic data is from females and metabolomic data is from both sexes. Node and arrow size and color '}
+
+
+comparison.T = "GRxWT.FDf"
+cond1 = "TktDfGR.F"
+cond2 = "TktDfWT.F"
+comparison.M = GRxWT.Df
+
+network.fun(comparison.T, comparison.M, cond1, cond2)
+
+```
+
+<br><br><br>
+
+```{r echo = F, fig.height=9, fig.width=12, fig.align='left', fig4, fig.cap = 'G85R TKT-Df relative to WT TKT-Df. Transcriptomic data is from males and metabolomic data is from both sexes. Node and arrow size and color '}
+
+
+comparison.T = "GRxWT.MDf"
+cond1 = "TktDfGR.M"
+cond2 = "TktDfWT.M"
+comparison.M = GRxWT.Df
+
+network.fun(comparison.T, comparison.M, cond1, cond2)
+
+
+
+```
+
+<br><br><br>
+
+```{r echo = F, fig.height=9, fig.width=12, fig.align='left', fig5, fig.cap = 'G85R TKT-OE relative to WT TKT-OE. Transcriptomic data is from females and metabolomic data is from both sexes. Node and arrow size and color '}
+
+
+comparison.T = "GRxWT.FOE"
+cond1 = "TktOEGR.F"
+cond2 = "TktOEWT.F"
+comparison.M = GRxWT.OE
+
+network.fun(comparison.T, comparison.M, cond1, cond2)
+
+```
+
+<br><br><br>
+
+```{r echo = F, fig.height=9, fig.width=12, fig.align='left', fig6, fig.cap = 'G85R TKT-Df relative to WT TKT-Df. Transcriptomic data is from males and metabolomic data is from both sexes. Node and arrow size and color '}
+
+
+comparison.T = "GRxWT.MOE"
+cond1 = "TktOEGR.M"
+cond2 = "TktOEWT.M"
+comparison.M = GRxWT.OE
+
+network.fun(comparison.T, comparison.M, cond1, cond2)
+
+
+
+```
+<br><br><br>
+
+```{r echo = F, fig.height=9, fig.width=12, fig.align='left', fig7, fig.cap = 'G85R control relative to G85R TKT-Df. Transcriptomic data is from females and metabolomic data is from both sexes. Node and arrow size and color '}
+
+
+comparison.T = "GRF.CxDf"
+cond2 = 'GR.F'
+cond1 = "TktDfGR.F"
+comparison.M = GR.CxDf
+
+network.fun(comparison.T, comparison.M, cond1, cond2)
+
+
+
+```
+
+<br><br><br>
+
+```{r echo = F, fig.height=9, fig.width=12, fig.align='left', fig8, fig.cap = 'G85R control relative to G85R TKT-Df. Transcriptomic data is from males and metabolomic data is from both sexes. Node and arrow size and color '}
+
+
+comparison.T = "GRM.CxDf"
+cond2 = 'GR.M'
+cond1 = "TktDfGR.M"
+comparison.M = GR.CxDf
+
+network.fun(comparison.T, comparison.M, cond1, cond2)
+
+
+
+```
+
+
+<br><br><br>
+
+```{r echo = F, fig.height=9, fig.width=12, fig.align='left', fig9, fig.cap = 'WT control relative to WT TKT-Df. Transcriptomic data is from females and metabolomic data is from both sexes. Node and arrow size and color '}
+
+
+comparison.T = "WTF.CxDf"
+cond2 = 'WT.F'
+cond1 = "TktDfWT.F"
+comparison.M = WT.CxDf
+
+network.fun(comparison.T, comparison.M, cond1, cond2)
+
+
+
+```
+
+<br><br><br>
+
+```{r echo = F, fig.height=9, fig.width=12, fig.align='left', fig10, fig.cap = 'WT control relative to WT TKT-Df. Transcriptomic data is from males and metabolomic data is from both sexes. Node and arrow size and color '}
+
+
+comparison.T = "WTM.CxDf"
+cond2 = 'WT.M'
+cond1 = "TktDfWT.M"
+comparison.M = WT.CxDf
+
+network.fun(comparison.T, comparison.M, cond1, cond2)
+
+
+
+```
+
+
+<br><br><br>
+
+```{r echo = F, fig.height=9, fig.width=12, fig.align='left', fig11, fig.cap = 'G85R control relative to G85R TKT-OE. Transcriptomic data is from females and metabolomic data is from both sexes. Node and arrow size and color '}
+
+
+comparison.T = "GRF.CxOE"
+cond2 = 'GR.F'
+cond1 = "TktOEGR.F"
+comparison.M = GR.CxOE
+
+network.fun(comparison.T, comparison.M, cond1, cond2)
+
+
+
+```
+
+<br><br><br>
+
+```{r echo = F, fig.height=9, fig.width=12, fig.align='left', fig12, fig.cap = 'G85R control relative to G85R TKT-OE. Transcriptomic data is from males and metabolomic data is from both sexes. Node and arrow size and color '}
+
+
+comparison.T = "GRM.CxOE"
+cond2 = 'GR.M'
+cond1 = "TktOEGR.M"
+comparison.M = GR.CxOE
+
+network.fun(comparison.T, comparison.M, cond1, cond2)
+
+
+
+```
+
+
+<br><br><br>
+
+```{r echo = F, fig.height=9, fig.width=12, fig.align='left', fig13, fig.cap = 'WT control relative to WT TKT-OE. Transcriptomic data is from females and metabolomic data is from both sexes. Node and arrow size and color '}
+
+
+comparison.T = "WTF.CxOE"
+cond2 = 'WT.F'
+cond1 = "TktOEWT.F"
+comparison.M = WT.CxOE
+
+network.fun(comparison.T, comparison.M, cond1, cond2)
+
+
+
+```
+
+<br><br><br>
+
+```{r echo = F, fig.height=9, fig.width=12, fig.align='left', fig14, fig.cap = 'WT control relative to WT TKT-Df. Transcriptomic data is from males and metabolomic data is from both sexes. Node and arrow size and color '}
+
+
+comparison.T = "WTM.CxOE"
+cond2 = 'WT.M'
+cond1 = "TktOEWT.M"
+comparison.M = WT.CxOE
+
+network.fun(comparison.T, comparison.M, cond1, cond2)
+
+
+
+```
+

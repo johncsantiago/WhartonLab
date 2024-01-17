@@ -1,0 +1,181 @@
+---
+title: "Box Plots Using All Data"
+author: "John Santiago"
+date: "2023-11-28"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include = F, echo = F}
+
+library(plotly)
+library(edgeR)
+
+##load all files from github
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"
+cpmdata = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT_cpmdata.csv"),row.names = 1)
+groups  = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.metadata.csv"),row.names = 1)
+TKT.EdgeR = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FDRTable.csv"),row.names = 1)
+TKT.EdgeR.FC = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FCTable.csv"),row.names = 1)
+
+groups = groups[colnames(cpmdata),]
+
+gbbOE = read.csv("/Users/johncsantiago/Documents/GitHub/Datasets/gbbOE_CountTable.csv", row.names = 1)
+gbbOE.groups = read.csv("/Users/johncsantiago/Documents/GitHub/Datasets/gbbOE_Metadata.csv", row.names = 1)
+gbbOE = gbbOE[,row.names(gbbOE.groups)]
+gbbOE.groups$group = paste0(gbbOE.groups$genotype, "_",gbbOE.groups$stage)
+
+##normalize data
+countdata=gbbOE
+x <- countdata
+gr <- factor(gbbOE.groups$group, levels=c(unique(gbbOE.groups$group)))
+y <- DGEList(counts=x,group=gr)
+keep <- filterByExpr(y)
+y <- y[keep,,keep.lib.sizes=FALSE]
+z <- calcNormFactors(y, method = "TMM")
+##normalized cpm
+gbbOE.cpmdata=cpm(z)
+
+gbbOEmean = gbbOE.cpmdata[,1:6]
+colnames(gbbOEmean) = unique(gr)
+i=1
+while(i<=6){
+  temp= gbbOE.cpmdata[,row.names(gbbOE.groups[gbbOE.groups$group == colnames(gbbOEmean)[i],])]
+  gbbOEmean[,i] = apply(temp, 1, mean)
+  i=i+1
+}
+
+
+design<-model.matrix(~0 + gr)
+colnames(design) = unique(gr)
+z = estimateDisp(z, design, robust = T)
+
+fit <- glmQLFit(z, design)
+plotQLDisp(fit)
+
+compare = makeContrasts(G85R_LL3-LoxP_LL3, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+GRxWT.LL3=DEout
+sGRxWT.LL3=DEout[DEout$FDR<.05,]
+
+compare = makeContrasts(G85R_ML3-LoxP_ML3, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+GRxWT.ML3=DEout
+sGRxWT.ML3=DEout[DEout$FDR<.05,]
+
+compare = makeContrasts(G85R_LL3-G85R_ML3, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+GR.LL3xML3=DEout
+sGR.LL3xML3=DEout[DEout$FDR<.05,]
+
+compare = makeContrasts(LoxP_LL3-LoxP_ML3, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+WT.LL3xML3=DEout
+sWT.LL3xML3=DEout[DEout$FDR<.05,]
+
+compare = makeContrasts(G85R_gbb_LL3-G85R_gbb_ML3, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+G85R_gbb.LL3xML3=DEout
+sG85R_gbb.LL3xML3=DEout[DEout$FDR<.05,]
+
+gbbKO = read.csv("/Users/johncsantiago/Documents/GitHub/Datasets/gbbKO_CountTable.csv", row.names = 1)
+gbbKO.groups = read.csv("/Users/johncsantiago/Documents/GitHub/Datasets/gbbKO_Metadata.csv", row.names = 1)
+
+##normalize data
+countdata=gbbKO
+x <- countdata
+gr <- factor(gbbKO.groups$Genotype, levels=c(unique(gbbKO.groups$Genotype)))
+y <- DGEList(counts=x,group=gr)
+keep <- filterByExpr(y)
+y <- y[keep,,keep.lib.sizes=FALSE]
+z <- calcNormFactors(y, method = "TMM")
+##normalized cpm
+gbbKO.cpmdata=cpm(z)
+
+GeneIDKey = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GeneIDKey.csv", row.names = 1)
+
+
+
+```
+
+```{r}
+
+##relish FBgn0014018
+##attacin FBgn0041579
+##cecropin FBgn0000276
+##diptericin FBgn0004240
+##drosocin FBgn0010388
+##defensin FBgn0010385
+##drosomycin FBgn0283461
+##metchnikowin FBgn0014865
+##sod1 FBgn0003462
+##sod2 FBgn0010213
+##catalase FBgn0000261
+##gstd1 FBgn0001149
+
+##cgs = c('CG10592','CG10827','CG1462','CG16771','CG1809','CG3264','CG3290','CG3292','CG5150','CG5361','CG5656','CG8105','CG8147')
+
+
+FBgn = 'FBgn0004362'
+name = ''
+
+gene = data.frame(cpm = as.numeric(cpmdata[FBgn,]), condition = groups$Group, group = paste0(groups$Genotype, groups$Sex))
+
+gene$group = factor(gene$group, levels = c(unique(gene$group)))
+gene$condition = factor(gene$condition, levels = c('GR.F', "TktDfGR.F", "TktOEGR.F",
+                                                 'WT.F', "TktDfWT.F", "TktOEWT.F",
+                                                 'GR.M', "TktDfGR.M", "TktOEGR.M",
+                                                 'WT.M', "TktDfWT.M", "TktOEWT.M"))
+
+boxplot(gene$cpm~gene$condition, xlab="",     
+        main= name,ylab="Counts per Million Reads", las = 2, cex.axis = .8)
+points(x=as.numeric(factor(gene$condition)),y=gene$cpm,cex=1,pch=21,bg=c('firebrick',"gold","darkgreen","dodgerblue")[as.numeric(factor(gene$group))])
+
+
+```
+
+```{r}
+
+gene = data.frame(cpm = as.numeric(gbbOE.cpmdata[FBgn,]), condition = gbbOE.groups$group, group = gbbOE.groups$genotype)
+
+gene$group = factor(gene$group, levels = c(unique(gene$group)))
+gene$condition = factor(gene$condition, levels = c('LoxP_ML3', "LoxP_LL3",
+                                                 'G85R_ML3', "G85R_LL3",
+                                                 'G85R_gbb_ML3', "G85R_gbb_LL3"))
+
+boxplot(gene$cpm~gene$condition, xlab="",     
+        main= name,ylab="Counts per Million Reads", las = 2, cex.axis = .8)
+points(x=as.numeric(factor(gene$condition)),y=gene$cpm,cex=1,pch=21,bg=c('firebrick',"dodgerblue","gold")[as.numeric(factor(gene$group))])
+
+```
+
+
+```{r}
+
+## WT = W1118
+## KO = GBB1/GBB2 (both null alleles)
+## Aaron and Catherine legend for RNAseq
+## Whole larvae
+
+gene = data.frame(cpm = as.numeric(gbbKO.cpmdata[FBgn,]), condition = gbbKO.groups$Genotype)
+
+gene$condition = factor(gene$condition, levels = c('WT', "KO"))
+
+boxplot(gene$cpm~gene$condition, xlab="",     
+        main= name,ylab="Counts per Million Reads", las = 2, cex.axis = .8)
+points(x=as.numeric(factor(gene$condition)),y=gene$cpm,cex=1,pch=21,bg=c('firebrick',"dodgerblue","gold")[as.numeric(factor(gene$condition))])
+
+```

@@ -1,0 +1,322 @@
+---
+title: "John CoI and RpL32 in G85R and WT Analysis"
+author: "John Santiago"
+date: "2023-12-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo = F, include = F}
+library(plotly)
+CoI.data = read.csv("/Users/johncsantiago/Documents/20231214_John_WT.GR_RpL32.mtCoI.csv")
+CoI.data$Genotype = substr(CoI.data$Sample,1,2)
+CoI.data$Sex = substr(CoI.data$Sample,3,3)
+CoI.data$Rep = substr(CoI.data$Sample,4,nchar(CoI.data$Sample))
+CoI.data$Primer = CoI.data$Target
+
+CoI.data = CoI.data[CoI.data$Well != 'F1',]
+
+```
+
+```{r echo = F}
+
+plotdata = CoI.data[CoI.data$Target == "RpL32" & nchar(CoI.data$Rep) == 1,]
+
+plotdata$x = factor(paste0(plotdata$Genotype, plotdata$Sex, plotdata$Rep), 
+                    levels = c(unique(paste0(plotdata$Genotype, plotdata$Sex, plotdata$Rep))))
+
+plotdata$Cq = as.numeric(plotdata$Cq)
+
+boxplot(plotdata$Cq~plotdata$x,
+     ylab = "Quantification Cycle (Cq)",
+     xlab = "Genotype",
+     main = "RpL32",
+     las = 2)
+
+points(x = plotdata$x,
+       y = plotdata$Cq,
+       cex = 1.5,
+       pch = 21,
+       bg = "firebrick",
+       col = "black")
+
+```
+
+```{r echo = F}
+
+plotdata = CoI.data[CoI.data$Target == "CoI" & nchar(CoI.data$Rep) == 1,]
+
+plotdata$x = factor(paste0(plotdata$Genotype, plotdata$Sex, plotdata$Rep), 
+                    levels = c(unique(paste0(plotdata$Genotype, plotdata$Sex, plotdata$Rep))))
+
+plotdata$Cq = as.numeric(plotdata$Cq)
+
+boxplot(plotdata$Cq~plotdata$x,
+     ylab = "Quantification Cycle (Cq)",
+     xlab = "Genotype",
+     main = "CoI",
+     las = 2)
+
+points(x = plotdata$x,
+       y = plotdata$Cq,
+       cex = 1.5,
+       pch = 21,
+       bg = "steelblue",
+       col = "black")
+
+```
+
+```{r echo = F}
+
+plotdata = CoI.data[CoI.data$Genotype == "WT" & 
+                      CoI.data$Sex == "M" &
+                      CoI.data$Rep != '2' &
+                      CoI.data$Rep != '3' &
+                      CoI.data$Primer == 'RpL32',]
+plotdata$x = factor(plotdata$Sample, 
+                    levels = c(unique(plotdata$Sample, plotdata$Primer)))
+plotdata$Cq = as.numeric(plotdata$Cq)
+
+
+boxplot(plotdata$Cq~plotdata$x,
+     ylab = "Quantification Cycle (Cq)",
+     xlab = "",
+     main = "RpL32 Efficiency",
+     las = 2,
+     cex = .1)
+
+points(x = plotdata$x,
+       y = plotdata$Cq,
+       cex = 1.5,
+       pch = 21,
+       bg = "firebrick",
+       col = "black")
+
+```
+
+```{r echo = F}
+
+plotdata = CoI.data[CoI.data$Genotype == "WT" & 
+                      CoI.data$Sex == "M" &
+                      CoI.data$Rep != '2' &
+                      CoI.data$Rep != '3' &
+                      CoI.data$Primer == 'RpL32',]
+plotdata$concentration = plotdata$Rep
+plotdata$concentration[plotdata$Rep == 1] = 5
+plotdata$concentration[plotdata$Rep == '1_2.5'] = 2.5
+plotdata$concentration[plotdata$Rep == '1_10'] = 10
+
+plotdata$x = log2(as.numeric(plotdata$concentration))
+plotdata$Cq = as.numeric(plotdata$Cq)
+
+
+
+plot(y = plotdata$Cq,
+     x = plotdata$x, 
+     type = "p",  
+     cex = 1, 
+     pch = 21, 
+     bg = "firebrick",
+     col = "black",
+     ylab = "Quantification Cycle (Cq)",
+     xlab = "log2(cDNA Conc. (ng/uL)")
+
+linearmodel=lm(as.numeric(plotdata$Cq)~plotdata$x)
+abline(a=linearmodel[[1]][[1]],b=linearmodel[[1]][2],lty=2,col="firebrick",lwd=2)
+text(x = 1.75, y = 20,paste0("RpL32 slope = ", signif(linearmodel[[1]][2],3)),cex=.8)
+RpL32.slope = linearmodel[[1]][2]
+
+RpL32.E = (-1+2^(-1/RpL32.slope))*100
+text(x = 1.75, y = 19.85,paste0("RpL32 Efficiency = ", signif(RpL32.E,3)),cex=.8)
+
+```
+
+
+```{r echo = F}
+
+plotdata = CoI.data[CoI.data$Genotype == "WT" & 
+                      CoI.data$Sex == "M" &
+                      CoI.data$Rep != '2' &
+                      CoI.data$Rep != '3' &
+                      CoI.data$Primer == 'CoI',]
+plotdata$x = factor(plotdata$Sample, 
+                    levels = c(unique(plotdata$Sample, plotdata$Primer)))
+plotdata$Cq = as.numeric(plotdata$Cq)
+
+
+boxplot(plotdata$Cq~plotdata$x,
+     ylab = "Quantification Cycle (Cq)",
+     xlab = "",
+     main = "CoI Efficiency",
+     las = 2,
+     cex = .1)
+
+points(x = plotdata$x,
+       y = plotdata$Cq,
+       cex = 1.5,
+       pch = 21,
+       bg = "steelblue",
+       col = "black")
+
+```
+
+```{r echo = F}
+
+plotdata = CoI.data[CoI.data$Genotype == "WT" & 
+                      CoI.data$Sex == "M" &
+                      CoI.data$Rep != '2' &
+                      CoI.data$Rep != '3' &
+                      CoI.data$Primer == 'CoI',]
+plotdata$concentration = plotdata$Rep
+plotdata$concentration[plotdata$Rep == 1] = 5
+plotdata$concentration[plotdata$Rep == '1_2.5'] = 2.5
+plotdata$concentration[plotdata$Rep == '1_10'] = 10
+
+plotdata$x = log2(as.numeric(plotdata$concentration))
+plotdata$Cq = as.numeric(plotdata$Cq)
+
+
+
+plot(y = plotdata$Cq,
+     x = plotdata$x, 
+     type = "p",  
+     cex = 1, 
+     pch = 21, 
+     bg = "steelblue",
+     col = "black",
+     ylab = "Quantification Cycle (Cq)",
+     xlab = "log2(cDNA Conc. (ng/uL)")
+
+linearmodel=lm(as.numeric(plotdata$Cq)~plotdata$x)
+abline(a=linearmodel[[1]][[1]],b=linearmodel[[1]][2],lty=2,col="steelblue",lwd=2)
+text(x = 1.75, y = 13.65,paste0("CoI slope = ", signif(linearmodel[[1]][2],3)),cex=.8)
+CoI.slope = linearmodel[[1]][2]
+
+CoI.E = (-1+2^(-1/CoI.slope))*100
+text(x = 1.75, y = 13.5,paste0("CoI Efficiency = ", signif(CoI.E,3)),cex=.8)
+
+```
+
+
+```{r echo = F, include = F}
+
+CoI.only = CoI.data[CoI.data$Primer == "CoI" & nchar(CoI.data$Rep) == 1,
+                    c("Sample", "Cq", "Primer")]
+RpL32.only = CoI.data[CoI.data$Primer == "RpL32" & nchar(CoI.data$Rep) == 1,
+                      c("Sample", "Cq", "Primer")]
+
+plotdata = rbind(CoI.only, RpL32.only)
+
+plotdata$Cq = as.numeric(plotdata$Cq)
+plotdata$Primer = as.factor(plotdata$Primer)
+
+plot.colors = c("steelblue", "firebrick")
+
+fig =  plot_ly(data = plotdata,
+          x = ~Sample,
+          y = ~Cq,
+          name = ~Primer,
+          type = 'scatter',
+          mode = 'markers',
+          color = ~Primer,
+          colors = plot.colors,
+          marker = list(size = 10,
+                        line = list(color = 'black', width = .5)))
+
+
+fig
+
+```
+
+```{r echo = F}
+
+plotdata = CoI.data[nchar(CoI.data$Rep) == 1,
+                    c("Sample", "Cq", "Primer")]
+plotdata$SP = paste0(plotdata$Sample, plotdata$Primer)
+plotdata$Cq = as.numeric(plotdata$Cq)
+mean.Ct = data.frame(Sample = unique(plotdata$Sample),
+                     Genotype = factor(substr(unique(plotdata$Sample),1,3), 
+                                       levels = c('WTF', 'WTM', 'GRF', 'GRM')),
+                     Sex = substr(unique(plotdata$Sample), 3,3),
+                     CoI = 0,
+                     RpL32 = 0)
+mean.Ct = mean.Ct[order(mean.Ct$Genotype),]
+
+i=1
+while(i <= nrow(mean.Ct)){
+  mean.Ct$CoI[i] = mean(plotdata[plotdata$SP == paste0(mean.Ct$Sample[i], 'CoI'),'Cq'])
+  mean.Ct$RpL32[i] = mean(plotdata[plotdata$SP == paste0(mean.Ct$Sample[i], 'RpL32'),'Cq'])
+  i = i + 1
+}
+
+mean.Ct$dCt = mean.Ct$CoI - mean.Ct$RpL32
+mean.Ct$FC = 2^-mean.Ct$dCt
+
+boxplot(mean.Ct$dCt~mean.Ct$Genotype,
+     ylab = "dCT",
+     xlab = "Genotype",
+     main = "dCT")
+
+points(x = mean.Ct$Genotype,
+       y = mean.Ct$dCt,
+       cex = 1.5,
+       pch = 21,
+       bg = c(rep("firebrick", 6), rep('steelblue', 6)),
+       col = "black")
+
+
+```
+
+```{r echo = F}
+
+boxplot(mean.Ct$FC~mean.Ct$Genotype,
+     ylab = "FC",
+     xlab = "Genotype",
+     main = "FC")
+
+points(x = mean.Ct$Genotype,
+       y = mean.Ct$FC,
+       cex = 1.5,
+       pch = 21,
+       bg = c(rep("firebrick", 6), rep('steelblue', 6)),
+       col = "black")
+
+
+```
+\newpage
+
+```{r}
+
+dCT.aov = aov(mean.Ct$dCt~mean.Ct$Genotype)
+
+summary(dCT.aov)
+```
+
+```{r}
+
+TukeyHSD(dCT.aov)
+
+```
+
+
+```{r echo = F}
+
+mean.dCt = data.frame(Genotype = unique(mean.Ct$Genotype), 
+                      mean.dCt = 0)
+mean.dCt$mean.dCt[1] = mean(mean.Ct[mean.Ct$Genotype == mean.dCt$Genotype[1], 'dCt'])
+mean.dCt$mean.dCt[2] = mean(mean.Ct[mean.Ct$Genotype == mean.dCt$Genotype[2], 'dCt'])
+mean.dCt$mean.dCt[3] = mean(mean.Ct[mean.Ct$Genotype == mean.dCt$Genotype[3], 'dCt'])
+mean.dCt$mean.dCt[4] = mean(mean.Ct[mean.Ct$Genotype == mean.dCt$Genotype[4], 'dCt'])
+row.names(mean.dCt) = mean.dCt$Genotype
+
+Male_fc = 2^-(mean.dCt['GRM',2] - mean.dCt['WTM',2])
+Female_fc = 2^-(mean.dCt['GRF',2] - mean.dCt['WTF',2])
+
+print(paste0("Relative mtDNA levels in Male G85R/WT = ", signif(Male_fc, 3)))
+
+print(paste0("Relative mtDNA levels in Female G85R/WT = ", signif(Female_fc, 3)))
+
+```

@@ -1,0 +1,133 @@
+---
+title: "Anna IDGF6 Efficiency Plate"
+author: "John Santiago"
+date: "2023-12-27"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo = F, include = F}
+library(plotly)
+IDGF6.data = read.csv("/Users/johncsantiago/Documents/20231116_Anna_WTG85R_IDGF6_PrimerEfficiency.csv")
+IDGF6.data$Genotype = "WT"
+
+IDGF6.data$Concentration = as.numeric(substr(IDGF6.data$Sample, 5, (nchar(IDGF6.data$Sample)-3)))
+
+IDGF6.data$log.Conc = log2(IDGF6.data$Concentration)
+
+IDGF6.data$SampleID = substr(IDGF6.data$Sample, 1,3)
+
+```
+
+```{r echo = F}
+
+IDGF6.1 = IDGF6.data[IDGF6.data$SampleID == "WT1", c("Cq", "SampleID", "Well", 'log.Conc', 'Concentration')]
+IDGF6.1$color = 'brown'
+IDGF6.1 = IDGF6.1[IDGF6.1$Concentration > 0,]
+IDGF6.2 = IDGF6.data[IDGF6.data$SampleID == "WT2", c("Cq", "SampleID", "Well", 'log.Conc', 'Concentration')]
+IDGF6.2$color = 'steelblue'
+IDGF6.2 = IDGF6.2[IDGF6.2$Concentration > 0,]
+
+
+plot(x = IDGF6.1$log.Conc, 
+     y = IDGF6.1$Cq, 
+     type = "p",  
+     cex = 1, 
+     pch = 21, 
+     bg = "firebrick",
+     col = "black",
+     ylab = "Quantification Cycle (Cq)",
+     xlab = "log2(cDNA Conc. (ng/uL)")
+
+points(x = IDGF6.2$log.Conc,
+       y = IDGF6.2$Cq,
+       cex = 1,
+       pch = 21,
+       bg = "steelblue",
+       col = "black")
+
+
+linearmodel=lm(as.numeric(IDGF6.1$Cq)~IDGF6.1$log.Conc)
+abline(a=linearmodel[[1]][[1]],b=linearmodel[[1]][2],lty=2,col="firebrick",lwd=2)
+text(x = 0, y = 21.5,paste0("IDGF6 1 slope = ", signif(linearmodel[[1]][2],3)),cex=.8)
+
+linearmodel=lm(as.numeric(IDGF6.2$Cq)~IDGF6.2$log.Conc)
+abline(a=linearmodel[[1]][[1]],b=linearmodel[[1]][2],lty=2,col="steelblue",lwd=2)
+text(x = 0, y = 21.2,paste0("IDGF6 2 slope = ", signif(linearmodel[[1]][2],3)),cex=.8)
+
+
+legend("topright", legend = c("IDGF6 1", "IDGF6 2"), pch = 21, col = "black", pt.bg = c("firebrick", "steelblue"), bty = "n")
+
+```
+
+
+```{r echo = F}
+
+plot(x = IDGF6.1$log.Conc, 
+     y = IDGF6.1$Cq, 
+     type = "p",  
+     cex = 1, 
+     pch = 21, 
+     bg = "firebrick",
+     col = "black",
+     ylab = "Quantification Cycle (Cq)",
+     xlab = "log2(cDNA Conc. (ng/uL)")
+
+
+linearmodel=lm(as.numeric(IDGF6.1$Cq)~IDGF6.1$log.Conc)
+abline(a=linearmodel[[1]][[1]],b=linearmodel[[1]][2],lty=2,col="firebrick",lwd=2)
+text(x = 0, y = 21.5,paste0("IDGF6 1 slope = ", signif(linearmodel[[1]][2],3)),cex=.8)
+
+
+legend("topright", legend = c("IDGF6 1"), pch = 21, col = "black", pt.bg = c("firebrick"), bty = "n")
+
+IDGF6.1.slope = linearmodel[[1]][2]
+
+```
+
+
+```{r echo = F}
+
+plot(x = IDGF6.2$log.Conc, 
+     y = IDGF6.2$Cq, 
+     type = "p",  
+     cex = 1, 
+     pch = 21, 
+     bg = "steelblue",
+     col = "black",
+     ylab = "Quantification Cycle (Cq)",
+     xlab = "log2(cDNA Conc. (ng/uL)")
+
+linearmodel=lm(as.numeric(IDGF6.2$Cq)~IDGF6.2$log.Conc)
+abline(a=linearmodel[[1]][[1]],b=linearmodel[[1]][2],lty=2,col="steelblue",lwd=2)
+text(x = 0, y = 22.2,paste0("IDGF6 2 slope = ", signif(linearmodel[[1]][2],3)),cex=.8)
+
+
+legend("topright", legend = c("IDGF6 2"), pch = 21, col = "black", pt.bg = c("steelblue"), bty = "n")
+
+IDGF6.2.slope = linearmodel[[1]][2]
+
+```
+
+
+```{r echo = F}
+
+
+IDGF6.1.E = (-1+2^(-1/IDGF6.1.slope))*100
+IDGF6.2.E = (-1+2^(-1/IDGF6.2.slope))*100
+
+Mean.E = mean(c(IDGF6.1.E, IDGF6.2.E))
+
+barplot(height = c(IDGF6.1.E, IDGF6.2.E, Mean.E), 
+        col = c("firebrick", "steelblue", "gold"), 
+        names = c("IDGF6 1", "IDGF6 2", "Mean E"), 
+        ylab = "Percent Efficiency (E)", 
+        ylim = c(0, 150))
+abline(h = 90, lty = 2, lwd = 1)
+abline(h = 110, lty = 2, lwd = 1)
+abline(h = 100, lty = 2, lwd = 2)
+
+```

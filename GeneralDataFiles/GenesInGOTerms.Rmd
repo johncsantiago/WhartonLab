@@ -100,7 +100,7 @@ unknowns.forFlybase = symbol2ensembl[grep("FBgn", names(symbol2ensembl))]
 unknown.key = read.csv("/Users/johncsantiago/Documents/CamiExtraGenes.csv", header = F, row.names = 1)
 
 KEY2 = data.frame(FBgn = unknown, Symbol = ensembl2symbol, ensembl = FBgn2ensembl)
-row.names(KEY2) = unknown
+row.names(KEY2) = unknownPNPase
 KEY2[row.names(unknown.key),"Symbol"]= unknown.key[,1]
 
 unknown.sym2ens = unlist(x3[KEY2[grep("FBgn",KEY2$ensembl),"Symbol"]])
@@ -187,6 +187,36 @@ x=as.list(org.Dm.egFLYBASECG2EG)
 xx=as.list(org.Dm.egSYMBOL)
 names(kegg)=as.vector(unlist(xx[unlist(x[names(kegg)])]))
 
-##saveRDS(kegg, "/Users/johncsantiago/Documents/GitHub/WhartonLab/Deficiency Screen/DataFiles/kegg.symbol2path.RData")
+##saveRDS(kegg, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/kegg.symbol2path.RData")
 
+```
+
+
+```{r}
+
+library(DBI)
+# Create an ephemeral in-memory RSQLite database
+con <- dbConnect(RSQLite::SQLite(), dbname = ":memory:")
+
+dbListTables(con)
+dbWriteTable(con, "mtcars", mtcars)
+dbListTables(con)
+
+dbListFields(con, "mtcars")
+dbReadTable(con, "mtcars")
+
+# You can fetch all results:
+res <- dbSendQuery(con, "SELECT * FROM mtcars WHERE cyl = 4")
+dbFetch(res)
+dbClearResult(res)
+
+# Or a chunk at a time
+res <- dbSendQuery(con, "SELECT * FROM mtcars WHERE cyl = 4")
+while(!dbHasCompleted(res)){
+  chunk <- dbFetch(res, n = 5)
+  print(nrow(chunk))
+}
+dbClearResult(res)
+
+dbDisconnect(con)
 ```

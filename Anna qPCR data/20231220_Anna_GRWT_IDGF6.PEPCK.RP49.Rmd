@@ -1,0 +1,718 @@
+---
+title: "Anna IDGF6 and PEPCK Primer qPCR Plate"
+author: "John Santiago"
+date: "2023-12-20"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo = F, include = F}
+library(plotly)
+IDGF6.data = read.csv("/Users/johncsantiago/Documents/20231220_Anna_GRWT_IDGF6.csv")
+IDGF6.data$Genotype = substr(IDGF6.data$Sample,1,2)
+IDGF6.data$Concentration = substr(IDGF6.data$Sample,5,nchar(IDGF6.data$Sample))
+IDGF6.data$Rep = substr(IDGF6.data$Sample,3,3)
+IDGF6.data$Primer = 'IDGF6'
+
+IDGF6.data = IDGF6.data[IDGF6.data$Well != "A7", c('Well', 'Sample', 'Cq', 'Genotype', 'Primer', 'Rep', 'Concentration')]
+
+RP49.PEPCK.data = read.csv("/Users/johncsantiago/Documents/20231220_Anna_GRWT_RP49.PEPCK.csv")
+RP49.PEPCK.data$Genotype = substr(RP49.PEPCK.data$Sample,1,2)
+RP49.PEPCK.data$Concentration = substr(RP49.PEPCK.data$Sample,6,(nchar(RP49.PEPCK.data$Sample)-3))
+RP49.PEPCK.data$Rep = substr(RP49.PEPCK.data$Sample,3,3)
+RP49.PEPCK.data$Primer = RP49.PEPCK.data$Target
+
+
+RP49.PEPCK.data = RP49.PEPCK.data[RP49.PEPCK.data$Well != "A6" &
+                                    RP49.PEPCK.data$Well != "A7" &
+                                    RP49.PEPCK.data$Well != "G3" &
+                                    RP49.PEPCK.data$Well != "G4" &
+                                    RP49.PEPCK.data$Well != "G5" &
+                                    RP49.PEPCK.data$Well != "G6" &
+                                    RP49.PEPCK.data$Well != "C9", 
+                                  c('Well', 'Sample', 'Cq', 'Genotype', 'Primer', 'Rep', 'Concentration')]
+
+RP49.PEPCK.data$Cq = as.numeric(RP49.PEPCK.data$Cq)
+
+
+LDH.PDH.PCB.data = read.csv("/Users/johncsantiago/Documents/20231221_Anna_GRWT_PCB.PDH.LDH.csv")
+
+LDH.PDH.PCB.data[grep('idgf', LDH.PDH.PCB.data$Sample), 'Sample'] = paste0('KD', substr(LDH.PDH.PCB.data[grep('idgf', LDH.PDH.PCB.data$Sample), 'Sample'] , 12, 18))
+
+LDH.PDH.PCB.data[grep('GR13', LDH.PDH.PCB.data$Sample), 'Sample'] = paste0('GR3', substr(LDH.PDH.PCB.data[grep('GR13', LDH.PDH.PCB.data$Sample), 'Sample'],5, 10))
+
+LDH.PDH.PCB.data$Genotype = substr(LDH.PDH.PCB.data$Sample,1,2)
+LDH.PDH.PCB.data$Concentration = substr(LDH.PDH.PCB.data$Sample,6,(nchar(LDH.PDH.PCB.data$Sample)-3))
+LDH.PDH.PCB.data$Rep = substr(LDH.PDH.PCB.data$Sample,3,3)
+LDH.PDH.PCB.data$Primer = LDH.PDH.PCB.data$Target
+
+
+LDH.PDH.PCB.data = LDH.PDH.PCB.data[LDH.PDH.PCB.data$Well != "D6" &
+                                    LDH.PDH.PCB.data$Well != "D1" &
+                                    LDH.PDH.PCB.data$Well != "D10" &
+                                    LDH.PDH.PCB.data$Well != "D12" &
+                                    LDH.PDH.PCB.data$Well != "E4", 
+                                  c('Well', 'Sample', 'Cq', 'Genotype', 'Primer', 'Rep', 'Concentration')]
+
+LDH.PDH.PCB.data$Cq = as.numeric(LDH.PDH.PCB.data$Cq)
+
+```
+
+```{r echo = F}
+
+plotdata = IDGF6.data
+plotdata = plotdata[order(paste0(plotdata$Genotype, plotdata$Rep)),]
+
+plotdata$x = factor(plotdata$Sample, 
+                    levels = c(unique(plotdata$Sample)))
+
+plotdata$Cq = as.numeric(plotdata$Cq)
+
+boxplot(plotdata$Cq~plotdata$x,
+     ylab = "Quantification Cycle (Cq)",
+     xlab = "",
+     main = "IDGF6",
+     las = 2)
+
+points(x = plotdata$x,
+       y = plotdata$Cq,
+       cex = 1.5,
+       pch = 21,
+       bg = "steelblue",
+       col = "black")
+
+```
+
+```{r echo = F}
+
+mean.cq = c(1:18)
+names(mean.cq) = unique(IDGF6.data$Sample)
+i = 1
+while(i <= length(mean.cq)){
+  mean.cq[i] = mean(IDGF6.data[IDGF6.data$Sample == names(mean.cq)[i], 'Cq'])
+  i = i+1
+}
+
+idgf.mean.cq = mean.cq[-grep(' 2.5', names(mean.cq))]
+names(idgf.mean.cq) = substr(names(idgf.mean.cq), 1,3)
+
+dCq = c(1:9)
+names(dCq) = unique(paste0(IDGF6.data$Genotype, IDGF6.data$Rep))
+i = 1
+while(i <= length(dCq)){
+  temp = mean.cq[substr(names(mean.cq),1,3) == names(dCq)[i]]
+  dCq[i] = temp[2] - temp[1]
+  i=i+1
+}
+
+
+
+FC = 2^dCq
+
+barplot(names = names(FC),
+     height = FC,
+     ylab = "Fold Change",
+     xlab = "",
+     main = "IDGF6 FC between 2.5ng and 5ng cDNA",
+     las = 2,
+     col = "steelblue",
+     ylim = c(0,2))
+
+
+```
+
+```{r echo = F}
+
+plotdata = RP49.PEPCK.data[RP49.PEPCK.data$Primer == 'RP49',]
+plotdata = plotdata[order(paste0(plotdata$Genotype, plotdata$Rep)),]
+
+plotdata$x = factor(plotdata$Sample, 
+                    levels = c(unique(plotdata$Sample)))
+
+plotdata$Cq = as.numeric(plotdata$Cq)
+
+boxplot(plotdata$Cq~plotdata$x,
+     ylab = "Quantification Cycle (Cq)",
+     xlab = "",
+     main = "RP49",
+     las = 2)
+
+points(x = plotdata$x,
+       y = plotdata$Cq,
+       cex = 1.5,
+       pch = 21,
+       bg = "firebrick",
+       col = "black")
+
+```
+
+```{r echo = F}
+
+plotdata = RP49.PEPCK.data[RP49.PEPCK.data$Primer == 'Pepck-1',]
+plotdata = plotdata[order(paste0(plotdata$Genotype, plotdata$Rep)),]
+
+plotdata$x = factor(plotdata$Sample, 
+                    levels = c(unique(plotdata$Sample)))
+
+plotdata$Cq = as.numeric(plotdata$Cq)
+
+boxplot(plotdata$Cq~plotdata$x,
+     ylab = "Quantification Cycle (Cq)",
+     xlab = "",
+     main = "PEPCK",
+     las = 2)
+
+points(x = plotdata$x,
+       y = plotdata$Cq,
+       cex = 1.5,
+       pch = 21,
+       bg = "darkgreen",
+       col = "black")
+
+```
+
+```{r echo = F}
+
+plotdata = LDH.PDH.PCB.data[LDH.PDH.PCB.data$Primer == 'PCB',]
+plotdata = plotdata[order(paste0(plotdata$Genotype, plotdata$Rep)),]
+
+plotdata$x = factor(plotdata$Sample, 
+                    levels = c(unique(plotdata$Sample)))
+
+plotdata$Cq = as.numeric(plotdata$Cq)
+
+boxplot(plotdata$Cq~plotdata$x,
+     ylab = "Quantification Cycle (Cq)",
+     xlab = "",
+     main = "PCB",
+     las = 2)
+
+points(x = plotdata$x,
+       y = plotdata$Cq,
+       cex = 1.5,
+       pch = 21,
+       bg = "gold",
+       col = "black")
+
+```
+
+```{r echo = F}
+
+plotdata = LDH.PDH.PCB.data[LDH.PDH.PCB.data$Primer == 'PDH',]
+plotdata = plotdata[order(paste0(plotdata$Genotype, plotdata$Rep)),]
+
+plotdata$x = factor(plotdata$Sample, 
+                    levels = c(unique(plotdata$Sample)))
+
+plotdata$Cq = as.numeric(plotdata$Cq)
+
+boxplot(plotdata$Cq~plotdata$x,
+     ylab = "Quantification Cycle (Cq)",
+     xlab = "",
+     main = "PDH",
+     las = 2)
+
+points(x = plotdata$x,
+       y = plotdata$Cq,
+       cex = 1.5,
+       pch = 21,
+       bg = "orchid4",
+       col = "black")
+
+```
+
+```{r echo = F}
+
+plotdata = LDH.PDH.PCB.data[LDH.PDH.PCB.data$Primer == 'LDH',]
+plotdata = plotdata[order(paste0(plotdata$Genotype, plotdata$Rep)),]
+
+plotdata$x = factor(plotdata$Sample, 
+                    levels = c(unique(plotdata$Sample)))
+
+plotdata$Cq = as.numeric(plotdata$Cq)
+
+boxplot(plotdata$Cq~plotdata$x,
+     ylab = "Quantification Cycle (Cq)",
+     xlab = "",
+     main = "LDH",
+     las = 2)
+
+points(x = plotdata$x,
+       y = plotdata$Cq,
+       cex = 1.5,
+       pch = 21,
+       bg = "darkorange",
+       col = "black")
+
+```
+
+```{r echo = F}
+
+rp49.data = RP49.PEPCK.data[RP49.PEPCK.data$Primer == 'RP49',]
+
+mean.cq = c(1:9)
+names(mean.cq) = unique(rp49.data$Sample)
+i = 1
+while(i <= length(mean.cq)){
+  mean.cq[i] = mean(rp49.data[rp49.data$Sample == names(mean.cq)[i], 'Cq'])
+  i = i+1
+}
+
+rp49.mean.cq = mean.cq
+names(rp49.mean.cq) = substr(names(rp49.mean.cq),1,3)
+
+
+
+pepck.data = RP49.PEPCK.data[RP49.PEPCK.data$Primer == 'Pepck-1',]
+
+mean.cq = c(1:10)
+names(mean.cq) = unique(pepck.data$Sample)
+i = 1
+while(i <= length(mean.cq)){
+  mean.cq[i] = mean(pepck.data[pepck.data$Sample == names(mean.cq)[i], 'Cq'])
+  i = i+1
+}
+
+pepck.mean.cq = mean.cq
+names(pepck.mean.cq) = substr(names(pepck.mean.cq),1,3)
+pepck.FC = 2^(pepck.mean.cq[10] - pepck.mean.cq[9])
+pepck.mean.cq = pepck.mean.cq[1:8]
+pepck.mean.cq = pepck.mean.cq[names(rp49.mean.cq)]
+names(pepck.mean.cq) = names(rp49.mean.cq)
+
+
+
+ldh.data = LDH.PDH.PCB.data[LDH.PDH.PCB.data$Primer == 'LDH',]
+
+mean.cq = c(1:10)
+names(mean.cq) = unique(ldh.data$Sample)
+i = 1
+while(i <= length(mean.cq)){
+  mean.cq[i] = mean(ldh.data[ldh.data$Sample == names(mean.cq)[i], 'Cq'])
+  i = i+1
+}
+
+ldh.mean.cq = mean.cq
+ldh.FC = 2^(ldh.mean.cq['Wt1 (2.5ng)'] - ldh.mean.cq['WT1 (5ng)'])
+ldh.mean.cq = ldh.mean.cq[names(ldh.mean.cq) != 'Wt1 (2.5ng)']
+names(ldh.mean.cq) = substr(names(ldh.mean.cq),1,3)
+ldh.mean.cq = ldh.mean.cq[names(rp49.mean.cq)]
+names(ldh.mean.cq) = names(rp49.mean.cq)
+
+
+
+pdh.data = LDH.PDH.PCB.data[LDH.PDH.PCB.data$Primer == 'PDH',]
+
+mean.cq = c(1:10)
+names(mean.cq) = unique(pdh.data$Sample)
+i = 1
+while(i <= length(mean.cq)){
+  mean.cq[i] = mean(pdh.data[pdh.data$Sample == names(mean.cq)[i], 'Cq'])
+  i = i+1
+}
+
+pdh.mean.cq = mean.cq
+pdh.FC = 2^(pdh.mean.cq['Wt1 (2.5ng)'] - pdh.mean.cq['WT1 (5ng)'])
+pdh.mean.cq = pdh.mean.cq[names(pdh.mean.cq) != 'Wt1 (2.5ng)']
+names(pdh.mean.cq) = substr(names(pdh.mean.cq),1,3)
+pdh.mean.cq = pdh.mean.cq[names(rp49.mean.cq)]
+names(pdh.mean.cq) = names(rp49.mean.cq)
+
+
+
+pcb.data = LDH.PDH.PCB.data[LDH.PDH.PCB.data$Primer == 'PCB',]
+
+mean.cq = c(1:10)
+names(mean.cq) = unique(pcb.data$Sample)
+i = 1
+while(i <= length(mean.cq)){
+  mean.cq[i] = mean(pcb.data[pcb.data$Sample == names(mean.cq)[i], 'Cq'])
+  i = i+1
+}
+
+pcb.mean.cq = mean.cq
+pcb.FC = 2^(pcb.mean.cq['Wt1 (2.5ng)'] - pcb.mean.cq['WT1 (5ng)'])
+pcb.mean.cq = pcb.mean.cq[names(pcb.mean.cq) != 'Wt1 (2.5ng)']
+names(pcb.mean.cq) = substr(names(pcb.mean.cq),1,3)
+pcb.mean.cq = pcb.mean.cq[names(rp49.mean.cq)]
+names(pcb.mean.cq) = names(rp49.mean.cq)
+
+
+```
+
+```{r echo = F}
+
+barplotdata = c(pepck.FC, pcb.FC, pdh.FC, ldh.FC)
+names(barplotdata) = c ('PEPCK', 'PCB', 'PDH', 'LDH')
+
+barplot(height = barplotdata,
+     ylab = "Fold Change",
+     xlab = "",
+     main = "Pepck-1 FC between 2.5ng and 10ng cDNA",
+     las = 1,
+     col = c("darkgreen", 'gold', 'orchid4', 'darkorange'),
+     ylim = c(0,4.1))
+abline(h = 4, lty = 2, lwd = 2)
+abline(h = 2, lty = 2, lwd = 2)
+
+```
+
+```{r echo = F}
+
+plotdata = rbind(IDGF6.data, RP49.PEPCK.data, LDH.PDH.PCB.data)
+plotdata = plotdata[plotdata$Genotype == "GR" & plotdata$Concentration == 5,]
+
+plotdata$x = factor(paste0(plotdata$Primer, '-', plotdata$Rep), 
+                    levels = c(unique(paste0(plotdata$Primer, '-', plotdata$Rep))[order(unique(paste0(plotdata$Primer, '-', plotdata$Rep)))]))
+
+plotdata$Cq = as.numeric(plotdata$Cq)
+
+boxplot(plotdata$Cq~plotdata$x,
+     ylab = "Quantification Cycle (Cq)",
+     xlab = "",
+     main = "G85R",
+     las = 2)
+
+points(x = plotdata$x,
+       y = plotdata$Cq,
+       cex = 1.5,
+       pch = 21,
+       bg = c(rep('steelblue',8), 
+              rep('firebrick',7),
+              rep("darkgreen",9),
+              rep("gold", 9),
+              rep('orchid4', 9),
+              rep('darkorange', 9)),
+       col = "black")
+
+```
+
+```{r echo = F}
+
+plotdata = rbind(IDGF6.data, RP49.PEPCK.data, LDH.PDH.PCB.data)
+plotdata = plotdata[plotdata$Genotype == "WT" & plotdata$Concentration == 5,]
+
+plotdata$x = factor(paste0(plotdata$Primer, '-', plotdata$Rep), 
+                    levels = c(unique(paste0(plotdata$Primer, '-', plotdata$Rep))[order(unique(paste0(plotdata$Primer, '-', plotdata$Rep)))]))
+
+plotdata$Cq = as.numeric(plotdata$Cq)
+
+boxplot(plotdata$Cq~plotdata$x,
+     ylab = "Quantification Cycle (Cq)",
+     xlab = "",
+     main = "WT",
+     las = 2)
+
+points(x = plotdata$x,
+       y = plotdata$Cq,
+       cex = 1.5,
+       pch = 21,
+       bg = c(rep('steelblue',9), 
+              rep('firebrick',9),
+              rep("darkgreen",6),
+              rep("gold", 7),
+              rep('orchid4', 9),
+              rep('darkorange', 9)),
+       col = "black")
+```
+
+```{r echo = F}
+
+plotdata = rbind(IDGF6.data, RP49.PEPCK.data, LDH.PDH.PCB.data)
+plotdata = plotdata[plotdata$Genotype == "KD" & plotdata$Concentration == 5,]
+
+plotdata$x = factor(paste0(plotdata$Primer, '-', plotdata$Rep), 
+                    levels = c(unique(paste0(plotdata$Primer, '-', plotdata$Rep))[order(unique(paste0(plotdata$Primer, '-', plotdata$Rep)))]))
+
+plotdata$Cq = as.numeric(plotdata$Cq)
+
+boxplot(plotdata$Cq~plotdata$x,
+     ylab = "Quantification Cycle (Cq)",
+     xlab = "",
+     main = "KD",
+     las = 2)
+
+points(x = plotdata$x,
+       y = plotdata$Cq,
+       cex = 1.5,
+       pch = 21,
+       bg = c(rep('steelblue',9), 
+              rep('firebrick',8),
+              rep("darkgreen",9),
+              rep("gold", 9),
+              rep('orchid4', 9),
+              rep('darkorange', 9)),
+       col = "black")
+```
+
+```{r echo = F}
+
+dCt = data.frame(Genotype = substr(names(idgf.mean.cq),1,2),
+                 IDGF6 = idgf.mean.cq,
+                 RP49 = rp49.mean.cq,
+                 PEPCK = pepck.mean.cq,
+                 PDH = pdh.mean.cq,
+                 PCB = pcb.mean.cq,
+                 LDH = ldh.mean.cq)
+dCt$Genotype = factor(dCt$Genotype, levels = c('WT', 'GR', 'KD'))
+
+dCt$IDGF6.dCt = dCt$IDGF6 - dCt$RP49
+dCt$IDGF6.FC = 2^-dCt$IDGF6.dCt
+
+dCt$PEPCK.dCt = dCt$PEPCK - dCt$RP49
+dCt$PEPCK.FC = 2^-dCt$PEPCK.dCt
+
+dCt$PDH.dCt = dCt$PDH - dCt$RP49
+dCt$PDH.FC = 2^-dCt$PDH.dCt
+
+dCt$PCB.dCt = dCt$PCB - dCt$RP49
+dCt$PCB.FC = 2^-dCt$PCB.dCt
+
+dCt$LDH.dCt = dCt$LDH - dCt$RP49
+dCt$LDH.FC = 2^-dCt$LDH.dCt
+
+
+
+
+GRvsWT = t.test(dCt$IDGF6.dCt[dCt$Genotype == "WT"], dCt$IDGF6.dCt[dCt$Genotype == "GR"])[[3]]
+KDvsWT = t.test(dCt$IDGF6.dCt[dCt$Genotype == "WT"], dCt$IDGF6.dCt[dCt$Genotype == "KD"])[[3]]
+
+boxplot(IDGF6.dCt~Genotype, data = dCt, ylim = c(2,7))
+
+points(x = dCt$Genotype,
+       y = dCt$IDGF6.dCt,
+       cex = 1.5,
+       pch = 21,
+       bg = c(rep('steelblue',3), 
+              rep('firebrick',3),
+              rep("darkgreen",3)),
+       col = "black")
+
+text(x=c(2,3),y=c(6.75,6.75), labels = c(paste0('pval = ', signif(GRvsWT,3)), 
+                                   paste0('pval = ', signif(KDvsWT,3))))
+
+```
+
+```{r echo = F}
+
+GRvsWT = t.test(dCt$PEPCK.dCt[dCt$Genotype == "WT"], dCt$PEPCK.dCt[dCt$Genotype == "GR"])[[3]]
+KDvsWT = t.test(dCt$PEPCK.dCt[dCt$Genotype == "WT"], dCt$PEPCK.dCt[dCt$Genotype == "KD"])[[3]]
+
+boxplot(PEPCK.dCt~Genotype, data = dCt, ylim = c(4, 7))
+
+points(x = dCt$Genotype,
+       y = dCt$PEPCK.dCt,
+       cex = 1.5,
+       pch = 21,
+       bg = c(rep('steelblue',3), 
+              rep('firebrick',3),
+              rep("darkgreen",3)),
+       col = "black")
+
+text(x=c(2,3),y=c(6.75,6.75), labels = c(paste0('pval = ', signif(GRvsWT,3)), 
+                                   paste0('pval = ', signif(KDvsWT,3))))
+
+```
+
+```{r echo = F}
+
+GRvsWT = t.test(dCt$PDH.dCt[dCt$Genotype == "WT"], dCt$PDH.dCt[dCt$Genotype == "GR"])[[3]]
+KDvsWT = t.test(dCt$PDH.dCt[dCt$Genotype == "WT"], dCt$PDH.dCt[dCt$Genotype == "KD"])[[3]]
+
+KDvsGR = t.test(dCt$PDH.dCt[dCt$Genotype == "GR"], dCt$PDH.dCt[dCt$Genotype == "KD"])[[3]]
+
+boxplot(PDH.dCt~Genotype, data = dCt)
+
+points(x = dCt$Genotype,
+       y = dCt$PDH.dCt,
+       cex = 1.5,
+       pch = 21,
+       bg = c(rep('steelblue',3), 
+              rep('firebrick',3),
+              rep("darkgreen",3)),
+       col = "black")
+
+text(x=c(2,3,2.5),y=c(11,11, 14), labels = c(paste0('pval = ', signif(GRvsWT,3)), 
+                                   paste0('pval = ', signif(KDvsWT,3)),
+                                   paste0('KD vs GR\npval = ', signif(KDvsGR,3))))
+
+
+```
+
+```{r echo = F}
+
+GRvsWT = t.test(dCt$PCB.dCt[dCt$Genotype == "WT"], dCt$PCB.dCt[dCt$Genotype == "GR"])[[3]]
+KDvsWT = t.test(dCt$PCB.dCt[dCt$Genotype == "WT"], dCt$PCB.dCt[dCt$Genotype == "KD"])[[3]]
+
+KDvsGR = t.test(dCt$PCB.dCt[dCt$Genotype == "GR"], dCt$PCB.dCt[dCt$Genotype == "KD"])[[3]]
+
+
+boxplot(PCB.dCt~Genotype, data = dCt)
+
+points(x = dCt$Genotype,
+       y = dCt$PCB.dCt,
+       cex = 1.5,
+       pch = 21,
+       bg = c(rep('steelblue',3), 
+              rep('firebrick',3),
+              rep("darkgreen",3)),
+       col = "black")
+
+text(x=c(2,3, 2.5),y=c(9, 9, 14), labels = c(paste0('pval = ', signif(GRvsWT,3)), 
+                                   paste0('pval = ', signif(KDvsWT,3)),
+                                   paste0('KD vs GR\npval = ', signif(KDvsGR,3))))
+
+```
+
+```{r echo = F}
+
+GRvsWT = t.test(dCt$LDH.dCt[dCt$Genotype == "WT"], dCt$LDH.dCt[dCt$Genotype == "GR"])[[3]]
+KDvsWT = t.test(dCt$LDH.dCt[dCt$Genotype == "WT"], dCt$LDH.dCt[dCt$Genotype == "KD"])[[3]]
+
+KDvsGR = t.test(dCt$LDH.dCt[dCt$Genotype == "GR"], dCt$LDH.dCt[dCt$Genotype == "KD"])[[3]]
+
+boxplot(LDH.dCt~Genotype, data = dCt)
+
+points(x = dCt$Genotype,
+       y = dCt$LDH.dCt,
+       cex = 1.5,
+       pch = 21,
+       bg = c(rep('steelblue',3), 
+              rep('firebrick',3),
+              rep("darkgreen",3)),
+       col = "black")
+
+text(x=c(2,3, 2.5),y=c(8, 8, 11), labels = c(paste0('pval = ', signif(GRvsWT,3)), 
+                                   paste0('pval = ', signif(KDvsWT,3)),
+                                   paste0('KD vs GR\npval = ', signif(KDvsGR,3))))
+
+```
+
+
+```{r echo = F}
+
+KDvsGR = t.test(dCt$PDH.dCt[dCt$Genotype == "GR"], dCt$PDH.dCt[dCt$Genotype == "KD"])[[3]]
+
+boxplotdata = dCt[row.names(dCt) != 'WT1' & row.names(dCt) != 'WT2',]
+
+boxplot(PDH.dCt~Genotype, data = boxplotdata, ylim = c(7.5,11))
+
+points(x = dCt$Genotype,
+       y = dCt$PDH.dCt,
+       cex = 1.5,
+       pch = 21,
+       bg = c(rep('steelblue',3), 
+              rep('firebrick',3),
+              rep("darkgreen",3)),
+       col = "black")
+text(x=c(2.5),y=c(10.5), labels = c(paste0('KD vs GR\npval = ', signif(KDvsGR,3))))
+
+
+```
+
+```{r echo = F}
+
+KDvsGR = t.test(dCt$PCB.dCt[dCt$Genotype == "GR"], dCt$PCB.dCt[dCt$Genotype == "KD"])[[3]]
+
+GRvsWT = t.test(dCt$PCB.dCt[dCt$Genotype == "GR"], dCt$PCB.dCt[dCt$Genotype == "WT"])[[3]]
+
+boxplotdata = dCt[row.names(dCt) != 'WT1' & row.names(dCt) != 'WT2',]
+
+boxplot(PCB.dCt~Genotype, data = boxplotdata, ylim = c(6,9))
+
+points(x = dCt$Genotype,
+       y = dCt$PCB.dCt,
+       cex = 1.5,
+       pch = 21,
+       bg = c(rep('steelblue',3), 
+              rep('firebrick',3),
+              rep("darkgreen",3)),
+       col = "black")
+text(x=c(2.5),y=c(8.5), labels = c(paste0('KD vs GR\npval = ', signif(KDvsGR,3))))
+
+
+```
+
+```{r echo = F}
+
+KDvsGR = t.test(dCt$LDH.dCt[dCt$Genotype == "GR"], dCt$LDH.dCt[dCt$Genotype == "KD"])[[3]]
+
+boxplotdata = dCt[row.names(dCt) != 'WT1' & row.names(dCt) != 'WT2',]
+
+boxplot(LDH.dCt~Genotype, data = boxplotdata, ylim = c(4.5,8))
+
+points(x = dCt$Genotype,
+       y = dCt$LDH.dCt,
+       cex = 1.5,
+       pch = 21,
+       bg = c(rep('steelblue',3), 
+              rep('firebrick',3),
+              rep("darkgreen",3)),
+       col = "black")
+text(x=c(2.5),y=c(7.5), labels = c(paste0('KD vs GR\npval = ', signif(KDvsGR,3))))
+
+
+```
+
+```{r echo = F}
+
+mean.dCt = data.frame(Genotype = c('WT','GR', 'KD'),
+                     IDGF6.dCT = c(mean(dCt$IDGF6.dCt[dCt$Genotype == 'WT']),
+                                   mean(dCt$IDGF6.dCt[dCt$Genotype == 'GR']),
+                                   mean(dCt$IDGF6.dCt[dCt$Genotype == 'KD'])),
+                     PEPCK.dCT = c(mean(na.omit(dCt$PEPCK.dCt[dCt$Genotype == 'WT'])),
+                                   mean(dCt$PEPCK.dCt[dCt$Genotype == 'GR']),
+                                   mean(dCt$PEPCK.dCt[dCt$Genotype == 'KD'])),
+                     PDH.dCT = c(dCt['WT3', 'PDH.dCt'],
+                                   mean(dCt$PDH.dCt[dCt$Genotype == 'GR']),
+                                   mean(dCt$PDH.dCt[dCt$Genotype == 'KD'])),
+                     PCB.dCT = c(dCt['WT3', 'PCB.dCt'],
+                                   mean(dCt$PCB.dCt[dCt$Genotype == 'GR']),
+                                   mean(dCt$PCB.dCt[dCt$Genotype == 'KD'])),
+                     LDH.dCT = c(dCt['WT3', 'LDH.dCt'],
+                                   mean(dCt$LDH.dCt[dCt$Genotype == 'GR']),
+                                   mean(na.omit(dCt$LDH.dCt[dCt$Genotype == 'KD']))))
+
+
+IDGF6.ddCT = c((mean.dCt$IDGF6.dCT[2] - mean.dCt$IDGF6.dCT[1]),
+               (mean.dCt$IDGF6.dCT[3] - mean.dCt$IDGF6.dCT[1]))
+names(IDGF6.ddCT) = c('GR/WT', 'KD/WT')
+
+PEPCK.ddCT = c((mean.dCt$PEPCK.dCT[2] - mean.dCt$PEPCK.dCT[1]),
+               (mean.dCt$PEPCK.dCT[3] - mean.dCt$PEPCK.dCT[1]))
+names(PEPCK.ddCT) = c('GR/WT', 'KD/WT')
+
+PDH.ddCT = c((mean.dCt$PDH.dCT[2] - mean.dCt$PDH.dCT[1]),
+               (mean.dCt$PDH.dCT[3] - mean.dCt$PDH.dCT[1]))
+names(PDH.ddCT) = c('GR/WT', 'KD/WT')
+
+PCB.ddCT = c((mean.dCt$PCB.dCT[2] - mean.dCt$PCB.dCT[1]),
+               (mean.dCt$PCB.dCT[3] - mean.dCt$PCB.dCT[1]))
+names(PCB.ddCT) = c('GR/WT', 'KD/WT')
+
+LDH.ddCT = c((mean.dCt$LDH.dCT[2] - mean.dCt$LDH.dCT[1]),
+               (mean.dCt$LDH.dCT[3] - mean.dCt$LDH.dCT[1]))
+names(PDH.ddCT) = c('GR/WT', 'KD/WT')
+
+barplot(height = c(2^-IDGF6.ddCT, NA, 
+                   2^-PEPCK.ddCT, NA, 
+                   2^-PDH.ddCT, NA, 
+                   2^-PCB.ddCT, NA, 
+                   2^-LDH.ddCT),
+        names.arg = c('GR IDGF6', 'KD IDGF6', NA, 
+                      'GR PEPCK', 'KD PEPCK', NA,
+                      'GR PDH', 'KD PDH', NA,
+                      'GR PCB', 'KD PCB', NA,
+                      'GR LDH', 'KD LDH'),
+        ylab = 'Fold Change (relative to WT)',
+        ylim = c(0,2.5),
+        las = 2,
+        cex.names = .9)
+abline(h = 1, lty = 2)
+
+
+
+```

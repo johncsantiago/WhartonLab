@@ -1,0 +1,525 @@
+---
+title: "Glycolysis Network"
+author: "John Santiago"
+date: "2023-12-06"
+output: 
+  bookdown::pdf_document2:
+    number_sections: false
+---
+
+```{r setup, include=FALSE}
+##knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(dev='svg', fig.width=9, fig.height=12, out.width = "9in", out.height = "12in")
+```
+
+- #### Figure \@ref(fig:fig1): GR.FC vs WT.FC
+
+- #### Figure \@ref(fig:fig2): GR.MC vs WT.MC
+
+- #### Figure \@ref(fig:fig3): GR.FDf vs WT.FDf
+
+- #### Figure \@ref(fig:fig4): GR.MDf vs WT.MDf
+
+- #### Figure \@ref(fig:fig5): GR.FOE vs WT.FOE
+
+- #### Figure \@ref(fig:fig6): GR.MOE vs WT.MOE
+
+- #### Figure \@ref(fig:fig7): GRF: C vs Df
+
+- #### Figure \@ref(fig:fig8): GRM: C vs Df
+
+- #### Figure \@ref(fig:fig9): WTF: C vs Df
+
+- #### Figure \@ref(fig:fig10): WTM: C vs Df
+
+- #### Figure \@ref(fig:fig11): GRF: C vs OE
+
+- #### Figure \@ref(fig:fig12): GRM: C vs OE
+
+- #### Figure \@ref(fig:fig13): WTF: C vs OE
+
+- #### Figure \@ref(fig:fig14): WTM: C vs OE
+
+
+<br><br><br>
+
+```{r echo = F, include = F}
+library(plotly)
+library(org.Dm.eg.db)
+library(ggpubr)
+library(performance)
+library(pathview)
+library(visNetwork)
+library(org.Dm.eg.db)
+
+##load all files from github
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"
+cpmdata = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT_cpmdata.csv"),row.names = 1)
+groups  = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.metadata.csv"),row.names = 1)
+TKT.EdgeR = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FDRTable.csv"),row.names = 1)
+TKT.EdgeR.FC = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FCTable.csv"),row.names = 1)
+
+GeneIDKey = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GeneIDKey.csv", row.names = 1)
+kegg = readRDS(gzcon(url(paste0(git.dir,"GeneralDataFiles/kegg.symbol2path.RData"))))
+kegg.names = read.csv(paste0(git.dir, "GeneralDataFiles/KEGG.names.csv"), row.names = 1)
+
+genesingo=as.list(org.Dm.egGO2ALLEGS)
+
+
+##mean.cpm; Mean cpm for each gene in each condition (groups$Group). Used for filtering
+mean.cpm = matrix(0, ncol = length(unique(groups$Group)), nrow = nrow(cpmdata))
+colnames(mean.cpm) = unique(groups$Group)
+row.names(mean.cpm) = row.names(cpmdata)
+i=1
+while(i<=ncol(mean.cpm)){
+  mean.cpm[,i]= apply(cpmdata[,row.names(groups[groups$Group == colnames(mean.cpm)[i],])], 1, mean)
+  i=i+1
+}
+
+i=1
+for(i in 1:ncol(TKT.EdgeR)){
+  TKT.EdgeR[TKT.EdgeR[,i] == 0,i] = 2
+  i=i+1
+}
+
+
+
+rawdata = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/MetabolomicsForMetaboanalyst.txt", sep = "\t", row.names = 1)
+
+KEGG.Key = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/RawMetabolomicData.csv", row.names = 1)
+KEGG.Key = setNames(KEGG.Key[-c(1:2), 2], row.names(KEGG.Key)[-c(1:2)])
+
+genotypes = setNames(c("WT", "GR", "TktOEWT", "TktOEGR", "TktDfWT", "TktDfGR"), c("C", "E", "A", "F", "B", "D"))
+
+metadata = data.frame(Sample = colnames(rawdata), 
+                      Group = as.character(rawdata[1,]), 
+                      TIC = as.numeric(rawdata[2,]), 
+                      Genotypes = genotypes[as.character(rawdata[1,])])
+
+row.names(metadata) = metadata$Sample
+
+norm.func = function(data){
+  nd = (as.numeric(data)/metadata$TIC)*1000
+  return(nd)
+}
+
+norm.data = t(apply(rawdata[3:nrow(rawdata),], 1, norm.func))
+colnames(norm.data) = colnames(rawdata)
+
+group.mean=function(data){
+  gm = mean(na.omit(data))
+}
+
+mean.data = matrix(0, nrow=nrow(norm.data), ncol = length(genotypes))
+row.names(mean.data) = row.names(norm.data)
+colnames(mean.data) = unique(metadata$Group)
+
+i=1
+while(i<=ncol(mean.data)){
+  mean.data[,i] = apply(norm.data[,metadata[metadata$Group == colnames(mean.data)[i], "Sample"]], 1, group.mean)
+  i = i+1
+}
+
+mean.cpm = as.data.frame(mean.cpm)
+
+compare.conditions = function(condition1, condition2){
+  columns1 = metadata[metadata$Group == condition1, "Sample"]
+  columns2 = metadata[metadata$Group == condition2, "Sample"]
+  p=setNames(rep(NA, nrow(norm.data)), row.names(norm.data))
+  i=1
+  while(i<=length(p)){
+    if(length(na.omit(norm.data[i,columns1]))>2 & 
+       length(na.omit(norm.data[i,columns2]))>2){
+      temp = t.test(na.omit(norm.data[i,columns1]),
+                    na.omit(norm.data[i,columns2]), paired = F, var.equal = T)
+      p[i] = temp[[3]]
+      }
+    i=i+1
+    }
+
+  fdr = p.adjust(p, "BH", length(p))
+
+  fc = mean.data[,condition1]/mean.data[,condition2]
+
+  comparison.table = data.frame(p = p, 
+                                FDR = fdr, 
+                                FC = fc, 
+                                KEGG = KEGG.Key[row.names(mean.data)])
+  
+  comparison.table = comparison.table[order(comparison.table$FDR),]
+}
+
+GRxWT.C = compare.conditions("E", "C")
+GRxWT.Df = compare.conditions("D", "B")
+GRxWT.OE = compare.conditions("F", "A")
+
+GR.CxDf = compare.conditions("D", "E")
+WT.CxDf = compare.conditions("B", "C")
+
+GR.CxOE = compare.conditions("F", "E")
+WT.CxOE = compare.conditions("A", "C")
+
+##Comparison cpm means
+ccm = data.frame(GRF.CxDf = apply(mean.cpm[,c("TktDfGR.F","GR.F")], MARGIN = 1, mean), 
+                 GRF.CxOE = apply(mean.cpm[,c("TktOEGR.F","GR.F")], MARGIN = 1, mean),
+                 WTF.CxDf = apply(mean.cpm[,c("TktDfWT.F","WT.F")], MARGIN = 1, mean),
+                 WTF.CxOE = apply(mean.cpm[,c("TktOEWT.F","WT.F")], MARGIN = 1, mean),
+                 GRxWT.FC = apply(mean.cpm[,c("GR.F","WT.F")], MARGIN = 1, mean), 
+                 GRxWT.FDf = apply(mean.cpm[,c("TktDfGR.F","TktDfWT.F")], MARGIN = 1, mean),
+                 GRxWT.FOE = apply(mean.cpm[,c("TktOEGR.F","TktOEWT.F")], MARGIN = 1, mean), 
+                 GRM.CxDf = apply(mean.cpm[,c("TktDfGR.M","GR.M")], MARGIN = 1, mean), 
+                 GRM.CxOE = apply(mean.cpm[,c("TktOEGR.M","GR.M")], MARGIN = 1, mean),
+                 WTM.CxDf = apply(mean.cpm[,c("TktDfWT.M","WT.M")], MARGIN = 1, mean),
+                 WTM.CxOE = apply(mean.cpm[,c("TktOEWT.M","WT.M")], MARGIN = 1, mean),
+                 GRxWT.MC = apply(mean.cpm[,c("GR.M","WT.M")], MARGIN = 1, mean), 
+                 GRxWT.MDf = apply(mean.cpm[,c("TktDfGR.M","TktDfWT.M")], MARGIN = 1, mean),
+                 GRxWT.MOE = apply(mean.cpm[,c("TktOEGR.M","TktOEWT.M")], MARGIN = 1, mean),
+                 GR.FxM = apply(mean.cpm[,c("GR.F","GR.M")], MARGIN = 1, mean),
+                 WT.FxM = apply(mean.cpm[,c("WT.F","WT.M")], MARGIN = 1, mean),
+                 row.names = row.names(mean.cpm))
+
+comparison.means = list(GRF.CxDf = c("TktDfGR.F","GR.F"), 
+                 GRF.CxOE = c("TktOEGR.F","GR.F"),
+                 WTF.CxDf = c("TktDfWT.F","WT.F"),
+                 WTF.CxOE = c("TktOEWT.F","WT.F"),
+                 GRxWT.FC = c("GR.F","WT.F"), 
+                 GRxWT.FDf = c("TktDfGR.F","TktDfWT.F"),
+                 GRxWT.FOE = c("TktOEGR.F","TktOEWT.F"), 
+                 GRM.CxDf = c("TktDfGR.M","GR.M"), 
+                 GRM.CxOE = c("TktOEGR.M","GR.M"),
+                 WTM.CxDf = c("TktDfWT.M","WT.M"),
+                 WTM.CxOE = c("TktOEWT.M","WT.M"),
+                 GRxWT.MC = c("GR.M","WT.M"), 
+                 GRxWT.MDf = c("TktDfGR.M","TktDfWT.M"),
+                 GRxWT.MOE = c("TktOEGR.M","TktOEWT.M"),
+                 GR.FxM = c("GR.F","GR.M"),
+                 WT.FxM = c("WT.F","WT.M"))
+
+
+
+```
+
+
+```{r include = F}
+
+
+##genes in the kegg pathway and their enzyme IDs
+glycolysis.genes = read.csv('/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GlycolysisGenesKEGGinfo.csv')
+##Edge data for genes connecting metabolites
+glycolysis.edges = read.csv('/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GlycolysisEnzymeEdgesKEGGinfo.csv')
+##Metabolites in the KEGG pathway with their ID
+glycolysis.metabs = read.csv('/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GlycolysisMetaboliteKEGGinfo.csv')
+
+node.data = node.info('/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/R Code/dme00010.xml')
+
+glycolysis.network = function(comparison.T, comparison.M){
+
+
+##extracting position data for nodes
+node.info = data.frame(ID = unlist(node.data$kegg.names, use.names = F),
+                       number = rep(names(node.data$kegg.names),
+                                    lengths(node.data$kegg.names)),
+                       x = 0,
+                       y = 0,
+                       color = 0,
+                       names = "")
+node.info$x = node.data$x[node.info$number]
+node.info$y = node.data$y[node.info$number]
+
+##make new columns for transcriptomic data
+glycolysis.genes$FBgn = ""
+glycolysis.genes$Symbol = ""
+glycolysis.genes$FC = 0
+glycolysis.genes$pval = 1
+
+##Isolate gene ID info for goi
+temp = GeneIDKey[GeneIDKey$CG %in% glycolysis.genes$CG,]
+row.names(temp) = temp$CG
+
+##fill in new columns with transcriptomic data
+glycolysis.genes$FBgn = temp[glycolysis.genes$CG,'FBgn']
+glycolysis.genes$Symbol = temp[glycolysis.genes$CG,'Symbol']
+glycolysis.genes$FC = TKT.EdgeR.FC[glycolysis.genes$FBgn, comparison.T]
+glycolysis.genes$FC = TKT.EdgeR[glycolysis.genes$FBgn, comparison.T]
+
+##make new columns for metabolomic data
+row.names(glycolysis.metabs) = glycolysis.metabs$KEGG.ID
+glycolysis.metabs$metabolomicsID = ""
+glycolysis.metabs$FC = 0
+glycolysis.metabs$pval = 1
+
+##retrieve name used in metabolomic data for metabolite IDs in path
+##including IDs associated with multiple metabolomic names
+i = 1
+while(i<=nrow(glycolysis.metabs)){
+  if(length(grep(glycolysis.metabs$KEGG.ID[i], KEGG.Key)) > 0){
+    glycolysis.metabs$metabolomicsID[i]= names(KEGG.Key[grep(glycolysis.metabs$KEGG.ID[i], KEGG.Key)])
+  }
+  i = i +1
+}
+
+##retrieve metabolite fold change and pvalue data
+glycolysis.metabs$FC = log2(comparison.M[glycolysis.metabs$metabolomicsID, "FC"])
+glycolysis.metabs$pval = -log10(comparison.M[glycolysis.metabs$metabolomicsID, "p"])
+
+##using the positions for nodes (metabolites) only
+metab.info = node.info[node.info$ID %in% glycolysis.metabs$KEGG.ID,]
+
+
+
+metab.info$FC = glycolysis.metabs[metab.info$ID, 'FC']
+metab.info$pval = glycolysis.metabs[metab.info$ID, 'pval']
+metab.info$names = glycolysis.metabs[metab.info$ID, 'Metabolite']
+metab.info$color = glycolysis.metabs[metab.info$ID, 'FC']
+metab.info$size = glycolysis.metabs[metab.info$ID, 'pval']
+
+color.pallette = colorRampPalette(c('royalblue', 'grey', "firebrick"))(401)
+
+metab.info$color[metab.info$color > 1] = 1
+metab.info$color[metab.info$color < -1] = -1
+metab.info$color = (metab.info$color * 200) +201
+metab.info$color = color.pallette[metab.info$color]
+metab.info$color[is.na(metab.info$color)] = 'dimgrey'
+
+metab.info$size = 10 + 10*abs(metab.info$size)
+metab.info$size[is.na(metab.info$size)] = 10
+
+metab.info$title = paste0(glycolysis.metabs[metab.info$ID, "metabolomicsID"],
+                          "<br>log2(FC): ", signif(metab.info$FC,3),
+                          "<br>pval: ", signif(10^-metab.info$pval,3))
+
+nodes = data.frame(id = paste0(metab.info$names),
+                   color = metab.info$color,
+                   size = metab.info$size,
+                   x = 2*metab.info$x,
+                   y = 2*metab.info$y,
+                   physics = F,
+                   group = "",
+                   title = metab.info$title)
+
+glycolysis.edges$FBgn = ''
+temp.glycolysis.path = glycolysis.edges
+
+i = 1
+while(i<=nrow(glycolysis.edges)){
+  enzymeID = paste0(glycolysis.edges$enzyme[i], "$")
+  if(nrow(glycolysis.genes[grep(enzymeID, glycolysis.genes$Enzyme),])>0){
+    temp = glycolysis.genes[grep(enzymeID, glycolysis.genes$Enzyme), "CG"]
+    temp = row.names(GeneIDKey[GeneIDKey$CG %in% temp,])
+    temp2 = glycolysis.edges[rep(i, length(temp)),]
+    temp2$FBgn = temp
+  }else{
+    temp2 = glycolysis.edges[i,]
+  }
+  temp.glycolysis.path = rbind(temp.glycolysis.path,temp2)
+  
+  i = i +1
+}
+
+glycolysis.edges = temp.glycolysis.path[(nrow(glycolysis.edges)+1):nrow(temp.glycolysis.path),]
+
+
+glycolysis.edges$size = log10(ccm[glycolysis.edges[,'FBgn'], comparison.T])
+glycolysis.edges$size[glycolysis.edges$size <1] = 1
+glycolysis.edges$size[is.na(glycolysis.edges$size)] = 1
+glycolysis.edges$size = 2*glycolysis.edges$size
+
+
+glycolysis.edges$color = TKT.EdgeR.FC[glycolysis.edges[,'FBgn'], comparison.T]
+## max color intensity is at FC of 2
+glycolysis.edges$color[glycolysis.edges$color>2] = 2
+glycolysis.edges$color[glycolysis.edges$color<(-2)] = -2
+glycolysis.edges$color = 201+(glycolysis.edges$color *100)
+glycolysis.edges$color = color.pallette[glycolysis.edges$color]
+glycolysis.edges$color[is.na(glycolysis.edges$color)] = 'dimgrey'
+
+
+
+glycolysis.edges$title = paste0(GeneIDKey[glycolysis.edges$FBgn, "Symbol"],
+                          "<br>log2(FC): ", signif(TKT.EdgeR.FC[glycolysis.edges[,'FBgn'], comparison.T],3),
+                          "<br>FDR: ", signif(TKT.EdgeR[glycolysis.edges[,'FBgn'], comparison.T],3),
+                          "<br>", comparison.means[[comparison.T]][1], " cpm: ", signif(mean.cpm[glycolysis.edges[,'FBgn'],comparison.means[[comparison.T]][1]],3),
+                          "<br>", comparison.means[[comparison.T]][2], " cpm: ", signif(mean.cpm[glycolysis.edges[,'FBgn'],comparison.means[[comparison.T]][2]],3))
+
+
+edges = data.frame(from = glycolysis.edges$from.name,
+                   to = glycolysis.edges$to.name,
+                   arrows = glycolysis.edges$arrow,
+                   color = glycolysis.edges$color,
+                   width = glycolysis.edges$size,
+                   title = glycolysis.edges$title,
+                   physics = T)
+
+nodes = data.frame(id = paste0(nodes$id),
+                   color = nodes$color,
+                   size = nodes$size,
+                   x = nodes$x,
+                   y = nodes$y,
+                   physics = F,
+                   group = "",
+                   title = nodes$title)
+
+OutsidePath = data.frame(id = c('Pentose Phosphate Pathway',
+                               'Propanoate Metabolism',
+                               'Starch and Sucrose Metabolism',
+                               'Citrate Cycle'),
+                        color = "black",
+                        size = 15,
+                        x= c(1350,1254,966,175),
+                        y=c(1112,1822,110,1700),
+                        physics = F,
+                        group = 'Outside Path',
+                        title = "")
+
+nodes = rbind(nodes, OutsidePath)
+
+visNetwork(nodes, edges, main = paste0(comparison.means[[comparison.T]][1], " vs ", comparison.means[[comparison.T]][2]))%>%
+  visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE)%>%
+  visEdges(arrows = edges$arrows)%>%
+  visGroups(groupname = "Outside Path", shape = 'box', physics=F, size = 25, font=list(color="white"))
+
+}
+
+```
+
+
+```{r echo = F, fig.height=12, fig.width=9, fig.align='left', fig1, fig.cap = 'G85R relative to WT. Transcriptomic data is from females and metabolomic data is from both sexes. Grey is no data; Red is increase; Blue is decreae; Node size is relative to pval; Node color is relative to fold change (range: -1 to 1); Edge width is relative to FDR (max -log10(4)); edge color is relative to fold change (range: -2 to 2)'}
+
+glycolysis.network(comparison.T = 'GRxWT.FC', comparison.M = GRxWT.C)
+
+
+
+```
+
+<br><br><br>
+
+```{r, echo =F, fig2, fig.height=12, fig.width=9, fig.align='left', fig.cap = 'G85R relative to WT. Transcriptomic data is from males and metabolomic data is from both sexes.Grey is no data; Red is increase; Blue is decreae; Node size is relative to pval; Node color is relative to fold change (range: -1 to 1); Edge width is relative to FDR (max -log10(4)); edge color is relative to fold change (range: -2 to 2)'}
+
+glycolysis.network(comparison.T = 'GRxWT.MC', comparison.M = GR.CxDf)
+
+
+
+```
+
+<br><br><br>
+
+```{r, echo =F, fig3, fig.height=12, fig.width=9, fig.align='left', fig.cap = 'G85R TKT-Df relative to WT TKT-Df. Transcriptomic data is from females and metabolomic data is from both sexes. Grey is no data; Red is increase; Blue is decreae; Node size is relative to pval; Node color is relative to fold change (range: -1 to 1); Edge width is relative to FDR (max -log10(4)); edge color is relative to fold change (range: -2 to 2)'}
+
+glycolysis.network(comparison.T = 'GRxWT.FDf', comparison.M = GRxWT.Df)
+
+
+
+```
+
+<br><br><br>
+
+```{r, echo =F, fig4, fig.height=12, fig.width=9, fig.align='left', fig.cap = 'G85R TKT-Df relative to WT TKT-Df. Transcriptomic data is from males and metabolomic data is from both sexes. Grey is no data; Red is increase; Blue is decreae; Node size is relative to pval; Node color is relative to fold change (range: -1 to 1); Edge width is relative to FDR (max -log10(4)); edge color is relative to fold change (range: -2 to 2)'}
+
+glycolysis.network(comparison.T = 'GRxWT.MDf', comparison.M = GRxWT.Df)
+
+
+
+```
+
+<br><br><br>
+
+```{r, echo =F, fig5, fig.height=12, fig.width=9, fig.align='left', fig.cap = 'G85R TKT-OE relative to WT TKT-OE. Transcriptomic data is from females and metabolomic data is from both sexes. Grey is no data; Red is increase; Blue is decreae; Node size is relative to pval; Node color is relative to fold change (range: -1 to 1); Edge width is relative to FDR (max -log10(4)); edge color is relative to fold change (range: -2 to 2)'}
+
+glycolysis.network(comparison.T = 'GRxWT.FOE', comparison.M = GRxWT.OE)
+
+
+
+```
+
+<br><br><br>
+
+```{r, echo =F, fig6, fig.height=12, fig.width=9, fig.align='left', fig.cap = 'G85R TKT-OE relative to WT TKT-OE. Transcriptomic data is from males and metabolomic data is from both sexes. Grey is no data; Red is increase; Blue is decreae; Node size is relative to pval; Node color is relative to fold change (range: -1 to 1); Edge width is relative to FDR (max -log10(4)); edge color is relative to fold change (range: -2 to 2)'}
+
+glycolysis.network(comparison.T = 'GRxWT.MOE', comparison.M = GRxWT.OE)
+
+
+
+```
+
+<br><br><br>
+
+```{r, echo =F, fig7, fig.height=12, fig.width=9, fig.align='left', fig.cap = 'G85R control relative to G85R TKT-Df. Transcriptomic data is from females and metabolomic data is from both sexes. Grey is no data; Red is increase; Blue is decreae; Node size is relative to pval; Node color is relative to fold change (range: -1 to 1); Edge width is relative to FDR (max -log10(4)); edge color is relative to fold change (range: -2 to 2)'}
+
+glycolysis.network(comparison.T = 'GRF.CxDf', comparison.M = GR.CxDf)
+
+
+
+```
+
+<br><br><br>
+
+```{r, echo =F, fig8, fig.height=12, fig.width=9, fig.align='left', fig.cap = 'G85R control relative to G85R TKT-Df. Transcriptomic data is from males and metabolomic data is from both sexes. Grey is no data; Red is increase; Blue is decreae; Node size is relative to pval; Node color is relative to fold change (range: -1 to 1); Edge width is relative to FDR (max -log10(4)); edge color is relative to fold change (range: -2 to 2)'}
+
+glycolysis.network(comparison.T = 'GRM.CxDf', comparison.M = GR.CxDf)
+
+
+
+```
+
+<br><br><br>
+
+```{r, echo =F, fig9, fig.height=12, fig.width=9, fig.align='left', fig.cap = 'WT control relative to WT TKT-Df. Transcriptomic data is from females and metabolomic data is from both sexes. Grey is no data; Red is increase; Blue is decreae; Node size is relative to pval; Node color is relative to fold change (range: -1 to 1); Edge width is relative to FDR (max -log10(4)); edge color is relative to fold change (range: -2 to 2)'}
+
+glycolysis.network(comparison.T = 'WTF.CxDf', comparison.M = WT.CxDf)
+
+
+
+```
+
+<br><br><br>
+
+
+```{r, echo =F, fig10, fig.height=12, fig.width=9, fig.align='left', fig.cap = 'WT control relative to WT TKT-Df. Transcriptomic data is from males and metabolomic data is from both sexes. Grey is no data; Red is increase; Blue is decreae; Node size is relative to pval; Node color is relative to fold change (range: -1 to 1); Edge width is relative to FDR (max -log10(4)); edge color is relative to fold change (range: -2 to 2)'}
+
+glycolysis.network(comparison.T = 'WTM.CxDf', comparison.M = WT.CxDf)
+
+
+
+```
+
+<br><br><br>
+
+```{r, echo =F, fig11, fig.height=12, fig.width=9, fig.align='left', fig.cap = 'G85R control relative to G85R TKT-OE. Transcriptomic data is from females and metabolomic data is from both sexes. Grey is no data; Red is increase; Blue is decreae; Node size is relative to pval; Node color is relative to fold change (range: -1 to 1); Edge width is relative to FDR (max -log10(4)); edge color is relative to fold change (range: -2 to 2)'}
+
+glycolysis.network(comparison.T = 'GRF.CxOE', comparison.M = GR.CxOE)
+
+
+
+```
+
+<br><br><br>
+
+```{r, echo =F, fig12, fig.height=12, fig.width=9, fig.align='left', fig.cap = 'G85R control relative to G85R TKT-OE. Transcriptomic data is from males and metabolomic data is from both sexes. Grey is no data; Red is increase; Blue is decreae; Node size is relative to pval; Node color is relative to fold change (range: -1 to 1); Edge width is relative to FDR (max -log10(4)); edge color is relative to fold change (range: -2 to 2)'}
+
+glycolysis.network(comparison.T = 'GRM.CxOE', comparison.M = GR.CxOE)
+
+
+
+```
+
+<br><br><br>
+
+```{r, echo =F, fig13, fig.height=12, fig.width=9, fig.align='left', fig.cap = 'WT control relative to WT TKT-OE. Transcriptomic data is from females and metabolomic data is from both sexes. Grey is no data; Red is increase; Blue is decreae; Node size is relative to pval; Node color is relative to fold change (range: -1 to 1); Edge width is relative to FDR (max -log10(4)); edge color is relative to fold change (range: -2 to 2)'}
+
+glycolysis.network(comparison.T = 'WTF.CxOE', comparison.M = WT.CxOE)
+
+
+
+```
+
+<br><br><br>
+
+```{r, echo =F, fig14, fig.height=12, fig.width=9, fig.align='left', fig.cap = 'WT control relative to WT TKT-OE. Transcriptomic data is from males and metabolomic data is from both sexes. Grey is no data; Red is increase; Blue is decreae; Node size is relative to pval; Node color is relative to fold change (range: -1 to 1); Edge width is relative to FDR (max -log10(4)); edge color is relative to fold change (range: -2 to 2)'}
+
+glycolysis.network(comparison.T = 'WTM.CxOE', comparison.M = WT.CxOE)
+
+
+
+```
+
+<br><br><br>
