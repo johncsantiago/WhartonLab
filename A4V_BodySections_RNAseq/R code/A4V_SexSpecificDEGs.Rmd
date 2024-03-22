@@ -1,0 +1,921 @@
+---
+title: "A4V PCA"
+author: "John Santiago"
+date: "2024-01-22"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo=F, include=F}
+
+library(plotly)
+library(edgeR)
+library(goseq)
+library(org.Dm.eg.db)
+library(rrvgo)
+library(VennDiagram)
+library(pathview)
+library(visNetwork)
+
+```
+
+```{r echo = F}
+counts = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.countdata.csv", row.names = 1)
+
+cpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.cpmdata.csv", row.names = 1)
+
+meancpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.meancpmdata.csv", row.names = 1)
+
+FDR = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.FDRdata.csv", row.names = 1)
+
+FC = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.FCdata.csv", row.names = 1)
+
+meta = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.metadata.csv", row.names = 1)
+
+GeneIDKey = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GeneIDKey.csv", row.names = 1)
+
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"
+GR.cpm = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT_cpmdata.csv"),row.names = 1)
+GR.meta  = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.metadata.csv"),row.names = 1)
+GR.FDR = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FDRTable.csv"),row.names = 1)
+kegg = readRDS(gzcon(url(paste0(git.dir,"GeneralDataFiles/kegg.symbol2path.RData"))))
+kegg.names = read.csv(paste0(git.dir, "GeneralDataFiles/KEGG.names.csv"), row.names = 1)
+
+```
+
+
+
+```{r echo = F, include = F}
+
+Enrichment = function(sigs, bg){
+  genes = setNames(rep(0, length(bg)), bg)
+  genes[sigs] = 1
+  pwf=nullp(genes,"dm3","geneSymbol")
+  GO.wall=goseq(pwf,"dm3","geneSymbol")
+  GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+  row.names(GO.wall) = GO.wall$category
+  KEGG=goseq(pwf,gene2cat=kegg)
+  KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
+  row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
+  KEGG$Name=kegg.names[row.names(KEGG),1]
+
+  enrichment.data = list(GO.wall, KEGG)
+  names(enrichment.data) = c("GO", "KEGG")
+  return(enrichment.data)
+}
+
+```
+
+```{r echo = F, include = F}
+GO.Sim.PCA = function(use.data){
+    pca <- prcomp(t(use.data), scale.=TRUE) 
+    pc1=scale(pca$x[,1])
+    pc2=scale(pca$x[,2])
+    eigs <- pca$sdev^2
+    ve=signif(((eigs / sum(eigs))*100)[1:3],4)
+
+    pca.data=data.frame(PC1=pc1,
+                        PC2=pc2,
+                        sdev=pca$sdev,
+                        Percent1=ve[1],
+                        Percent2=ve[2],
+                        Group = reducedTerms[row.names(use.data), "parentTerm"],
+                        Score = reducedTerms[row.names(use.data), "score"],
+                        Term = reducedTerms[row.names(use.data), "term"],
+                        TotalDE = GO.data[row.names(use.data), "numDEInCat"],
+                        Total = GO.data[row.names(use.data), "numInCat"],
+                        SigVal = signif(GO.data[row.names(use.data), "adjp"],3))
+
+    pca.data$Group = factor(pca.data$Group, levels = unique(pca.data$Group))
+    pca.data$Score = 20*(1+pca.data$Score/mean(pca.data$Score))
+    
+  fig  = plot_ly(data = pca.data, 
+                 x = ~PC1, 
+                 y = ~PC2,
+                 name = ~Group,
+                 type = 'scatter',
+                 mode = 'markers',
+                 showlegend = T,
+                 color = ~Group,
+                 ##symbol = ~Group,
+                 ##symbols = as.character(seq_along(unique(point.data$Set))),
+                 ##colors = c("firebrick","gold","deepskyblue"),
+                 marker = list(size = pca.data$Score,
+                               line = list(color = "black", width = 1.5)),
+                 hoverinfo = "text",
+                 hovertext = paste("Parent Group: ", pca.data$Group,
+                                   "\nSample: ", pca.data$Term, 
+                                   "\nTotal DE: ", pca.data$TotalDE, 
+                                   "\nTotal in Cat.: ", pca.data$Total, 
+                                   "\nFDR: ", pca.data$SigVal)) %>%
+    layout(xaxis = list(title = paste0("PC1", "(", ve[1], "%)")),
+           yaxis = list(title = paste0("PC2", "(", ve[2], "%)")),
+           title = "Enriched GO term similarity")
+           
+  return(fig)
+}
+
+```
+
+```{r echo = F, include =F}
+
+GO20 = function(GO.data, GO.ontology){
+GO.data = GO.data[GO.data$ontology == GO.ontology,
+                  c("category", "term","adjp", "numDEInCat", "numInCat")]
+
+
+data = GO.data[20:1,c("term","adjp","numDEInCat", "numInCat", "category")]
+data$Score = -log10(data$adjp)
+data$term = factor(data$term, levels = c(unique(data$term)))
+
+m <- list(
+  l = 50,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 4
+)
+
+fig <- plot_ly(data, 
+               x = ~numDEInCat, y = ~term, 
+               type = 'bar',
+               name = "term",
+               marker = list(colorscale = list(c(0,.5,1), c("brown","gold", "steelblue")),
+    reversescale =T,
+                             colorbar = list(title = "-log10(FDR)",
+                                      len = .8, outlinewidth = 0,
+                                      tickformat = ".2f",
+                                      tick0 = 0),##, dtick = .01),
+                             color = ~Score,
+                             line = list(color = "black", width = 1.5)),
+    hoverinfo = "text",
+    hovertext = paste("Sample:", data$term,
+                      "\nGO ID: ", data$category,
+                      "\nTotal DE: ", data$numDEInCat,
+                      "\nTotal in Cat.: ", data$numInCat,
+                      "\nFDR: ", signif(data$adjp, 3))) %>%
+    layout(xaxis = list(title = "Number of Genes"),
+           yaxis = list(title = ""),
+           title = "Top 20 Most Enriched GO Terms",
+           margin = m)
+
+  return(fig)
+}
+
+```
+
+```{r, echo = F, include = F}
+
+KEGG20 = function(data){
+  
+  data = data[1:20, c("category", "Name","adjp", "numDEInCat", "numInCat")]
+  
+data$term = data$Name
+if(length(unique(data$term)) < length(data$term)){
+  data$term[duplicated(data$term)] = paste(data$term[duplicated(data$term)], "2")
+}  
+data = data[20:1,]
+data$Score = -log10(data$adjp)
+data$term = factor(data$term, levels = c(unique(data$term)))
+
+
+m <- list(
+  l = 50,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 4
+)
+
+fig <- plot_ly(data, 
+               x = ~numDEInCat, y = ~term, 
+               type = 'bar',
+               name = "Name",
+               marker = list(colorscale = list(c(0,.5,1), c("brown","gold", "steelblue")),
+    reversescale =T,
+                             colorbar = list(title = "-log10(FDR)",
+                                      len = .8, outlinewidth = 0,
+                                      tickformat = ".2f",
+                                      tick0 = 0),##, dtick = .01),
+                             color = ~Score,
+                             line = list(color = "black", width = 1.5)),
+    hoverinfo = "text",
+    hovertext = paste("Sample:", data$Name,
+                      "\nGO ID: ", data$category,
+                      "\nTotal DE: ", data$numDEInCat,
+                      "\nTotal in Cat.: ", data$numInCat,
+                      "\nFDR: ", signif(data$adjp, 3))) %>%
+    layout(xaxis = list(title = "Number of Genes"),
+           yaxis = list(title = ""),
+           title = "Top 20 Most Enriched KEGG Terms",
+           margin = m)
+
+return(fig)
+
+}
+
+```
+
+
+
+```{r echo = F}
+
+cutoff=0
+
+sigsA3FvMT = row.names(FDR)[FDR[,'A3FvMT']<.05]
+sigsS3FvMT = row.names(FDR)[FDR[,'S3FvMT']<.05]
+sigsA9FvMT = row.names(FDR)[FDR[,'A9FvMT']<.05]
+sigsS9FvMT = row.names(FDR)[FDR[,'S9FvMT']<.05]
+
+sigsGR.FxM = row.names(GR.FDR)[GR.FDR$GR.FxM <.05]
+sigsWT.FxM = row.names(GR.FDR)[GR.FDR$WT.FxM <.05]
+
+A3 = setdiff(sigsA3FvMT, sigsS3FvMT)
+A3 = A3[apply(meancpm[A3, c("A3FT", "A3MT", "S3FT", "S3MT")],MARGIN = 1, mean)>cutoff]
+A3 = intersect(A3, row.names(FDR)[FDR$AvS3MT < 0.05])
+A3 = setdiff(A3, row.names(FDR)[FDR$AvS3FT < 0.05])
+
+A9 = setdiff(sigsA9FvMT, sigsS9FvMT)
+A9 = A9[apply(meancpm[A9, c("A9FT", "A9MT", "S9FT", "S9MT")],MARGIN = 1, mean)>cutoff]
+A9 = intersect(A9, row.names(FDR)[FDR$AvS9MT < 0.05])
+A9 = setdiff(A9, row.names(FDR)[FDR$AvS9FT < 0.05])
+
+GR = setdiff(sigsGR.FxM, sigsWT.FxM)
+GR = GR[apply(GR.cpm[GR, c("GR.F1", "GR.F2",
+                           "GR.M1","GR.M2","GR.M3",
+                           "WT.F1","WT.F2",
+                           "WT.M1","WT.M2","WT.M3")],MARGIN = 1, mean)>cutoff]
+GR=intersect(GR, row.names(GR.FDR)[GR.FDR$GRxWT.MC < 0.05])
+
+##Sample titles as strings. Only fill in up to your number of selected categories
+set1="A4V 3-day"
+set2="A4V 9-day"
+set3="G85R Larvae"
+set4=""
+  
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1=A3
+s2=A9
+s3=GR
+s4=""
+
+T3 = A3
+T9 = A9
+
+```
+
+
+Thorax Sex Specific DEGs
+```{r echo = F}
+
+##Triple Venn
+grid.newpage()
+draw.triple.venn(area1=length(s1),area2=length(s2),area3=length(s3),n12=length(intersect(s1,s2)),n23 = length(intersect(s2,s3)),n13 = length(intersect(s1,s3)),n123 = length(intersect(intersect(s1,s2),s3)),category=c(set1,set2,set3),fill = c("green", "blue","red"),cex=1.5,cat.cex = 1)
+
+
+```
+
+```{r echo = F}
+
+
+
+sigsA3FvMH = row.names(FDR)[FDR[,'A3FvMH']<.05]
+sigsS3FvMH = row.names(FDR)[FDR[,'S3FvMH']<.05]
+sigsA9FvMH = row.names(FDR)[FDR[,'A9FvMH']<.05]
+sigsS9FvMH = row.names(FDR)[FDR[,'S9FvMH']<.05]
+
+sigsGR.FxM = row.names(GR.FDR)[GR.FDR$GR.FxM <.05]
+sigsWT.FxM = row.names(GR.FDR)[GR.FDR$WT.FxM <.05]
+
+A3 = setdiff(sigsA3FvMH, sigsS3FvMH)
+A3 = A3[apply(meancpm[A3, c("A3FH", "A3MH", "S3FH", "S3MH")],MARGIN = 1, mean)>cutoff]
+A3 = intersect(A3, row.names(FDR)[FDR$AvS3MH < 0.05])
+A3 = setdiff(A3, row.names(FDR)[FDR$AvS3FH < 0.05])
+
+A9 = setdiff(sigsA9FvMH, sigsS9FvMH)
+A9 = A9[apply(meancpm[A9, c("A9FH", "A9MH", "S9FH", "S9MH")],MARGIN = 1, mean)>cutoff]
+A9 = intersect(A9, row.names(FDR)[FDR$AvS9MH < 0.05])
+A9 = setdiff(A9, row.names(FDR)[FDR$AvS9FH < 0.05])
+
+GR = setdiff(sigsGR.FxM, sigsWT.FxM)
+GR = GR[apply(GR.cpm[GR, c("GR.F1", "GR.F2",
+                           "GR.M1","GR.M2","GR.M3",
+                           "WT.F1","WT.F2",
+                           "WT.M1","WT.M2","WT.M3")],MARGIN = 1, mean)>cutoff]
+GR=intersect(GR, row.names(GR.FDR)[GR.FDR$GRxWT.MC < 0.05])
+
+##Sample titles as strings. Only fill in up to your number of selected categories
+set1="A4V 3-day"
+set2="A4V 9-day"
+set3="G85R Larvae"
+set4=""
+  
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1=A3
+s2=A9
+s3=GR
+s4=""
+
+H3=A3
+H9=A9
+
+```
+
+Head Sex Specific DEGs
+```{r echo = F}
+
+##Triple Venn
+grid.newpage()
+draw.triple.venn(area1=length(s1),area2=length(s2),area3=length(s3),n12=length(intersect(s1,s2)),n23 = length(intersect(s2,s3)),n13 = length(intersect(s1,s3)),n123 = length(intersect(intersect(s1,s2),s3)),category=c(set1,set2,set3),fill = c("green", "blue","red"),cex=1.5,cat.cex = 1)
+
+
+```
+
+
+```{r echo = F}
+
+
+
+sigsA3FvMA = row.names(FDR)[FDR[,'A3FvMA']<.05]
+sigsS3FvMA = row.names(FDR)[FDR[,'S3FvMA']<.05]
+sigsA9FvMA = row.names(FDR)[FDR[,'A9FvMA']<.05]
+sigsS9FvMA = row.names(FDR)[FDR[,'S9FvMA']<.05]
+
+sigsGR.FxM = row.names(GR.FDR)[GR.FDR$GR.FxM <.05]
+sigsWT.FxM = row.names(GR.FDR)[GR.FDR$WT.FxM <.05]
+
+A3 = setdiff(sigsA3FvMA, sigsS3FvMA)
+A3 = A3[apply(meancpm[A3, c("A3FA", "A3MA", "S3FA", "S3MA")],MARGIN = 1, mean)>cutoff]
+A3 = intersect(A3, row.names(FDR)[FDR$AvS3MA < 0.05])
+A3 = setdiff(A3, row.names(FDR)[FDR$AvS3FA < 0.05])
+
+A9 = setdiff(sigsA9FvMA, sigsS9FvMA)
+A9 = A9[apply(meancpm[A9, c("A9FA", "A9MA", "S9FA", "S9MA")],MARGIN = 1, mean)>cutoff]
+A9 = intersect(A9, row.names(FDR)[FDR$AvS9MA < 0.05])
+A9 = setdiff(A9, row.names(FDR)[FDR$AvS9FA < 0.05])
+
+GR = setdiff(sigsGR.FxM, sigsWT.FxM)
+GR = GR[apply(GR.cpm[GR, c("GR.F1", "GR.F2",
+                           "GR.M1","GR.M2","GR.M3",
+                           "WT.F1","WT.F2",
+                           "WT.M1","WT.M2","WT.M3")],MARGIN = 1, mean)>cutoff]
+GR=intersect(GR, row.names(GR.FDR)[GR.FDR$GRxWT.MC < 0.05])
+
+##Sample titles as strings. Only fill in up to your number of selected categories
+set1="A4V 3-day"
+set2="A4V 9-day"
+set3="G85R Larvae"
+set4=""
+  
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1=A3
+s2=A9
+s3=GR
+s4=""
+
+A3=A3
+A9=A9
+
+```
+
+Abdomen Sex Specific DEGs
+```{r echo = F}
+
+##Triple Venn
+grid.newpage()
+draw.triple.venn(area1=length(s1),area2=length(s2),area3=length(s3),n12=length(intersect(s1,s2)),n23 = length(intersect(s2,s3)),n13 = length(intersect(s1,s3)),n123 = length(intersect(intersect(s1,s2),s3)),category=c(set1,set2,set3),fill = c("green", "blue","red"),cex=1.5,cat.cex = 1)
+
+
+```
+
+
+```{r include = F, echo = F}
+
+sigs = T9##setdiff(T9,T3)
+bg = row.names(FDR)
+
+sigsKEY = GeneIDKey[sigs,]
+sigs = na.omit(sigsKEY$Symbol)
+bgKEY = GeneIDKey[bg,]
+bg = na.omit(bgKEY$Symbol)
+
+sig.cats = Enrichment(sigs, bg)
+thorax.cats = sig.cats
+
+```
+
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "CC"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "BP"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+BP.simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+BP.reducedTerms <- reduceSimMatrix(BP.simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "MF"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+MF.simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+MF.reducedTerms <- reduceSimMatrix(MF.simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+```{r echo = F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "BP"
+BP.GO.fig = GO20(GO.data, GO.ontology)
+
+GO.ontology = "CC"
+CC.GO.fig = GO20(GO.data, GO.ontology)
+
+GO.ontology = "MF"
+MF.GO.fig = GO20(GO.data, GO.ontology)
+
+KEGG.fig = KEGG20(sig.cats[["KEGG"]])
+
+```
+
+9 Day Thorax Biological Process GO Terms
+```{r, echo = F,  fig.width= 10}
+
+BP.GO.fig
+
+```
+
+9 Day Thorax Cellular Component GO Terms
+```{r, echo = F,  fig.width= 10}
+
+CC.GO.fig
+
+```
+
+9 Day Thorax Molecular Function GO Terms
+```{r, echo = F,  fig.width= 10}
+
+MF.GO.fig
+
+```
+
+9 Day Thorax KEGG Pathways
+```{r, echo = F,  fig.width= 10}
+
+KEGG.fig
+
+```
+
+
+9 Day Thorax Cellular Component GO Terms
+```{r  echo = F, fig.align='left'}
+
+treemapPlot(reducedTerms)
+
+```
+
+9 Day Thorax Biological Process GO Terms
+```{r  echo = F, fig.align='left'}
+
+treemapPlot(BP.reducedTerms)
+
+```
+
+9 Day Thorax Molecular Function GO Terms
+```{r  echo = F, fig.align='left'}
+
+treemapPlot(MF.reducedTerms)
+
+```
+
+```{r}
+
+x <- counts
+gr <- factor(substr(colnames(counts), 1, nchar(colnames(counts))-1))
+y <- DGEList(counts=x,group=gr)
+keep <- filterByExpr(y)
+y <- y[keep,,keep.lib.sizes=FALSE]
+z <- normLibSizes(y)
+design<-model.matrix(~0 + gr)
+colnames(design) = unique(gr)
+z = estimateDisp(z, design)
+fit <- glmQLFit(z, design)
+
+contr = makeContrasts(A9MT - A9FT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A9MvFT = DEdata
+
+
+```
+
+```{r}
+
+volcano.data = data.frame(Symbol = GeneIDKey[T9, "Symbol"], 
+                          FDR = -log2(FDR[T9, 'A9FvMT']),
+                          FC = A9MvFT[T9, 'logFC'],
+                          Color = 'grey',
+                          size = 3*log(meancpm[T9,"A9MT"]),
+                          M.cpm = meancpm[T9,"A9MT"],
+                          F.cpm = meancpm[T9,"A9FT"],
+                          SM.cpm = meancpm[T9,"S9MT"],
+                          SF.cpm = meancpm[T9,"S9FT"],
+                          GO.terms = "none")
+
+main.title = ""
+
+volcano.data$Color[volcano.data$FDR >= -log2(.05) & volcano.data$FC < 0] = 'lightblue'
+volcano.data$Color[volcano.data$FDR >= -log2(.0001) & volcano.data$FC < 0] = 'steelblue'
+volcano.data$Color[volcano.data$FDR >= -log2(.000001) & volcano.data$FC < 0] = 'dodgerblue'
+
+volcano.data$Color[volcano.data$FDR >= -log2(.05) & volcano.data$FC > 0] = 'lightcoral'
+volcano.data$Color[volcano.data$FDR >= -log2(.0001) & volcano.data$FC > 0] = 'tomato'
+volcano.data$Color[volcano.data$FDR >= -log2(.000001) & volcano.data$FC > 0] = 'firebrick'
+
+volcano.data$size[volcano.data$FDR <= -log2(.05)] = 3
+
+
+
+fig = plot_ly(data = volcano.data,
+              x = ~FC,
+              y = ~FDR,
+              type = 'scatter',
+              mode = 'markers',
+              marker = list(color = ~Color, colors = ~Color, size = volcano.data$size,
+                            line = list(color = 'black', width = .5)),
+              hoverinfo = "text",
+              hovertext = paste("Gene:", volcano.data$Symbol,
+                      "\n-log2(FDR): ", round(volcano.data$FDR,2),
+                      "\nFC: ", round(volcano.data$FC,2),
+                      "\nA4V Male Thorax mean cpm: ", round(volcano.data$M.cpm, 1),
+                      "\nA4V Female Thorax mean cpm: ", round(volcano.data$F.cpm, 1),
+                      "\nSilent Male Thorax mean cpm: ", round(volcano.data$SM.cpm, 1),
+                      "\nSilent Female Thorax mean cpm: ", round(volcano.data$SF.cpm, 1)))
+fig = fig %>% layout(title = main.title)
+
+              ##color = ~Color,
+              ##colors = 'Spectral')
+              ##color = ~Color,
+              ##colors = ~Color)
+              ##marker = list(colorscale = list(c(0,.5,1), c("blue","yellow", "red")), color = ~Color))
+
+fig
+
+```
+
+
+```{r}
+
+##NMJ = GO:0031594
+##synapse = GO:0045202
+
+specific.cat = c('none', 'parent.category', 'specific.kegg', 'specific.go', "BP.parent.category", "MF.parent.category")
+
+specific.cat = specific.cat[5]
+parent.category = 'response to biotic stimulus'
+specific.kegg = "none"
+specific.go =  '0031594'
+
+set.size = F
+  
+
+if(specific.cat ==  'parent.category'){
+  rt = reducedTerms
+}
+
+if(specific.cat ==  'BP.parent.category'){
+  rt = BP.reducedTerms
+}
+
+if(specific.cat ==  'MF.parent.category'){
+  rt = MF.reducedTerms
+}
+
+GOterm.genes = vector('list', length = length(unique(rt$parent)))
+names(GOterm.genes) = unique(rt$parent)
+i=1
+while(i<=length(GOterm.genes)){
+  goinparent = rt[grep(names(GOterm.genes)[i], rt$parent),'go']
+  genesinparent = unlist(genesingo[goinparent])
+  GOterm.genes[[i]] = GeneIDKey[GeneIDKey$ensembl %in% genesinparent, 'FBgn']
+  i = i +1
+}
+
+volcano.data = data.frame(Symbol = GeneIDKey[T9, "Symbol"], 
+                          FDR = -log2(FDR[T9, 'A9FvMT']),
+                          FC = A9MvFT[T9, 'logFC'],
+                          Color = 'grey',
+                          size = 3*log(meancpm[T9,"A9MT"]),
+                          M.cpm = meancpm[T9,"A9MT"],
+                          F.cpm = meancpm[T9,"A9FT"],
+                          SM.cpm = meancpm[T9,"S9MT"],
+                          SF.cpm = meancpm[T9,"S9FT"],
+                          GO.terms = "none")
+
+main.title = ""
+
+volcano.data$Color[volcano.data$FDR >= -log2(.05) & volcano.data$FC < 0] = 'lightblue'
+volcano.data$Color[volcano.data$FDR >= -log2(.0001) & volcano.data$FC < 0] = 'steelblue'
+volcano.data$Color[volcano.data$FDR >= -log2(.000001) & volcano.data$FC < 0] = 'dodgerblue'
+
+volcano.data$Color[volcano.data$FDR >= -log2(.05) & volcano.data$FC > 0] = 'lightcoral'
+volcano.data$Color[volcano.data$FDR >= -log2(.0001) & volcano.data$FC > 0] = 'tomato'
+volcano.data$Color[volcano.data$FDR >= -log2(.000001) & volcano.data$FC > 0] = 'firebrick'
+
+volcano.data$size[volcano.data$FDR <= -log2(.05)] = 3
+
+if(set.size == T){
+  volcano.data$size = 15
+  volcano.data$size[volcano.data$FDR <= -log2(.05)] = 5
+}
+
+
+if(specific.cat == 'parent.category' | specific.cat == 'BP.parent.category' | specific.cat == 'MF.parent.category'){
+  parent.genes = GOterm.genes[[intersect(rt[rt$parentTerm == parent.category, "go"], names(GOterm.genes))]]
+  parent.genes = intersect(parent.genes, row.names(volcano.data))
+  volcano.data$Color = 'honeydew'
+  volcano.data[parent.genes, 'Color'] = 'deeppink'
+  volcano.data = volcano.data[order(volcano.data$Color, decreasing = T),]
+  main.title = sig.cats$GO[c(grep(parent.category, sig.cats$GO$term), grep(parent.category, sig.cats$GO$category)), 'term']
+  main.title = parent.category
+}
+
+
+
+
+
+if(specific.cat == 'specific.kegg'){
+  kegg.id = sig.cats$KEGG[c(grep(specific.kegg, sig.cats$KEGG$Name), grep(specific.kegg, sig.cats$KEGG$category)), 'category']
+  kegg.genes = names(kegg[grep(kegg.id, kegg)])
+  volcano.data$Color = 'honeydew'
+  row.names(volcano.data) = volcano.data$Symbol
+    volcano.data[kegg.genes, 'Color'] = 'deeppink'
+  volcano.data = volcano.data[order(volcano.data$Color, decreasing = T),]
+  main.title = sig.cats$KEGG[c(grep(specific.kegg, sig.cats$KEGG$Name), grep(specific.kegg, sig.cats$KEGG$category)), 'Name']
+}
+
+
+if(specific.cat == 'specific.go'){
+  go.id = sig.cats$GO[c(grep(specific.go, sig.cats$GO$term), grep(specific.go, sig.cats$GO$category)), 'category']
+  volcano.data$Color = 'honeydew'
+  go.genes = genesingo[[go.id]]
+  go.genes = GeneIDKey[GeneIDKey$ensembl %in% go.genes, "FBgn"]
+  go.genes = intersect(go.genes, row.names(volcano.data))
+  volcano.data[go.genes, 'Color'] = 'deeppink'
+  volcano.data = volcano.data[order(volcano.data$Color, decreasing = T),]
+  main.title = sig.cats$GO[c(grep(specific.go, sig.cats$GO$term), grep(specific.go, sig.cats$GO$category)), 'term']
+}
+
+##volcano.data
+
+
+fig = plot_ly(data = volcano.data,
+              x = ~FC,
+              y = ~FDR,
+              type = 'scatter',
+              mode = 'markers',
+              marker = list(color = ~Color, colors = ~Color, size = volcano.data$size,
+                            line = list(color = 'black', width = .5)),
+              hoverinfo = "text",
+              hovertext = paste("Gene:", volcano.data$Symbol,
+                      "\n-log2(FDR): ", round(volcano.data$FDR,2),
+                      "\nFC: ", round(volcano.data$FC,2),
+                      "\nA4V Male Thorax mean cpm: ", round(volcano.data$M.cpm, 1),
+                      "\nA4V Female Thorax mean cpm: ", round(volcano.data$F.cpm, 1),
+                      "\nSilent Male Thorax mean cpm: ", round(volcano.data$SM.cpm, 1),
+                      "\nSilent Female Thorax mean cpm: ", round(volcano.data$SF.cpm, 1)))
+fig = fig %>% layout(title = main.title)
+
+              ##color = ~Color,
+              ##colors = 'Spectral')
+              ##color = ~Color,
+              ##colors = ~Color)
+              ##marker = list(colorscale = list(c(0,.5,1), c("blue","yellow", "red")), color = ~Color))
+
+fig
+
+
+```
+
+
+```{r include = F}
+
+
+##genes in the kegg pathway and their enzyme IDs
+glycolysis.genes = read.csv('/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GlycolysisGenesKEGGinfo.csv')
+##Edge data for genes connecting metabolites
+glycolysis.edges = read.csv('/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GlycolysisEnzymeEdgesKEGGinfo.csv')
+##Metabolites in the KEGG pathway with their ID
+glycolysis.metabs = read.csv('/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GlycolysisMetaboliteKEGGinfo.csv')
+
+node.data = node.info('/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/R Code/dme00010.xml')
+
+
+##extracting position data for nodes
+node.info = data.frame(ID = unlist(node.data$kegg.names, use.names = F),
+                       number = rep(names(node.data$kegg.names),
+                                    lengths(node.data$kegg.names)),
+                       x = 0,
+                       y = 0,
+                       color = 0,
+                       names = "")
+node.info$x = node.data$x[node.info$number]
+node.info$y = node.data$y[node.info$number]
+
+##make new columns for transcriptomic data
+glycolysis.genes$FBgn = ""
+glycolysis.genes$Symbol = ""
+glycolysis.genes$FC = 0
+glycolysis.genes$pval = 1
+
+##Isolate gene ID info for goi
+temp = GeneIDKey[GeneIDKey$CG %in% glycolysis.genes$CG,]
+row.names(temp) = temp$CG
+
+##fill in new columns with transcriptomic data
+glycolysis.genes$FBgn = temp[glycolysis.genes$CG,'FBgn']
+glycolysis.genes$Symbol = temp[glycolysis.genes$CG,'Symbol']
+glycolysis.genes$FC = A9MvFT[glycolysis.genes$FBgn, 'logFC']
+glycolysis.genes$FDr = A9MvFT[glycolysis.genes$FBgn, 'FDR']
+
+##make new columns for metabolomic data
+row.names(glycolysis.metabs) = glycolysis.metabs$KEGG.ID
+glycolysis.metabs$metabolomicsID = ""
+glycolysis.metabs$FC = 0
+glycolysis.metabs$pval = 1
+
+##retrieve name used in metabolomic data for metabolite IDs in path
+##including IDs associated with multiple metabolomic names
+i = 1
+while(i<=nrow(glycolysis.metabs)){
+  if(length(grep(glycolysis.metabs$KEGG.ID[i], KEGG.Key)) > 0){
+    glycolysis.metabs$metabolomicsID[i]= names(KEGG.Key[grep(glycolysis.metabs$KEGG.ID[i], KEGG.Key)])
+  }
+  i = i +1
+}
+
+
+##using the positions for nodes (metabolites) only
+metab.info = node.info[node.info$ID %in% glycolysis.metabs$KEGG.ID,]
+
+
+
+metab.info$FC = glycolysis.metabs[metab.info$ID, 'FC']
+metab.info$pval = glycolysis.metabs[metab.info$ID, 'pval']
+metab.info$names = glycolysis.metabs[metab.info$ID, 'Metabolite']
+metab.info$color = glycolysis.metabs[metab.info$ID, 'FC']
+metab.info$size = glycolysis.metabs[metab.info$ID, 'pval']
+
+color.pallette = colorRampPalette(c('royalblue', 'grey', "firebrick"))(401)
+
+metab.info$color[metab.info$color > 1] = 1
+metab.info$color[metab.info$color < -1] = -1
+metab.info$color = (metab.info$color * 200) +201
+metab.info$color = color.pallette[metab.info$color]
+metab.info$color[is.na(metab.info$color)] = 'dimgrey'
+
+metab.info$size = 10 + 10*abs(metab.info$size)
+metab.info$size[is.na(metab.info$size)] = 10
+
+metab.info$title = paste0(glycolysis.metabs[metab.info$ID, "metabolomicsID"],
+                          "<br>log2(FC): ", signif(metab.info$FC,3),
+                          "<br>pval: ", signif(10^-metab.info$pval,3))
+
+nodes = data.frame(id = paste0(metab.info$names),
+                   color = metab.info$color,
+                   size = metab.info$size,
+                   x = 2*metab.info$x,
+                   y = 2*metab.info$y,
+                   physics = F,
+                   group = "",
+                   title = metab.info$title)
+
+glycolysis.edges$FBgn = ''
+temp.glycolysis.path = glycolysis.edges
+
+i = 1
+while(i<=nrow(glycolysis.edges)){
+  enzymeID = paste0(glycolysis.edges$enzyme[i], "$")
+  if(nrow(glycolysis.genes[grep(enzymeID, glycolysis.genes$Enzyme),])>0){
+    temp = glycolysis.genes[grep(enzymeID, glycolysis.genes$Enzyme), "CG"]
+    temp = row.names(GeneIDKey[GeneIDKey$CG %in% temp,])
+    temp2 = glycolysis.edges[rep(i, length(temp)),]
+    temp2$FBgn = temp
+  }else{
+    temp2 = glycolysis.edges[i,]
+  }
+  temp.glycolysis.path = rbind(temp.glycolysis.path,temp2)
+  
+  i = i +1
+}
+
+glycolysis.edges = temp.glycolysis.path[(nrow(glycolysis.edges)+1):nrow(temp.glycolysis.path),]
+
+
+glycolysis.edges$size = log10(meancpm[glycolysis.edges[,'FBgn'], 'A9MT'])
+glycolysis.edges$size[glycolysis.edges$size <1] = 1
+glycolysis.edges$size[is.na(glycolysis.edges$size)] = 1
+glycolysis.edges$size = 2*glycolysis.edges$size
+
+
+glycolysis.edges$color = TKT.EdgeR.FC[glycolysis.edges[,'FBgn'], comparison.T]
+## max color intensity is at FC of 2
+glycolysis.edges$color[glycolysis.edges$color>1] = 1
+glycolysis.edges$color[glycolysis.edges$color<(-1)] = -1
+glycolysis.edges$color = 201+(glycolysis.edges$color *200)
+glycolysis.edges$color = color.pallette[glycolysis.edges$color]
+glycolysis.edges$color[is.na(glycolysis.edges$color)] = 'dimgrey'
+
+
+
+glycolysis.edges$title = paste0(GeneIDKey[glycolysis.edges$FBgn, "Symbol"],
+                          "<br>log2(FC): ", signif(TKT.EdgeR.FC[glycolysis.edges[,'FBgn'], comparison.T],3),
+                          "<br>FDR: ", signif(TKT.EdgeR[glycolysis.edges[,'FBgn'], comparison.T],3),
+                          "<br>", comparison.means[[comparison.T]][1], " cpm: ", signif(mean.cpm[glycolysis.edges[,'FBgn'],comparison.means[[comparison.T]][1]],3),
+                          "<br>", comparison.means[[comparison.T]][2], " cpm: ", signif(mean.cpm[glycolysis.edges[,'FBgn'],comparison.means[[comparison.T]][2]],3))
+
+
+edges = data.frame(from = glycolysis.edges$from.name,
+                   to = glycolysis.edges$to.name,
+                   arrows = glycolysis.edges$arrow,
+                   color = glycolysis.edges$color,
+                   width = glycolysis.edges$size,
+                   title = glycolysis.edges$title,
+                   physics = T)
+
+nodes = data.frame(id = paste0(nodes$id),
+                   color = nodes$color,
+                   size = nodes$size,
+                   x = nodes$x,
+                   y = nodes$y,
+                   physics = F,
+                   group = "",
+                   title = nodes$title)
+
+OutsidePath = data.frame(id = c('Pentose Phosphate Pathway',
+                               'Propanoate Metabolism',
+                               'Starch and Sucrose Metabolism',
+                               'Citrate Cycle'),
+                        color = "black",
+                        size = 15,
+                        x= c(1350,1254,966,175),
+                        y=c(1112,1822,110,1700),
+                        physics = F,
+                        group = 'Outside Path',
+                        title = "")
+
+nodes = rbind(nodes, OutsidePath)
+
+visNetwork(nodes, edges, main = paste0(comparison.means[[comparison.T]][1], " vs ", comparison.means[[comparison.T]][2]))%>%
+  visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE)%>%
+  visEdges(arrows = edges$arrows)%>%
+  visGroups(groupname = "Outside Path", shape = 'box', physics=F, size = 25, font=list(color="white"))
+
+
+```

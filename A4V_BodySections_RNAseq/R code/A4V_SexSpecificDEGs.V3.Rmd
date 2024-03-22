@@ -1,0 +1,178 @@
+---
+title: "A4V PCA"
+author: "John Santiago"
+date: "2024-01-22"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo=F, include=F}
+
+library(plotly)
+library(edgeR)
+library(goseq)
+library(org.Dm.eg.db)
+library(rrvgo)
+library(VennDiagram)
+library(pathview)
+library(visNetwork)
+library(pathview)
+library(rstudioapi)
+library(clusterProfiler)
+library(UpSetR)
+
+```
+
+```{r echo = F}
+counts = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.countdata.csv", row.names = 1)
+
+cpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.cpmdata.csv", row.names = 1)
+
+meancpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.meancpmdata.csv", row.names = 1)
+
+FDR = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.FDRdata.csv", row.names = 1)
+
+FC = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.FCdata.csv", row.names = 1)
+
+meta = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.metadata.csv", row.names = 1)
+
+GeneIDKey = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GeneIDKey.csv", row.names = 1)
+
+KEGG.Key = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/RawMetabolomicData.csv", row.names = 1)
+KEGG.Key = setNames(KEGG.Key[-c(1:2), 2], row.names(KEGG.Key)[-c(1:2)])
+
+genesingo=as.list(org.Dm.egGO2ALLEGS)
+
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"
+GR.cpm = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT_cpmdata.csv"),row.names = 1)
+GR.meta  = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.metadata.csv"),row.names = 1)
+GR.FDR = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FDRTable.csv"),row.names = 1)
+kegg = readRDS(gzcon(url(paste0(git.dir,"GeneralDataFiles/kegg.symbol2path.RData"))))
+kegg.names = read.csv(paste0(git.dir, "GeneralDataFiles/KEGG.names.csv"), row.names = 1)
+
+
+```
+
+
+
+```{r echo = F, include = F}
+
+Enrichment = function(sigs, bg){
+  sigsKEY = GeneIDKey[sigs,]
+  sigs = na.omit(sigsKEY$Symbol)
+  bgKEY = GeneIDKey[bg,]
+  bg = na.omit(bgKEY$Symbol)
+
+  genes = setNames(rep(0, length(bg)), bg)
+  genes[sigs] = 1
+  pwf=nullp(genes,"dm3","geneSymbol")
+  GO.wall=goseq(pwf,"dm3","geneSymbol")
+  GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+  row.names(GO.wall) = GO.wall$category
+  KEGG=goseq(pwf,gene2cat=kegg)
+  KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
+  row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
+  KEGG$Name=kegg.names[row.names(KEGG),1]
+
+  enrichment.data = list(GO.wall, KEGG)
+  names(enrichment.data) = c("GO", "KEGG")
+  return(enrichment.data)
+}
+
+```
+
+```{r echo = F, include = F}
+
+GO.Sim.PCA = function(use.data){
+    pca <- prcomp(t(use.data), scale.=TRUE) 
+    pc1=scale(pca$x[,1])
+    pc2=scale(pca$x[,2])
+    eigs <- pca$sdev^2
+    ve=signif(((eigs / sum(eigs))*100)[1:3],4)
+
+    pca.data=data.frame(PC1=pc1,
+                        PC2=pc2,
+                        sdev=pca$sdev,
+                        Percent1=ve[1],
+                        Percent2=ve[2],
+                        Group = use.data[row.names(use.data), "parentTerm"],
+                        Score = use.data[row.names(use.data), "score"],
+                        Term = use.data[row.names(use.data), "term"],
+                        TotalDE = GO.data[row.names(use.data), "numDEInCat"],
+                        Total = GO.data[row.names(use.data), "numInCat"],
+                        SigVal = signif(GO.data[row.names(use.data), "adjp"],3))
+
+    pca.data$Group = factor(pca.data$Group, levels = unique(pca.data$Group))
+    pca.data$Score = 20*(1+pca.data$Score/mean(pca.data$Score))
+    
+  fig  = plot_ly(data = pca.data, 
+                 x = ~PC1, 
+                 y = ~PC2,
+                 name = ~Group,
+                 type = 'scatter',
+                 mode = 'markers',
+                 showlegend = T,
+                 color = ~Group,
+                 ##symbol = ~Group,
+                 ##symbols = as.character(seq_along(unique(point.data$Set))),
+                 ##colors = c("firebrick","gold","deepskyblue"),
+                 marker = list(size = pca.data$Score,
+                               line = list(color = "black", width = 1.5)),
+                 hoverinfo = "text",
+                 hovertext = paste("Parent Group: ", pca.data$Group,
+                                   "\nSample: ", pca.data$Term, 
+                                   "\nTotal DE: ", pca.data$TotalDE, 
+                                   "\nTotal in Cat.: ", pca.data$Total, 
+                                   "\nFDR: ", pca.data$SigVal)) %>%
+    layout(xaxis = list(title = paste0("PC1", "(", ve[1], "%)")),
+           yaxis = list(title = paste0("PC2", "(", ve[2], "%)")),
+           title = "Enriched GO term similarity")
+           
+  return(fig)
+}
+
+```
+
+
+```{r echo = F, message = F}
+
+Male_DEGs<- list(
+  "Male Thorax 3 Day" = row.names(FDR)[FDR$AvS3MT < 0.05], 
+  "Female Thorax 3 Day" = row.names(FDR)[FDR$AvS3FT < 0.05],
+  "Male Thorax 9 Day" = row.names(FDR)[FDR$AvS9MT < 0.05], 
+  "Female Thorax 9 Day" = row.names(FDR)[FDR$AvS9FT < 0.05],
+  "Female Thorax 40 Day" = row.names(FDR)[FDR$AvS40FT < 0.05]
+  )
+
+degs_intersection_upset = upset(
+                                fromList(Male_DEGs),
+                                nsets = length(Male_DEGs),
+                                nintersects = NA,
+                                empty.intersections = "on", 
+                                main.bar.color = "cyan4", 
+                                sets.bar.color = 'coral1',
+                                matrix.color = 'cyan4',
+                                keep.order=T,
+                                set_size.show =T,
+                                group.by = 'sets',
+                                set_size.scale_max = max(lengths(Male_DEGs))*1.25,
+                                sets.x.label = 'Total DEGs',
+                                  queries = list(
+                                    list(
+                                      query = intersects,
+                                      params = list("Male Thorax 3 Day"),
+                                      active = T,
+                                      query.name = "Male 3 Day",
+                                      color = "orange"
+                                      ))
+                                )
+
+
+
+degs_intersection_upset
+
+```
+

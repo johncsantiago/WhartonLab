@@ -13,8 +13,18 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(plotly)
 library(edgeR)
+library(goseq)
+library(org.Dm.eg.db)
+library(rrvgo)
+library(VennDiagram)
 
+```
+
+
+```{r include =F}
 sample.names = list.files("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/Count_Tables/")
+
+meta = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.metadata.csv", row.names = 1)
 
 temp = read.csv(paste0("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/Count_Tables/", sample.names[1]), sep = '\t', row.names = 1)
 
@@ -29,6 +39,9 @@ while(i <= length(sample.names)){
   i=i+1
 }
 
+countdata = countdata[-(grep("ti",row.names(countdata))),]
+countdata = countdata[-(grep("trans",row.names(countdata))),]
+
 
 ##normalize data
 x <- countdata
@@ -36,17 +49,919 @@ gr <- factor(substr(colnames(countdata), 1, nchar(colnames(countdata))-1))
 y <- DGEList(counts=x,group=gr)
 keep <- filterByExpr(y)
 y <- y[keep,,keep.lib.sizes=FALSE]
-z <- calcNormFactors(y, method = "TMM")
+z <- normLibSizes(y)
 ##normalized cpm
 cpmdata=cpm(z)
+
+##updated edger analysis pipeline
+design<-model.matrix(~0 + gr)
+colnames(design) = unique(gr)
+z = estimateDisp(z, design)
+fit <- glmQLFit(z, design)
+
+contr = makeContrasts(A3FH - S3FH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS3FH = DEdata
+sigAvS3FH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3MH - S3MH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS3MH = DEdata
+sigAvS3MH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A9FH - S9FH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS9FH = DEdata
+sigAvS9FH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A9MH - S9MH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS9MH = DEdata
+sigAvS9MH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A40FH - S40FH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS40FH = DEdata
+sigAvS40FH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S3FH - S9FH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S3v9FH = DEdata
+sigS3v9FH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3FH - A9FH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A3v9FH = DEdata
+sigA3v9FH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S3MH - S9MH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S3v9MH = DEdata
+sigS3v9MH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3MH - A9MH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A3v9MH = DEdata
+sigA3v9MH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S9FH - S40FH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S9v40FH = DEdata
+sigS9v40FH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A9FH - A40FH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A9v40FH = DEdata
+sigA9v40FH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S3FH - S40FH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S3v40FH = DEdata
+sigS3v40FH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3FH - A40FH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A3v40FH = DEdata
+sigA3v40FH = DEdata[DEdata$FDR < 0.05, ]
+
+
+
+
+
+contr = makeContrasts(A3FT - S3FT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS3FT = DEdata
+sigAvS3FT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3MT - S3MT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS3MT = DEdata
+sigAvS3MT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A9FT - S9FT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS9FT = DEdata
+sigAvS9FT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A9MT - S9MT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS9MT = DEdata
+sigAvS9MT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A40FT - S40FT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS40FT = DEdata
+sigAvS40FT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S3FT - S9FT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S3v9FT = DEdata
+sigS3v9FT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3FT - A9FT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A3v9FT = DEdata
+sigA3v9FT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S3MT - S9MT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S3v9MT = DEdata
+sigS3v9MT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3MT - A9MT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A3v9MT = DEdata
+sigA3v9MT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S9FT - S40FT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S9v40FT = DEdata
+sigS9v40FT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A9FT - A40FT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A9v40FT = DEdata
+sigA9v40FT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S3FT - S40FT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S3v40FT = DEdata
+sigS3v40FT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3FT - A40FT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A3v40FT = DEdata
+sigA3v40FT = DEdata[DEdata$FDR < 0.05, ]
+
+
+
+
+
+contr = makeContrasts(A3FA - S3FA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS3FA = DEdata
+sigAvS3FA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3MA - S3MA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS3MA = DEdata
+sigAvS3MA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A9FA - S9FA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS9FA = DEdata
+sigAvS9FA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A9MA - S9MA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS9MA = DEdata
+sigAvS9MA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A40FA - S40FA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS40FA = DEdata
+sigAvS40FA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S3FA - S9FA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S3v9FA = DEdata
+sigS3v9FA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3FA - A9FA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A3v9FA = DEdata
+sigA3v9FA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S3MA - S9MA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S3v9MA = DEdata
+sigS3v9MA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3MA - A9MA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A3v9MA = DEdata
+sigA3v9MA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S9FA - S40FA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S9v40FA = DEdata
+sigS9v40FA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A9FA - A40FA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A9v40FA = DEdata
+sigA9v40FA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S3FA - S40FA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S3v40FA = DEdata
+sigS3v40FA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3FA - A40FA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A3v40FA = DEdata
+sigA3v40FA = DEdata[DEdata$FDR < 0.05, ]
+
+
+
+
+
+contr = makeContrasts(A3FH - A3MH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A3FvMH = DEdata
+sigA3FvMH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S3FH - S3MH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S3FvMH = DEdata
+sigS3FvMH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A9FH - A9MH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A9FvMH = DEdata
+sigA9FvMH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S9FH - S9MH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S9FvMH = DEdata
+sigS9FvMH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3FT - A3MT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A3FvMT = DEdata
+sigA3FvMT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S3FT - S3MT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S3FvMT = DEdata
+sigS3FvMT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A9FT - A9MT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A9FvMT = DEdata
+sigA9FvMT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S9FT - S9MT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S9FvMT = DEdata
+sigS9FvMT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3FA - A3MA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A3FvMA = DEdata
+sigA3FvMA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S3FA - S3MA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S3FvMA = DEdata
+sigS3FvMA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A9FA - A9MA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A9FvMA = DEdata
+sigA9FvMA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S9FA - S9MA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S9FvMA = DEdata
+sigS9FvMA = DEdata[DEdata$FDR < 0.05, ]
+
+
+
+
+
+
+
+order = row.names(cpmdata)
+A4V.FDR = data.frame(AvS3FH = AvS3FH[order, "FDR"],
+                     AvS3MH = AvS3MH[order, "FDR"],
+                     AvS9FH = AvS9FH[order, "FDR"],
+                     AvS9MH = AvS9MH[order, "FDR"],
+                     AvS40FH = AvS40FH[order, "FDR"],
+                     A3v9FH = A3v9FH[order, "FDR"],
+                     S3v9FH = S3v9FH[order, "FDR"],
+                     A3v9MH = A3v9MH[order, "FDR"],
+                     S3v9MH = S3v9MH[order, "FDR"],
+                     A9v40FH = A9v40FH[order, "FDR"],
+                     S9v40FH = S9v40FH[order, "FDR"],
+                     A3v40FH = A3v40FH[order, "FDR"],
+                     S3v40FH = S3v40FH[order, "FDR"],
+                     
+                     AvS3FT = AvS3FT[order, "FDR"],
+                     AvS3MT = AvS3MT[order, "FDR"],
+                     AvS9FT = AvS9FT[order, "FDR"],
+                     AvS9MT = AvS9MT[order, "FDR"],
+                     AvS40FT = AvS40FT[order, "FDR"],
+                     A3v9FT = A3v9FT[order, "FDR"],
+                     S3v9FT = S3v9FT[order, "FDR"],
+                     A3v9MT = A3v9MT[order, "FDR"],
+                     S3v9MT = S3v9MT[order, "FDR"],
+                     A9v40FT = A9v40FT[order, "FDR"],
+                     S9v40FT = S9v40FT[order, "FDR"],
+                     A3v40FT = A3v40FT[order, "FDR"],
+                     S3v40FT = S3v40FT[order, "FDR"],
+                     
+                     AvS3FA = AvS3FA[order, "FDR"],
+                     AvS3MA = AvS3MA[order, "FDR"],
+                     AvS9FA = AvS9FA[order, "FDR"],
+                     AvS9MA = AvS9MA[order, "FDR"],
+                     AvS40FA = AvS40FA[order, "FDR"],
+                     A3v9FA = A3v9FA[order, "FDR"],
+                     S3v9FA = S3v9FA[order, "FDR"],
+                     A3v9MA = A3v9MA[order, "FDR"],
+                     S3v9MA = S3v9MA[order, "FDR"],
+                     A9v40FA = A9v40FA[order, "FDR"],
+                     S9v40FA = S9v40FA[order, "FDR"],
+                     A3v40FA = A3v40FA[order, "FDR"],
+                     S3v40FA = S3v40FA[order, "FDR"],
+                     
+                     A3FvMH = A3FvMH[order, "FDR"],
+                     S3FvMH = S3FvMH[order, "FDR"],
+                     A9FvMH = A9FvMH[order, "FDR"],
+                     S9FvMH = S9FvMH[order, "FDR"],
+                     A3FvMT = A3FvMT[order, "FDR"],
+                     S3FvMT = S3FvMT[order, "FDR"],
+                     A9FvMT = A9FvMT[order, "FDR"],
+                     S9FvMT = S9FvMT[order, "FDR"],
+                     A3FvMA = A3FvMA[order, "FDR"],
+                     S3FvMA = S3FvMA[order, "FDR"],
+                     A9FvMA = A9FvMA[order, "FDR"],
+                     S9FvMA = S9FvMA[order, "FDR"])
+row.names(A4V.FDR) = order
+
+A4V.FC = data.frame(AvS3FH = AvS3FH[order, "logFC"],
+                     AvS3MH = AvS3MH[order, "logFC"],
+                     AvS9FH = AvS9FH[order, "logFC"],
+                     AvS9MH = AvS9MH[order, "logFC"],
+                     AvS40FH = AvS40FH[order, "logFC"],
+                     A3v9FH = A3v9FH[order, "logFC"],
+                     S3v9FH = S3v9FH[order, "logFC"],
+                     A3v9MH = A3v9MH[order, "logFC"],
+                     S3v9MH = S3v9MH[order, "logFC"],
+                     A9v40FH = A9v40FH[order, "logFC"],
+                     S9v40FH = S9v40FH[order, "logFC"],
+                     A3v40FH = A3v40FH[order, "logFC"],
+                     S3v40FH = S3v40FH[order, "logFC"],
+                     
+                     AvS3FT = AvS3FT[order, "logFC"],
+                     AvS3MT = AvS3MT[order, "logFC"],
+                     AvS9FT = AvS9FT[order, "logFC"],
+                     AvS9MT = AvS9MT[order, "logFC"],
+                     AvS40FT = AvS40FT[order, "logFC"],
+                     A3v9FT = A3v9FT[order, "logFC"],
+                     S3v9FT = S3v9FT[order, "logFC"],
+                     A3v9MT = A3v9MT[order, "logFC"],
+                     S3v9MT = S3v9MT[order, "logFC"],
+                     A9v40FT = A9v40FT[order, "logFC"],
+                     S9v40FT = S9v40FT[order, "logFC"],
+                     A3v40FT = A3v40FT[order, "logFC"],
+                     S3v40FT = S3v40FT[order, "logFC"],
+                     
+                     AvS3FA = AvS3FA[order, "logFC"],
+                     AvS3MA = AvS3MA[order, "logFC"],
+                     AvS9FA = AvS9FA[order, "logFC"],
+                     AvS9MA = AvS9MA[order, "logFC"],
+                     AvS40FA = AvS40FA[order, "logFC"],
+                     A3v9FA = A3v9FA[order, "logFC"],
+                     S3v9FA = S3v9FA[order, "logFC"],
+                     A3v9MA = A3v9MA[order, "logFC"],
+                     S3v9MA = S3v9MA[order, "logFC"],
+                     A9v40FA = A9v40FA[order, "logFC"],
+                     S9v40FA = S9v40FA[order, "logFC"],
+                     A3v40FA = A3v40FA[order, "logFC"],
+                     S3v40FA = S3v40FA[order, "logFC"],
+                     
+                     A3FvMH = A3FvMH[order, "logFC"],
+                     S3FvMH = S3FvMH[order, "logFC"],
+                     A9FvMH = A9FvMH[order, "logFC"],
+                     S9FvMH = S9FvMH[order, "logFC"],
+                     A3FvMT = A3FvMT[order, "logFC"],
+                     S3FvMT = S3FvMT[order, "logFC"],
+                     A9FvMT = A9FvMT[order, "logFC"],
+                     S9FvMT = S9FvMT[order, "logFC"],
+                     A3FvMA = A3FvMA[order, "logFC"],
+                     S3FvMA = S3FvMA[order, "logFC"],
+                     A9FvMA = A9FvMA[order, "logFC"],
+                     S9FvMA = S9FvMA[order, "logFC"])
+row.names(A4V.FC) = order
+
+cpmdata = cpmdata[grep("FBgn",row.names(cpmdata)),]
+A4V.FDR = A4V.FDR[row.names(cpmdata),]
+
+A4V.meancpm = cpmdata[,1:30]
+colnames(A4V.meancpm) = unique(meta$Group)
+i=1
+while(i<=nrow(A4V.meancpm)){
+  j=1
+  while(j<=ncol(A4V.meancpm)){
+    A4V.meancpm[i,j]=mean(cpmdata[i,row.names(meta)[meta$Group == colnames(A4V.meancpm)[j]]])
+    j=j+1
+  }
+  i=i+1
+}
+
+
+##write.csv(cpmdata, "/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.cpmdata.csv")
+##write.csv(A4V.FDR, "/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.FDRdata.csv")
+##write.csv(A4V.meancpm, "/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.meancpmdata.csv")
+##write.csv(A4V.FC, "/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.FCdata.csv")
+
+```
+
+```{r}
+
+cpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.cpmdata.csv", row.names = 1)
+
+meancpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.meancpmdata.csv", row.names = 1)
+
+FDR = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.FDRdata.csv", row.names = 1)
+
+FC = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.FCdata.csv", row.names = 1)
+
+meta = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.metadata.csv", row.names = 1)
+
+GeneIDKey = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GeneIDKey.csv", row.names = 1)
+
+```
+
+
+```{r echo = F}
+
+## arc1 FBgn = 'FBgn0033926'
+##spn FBgn = 'FBgn0010905'
+FBgn = 'FBgn0035348'
+name = ''
+
+par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
+gene = data.frame(cpm = as.numeric(cpm[FBgn,]), 
+                  condition = substr(row.names(meta),1, nchar(row.names(meta))-1), 
+                  group = paste(meta$Genotype, meta$Sex))
+
+gene$condition = factor(gene$condition, levels = c("A3FH", "A9FH", "A40FH",
+                                                   "S3FH", "S9FH", "S40FH",
+                                                   "A3FT", "A9FT", "A40FT",
+                                                   "S3FT", "S9FT", "S40FT",
+                                                   "A3FA", "A9FA", "A40FA",
+                                                   "S3FA", "S9FA", "S40FA",
+                                                   "A3MH", "A9MH",
+                                                   "S3MH", "S9MH",
+                                                   "A3MT", "A9MT",
+                                                   "S3MT", "S9MT",
+                                                   "A3MA", "A9MA",
+                                                   "S3MA", "S9MA"))
+gene$group = factor(gene$group, levels = c(unique(gene$group)))
+
+boxplot(gene$cpm~gene$condition, xlab="",     
+        main= name,ylab="Counts per Million Reads", las = 2, cex.axis = .8)
+points(x=as.numeric(factor(gene$condition)),y=gene$cpm,cex=1,pch=21,bg=c('firebrick',"gold","darkgreen","dodgerblue")[as.numeric(factor(gene$group))])
+legend('topright',
+       inset=c(-0.175,0),
+       legend = c('A4V F', 'Silent F', 'A4V M', 'Silent F'), 
+       fill = c('firebrick',"darkgreen","gold","dodgerblue"),
+       cex = .65,
+       bty = 'n',
+       pt.cex = .5)
+
+
+```
+
+##GO and KEGG Enrichment function
+```{r echo = F, include = F}
+
+Enrichment = function(sigs, bg){
+  genes = setNames(rep(0, length(bg)), bg)
+  genes[sigs] = 1
+  pwf=nullp(genes,"dm3","geneSymbol")
+  GO.wall=goseq(pwf,"dm3","geneSymbol")
+  GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+  row.names(GO.wall) = GO.wall$category
+  KEGG=goseq(pwf,gene2cat=kegg)
+  KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
+  row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
+  KEGG$Name=kegg.names[row.names(KEGG),1]
+
+  enrichment.data = list(GO.wall, KEGG)
+  names(enrichment.data) = c("GO", "KEGG")
+  return(enrichment.data)
+}
+
+```
+
+##GO.Sim.PCA function
+```{r echo = F, include = F}
+GO.Sim.PCA = function(use.data){
+    pca <- prcomp(t(use.data), scale.=TRUE) 
+    pc1=scale(pca$x[,1])
+    pc2=scale(pca$x[,2])
+    eigs <- pca$sdev^2
+    ve=signif(((eigs / sum(eigs))*100)[1:3],4)
+
+    pca.data=data.frame(PC1=pc1,
+                        PC2=pc2,
+                        sdev=pca$sdev,
+                        Percent1=ve[1],
+                        Percent2=ve[2],
+                        Group = reducedTerms[row.names(use.data), "parentTerm"],
+                        Score = reducedTerms[row.names(use.data), "score"],
+                        Term = reducedTerms[row.names(use.data), "term"],
+                        TotalDE = GO.data[row.names(use.data), "numDEInCat"],
+                        Total = GO.data[row.names(use.data), "numInCat"],
+                        SigVal = signif(GO.data[row.names(use.data), "adjp"],3))
+
+    pca.data$Group = factor(pca.data$Group, levels = unique(pca.data$Group))
+    pca.data$Score = 20*(1+pca.data$Score/mean(pca.data$Score))
+    
+  fig  = plot_ly(data = pca.data, 
+                 x = ~PC1, 
+                 y = ~PC2,
+                 name = ~Group,
+                 type = 'scatter',
+                 mode = 'markers',
+                 showlegend = T,
+                 color = ~Group,
+                 ##symbol = ~Group,
+                 ##symbols = as.character(seq_along(unique(point.data$Set))),
+                 ##colors = c("firebrick","gold","deepskyblue"),
+                 marker = list(size = pca.data$Score,
+                               line = list(color = "black", width = 1.5)),
+                 hoverinfo = "text",
+                 hovertext = paste("Parent Group: ", pca.data$Group,
+                                   "\nSample: ", pca.data$Term, 
+                                   "\nTotal DE: ", pca.data$TotalDE, 
+                                   "\nTotal in Cat.: ", pca.data$Total, 
+                                   "\nFDR: ", pca.data$SigVal)) %>%
+    layout(xaxis = list(title = paste0("PC1", "(", ve[1], "%)")),
+           yaxis = list(title = paste0("PC2", "(", ve[2], "%)")),
+           title = "Enriched GO term similarity")
+           
+  return(fig)
+}
+
+```
+
+##GO20 Function
+```{r echo = F, include =F}
+
+GO20 = function(GO.data, GO.ontology){
+GO.data = GO.data[GO.data$ontology == GO.ontology,
+                  c("category", "term","adjp", "numDEInCat", "numInCat")]
+
+
+data = GO.data[20:1,c("term","adjp","numDEInCat", "numInCat", "category")]
+data$Score = -log10(data$adjp)
+data$term = factor(data$term, levels = c(unique(data$term)))
+
+m <- list(
+  l = 50,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 4
+)
+
+fig <- plot_ly(data, 
+               x = ~numDEInCat, y = ~term, 
+               type = 'bar',
+               name = "term",
+               marker = list(colorscale = list(c(0,.5,1), c("brown","gold", "steelblue")),
+    reversescale =T,
+                             colorbar = list(title = "-log10(FDR)",
+                                      len = .8, outlinewidth = 0,
+                                      tickformat = ".2f",
+                                      tick0 = 0),##, dtick = .01),
+                             color = ~Score,
+                             line = list(color = "black", width = 1.5)),
+    hoverinfo = "text",
+    hovertext = paste("Sample:", data$term,
+                      "\nGO ID: ", data$category,
+                      "\nTotal DE: ", data$numDEInCat,
+                      "\nTotal in Cat.: ", data$numInCat,
+                      "\nFDR: ", signif(data$adjp, 3))) %>%
+    layout(xaxis = list(title = "Number of Genes"),
+           yaxis = list(title = ""),
+           title = "Top 20 Most Enriched GO Terms",
+           margin = m)
+
+  return(fig)
+}
+
+```
+
+##KEGG20 Function
+```{r, echo = F, include = F}
+
+KEGG20 = function(data){
+  
+  data = data[1:20, c("category", "Name","adjp", "numDEInCat", "numInCat")]
+  
+data$term = data$Name
+if(length(unique(data$term)) < length(data$term)){
+  data$term[duplicated(data$term)] = paste(data$term[duplicated(data$term)], "2")
+}  
+data = data[20:1,]
+data$Score = -log10(data$adjp)
+data$term = factor(data$term, levels = c(unique(data$term)))
+
+
+m <- list(
+  l = 50,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 4
+)
+
+fig <- plot_ly(data, 
+               x = ~numDEInCat, y = ~term, 
+               type = 'bar',
+               name = "Name",
+               marker = list(colorscale = list(c(0,.5,1), c("brown","gold", "steelblue")),
+    reversescale =T,
+                             colorbar = list(title = "-log10(FDR)",
+                                      len = .8, outlinewidth = 0,
+                                      tickformat = ".2f",
+                                      tick0 = 0),##, dtick = .01),
+                             color = ~Score,
+                             line = list(color = "black", width = 1.5)),
+    hoverinfo = "text",
+    hovertext = paste("Sample:", data$Name,
+                      "\nGO ID: ", data$category,
+                      "\nTotal DE: ", data$numDEInCat,
+                      "\nTotal in Cat.: ", data$numInCat,
+                      "\nFDR: ", signif(data$adjp, 3))) %>%
+    layout(xaxis = list(title = "Number of Genes"),
+           yaxis = list(title = ""),
+           title = "Top 20 Most Enriched KEGG Terms",
+           margin = m)
+
+return(fig)
+
+}
+
+```
+
+```{r echo = F, include = F}
+
+i=1
+
+while(i<=ncol(FDR)){
+compare = colnames(FDR)[i]
+
+sigs = row.names(FDR)[FDR[,i]<.05]
+bg = row.names(FDR)
+
+sigsKEY = GeneIDKey[sigs,]
+sigs = na.omit(sigsKEY$Symbol)
+bgKEY = GeneIDKey[bg,]
+bg = na.omit(bgKEY$Symbol)
+
+sig.cats = Enrichment(sigs, bg)
+
+##write.csv(sig.cats[[1]], paste0("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/GOterm Enrichment/", colnames(FDR)[i],"_GOTermAnalysis.csv"))
+
+##write.csv(sig.cats[[2]], paste0("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/KEGG Enrichment/", colnames(FDR)[i],"KEGGAnalysis.csv"))
+
+i = i +1
+
+}
+
+```
+
+
+```{r}
+
+
+
+sigsA3FvMT = row.names(FDR)[FDR[,'A3FvMT']<.05]
+sigsS3FvMT = row.names(FDR)[FDR[,'S3FvMT']<.05]
+sigsA9FvMT = row.names(FDR)[FDR[,'A9FvMT']<.05]
+sigsS9FvMT = row.names(FDR)[FDR[,'S9FvMT']<.05]
+
+GR.cpm = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT_cpmdata.csv"),row.names = 1)
+GR.meta  = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.metadata.csv"),row.names = 1)
+GR.FDR = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FDRTable.csv"),row.names = 1)
+
+sigsGR.FxM = row.names(GR.FDR)[GR.FDR$GR.FxM <.05]
+sigsWT.FxM = row.names(GR.FDR)[GR.FDR$WT.FxM <.05]
+
+A3 = setdiff(sigsA3FvMT, sigsS3FvMT)
+A9 = setdiff(sigsA9FvMT, sigsS9FvMT)
+GR = setdiff(sigsGR.FxM, sigsWT.FxM)
+
+##Sample titles as strings. Only fill in up to your number of selected categories
+set1="A4V 3-day"
+set2="A4V 9-day"
+set3="G85R Larvae"
+set4=""
+  
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1=A3
+s2=A9
+s3=GR
+s4=""
+
+T3 = A3
+T9 = A9
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r echo=F, include=F}
+
+FC.subset = FC[, c("AvS3FH", "AvS9FH", "AvS40FH",
+                   "AvS3MH", "AvS9MH",
+                   "AvS3FT", "AvS9FT", "AvS40FT",
+                   "AvS3MT", "AvS9MT",
+                   "AvS3FA", "AvS9FA", "AvS40FA",
+                   "AvS3MA", "AvS9MA")]
+gr <- c("03FH", "09FH", "40FH",
+        "03MH", "09MH",
+        "03FT", "09FT", "40FT",
+        "03MT", "09MT",
+        "03FA", "09FA", "40FA",
+        "03MA", "09MA")
+colnames(FC.subset) = gr
+
+pca <- prcomp(t(FC.subset), scale.=TRUE) 
+
+
+PC1=scale(pca$x[,1])
+PC2=scale(pca$x[,2])
+eigs <- pca$sdev^2
+ve=signif(((eigs / sum(eigs))*100)[1:3],4)
+      
+    pca.data=data.frame(Sample=gr,
+                        ##PC1=scale(pca$x[,1]),
+                        ##PC2=scale(pca$x[,2]),
+                        PC1=scale(pca$x[,1]),
+                        PC2=scale(pca$x[,2]),
+                        sdev=pca$sdev,
+                        Tissue=substr(gr, 4, 4), 
+                        Sex=substr(gr, 3, 3), 
+                        Age=substr(gr, 1, 2),
+                        Percent1=ve[1],
+                        Percent2=ve[2],
+                        Group= paste0(substr(gr, 3, 3),
+                                      substr(gr, 4, 4)),
+                        pca.color = substr(gr, 3, 3),
+                        pca.shape = substr(gr, 4, 4))
+    
+    
+fig  = plot_ly(data = pca.data, 
+                 x = ~PC1, 
+                 y = ~PC2,
+                 name = ~Group,
+                 type = 'scatter',
+                 mode = 'markers',
+                 showlegend = T,
+                 color = ~pca.color,
+                 symbol = ~pca.shape,
+                 marker = list(size = 15,
+                               line = list(color = "black", width = 1.5)),
+                 hoverinfo = "text",
+                 hovertext = paste("Sample:", pca.data$Sample)) %>%
+    layout(xaxis = list(title = paste0("PC 1", "(", pca.data$Percent1[1], "%)")),
+           yaxis = list(title = paste0("PC 2", "(", pca.data$Percent2[2], "%)")))
+```
+
+```{r}
+
+  fig
 
 ```
 
 
 ```{r echo=F, include=F}
 
-pca <- prcomp(t(cpmdata), scale.=TRUE) 
-gr <- colnames(cpmdata)
+pca.data = cpmdata[,substr(colnames(cpmdata), nchar(colnames(cpmdata))-1, nchar(colnames(cpmdata))-1) == "H"]
+
+remove = apply(pca.data, MARGIN = 1, sum) != 0
+
+pca.data = pca.data[remove,]
+
+pca <- prcomp(t(pca.data), scale.=TRUE) 
+gr <- colnames(pca.data)
 PC1=scale(pca$x[,1])
 PC2=scale(pca$x[,2])
 eigs <- pca$sdev^2
@@ -64,9 +979,7 @@ ve=signif(((eigs / sum(eigs))*100)[1:3],4)
                         Percent1=ve[1],
                         Percent2=ve[2],
                         Group= paste0(substr(gr, 1, 1),
-                                      substr(gr, nchar(gr)-2, nchar(gr)-1)),
-                        pca.color = substr(gr, nchar(gr)-1, nchar(gr)-1),
-                        pca.shape = substr(gr, nchar(gr)-2, nchar(gr)-2))
+                                      substr(gr, nchar(gr)-2, nchar(gr)-1)))
     
     
 fig  = plot_ly(data = pca.data, 
@@ -76,8 +989,125 @@ fig  = plot_ly(data = pca.data,
                  type = 'scatter',
                  mode = 'markers',
                  showlegend = T,
-                 color = ~pca.color,
-                 symbol = ~pca.shape,
+                 color = ~Group,
+                 symbol = ~Genotype,
+                 ##symbols = as.character(seq_along(unique(point.data$Set))),
+                 ##colors = c(input$color1, input$color2, input$color3)[c(1:length(levels(pca.color)))],
+                 marker = list(size = 15,
+                               line = list(color = "black", width = 1.5)),
+                 hoverinfo = "text",
+                 hovertext = paste("Sample:", pca.data$Sample)) %>%
+    layout(xaxis = list(title = paste0("PC 1", "(", pca.data$Percent1[1], "%)")),
+           yaxis = list(title = paste0("PC 2", "(", pca.data$Percent2[2], "%)")))
+```
+
+```{r}
+
+  fig
+
+```
+
+
+
+
+```{r echo=F, include=F}
+
+pca.data = cpmdata[,substr(colnames(cpmdata), nchar(colnames(cpmdata))-1, nchar(colnames(cpmdata))-1) == "T"]
+
+remove = apply(pca.data, MARGIN = 1, sum) != 0
+
+pca.data = pca.data[remove,]
+
+pca <- prcomp(t(pca.data), scale.=TRUE) 
+gr <- colnames(pca.data)
+PC1=scale(pca$x[,1])
+PC2=scale(pca$x[,2])
+eigs <- pca$sdev^2
+ve=signif(((eigs / sum(eigs))*100)[1:3],4)
+      
+    pca.data=data.frame(Sample=gr,
+                        ##PC1=scale(pca$x[,1]),
+                        ##PC2=scale(pca$x[,2]),
+                        PC1=scale(pca$x[,1]),
+                        PC2=scale(pca$x[,2]),
+                        sdev=pca$sdev,
+                        Genotype=substr(gr, 1, 1), 
+                        Sex=substr(gr, nchar(gr)-2, nchar(gr)-2), 
+                        Age=substr(gr, 2, nchar(gr)-3),
+                        Percent1=ve[1],
+                        Percent2=ve[2],
+                        Group= paste0(substr(gr, 1, 1),
+                                      substr(gr, nchar(gr)-2, nchar(gr)-1)))
+    
+    
+fig  = plot_ly(data = pca.data, 
+                 x = ~PC1, 
+                 y = ~PC2,
+                 name = ~Group,
+                 type = 'scatter',
+                 mode = 'markers',
+                 showlegend = T,
+                 color = ~Group,
+                 symbol = ~Genotype,
+                 ##symbols = as.character(seq_along(unique(point.data$Set))),
+                 ##colors = c(input$color1, input$color2, input$color3)[c(1:length(levels(pca.color)))],
+                 marker = list(size = 15,
+                               line = list(color = "black", width = 1.5)),
+                 hoverinfo = "text",
+                 hovertext = paste("Sample:", pca.data$Sample)) %>%
+    layout(xaxis = list(title = paste0("PC 1", "(", pca.data$Percent1[1], "%)")),
+           yaxis = list(title = paste0("PC 2", "(", pca.data$Percent2[2], "%)")))
+```
+
+```{r}
+
+  fig
+
+```
+
+
+
+
+
+```{r echo=F, include=F}
+
+pca.data = A4V.cpm[,substr(colnames(A4V.cpm), nchar(colnames(A4V.cpm))-1, nchar(colnames(A4V.cpm))-1) == "A"]
+
+remove = apply(pca.data, MARGIN = 1, sum) != 0
+
+pca.data = pca.data[remove,]
+
+pca <- prcomp(t(pca.data), scale.=TRUE) 
+gr <- colnames(pca.data)
+PC1=scale(pca$x[,1])
+PC2=scale(pca$x[,2])
+eigs <- pca$sdev^2
+ve=signif(((eigs / sum(eigs))*100)[1:3],4)
+      
+    pca.data=data.frame(Sample=gr,
+                        ##PC1=scale(pca$x[,1]),
+                        ##PC2=scale(pca$x[,2]),
+                        PC1=scale(pca$x[,1]),
+                        PC2=scale(pca$x[,2]),
+                        sdev=pca$sdev,
+                        Genotype=substr(gr, 1, 1), 
+                        Sex=substr(gr, nchar(gr)-2, nchar(gr)-2), 
+                        Age=substr(gr, 2, nchar(gr)-3),
+                        Percent1=ve[1],
+                        Percent2=ve[2],
+                        Group= paste0(substr(gr, 1, 1),
+                                      substr(gr, nchar(gr)-2, nchar(gr)-1)))
+    
+    
+fig  = plot_ly(data = pca.data, 
+                 x = ~PC1, 
+                 y = ~PC2,
+                 name = ~Group,
+                 type = 'scatter',
+                 mode = 'markers',
+                 showlegend = T,
+                 color = ~Group,
+                 symbol = ~Genotype,
                  ##symbols = as.character(seq_along(unique(point.data$Set))),
                  ##colors = c(input$color1, input$color2, input$color3)[c(1:length(levels(pca.color)))],
                  marker = list(size = 15,

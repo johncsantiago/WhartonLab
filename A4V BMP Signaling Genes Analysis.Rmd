@@ -1,0 +1,1311 @@
+---
+title: "BMP Signaling Genes"
+author: "John Santiago"
+date: "2024-02-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r echo = F, message = F}
+
+library(heatmaply)
+library(dendextend)
+
+counts = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.countdata.csv", row.names = 1)
+
+cpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.cpmdata.csv", row.names = 1)
+
+meancpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.meancpmdata.csv", row.names = 1)
+
+FDR = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.FDRdata.csv", row.names = 1)
+
+FC = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.FCdata.csv", row.names = 1)
+
+meta = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.metadata.csv", row.names = 1)
+
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"
+GR.cpm = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT_cpmdata.csv"),row.names = 1)
+GR.meta  = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.metadata.csv"),row.names = 1)
+GR.FDR = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FDRTable.csv"),row.names = 1)
+
+bmp = read.csv('/Users/johncsantiago/Documents/GitHub/WhartonLab/BMP Signaling Genes.csv', row.names = 1, header = F)
+
+bmp$fb = row.names(bmp)
+
+bmpcpm = cpm[intersect(row.names(bmp), row.names(cpm)),]
+
+GR.bmp = GR.cpm[intersect(row.names(GR.cpm), row.names(bmp)),]
+
+GR.mean = matrix(rep(0, 12*nrow(GR.bmp)), ncol = 12)
+colnames(GR.mean) = unique(GR.meta$Group)
+row.names(GR.mean) = row.names(GR.bmp)
+
+i = 1
+while(i <= ncol(GR.mean)){
+  GR.mean[,i] = apply(GR.bmp[,row.names(GR.meta)[GR.meta$Group == colnames(GR.mean)[i]]], 1, mean)
+  i = i +1
+}
+
+GR.mean.meta = GR.meta[GR.meta$Replicate == 1, c(1:3,5)]
+row.names(GR.mean.meta) = GR.mean.meta$Group
+
+```
+
+
+```{r echo = F}
+
+hmgroups = meta[meta$Section=='Thorax' & meta$Sex == "F",]
+hmgroups$Age[nchar(hmgroups$Age) ==1] = paste0("0",hmgroups$Age[nchar(hmgroups$Age) ==1])
+hmgroups$ID = paste0(substr(hmgroups$Genotype,1,1), hmgroups$Age, hmgroups$Sex, "T_rep", hmgroups$Replicate)
+hmgroups=hmgroups[order(hmgroups$ID),]
+hmdata = bmpcpm[, row.names(hmgroups)]
+colnames(hmdata) = hmgroups$ID
+Fhmdata=t(scale(t(hmdata)))
+Fsidecols=data.frame("Tissue" = "Thorax",
+                     "Sex" = hmgroups$Sex,
+                     "Genotype" = hmgroups$Genotype,
+                     "Age" = hmgroups$Age)
+row.names(Fsidecols)=colnames(Fhmdata)
+
+
+hmgroups = meta[meta$Section=='Thorax' & meta$Sex == "M",]
+hmgroups$Age[nchar(hmgroups$Age) ==1] = paste0("0",hmgroups$Age[nchar(hmgroups$Age) ==1])
+hmgroups$ID = paste0(substr(hmgroups$Genotype,1,1), hmgroups$Age, hmgroups$Sex, "T_rep", hmgroups$Replicate)
+hmgroups=hmgroups[order(hmgroups$ID),]
+hmdata = bmpcpm[, row.names(hmgroups)]
+colnames(hmdata) = hmgroups$ID
+Mhmdata=t(scale(t(hmdata)))
+Msidecols=data.frame("Tissue" = "Thorax",
+                     "Sex" = hmgroups$Sex,
+                     "Genotype" = hmgroups$Genotype,
+                     "Age" = hmgroups$Age)
+row.names(Msidecols)=colnames(Mhmdata)
+
+
+
+Thmdata = cbind(Fhmdata, Mhmdata)
+row.names(Thmdata) = bmp[row.names(Thmdata),1]
+Tsidecols = rbind(Fsidecols, Msidecols)
+
+
+hmgroups = meta[meta$Section=='Head' & meta$Sex == "F",]
+hmgroups$Age[nchar(hmgroups$Age) ==1] = paste0("0",hmgroups$Age[nchar(hmgroups$Age) ==1])
+hmgroups$ID = paste0(substr(hmgroups$Genotype,1,1), hmgroups$Age, hmgroups$Sex, "H_rep", hmgroups$Replicate)
+hmgroups=hmgroups[order(hmgroups$ID),]
+hmdata = bmpcpm[, row.names(hmgroups)]
+colnames(hmdata) = hmgroups$ID
+Fhmdata=t(scale(t(hmdata)))
+Fsidecols=data.frame("Tissue" = "Head",
+                     "Sex" = hmgroups$Sex,
+                     "Genotype" = hmgroups$Genotype,
+                     "Age" = hmgroups$Age)
+row.names(Fsidecols)=colnames(Fhmdata)
+
+
+hmgroups = meta[meta$Section=='Head' & meta$Sex == "M",]
+hmgroups$Age[nchar(hmgroups$Age) ==1] = paste0("0",hmgroups$Age[nchar(hmgroups$Age) ==1])
+hmgroups$ID = paste0(substr(hmgroups$Genotype,1,1), hmgroups$Age, hmgroups$Sex, "H_rep", hmgroups$Replicate)
+hmgroups=hmgroups[order(hmgroups$ID),]
+hmdata = bmpcpm[, row.names(hmgroups)]
+colnames(hmdata) = hmgroups$ID
+Mhmdata=t(scale(t(hmdata)))
+Msidecols=data.frame("Tissue" = "Head",
+                     "Sex" = hmgroups$Sex,
+                     "Genotype" = hmgroups$Genotype,
+                     "Age" = hmgroups$Age)
+row.names(Msidecols)=colnames(Mhmdata)
+
+
+
+Hhmdata = cbind(Fhmdata, Mhmdata)
+row.names(Hhmdata) = bmp[row.names(Hhmdata),1]
+Hsidecols = rbind(Fsidecols, Msidecols)
+
+
+hmgroups = meta[meta$Section=='Abdomen' & meta$Sex == "F",]
+hmgroups$Age[nchar(hmgroups$Age) ==1] = paste0("0",hmgroups$Age[nchar(hmgroups$Age) ==1])
+hmgroups$ID = paste0(substr(hmgroups$Genotype,1,1), hmgroups$Age, hmgroups$Sex, "A_rep", hmgroups$Replicate)
+hmgroups=hmgroups[order(hmgroups$ID),]
+hmdata = bmpcpm[, row.names(hmgroups)]
+colnames(hmdata) = hmgroups$ID
+Fhmdata=t(scale(t(hmdata)))
+Fsidecols=data.frame("Tissue" = "Abdomen",
+                     "Sex" = hmgroups$Sex,
+                     "Genotype" = hmgroups$Genotype,
+                     "Age" = hmgroups$Age)
+row.names(Fsidecols)=colnames(Fhmdata)
+
+
+hmgroups = meta[meta$Section=='Abdomen' & meta$Sex == "M",]
+hmgroups$Age[nchar(hmgroups$Age) ==1] = paste0("0",hmgroups$Age[nchar(hmgroups$Age) ==1])
+hmgroups$ID = paste0(substr(hmgroups$Genotype,1,1), hmgroups$Age, hmgroups$Sex, "A_rep", hmgroups$Replicate)
+hmgroups=hmgroups[order(hmgroups$ID),]
+hmdata = bmpcpm[, row.names(hmgroups)]
+colnames(hmdata) = hmgroups$ID
+Mhmdata=t(scale(t(hmdata)))
+Msidecols=data.frame("Tissue" = "Abdomen",
+                     "Sex" = hmgroups$Sex,
+                     "Genotype" = hmgroups$Genotype,
+                     "Age" = hmgroups$Age)
+row.names(Msidecols)=colnames(Mhmdata)
+
+
+
+Ahmdata = cbind(Fhmdata, Mhmdata)
+row.names(Ahmdata) = bmp[row.names(Ahmdata),1]
+Asidecols = rbind(Fsidecols, Msidecols)
+
+```
+
+
+```{r echo = F, include = F}
+
+hmdata = cbind(cbind(Hhmdata, Thmdata), Ahmdata)
+sidecols = rbind(rbind(Hsidecols, Tsidecols), Asidecols)
+
+heatmaply(hmdata,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          scale="none",
+          dendrogram = "row",
+          Rowv=T,
+          Colv=F,
+          cexRow = .75,
+          na.value="black",
+          labRow = row.names(hmdata),
+          col_side_colors = sidecols)
+
+```
+
+
+```{r echo = F}
+
+mean.meta = meta[meta$Replicate == '1', c(1:4,6)]
+row.names(mean.meta) = mean.meta$Group
+bmpmean = meancpm[intersect(row.names(meancpm),row.names(bmp)),]
+
+hmgroups = mean.meta[mean.meta$Section=='Thorax' & mean.meta$Sex == "F",]
+hmgroups$Age[nchar(hmgroups$Age) ==1] = paste0("0",hmgroups$Age[nchar(hmgroups$Age) ==1])
+hmgroups$ID = paste0(substr(hmgroups$Genotype,1,1), hmgroups$Age, hmgroups$Sex, substr(hmgroups$Section,1,1))
+hmgroups=hmgroups[order(hmgroups$ID),]
+hmdata = bmpmean[, row.names(hmgroups)]
+colnames(hmdata) = hmgroups$ID
+
+TFhmdata=t(scale(t(hmdata)))
+TFsidecols=data.frame("Tissue" = "Thorax",
+                     "Sex" = hmgroups$Sex,
+                     "Genotype" = hmgroups$Genotype,
+                     "Age" = hmgroups$Age)
+row.names(TFsidecols)=colnames(TFhmdata)
+
+
+
+hmgroups = mean.meta[mean.meta$Section=='Thorax' & mean.meta$Sex == "M",]
+hmgroups$Age[nchar(hmgroups$Age) ==1] = paste0("0",hmgroups$Age[nchar(hmgroups$Age) ==1])
+hmgroups$ID = paste0(substr(hmgroups$Genotype,1,1), hmgroups$Age, hmgroups$Sex, substr(hmgroups$Section,1,1))
+hmgroups=hmgroups[order(hmgroups$ID),]
+hmdata = bmpmean[, row.names(hmgroups)]
+colnames(hmdata) = hmgroups$ID
+
+TMhmdata=t(scale(t(hmdata)))
+TMsidecols=data.frame("Tissue" = "Thorax",
+                     "Sex" = hmgroups$Sex,
+                     "Genotype" = hmgroups$Genotype,
+                     "Age" = hmgroups$Age)
+row.names(TMsidecols)=colnames(TMhmdata)
+
+
+
+
+
+
+Thmdata = cbind(TFhmdata, TMhmdata)
+row.names(Thmdata) = bmp[row.names(Thmdata),1]
+Tsidecols = rbind(TFsidecols, TMsidecols)
+
+
+
+
+hmgroups = mean.meta[mean.meta$Section=='Head' & mean.meta$Sex == "F",]
+hmgroups$Age[nchar(hmgroups$Age) ==1] = paste0("0",hmgroups$Age[nchar(hmgroups$Age) ==1])
+hmgroups$ID = paste0(substr(hmgroups$Genotype,1,1), hmgroups$Age, hmgroups$Sex, substr(hmgroups$Section,1,1))
+hmgroups=hmgroups[order(hmgroups$ID),]
+hmdata = bmpmean[, row.names(hmgroups)]
+colnames(hmdata) = hmgroups$ID
+
+HFhmdata=t(scale(t(hmdata)))
+HFsidecols=data.frame("Tissue" = "Thorax",
+                     "Sex" = hmgroups$Sex,
+                     "Genotype" = hmgroups$Genotype,
+                     "Age" = hmgroups$Age)
+row.names(HFsidecols)=colnames(HFhmdata)
+
+
+
+hmgroups = mean.meta[mean.meta$Section=='Head' & mean.meta$Sex == "M",]
+hmgroups$Age[nchar(hmgroups$Age) ==1] = paste0("0",hmgroups$Age[nchar(hmgroups$Age) ==1])
+hmgroups$ID = paste0(substr(hmgroups$Genotype,1,1), hmgroups$Age, hmgroups$Sex, substr(hmgroups$Section,1,1))
+hmgroups=hmgroups[order(hmgroups$ID),]
+hmdata = bmpmean[, row.names(hmgroups)]
+colnames(hmdata) = hmgroups$ID
+
+HMhmdata=t(scale(t(hmdata)))
+HMsidecols=data.frame("Tissue" = "Thorax",
+                     "Sex" = hmgroups$Sex,
+                     "Genotype" = hmgroups$Genotype,
+                     "Age" = hmgroups$Age)
+row.names(HMsidecols)=colnames(HMhmdata)
+
+
+Hhmdata = cbind(HFhmdata, HMhmdata)
+row.names(Hhmdata) = bmp[row.names(Hhmdata),1]
+Hsidecols = rbind(HFsidecols, HMsidecols)
+
+
+
+hmgroups = mean.meta[mean.meta$Section=='Abdomen' & mean.meta$Sex == "F",]
+hmgroups$Age[nchar(hmgroups$Age) ==1] = paste0("0",hmgroups$Age[nchar(hmgroups$Age) ==1])
+hmgroups$ID = paste0(substr(hmgroups$Genotype,1,1), hmgroups$Age, hmgroups$Sex, substr(hmgroups$Section,1,1))
+hmgroups=hmgroups[order(hmgroups$ID),]
+hmdata = bmpmean[, row.names(hmgroups)]
+colnames(hmdata) = hmgroups$ID
+
+AFhmdata=t(scale(t(hmdata)))
+AFsidecols=data.frame("Tissue" = "Thorax",
+                     "Sex" = hmgroups$Sex,
+                     "Genotype" = hmgroups$Genotype,
+                     "Age" = hmgroups$Age)
+row.names(AFsidecols)=colnames(AFhmdata)
+
+
+
+hmgroups = mean.meta[mean.meta$Section=='Abdomen' & mean.meta$Sex == "M",]
+hmgroups$Age[nchar(hmgroups$Age) ==1] = paste0("0",hmgroups$Age[nchar(hmgroups$Age) ==1])
+hmgroups$ID = paste0(substr(hmgroups$Genotype,1,1), hmgroups$Age, hmgroups$Sex, substr(hmgroups$Section,1,1))
+hmgroups=hmgroups[order(hmgroups$ID),]
+hmdata = bmpmean[, row.names(hmgroups)]
+colnames(hmdata) = hmgroups$ID
+
+AMhmdata=t(scale(t(hmdata)))
+AMsidecols=data.frame("Tissue" = "Thorax",
+                     "Sex" = hmgroups$Sex,
+                     "Genotype" = hmgroups$Genotype,
+                     "Age" = hmgroups$Age)
+row.names(AMsidecols)=colnames(AMhmdata)
+
+
+Ahmdata = cbind(AFhmdata, AMhmdata)
+row.names(Ahmdata) = bmp[row.names(Ahmdata),1]
+Asidecols = rbind(AFsidecols, AMsidecols)
+
+```
+
+
+```{r echo = F, include = F}
+
+hmdata = TMhmdata
+row.names(hmdata) = bmp[row.names(hmdata),1]
+sidecols = TMsidecols
+
+
+heatmaply(hmdata,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          scale="none",
+          dendrogram = "row",
+          Rowv=T,
+          Colv=F,
+          cexRow = .75,
+          na.value="black",
+          labRow = row.names(hmdata),
+          col_side_colors = sidecols)
+
+```
+
+
+
+
+```{r echo = F}
+
+hmcluster = function(clusternum, allscaled, Title){
+  
+dnd=cut(as.dendrogram(hc),h=cutheight)
+cluster=row.names(scaled)[unlist(dnd$lower[[clusternum]])]
+
+
+row.names(allscaled) = bmp[row.names(allscaled), 1]
+df = allscaled[cluster[length(cluster):1],] %>%
+  reshape2::melt() %>%
+  dplyr::rename(row=Var1,col=Var2)
+
+
+meandf = bmpmean
+row.names(meandf) = bmp[row.names(meandf),1]
+meandf = meandf[cluster[length(cluster):1],]
+temp = hm.meta[hm.meta$Replicate == 1,]
+row.names(temp) = temp$Group
+colnames(meandf) = temp[colnames(meandf), 'ID']
+meandf =  as.matrix(meandf[, colnames(allscaled)])
+meandf = meandf %>%
+  reshape2::melt() %>%
+  dplyr::rename(row=Var1,col=Var2)
+
+rep1df = bmpcpm
+row.names(rep1df) = bmp[row.names(rep1df),1]
+rep1df = rep1df[cluster[length(cluster):1], row.names(hm.meta)[hm.meta$Replicate == 1]]
+colnames(rep1df) = hm.meta[colnames(rep1df), 'ID']
+rep1df =  as.matrix(rep1df[, colnames(allscaled)])
+rep1df = rep1df %>%
+  reshape2::melt() %>%
+  dplyr::rename(row=Var1,col=Var2)
+
+rep2df = bmpcpm
+row.names(rep2df) = bmp[row.names(rep2df),1]
+rep2df = rep2df[cluster[length(cluster):1], row.names(hm.meta)[hm.meta$Replicate == 2]]
+colnames(rep2df) = hm.meta[colnames(rep2df), 'ID']
+rep2df =  as.matrix(rep2df[, colnames(allscaled)])
+rep2df = rep2df %>%
+  reshape2::melt() %>%
+  dplyr::rename(row=Var1,col=Var2)
+
+rep3df = bmpcpm
+row.names(rep3df) = bmp[row.names(rep3df),1]
+rep3df = rep3df[cluster[length(cluster):1], row.names(hm.meta)[hm.meta$Replicate == 3]]
+colnames(rep3df) = hm.meta[colnames(rep3df), 'ID']
+rep3df =  as.matrix(rep3df[, colnames(allscaled)])
+rep3df = rep3df %>%
+  reshape2::melt() %>%
+  dplyr::rename(row=Var1,col=Var2)
+
+
+FBgn = bmp
+row.names(FBgn) = FBgn[,1]
+
+df$mean = meandf$value
+df$rep1 = rep1df$value
+df$rep2 = rep2df$value
+df$rep3 = rep3df$value
+df$fbgn = FBgn[as.character(df$row), 'fb']
+
+fig = plot_ly(x = df$col, 
+              y = df$row,
+              z = df$value,
+              type = "heatmap",
+              colors = RdYlBu(100)[100:1],
+              hoverinfo = "text",
+              hovertext = paste("Sample:", df$col,
+                                "\nGene Symbol: ", df$row,
+                                "\nGene FBgn: ", df$fbgn,
+                                "\nMean CPM: ", signif(df$mean, 3),
+                                "\nRep1 CPM: ", signif(df$rep1, 3),
+                                "\nRep2 CPM: ", signif(df$rep2, 3),
+                                "\nRep3 CPM: ", signif(df$rep3, 3)))
+
+fig = fig %>% layout(title = paste(Title, " cluster ",clusternum, " genes"),
+                     xaxis = list(title = ""),
+                     yaxis = list(title = ""),
+                     shapes = list(
+                       list(
+                         type = "rect",
+                         fillcolor = 'deeppink',
+                         line = list(color = "deeppink", dash = 'none', width = 1),
+                         opacity = 1,
+                         x0 = -.5,
+                         x1 = 2.5,
+                         y0 = length(cluster)-.5,
+                         y1 = length(cluster)+1,
+                         textposition = "inside",
+                         textinfo = "label"),
+                       list(
+                         type = "rect",
+                         fillcolor = 'khaki',
+                         line = list(color = "khaki", dash = 'none', width = 1),
+                         opacity = 1,
+                         x0 = 2.5,
+                         x1 = 5.5,
+                         y0 = length(cluster)-.5,
+                         y1 = length(cluster)+1),
+                       list(
+                         type = "rect",
+                         fillcolor = 'deepskyblue',
+                         line = list(color = "deepskyblue", dash = 'none', width = 1),
+                         opacity = 1,
+                         x0 = 5.5,
+                         x1 = 7.5,
+                         y0 = length(cluster)-.5,
+                         y1 = length(cluster)+1),
+                       list(
+                         type = "rect",
+                         fillcolor = 'slategray',
+                         line = list(color = "slategray", dash = 'none', width = 1),
+                         opacity = 1,
+                         x0 = 7.5,
+                         x1 = 9.5,
+                         y0 = length(cluster)-.5,
+                         y1 = length(cluster)+1),
+                       list(
+                         type = "rect",
+                         line = list(color = "black", dash = 'none', width = 6),
+                         opacity = 1,
+                         x0 = -.5,
+                         x1 = 9.5,
+                         y0 = -.5,
+                         y1 = length(cluster)+1),
+                       list(
+                         type = 'line',
+                         line = list(color = "black", dash = 'none', width = 6),
+                         x0 = -.5,
+                         x1 = 9.5,
+                         y0 = length(cluster)-.5,
+                         y1 = length(cluster)-.5),
+                       list(
+                         type = 'line',
+                         line = list(color = "black", dash = 'none', width = 6),
+                         x0 = 2.5,
+                         x1 = 2.5,
+                         y0 = -.5,
+                         y1 = length(cluster)+1),
+                       list(
+                         type = 'line',
+                         line = list(color = "black", dash = 'none', width = 6),
+                         x0 = 7.5,
+                         x1 = 7.5,
+                         y0 = -.5,
+                         y1 = length(cluster)+1),
+                       list(
+                         type = 'line',
+                         line = list(color = "black", dash = 'none', width = 6),
+                         x0 = 5.5,
+                         x1 = 5.5,
+                         y0 = -.5,
+                         y1 = length(cluster)+1)))
+
+fig = fig %>% add_annotations(x = c(1, 4, 6.5, 8.5), 
+                              y = length(cluster)+.25, 
+                              text = c("A4V Females", 
+                                       "Silent Females", 
+                                       "A4V Males", 
+                                       "Silent Males"), 
+                              font = list(color = '#000000', size = 14), 
+                              showarrow = F)
+
+return(fig)
+
+}
+
+```
+
+
+
+
+```{r echo = F, fig.height=10}
+
+scaled = HFhmdata
+allscaled = cbind(HFhmdata, HMhmdata)
+Title = "Female Head"
+branches=3
+
+hm.meta = meta
+hm.meta$Age[nchar(hm.meta$Age) ==1] = paste0("0",hm.meta$Age[nchar(hm.meta$Age) ==1])
+hm.meta$ID = paste0(substr(hm.meta$Genotype,1,1), hm.meta$Age, hm.meta$Sex, substr(hm.meta$Section,1,1))
+
+row.names(scaled) = bmp[row.names(scaled),1]
+
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
+
+colors = allcolors[1:branches]
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = Title) 
+
+
+```
+
+
+
+
+
+```{r echo = F}
+
+hmcluster(clusternum = 1, allscaled, Title)
+
+```
+
+
+```{r echo = F}
+
+hmcluster(clusternum = 2, allscaled, Title)
+
+```
+
+
+```{r echo = F}
+
+hmcluster(clusternum = 3, allscaled, Title)
+
+```
+
+
+
+
+```{r echo = F, fig.height=10}
+
+scaled = HMhmdata
+Title = "Male Head"
+branches=3
+
+row.names(scaled) = bmp[row.names(scaled),1]
+
+colors = allcolors[1:branches]
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = Title) 
+
+
+```
+
+
+
+```{r echo = F}
+
+hmcluster(clusternum = 1, allscaled, Title)
+
+```
+
+```{r echo = F}
+
+hmcluster(clusternum = 2, allscaled, Title)
+
+```
+
+```{r echo = F}
+
+hmcluster(clusternum = 3, allscaled, Title)
+
+```
+
+
+
+
+
+
+
+```{r echo = F, fig.height=10}
+
+scaled = TFhmdata
+allscaled = cbind(TFhmdata, TMhmdata)
+Title = "Female Thorax"
+branches=3
+
+row.names(scaled) = bmp[row.names(scaled),1]
+
+colors = allcolors[1:branches]
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = Title) 
+
+
+```
+
+```{r echo = F}
+
+hmcluster(clusternum = 1, allscaled, Title)
+
+```
+
+```{r echo = F}
+
+hmcluster(clusternum = 2, allscaled, Title)
+
+```
+
+
+
+```{r echo = F}
+
+hmcluster(clusternum = 3, allscaled, Title)
+
+```
+
+
+
+
+
+
+
+
+```{r echo = F, fig.height=10}
+
+scaled = TMhmdata
+Title = "Male Thorax"
+branches=3
+
+row.names(scaled) = bmp[row.names(scaled),1]
+
+colors = allcolors[1:branches]
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = Title) 
+
+
+```
+
+
+```{r echo = F}
+
+hmcluster(clusternum = 1, allscaled, Title)
+
+```
+
+```{r echo = F}
+
+hmcluster(clusternum = 2, allscaled, Title)
+
+```
+
+```{r echo = F}
+
+hmcluster(clusternum = 3, allscaled, Title)
+
+```
+
+
+
+
+
+```{r echo = F, fig.height=10}
+
+scaled = AFhmdata
+allscaled = cbind(AFhmdata, AMhmdata)
+Title = "Female Abdomen"
+branches=3
+
+row.names(scaled) = bmp[row.names(scaled),1]
+
+colors = allcolors[1:branches]
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = Title) 
+
+
+```
+
+
+
+```{r echo = F}
+
+hmcluster(clusternum = 1, allscaled, Title)
+
+```
+
+```{r echo = F}
+
+hmcluster(clusternum = 2, allscaled, Title)
+
+```
+
+```{r echo = F}
+
+hmcluster(clusternum = 3, allscaled, Title)
+
+```
+
+
+
+
+```{r echo = F, fig.height=10}
+
+scaled = AMhmdata
+Title = "Male Abdomen"
+branches=3
+
+row.names(scaled) = bmp[row.names(scaled),1]
+
+colors = allcolors[1:branches]
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = Title) 
+
+
+```
+
+
+
+```{r echo = F}
+
+hmcluster(clusternum = 1, allscaled, Title)
+
+```
+
+```{r echo = F}
+
+hmcluster(clusternum = 2, allscaled, Title)
+
+```
+
+```{r echo = F}
+
+hmcluster(clusternum = 3, allscaled, Title)
+
+```
+
+
+
+
+
+```{r echo = F, fig.height=10}
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('GR.M', 'TktDfGR.M', 'TktOEGR.M',
+                      'WT.M', 'TktDfWT.M', 'TktOEWT.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('GR.F', 'TktDfGR.F', 'TktOEGR.F',
+                      'WT.F', 'TktDfWT.F', 'TktOEWT.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+
+allscaled = cbind(Fhmdata,Mhmdata)
+
+
+Fsidecols=data.frame("Sex" = hmgroups$Sex,
+                     "Genotype" = hmgroups$Genotype)
+row.names(Fsidecols)=colnames(Fhmdata)
+
+scaled = Fhmdata
+Title = "Female Larvae"
+branches=3
+
+row.names(scaled) = bmp[row.names(scaled),1]
+
+colors = allcolors[1:branches]
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = Title) 
+
+
+```
+
+
+```{r echo = F}
+
+GR.hmcluster = function(clusternum, allscaled, Title){
+dnd=cut(as.dendrogram(hc),h=cutheight)
+cluster=row.names(scaled)[unlist(dnd$lower[[clusternum]])]
+
+
+row.names(allscaled) = bmp[row.names(allscaled), 1]
+df = allscaled[cluster[length(cluster):1],] %>%
+  reshape2::melt() %>%
+  dplyr::rename(row=Var1,col=Var2)
+
+
+meandf = GR.mean
+row.names(meandf) = bmp[row.names(meandf),1]
+meandf = meandf[cluster[length(cluster):1],]
+meandf =  as.matrix(meandf[, colnames(allscaled)])
+meandf = meandf %>%
+  reshape2::melt() %>%
+  dplyr::rename(row=Var1,col=Var2)
+
+
+FBgn = bmp
+row.names(FBgn) = FBgn[,1]
+
+df$mean = meandf$value
+df$fbgn = FBgn[as.character(df$row), 'fb']
+
+fig = plot_ly(x = df$col, 
+              y = df$row,
+              z = df$value,
+              type = "heatmap",
+              colors = RdYlBu(100)[100:1],
+              hoverinfo = "text",
+              hovertext = paste("Sample:", df$col,
+                                "\nGene Symbol: ", df$row,
+                                "\nGene FBgn: ", df$fbgn,
+                                "\nMean CPM: ", signif(df$mean, 3)))
+
+fig = fig %>% layout(title = paste(Title, " cluster ",clusternum, " genes"),
+                     xaxis = list(title = ""),
+                     yaxis = list(title = ""),
+                     shapes = list(
+                       list(
+                         type = "rect",
+                         fillcolor = 'deeppink',
+                         line = list(color = "deeppink", dash = 'none', width = 1),
+                         opacity = 1,
+                         x0 = -.5,
+                         x1 = 2.5,
+                         y0 = length(cluster)-.5,
+                         y1 = length(cluster)+1),
+                       list(
+                         type = "rect",
+                         fillcolor = 'khaki',
+                         line = list(color = "khaki", dash = 'none', width = 1),
+                         opacity = 1,
+                         x0 = 2.5,
+                         x1 = 5.5,
+                         y0 = length(cluster)-.5,
+                         y1 = length(cluster)+1),
+                       list(
+                         type = "rect",
+                         fillcolor = 'deepskyblue',
+                         line = list(color = "deepskyblue", dash = 'none', width = 1),
+                         opacity = 1,
+                         x0 = 5.5,
+                         x1 = 8.5,
+                         y0 = length(cluster)-.5,
+                         y1 = length(cluster)+1),
+                       list(
+                         type = "rect",
+                         fillcolor = 'slategray',
+                         line = list(color = "slategray", dash = 'none', width = 1),
+                         opacity = 1,
+                         x0 = 8.5,
+                         x1 = 11.5,
+                         y0 = length(cluster)-.5,
+                         y1 = length(cluster)+1),
+                       list(
+                         type = "rect",
+                         line = list(color = "black", dash = 'none', width = 6),
+                         opacity = 1,
+                         x0 = -.5,
+                         x1 = 11.5,
+                         y0 = -.5,
+                         y1 = length(cluster)+1),
+                       list(
+                         type = 'line',
+                         line = list(color = "black", dash = 'none', width = 6),
+                         x0 = -.5,
+                         x1 = 11.5,
+                         y0 = length(cluster)-.5,
+                         y1 = length(cluster)-.5),
+                       list(
+                         type = 'line',
+                         line = list(color = "black", dash = 'none', width = 6),
+                         x0 = 2.5,
+                         x1 = 2.5,
+                         y0 = -.5,
+                         y1 = length(cluster)+1),
+                       list(
+                         type = 'line',
+                         line = list(color = "black", dash = 'none', width = 6),
+                         x0 = 8.5,
+                         x1 = 8.5,
+                         y0 = -.5,
+                         y1 = length(cluster)+1),
+                       list(
+                         type = 'line',
+                         line = list(color = "black", dash = 'none', width = 6),
+                         x0 = 5.5,
+                         x1 = 5.5,
+                         y0 = -.5,
+                         y1 = length(cluster)+1)))
+
+fig = fig %>% add_annotations(x = c(1, 4, 7, 10), 
+                              y = length(cluster)+.25, 
+                              text = c("G85R Females", 
+                                       "Silent Females", 
+                                       "G85R Males", 
+                                       "Silent Males"), 
+                              font = list(color = '#000000', size = 14), 
+                              showarrow = F)
+
+return(fig)
+
+}
+
+```
+
+```{r echo = F}
+
+GR.hmcluster(clusternum = 1, allscaled, Title)
+
+```
+
+```{r echo = F}
+
+GR.hmcluster(clusternum = 2, allscaled, Title)
+
+```
+
+```{r echo = F}
+
+GR.hmcluster(clusternum = 3, allscaled, Title)
+
+```
+
+
+```{r echo = F, fig.height=10}
+
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('GR.F', 'TktDfGR.F', 'TktOEGR.F',
+                      'WT.F', 'TktDfWT.F', 'TktOEWT.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('GR.M', 'TktDfGR.M', 'TktOEGR.M',
+                      'WT.M', 'TktDfWT.M', 'TktOEWT.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+
+allscaled = cbind(Fhmdata,Mhmdata)
+
+
+Msidecols=data.frame("Sex" = hmgroups$Sex,
+                     "Genotype" = hmgroups$Genotype)
+row.names(Msidecols)=colnames(Mhmdata)
+
+scaled = Mhmdata
+Title = "Male Larvae"
+branches=3
+
+row.names(scaled) = bmp[row.names(scaled),1]
+
+colors = allcolors[1:branches]
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = Title) 
+
+
+```
+
+
+
+```{r echo = F}
+
+GR.hmcluster(clusternum = 1, allscaled, Title)
+
+```
+
+```{r echo = F}
+
+GR.hmcluster(clusternum = 2, allscaled, Title)
+
+```
+
+```{r echo = F}
+
+GR.hmcluster(clusternum = 3, allscaled, Title)
+
+```
+
+
+
+
+##Heatmap of Fold Changes
+```{r echo = F, fig.height=10}
+
+hmdata = FC[intersect(row.names(FC), row.names(bmp)), c("AvS3FH", "AvS9FH", "AvS40FH",
+                                                        "AvS3MH", "AvS9MH",
+                                                        "AvS3FT", "AvS9FT", "AvS40FT",
+                                                        "AvS3MT", "AvS9MT",
+                                                        "AvS3FA", "AvS9FA", "AvS40FA",
+                                                        "AvS3MA", "AvS9MA")]
+
+hmFDR = FDR[row.names(hmdata), colnames(hmdata)]
+
+colnames(hmdata) = c('A3FH', 'A9FH', 'A40FH',
+                     'A3MH', 'A9MH',
+                     'A3FT', 'A9FT', 'A40FT',
+                     'A3MT', 'A9MT',
+                     'A3FA', 'A9FA', 'A40FA',
+                     'A3MA', 'A9MA')
+scaled=t(scale(t(hmdata)))
+
+
+Title = "Fold Change Data"
+branches=6
+
+row.names(scaled) = bmp[row.names(scaled),1]
+
+colors = allcolors[1:branches]
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+scaled[hmFDR>.05] = NA
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = Title) 
+
+
+```
+
+
+
+
+
+
+

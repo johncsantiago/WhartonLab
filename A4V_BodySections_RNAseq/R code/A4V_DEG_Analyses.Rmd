@@ -1,0 +1,675 @@
+---
+title: "A4V PCA"
+author: "John Santiago"
+date: "2024-01-22"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo=F, include=F}
+
+library(plotly)
+library(edgeR)
+library(goseq)
+library(org.Dm.eg.db)
+library(rrvgo)
+library(VennDiagram)
+
+```
+
+```{r}
+
+cpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.cpmdata.csv", row.names = 1)
+
+meancpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.meancpmdata.csv", row.names = 1)
+
+FDR = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.FDRdata.csv", row.names = 1)
+
+FC = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.FCdata.csv", row.names = 1)
+
+meta = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.metadata.csv", row.names = 1)
+
+GeneIDKey = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GeneIDKey.csv", row.names = 1)
+
+```
+
+
+##GO and KEGG Enrichment function
+```{r echo = F, include = F}
+
+Enrichment = function(sigs, bg){
+  genes = setNames(rep(0, length(bg)), bg)
+  genes[sigs] = 1
+  pwf=nullp(genes,"dm3","geneSymbol")
+  GO.wall=goseq(pwf,"dm3","geneSymbol")
+  GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+  row.names(GO.wall) = GO.wall$category
+  KEGG=goseq(pwf,gene2cat=kegg)
+  KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
+  row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
+  KEGG$Name=kegg.names[row.names(KEGG),1]
+
+  enrichment.data = list(GO.wall, KEGG)
+  names(enrichment.data) = c("GO", "KEGG")
+  return(enrichment.data)
+}
+
+```
+
+##GO.Sim.PCA function
+```{r echo = F, include = F}
+GO.Sim.PCA = function(use.data){
+    pca <- prcomp(t(use.data), scale.=TRUE) 
+    pc1=scale(pca$x[,1])
+    pc2=scale(pca$x[,2])
+    eigs <- pca$sdev^2
+    ve=signif(((eigs / sum(eigs))*100)[1:3],4)
+
+    pca.data=data.frame(PC1=pc1,
+                        PC2=pc2,
+                        sdev=pca$sdev,
+                        Percent1=ve[1],
+                        Percent2=ve[2],
+                        Group = reducedTerms[row.names(use.data), "parentTerm"],
+                        Score = reducedTerms[row.names(use.data), "score"],
+                        Term = reducedTerms[row.names(use.data), "term"],
+                        TotalDE = GO.data[row.names(use.data), "numDEInCat"],
+                        Total = GO.data[row.names(use.data), "numInCat"],
+                        SigVal = signif(GO.data[row.names(use.data), "adjp"],3))
+
+    pca.data$Group = factor(pca.data$Group, levels = unique(pca.data$Group))
+    pca.data$Score = 20*(1+pca.data$Score/mean(pca.data$Score))
+    
+  fig  = plot_ly(data = pca.data, 
+                 x = ~PC1, 
+                 y = ~PC2,
+                 name = ~Group,
+                 type = 'scatter',
+                 mode = 'markers',
+                 showlegend = T,
+                 color = ~Group,
+                 ##symbol = ~Group,
+                 ##symbols = as.character(seq_along(unique(point.data$Set))),
+                 ##colors = c("firebrick","gold","deepskyblue"),
+                 marker = list(size = pca.data$Score,
+                               line = list(color = "black", width = 1.5)),
+                 hoverinfo = "text",
+                 hovertext = paste("Parent Group: ", pca.data$Group,
+                                   "\nSample: ", pca.data$Term, 
+                                   "\nTotal DE: ", pca.data$TotalDE, 
+                                   "\nTotal in Cat.: ", pca.data$Total, 
+                                   "\nFDR: ", pca.data$SigVal)) %>%
+    layout(xaxis = list(title = paste0("PC1", "(", ve[1], "%)")),
+           yaxis = list(title = paste0("PC2", "(", ve[2], "%)")),
+           title = "Enriched GO term similarity")
+           
+  return(fig)
+}
+
+```
+
+##GO20 Function
+```{r echo = F, include =F}
+
+GO20 = function(GO.data, GO.ontology){
+GO.data = GO.data[GO.data$ontology == GO.ontology,
+                  c("category", "term","adjp", "numDEInCat", "numInCat")]
+
+
+data = GO.data[20:1,c("term","adjp","numDEInCat", "numInCat", "category")]
+data$Score = -log10(data$adjp)
+data$term = factor(data$term, levels = c(unique(data$term)))
+
+m <- list(
+  l = 50,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 4
+)
+
+fig <- plot_ly(data, 
+               x = ~numDEInCat, y = ~term, 
+               type = 'bar',
+               name = "term",
+               marker = list(colorscale = list(c(0,.5,1), c("brown","gold", "steelblue")),
+    reversescale =T,
+                             colorbar = list(title = "-log10(FDR)",
+                                      len = .8, outlinewidth = 0,
+                                      tickformat = ".2f",
+                                      tick0 = 0),##, dtick = .01),
+                             color = ~Score,
+                             line = list(color = "black", width = 1.5)),
+    hoverinfo = "text",
+    hovertext = paste("Sample:", data$term,
+                      "\nGO ID: ", data$category,
+                      "\nTotal DE: ", data$numDEInCat,
+                      "\nTotal in Cat.: ", data$numInCat,
+                      "\nFDR: ", signif(data$adjp, 3))) %>%
+    layout(xaxis = list(title = "Number of Genes"),
+           yaxis = list(title = ""),
+           title = "Top 20 Most Enriched GO Terms",
+           margin = m)
+
+  return(fig)
+}
+
+```
+
+##KEGG20 Function
+```{r, echo = F, include = F}
+
+KEGG20 = function(data){
+  
+  data = data[1:20, c("category", "Name","adjp", "numDEInCat", "numInCat")]
+  
+data$term = data$Name
+if(length(unique(data$term)) < length(data$term)){
+  data$term[duplicated(data$term)] = paste(data$term[duplicated(data$term)], "2")
+}  
+data = data[20:1,]
+data$Score = -log10(data$adjp)
+data$term = factor(data$term, levels = c(unique(data$term)))
+
+
+m <- list(
+  l = 50,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 4
+)
+
+fig <- plot_ly(data, 
+               x = ~numDEInCat, y = ~term, 
+               type = 'bar',
+               name = "Name",
+               marker = list(colorscale = list(c(0,.5,1), c("brown","gold", "steelblue")),
+    reversescale =T,
+                             colorbar = list(title = "-log10(FDR)",
+                                      len = .8, outlinewidth = 0,
+                                      tickformat = ".2f",
+                                      tick0 = 0),##, dtick = .01),
+                             color = ~Score,
+                             line = list(color = "black", width = 1.5)),
+    hoverinfo = "text",
+    hovertext = paste("Sample:", data$Name,
+                      "\nGO ID: ", data$category,
+                      "\nTotal DE: ", data$numDEInCat,
+                      "\nTotal in Cat.: ", data$numInCat,
+                      "\nFDR: ", signif(data$adjp, 3))) %>%
+    layout(xaxis = list(title = "Number of Genes"),
+           yaxis = list(title = ""),
+           title = "Top 20 Most Enriched KEGG Terms",
+           margin = m)
+
+return(fig)
+
+}
+
+```
+
+
+```{r echo = F}
+
+sigsA3FvMT = row.names(FDR)[FDR[,'A3FvMT']<.05]
+sigsS3FvMT = row.names(FDR)[FDR[,'S3FvMT']<.05]
+sigsA9FvMT = row.names(FDR)[FDR[,'A9FvMT']<.05]
+sigsS9FvMT = row.names(FDR)[FDR[,'S9FvMT']<.05]
+
+GR.cpm = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT_cpmdata.csv"),row.names = 1)
+GR.meta  = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.metadata.csv"),row.names = 1)
+GR.FDR = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FDRTable.csv"),row.names = 1)
+
+sigsGR.FxM = row.names(GR.FDR)[GR.FDR$GR.FxM <.05]
+sigsWT.FxM = row.names(GR.FDR)[GR.FDR$WT.FxM <.05]
+
+A3 = setdiff(sigsA3FvMT, sigsS3FvMT)
+A9 = setdiff(sigsA9FvMT, sigsS9FvMT)
+GR = setdiff(sigsGR.FxM, sigsWT.FxM)
+
+##Sample titles as strings. Only fill in up to your number of selected categories
+set1="A4V 3-day"
+set2="A4V 9-day"
+set3="G85R Larvae"
+set4=""
+  
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1=A3
+s2=A9
+s3=GR
+s4=""
+
+T3 = A3
+T9 = A9
+
+```
+
+```{r}
+
+##Triple Venn
+grid.newpage()
+draw.triple.venn(area1=length(s1),area2=length(s2),area3=length(s3),n12=length(intersect(s1,s2)),n23 = length(intersect(s2,s3)),n13 = length(intersect(s1,s3)),n123 = length(intersect(intersect(s1,s2),s3)),category=c(set1,set2,set3),fill = c("green", "blue","red"),cex=1.5,cat.cex = 1)
+
+
+```
+
+```{r echo = F}
+
+
+
+sigsA3FvMH = row.names(FDR)[FDR[,'A3FvMH']<.05]
+sigsS3FvMH = row.names(FDR)[FDR[,'S3FvMH']<.05]
+sigsA9FvMH = row.names(FDR)[FDR[,'A9FvMH']<.05]
+sigsS9FvMH = row.names(FDR)[FDR[,'S9FvMH']<.05]
+
+GR.cpm = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT_cpmdata.csv"),row.names = 1)
+GR.meta  = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.metadata.csv"),row.names = 1)
+GR.FDR = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FDRTable.csv"),row.names = 1)
+
+sigsGR.FxM = row.names(GR.FDR)[GR.FDR$GR.FxM <.05]
+sigsWT.FxM = row.names(GR.FDR)[GR.FDR$WT.FxM <.05]
+
+A3 = setdiff(sigsA3FvMH, sigsS3FvMH)
+A9 = setdiff(sigsA9FvMH, sigsS9FvMH)
+GR = setdiff(sigsGR.FxM, sigsWT.FxM)
+
+##Sample titles as strings. Only fill in up to your number of selected categories
+set1="A4V 3-day"
+set2="A4V 9-day"
+set3="G85R Larvae"
+set4=""
+  
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1=A3
+s2=A9
+s3=GR
+s4=""
+
+H3=A3
+H9=A9
+
+```
+
+```{r}
+
+##Triple Venn
+grid.newpage()
+draw.triple.venn(area1=length(s1),area2=length(s2),area3=length(s3),n12=length(intersect(s1,s2)),n23 = length(intersect(s2,s3)),n13 = length(intersect(s1,s3)),n123 = length(intersect(intersect(s1,s2),s3)),category=c(set1,set2,set3),fill = c("green", "blue","red"),cex=1.5,cat.cex = 1)
+
+
+```
+
+
+```{r echo = F}
+
+
+
+sigsA3FvMA = row.names(FDR)[FDR[,'A3FvMA']<.05]
+sigsS3FvMA = row.names(FDR)[FDR[,'S3FvMA']<.05]
+sigsA9FvMA = row.names(FDR)[FDR[,'A9FvMA']<.05]
+sigsS9FvMA = row.names(FDR)[FDR[,'S9FvMA']<.05]
+
+GR.cpm = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT_cpmdata.csv"),row.names = 1)
+GR.meta  = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.metadata.csv"),row.names = 1)
+GR.FDR = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FDRTable.csv"),row.names = 1)
+
+sigsGR.FxM = row.names(GR.FDR)[GR.FDR$GR.FxM <.05]
+sigsWT.FxM = row.names(GR.FDR)[GR.FDR$WT.FxM <.05]
+
+A3 = setdiff(sigsA3FvMA, sigsS3FvMA)
+A9 = setdiff(sigsA9FvMA, sigsS9FvMA)
+GR = setdiff(sigsGR.FxM, sigsWT.FxM)
+
+##Sample titles as strings. Only fill in up to your number of selected categories
+set1="A4V 3-day"
+set2="A4V 9-day"
+set3="G85R Larvae"
+set4=""
+  
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1=A3
+s2=A9
+s3=GR
+s4=""
+
+A3=A3
+A9=A9
+
+```
+
+```{r}
+
+##Triple Venn
+grid.newpage()
+draw.triple.venn(area1=length(s1),area2=length(s2),area3=length(s3),n12=length(intersect(s1,s2)),n23 = length(intersect(s2,s3)),n13 = length(intersect(s1,s3)),n123 = length(intersect(intersect(s1,s2),s3)),category=c(set1,set2,set3),fill = c("green", "blue","red"),cex=1.5,cat.cex = 1)
+
+
+```
+
+
+```{r echo = F, include = F}
+
+sigs = setdiff(setdiff(T9,T3),GR)
+bg = row.names(FDR)
+
+sigsKEY = GeneIDKey[sigs,]
+sigs = na.omit(sigsKEY$Symbol)
+bgKEY = GeneIDKey[bg,]
+bg = na.omit(bgKEY$Symbol)
+
+sig.cats = Enrichment(sigs, bg)
+
+```
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "BP"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+
+```{r echo = F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "BP"
+BP.GO.fig = GO20(GO.data, GO.ontology)
+
+GO.ontology = "CC"
+CC.GO.fig = GO20(GO.data, GO.ontology)
+
+GO.ontology = "MF"
+MF.GO.fig = GO20(GO.data, GO.ontology)
+
+KEGG.fig = KEGG20(sig.cats[["KEGG"]])
+
+```
+
+```{r, fig.width= 10}
+
+BP.GO.fig
+
+```
+
+```{r, fig.width= 10}
+
+CC.GO.fig
+
+```
+
+```{r, fig.width= 10}
+
+MF.GO.fig
+
+```
+
+```{r, fig.width= 10}
+
+KEGG.fig
+
+```
+
+```{r fig.height=7, fig.width=10}
+
+heatmapPlot(simMatrix,
+            reducedTerms,
+            annotateParent=TRUE,
+            annotationLabel="parentTerm",
+            fontsize=6,
+            main = "Repressor Gene Enriched Biological Process GO terms")
+
+```
+
+```{r warning=F, fig.width=10}
+
+use.data   = simMatrix
+GO.Sim.PCA(use.data)
+
+```
+
+
+```{r fig.align='left'}
+
+treemapPlot(reducedTerms)
+
+```
+
+```{r echo=F, include=F}
+
+pca <- prcomp(t(A4V.cpm), scale.=TRUE) 
+gr <- colnames(A4V.cpm)
+PC1=scale(pca$x[,1])
+PC2=scale(pca$x[,2])
+eigs <- pca$sdev^2
+ve=signif(((eigs / sum(eigs))*100)[1:3],4)
+      
+    pca.data=data.frame(Sample=gr,
+                        ##PC1=scale(pca$x[,1]),
+                        ##PC2=scale(pca$x[,2]),
+                        PC1=scale(pca$x[,1]),
+                        PC2=scale(pca$x[,2]),
+                        sdev=pca$sdev,
+                        Genotype=substr(gr, 1, 1), 
+                        Sex=substr(gr, nchar(gr)-2, nchar(gr)-2), 
+                        Age=substr(gr, 2, nchar(gr)-3),
+                        Percent1=ve[1],
+                        Percent2=ve[2],
+                        Group= paste0(substr(gr, 1, 1),
+                                      substr(gr, nchar(gr)-2, nchar(gr)-1)),
+                        pca.color = substr(gr, nchar(gr)-1, nchar(gr)-1),
+                        pca.shape = substr(gr, nchar(gr)-2, nchar(gr)-2))
+    
+    
+fig  = plot_ly(data = pca.data, 
+                 x = ~PC1, 
+                 y = ~PC2,
+                 name = ~Group,
+                 type = 'scatter',
+                 mode = 'markers',
+                 showlegend = T,
+                 color = ~pca.color,
+                 symbol = ~pca.shape,
+                 ##symbols = as.character(seq_along(unique(point.data$Set))),
+                 ##colors = c(input$color1, input$color2, input$color3)[c(1:length(levels(pca.color)))],
+                 marker = list(size = 15,
+                               line = list(color = "black", width = 1.5)),
+                 hoverinfo = "text",
+                 hovertext = paste("Sample:", pca.data$Sample)) %>%
+    layout(xaxis = list(title = paste0("PC 1", "(", pca.data$Percent1[1], "%)")),
+           yaxis = list(title = paste0("PC 2", "(", pca.data$Percent2[2], "%)")))
+```
+
+```{r}
+
+  fig
+
+```
+
+
+```{r echo=F, include=F}
+
+pca.data = cpmdata[,substr(colnames(cpmdata), nchar(colnames(cpmdata))-1, nchar(colnames(cpmdata))-1) == "H"]
+
+remove = apply(pca.data, MARGIN = 1, sum) != 0
+
+pca.data = pca.data[remove,]
+
+pca <- prcomp(t(pca.data), scale.=TRUE) 
+gr <- colnames(pca.data)
+PC1=scale(pca$x[,1])
+PC2=scale(pca$x[,2])
+eigs <- pca$sdev^2
+ve=signif(((eigs / sum(eigs))*100)[1:3],4)
+      
+    pca.data=data.frame(Sample=gr,
+                        ##PC1=scale(pca$x[,1]),
+                        ##PC2=scale(pca$x[,2]),
+                        PC1=scale(pca$x[,1]),
+                        PC2=scale(pca$x[,2]),
+                        sdev=pca$sdev,
+                        Genotype=substr(gr, 1, 1), 
+                        Sex=substr(gr, nchar(gr)-2, nchar(gr)-2), 
+                        Age=substr(gr, 2, nchar(gr)-3),
+                        Percent1=ve[1],
+                        Percent2=ve[2],
+                        Group= paste0(substr(gr, 1, 1),
+                                      substr(gr, nchar(gr)-2, nchar(gr)-1)))
+    
+    
+fig  = plot_ly(data = pca.data, 
+                 x = ~PC1, 
+                 y = ~PC2,
+                 name = ~Group,
+                 type = 'scatter',
+                 mode = 'markers',
+                 showlegend = T,
+                 color = ~Group,
+                 symbol = ~Genotype,
+                 ##symbols = as.character(seq_along(unique(point.data$Set))),
+                 ##colors = c(input$color1, input$color2, input$color3)[c(1:length(levels(pca.color)))],
+                 marker = list(size = 15,
+                               line = list(color = "black", width = 1.5)),
+                 hoverinfo = "text",
+                 hovertext = paste("Sample:", pca.data$Sample)) %>%
+    layout(xaxis = list(title = paste0("PC 1", "(", pca.data$Percent1[1], "%)")),
+           yaxis = list(title = paste0("PC 2", "(", pca.data$Percent2[2], "%)")))
+```
+
+```{r}
+
+  fig
+
+```
+
+
+
+
+```{r echo=F, include=F}
+
+pca.data = cpmdata[,substr(colnames(cpmdata), nchar(colnames(cpmdata))-1, nchar(colnames(cpmdata))-1) == "T"]
+
+remove = apply(pca.data, MARGIN = 1, sum) != 0
+
+pca.data = pca.data[remove,]
+
+pca <- prcomp(t(pca.data), scale.=TRUE) 
+gr <- colnames(pca.data)
+PC1=scale(pca$x[,1])
+PC2=scale(pca$x[,2])
+eigs <- pca$sdev^2
+ve=signif(((eigs / sum(eigs))*100)[1:3],4)
+      
+    pca.data=data.frame(Sample=gr,
+                        ##PC1=scale(pca$x[,1]),
+                        ##PC2=scale(pca$x[,2]),
+                        PC1=scale(pca$x[,1]),
+                        PC2=scale(pca$x[,2]),
+                        sdev=pca$sdev,
+                        Genotype=substr(gr, 1, 1), 
+                        Sex=substr(gr, nchar(gr)-2, nchar(gr)-2), 
+                        Age=substr(gr, 2, nchar(gr)-3),
+                        Percent1=ve[1],
+                        Percent2=ve[2],
+                        Group= paste0(substr(gr, 1, 1),
+                                      substr(gr, nchar(gr)-2, nchar(gr)-1)))
+    
+    
+fig  = plot_ly(data = pca.data, 
+                 x = ~PC1, 
+                 y = ~PC2,
+                 name = ~Group,
+                 type = 'scatter',
+                 mode = 'markers',
+                 showlegend = T,
+                 color = ~Group,
+                 symbol = ~Genotype,
+                 ##symbols = as.character(seq_along(unique(point.data$Set))),
+                 ##colors = c(input$color1, input$color2, input$color3)[c(1:length(levels(pca.color)))],
+                 marker = list(size = 15,
+                               line = list(color = "black", width = 1.5)),
+                 hoverinfo = "text",
+                 hovertext = paste("Sample:", pca.data$Sample)) %>%
+    layout(xaxis = list(title = paste0("PC 1", "(", pca.data$Percent1[1], "%)")),
+           yaxis = list(title = paste0("PC 2", "(", pca.data$Percent2[2], "%)")))
+```
+
+```{r}
+
+  fig
+
+```
+
+
+
+
+
+```{r echo=F, include=F}
+
+pca.data = A4V.cpm[,substr(colnames(A4V.cpm), nchar(colnames(A4V.cpm))-1, nchar(colnames(A4V.cpm))-1) == "A"]
+
+remove = apply(pca.data, MARGIN = 1, sum) != 0
+
+pca.data = pca.data[remove,]
+
+pca <- prcomp(t(pca.data), scale.=TRUE) 
+gr <- colnames(pca.data)
+PC1=scale(pca$x[,1])
+PC2=scale(pca$x[,2])
+eigs <- pca$sdev^2
+ve=signif(((eigs / sum(eigs))*100)[1:3],4)
+      
+    pca.data=data.frame(Sample=gr,
+                        ##PC1=scale(pca$x[,1]),
+                        ##PC2=scale(pca$x[,2]),
+                        PC1=scale(pca$x[,1]),
+                        PC2=scale(pca$x[,2]),
+                        sdev=pca$sdev,
+                        Genotype=substr(gr, 1, 1), 
+                        Sex=substr(gr, nchar(gr)-2, nchar(gr)-2), 
+                        Age=substr(gr, 2, nchar(gr)-3),
+                        Percent1=ve[1],
+                        Percent2=ve[2],
+                        Group= paste0(substr(gr, 1, 1),
+                                      substr(gr, nchar(gr)-2, nchar(gr)-1)))
+    
+    
+fig  = plot_ly(data = pca.data, 
+                 x = ~PC1, 
+                 y = ~PC2,
+                 name = ~Group,
+                 type = 'scatter',
+                 mode = 'markers',
+                 showlegend = T,
+                 color = ~Group,
+                 symbol = ~Genotype,
+                 ##symbols = as.character(seq_along(unique(point.data$Set))),
+                 ##colors = c(input$color1, input$color2, input$color3)[c(1:length(levels(pca.color)))],
+                 marker = list(size = 15,
+                               line = list(color = "black", width = 1.5)),
+                 hoverinfo = "text",
+                 hovertext = paste("Sample:", pca.data$Sample)) %>%
+    layout(xaxis = list(title = paste0("PC 1", "(", pca.data$Percent1[1], "%)")),
+           yaxis = list(title = paste0("PC 2", "(", pca.data$Percent2[2], "%)")))
+```
+
+```{r}
+
+  fig
+
+```

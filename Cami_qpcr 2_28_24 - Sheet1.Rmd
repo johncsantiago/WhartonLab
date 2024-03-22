@@ -1,0 +1,170 @@
+---
+title: "Cami qPCR 20240228"
+author: "John Santiago"
+date: "2024-02-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+cami = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Cami_qpcr 2_28_24 - Sheet1.csv", header = T)
+
+```
+
+```{r}
+
+
+plotdata1 = cami[cami$Genotype=='OK371>G4C2' & cami$Primer == 'vap33',]
+plotdata2 = cami[cami$Genotype=='OK371>G4C2' & cami$Primer == 'Rp49',]
+plotdata3 = cami[cami$Genotype=='OK371>G4C2' & cami$Primer == 'xbp1',] 
+plotdata4 = cami[cami$Genotype=='OK371>G4C2' & cami$Primer == 'atf4',] 
+plotdata5 = cami[cami$Genotype=='OK371>G4C2' & cami$Primer == 'atf6',] 
+
+plot(x = log2(plotdata1$Concentration), 
+     y = plotdata1$Cq.Mean, 
+     type = "p",  
+     cex = 1, 
+     pch = 21, 
+     bg = "firebrick",
+     col = "black",
+     ylab = "Quantification Cycle (Cq)",
+     xlab = "log2(cDNA Conc. (ng/uL)",
+     ylim = c(16,28))
+
+points(x = log2(plotdata2$Concentration),
+       y = plotdata2$Cq.Mean,
+       cex = 1,
+       pch = 21,
+       bg = "steelblue",
+       col = "black")
+
+points(x = log2(plotdata3$Concentration),
+       y = plotdata3$Cq.Mean,
+       cex = 1,
+       pch = 21,
+       bg = "gold",
+       col = "black")
+
+points(x = log2(plotdata4$Concentration),
+       y = plotdata4$Cq.Mean,
+       cex = 1,
+       pch = 21,
+       bg = "darkgreen",
+       col = "black")
+
+points(x = log2(plotdata5$Concentration),
+       y = plotdata5$Cq.Mean,
+       cex = 1,
+       pch = 21,
+       bg = "grey",
+       col = "black")
+
+
+linearmodel=lm(as.numeric(plotdata1$Cq.Mean)~log2(plotdata1$Concentration))
+abline(a=linearmodel[[1]][[1]],b=linearmodel[[1]][2],lty=2,col="firebrick",lwd=2)
+text(x = 2, y = 21,paste0("vap33 slope = ", signif(linearmodel[[1]][2],3)),cex=.8)
+
+linearmodel=lm(as.numeric(plotdata2$Cq.Mean)~log2(plotdata2$Concentration))
+abline(a=linearmodel[[1]][[1]],b=linearmodel[[1]][2],lty=2,col="steelblue",lwd=2)
+text(x = 2, y = 20.5,paste0("Rp49 slope = ", signif(linearmodel[[1]][2],3)),cex=.8)
+
+linearmodel=lm(as.numeric(plotdata3$Cq.Mean)~log2(plotdata3$Concentration))
+abline(a=linearmodel[[1]][[1]],b=linearmodel[[1]][2],lty=2,col="gold",lwd=2)
+text(x = 2, y = 20,paste0("xbp1 slope = ", signif(linearmodel[[1]][2],3)),cex=.8)
+
+linearmodel=lm(as.numeric(plotdata4$Cq.Mean)~log2(plotdata4$Concentration))
+abline(a=linearmodel[[1]][[1]],b=linearmodel[[1]][2],lty=2,col="darkgreen",lwd=2)
+text(x = 2, y = 19.5,paste0("atf4 slope = ", signif(linearmodel[[1]][2],3)),cex=.8)
+
+linearmodel=lm(as.numeric(plotdata5$Cq.Mean)~log2(plotdata5$Concentration))
+abline(a=linearmodel[[1]][[1]],b=linearmodel[[1]][2],lty=2,col="grey",lwd=2)
+text(x = 2, y = 19,paste0("atf6 slope = ", signif(linearmodel[[1]][2],3)),cex=.8)
+
+
+legend("topright", legend = c("vap33", "Rp49", 'xbp1', 'atf4', 'atf5'), pch = 21, col = "black", pt.bg = c("firebrick", "steelblue", 'gold', 'darkgreen', 'grey'), bty = "n")
+
+```
+
+
+```{r}
+
+
+cami2 = cami
+cami2$Concentration[cami2$Concentration == 5] = 0
+cami2$Concentration[cami2$Concentration == 2.5] = 5
+cami2$Concentration[cami2$Concentration == 0] = 2.5
+
+plotdata1 = cami2[cami2$Genotype=='OK371>G4C2' & cami2$Primer == 'vap33',]
+plotdata2 = cami2[cami2$Genotype=='OK371>G4C2' & cami2$Primer == 'Rp49',]
+plotdata3 = cami2[cami2$Genotype=='OK371>G4C2' & cami2$Primer == 'xbp1',] 
+plotdata4 = cami2[cami2$Genotype=='OK371>G4C2' & cami2$Primer == 'atf4',] 
+plotdata5 = cami2[cami2$Genotype=='OK371>G4C2' & cami2$Primer == 'atf6',] 
+
+plot(x = log2(plotdata1$Concentration), 
+     y = plotdata1$Cq.Mean, 
+     type = "p",  
+     cex = 1, 
+     pch = 21, 
+     bg = "firebrick",
+     col = "black",
+     ylab = "Quantification Cycle (Cq)",
+     xlab = "log2(cDNA Conc. (ng/uL)",
+     ylim = c(16,28))
+
+points(x = log2(plotdata2$Concentration),
+       y = plotdata2$Cq.Mean,
+       cex = 1,
+       pch = 21,
+       bg = "steelblue",
+       col = "black")
+
+points(x = log2(plotdata3$Concentration),
+       y = plotdata3$Cq.Mean,
+       cex = 1,
+       pch = 21,
+       bg = "gold",
+       col = "black")
+
+points(x = log2(plotdata4$Concentration),
+       y = plotdata4$Cq.Mean,
+       cex = 1,
+       pch = 21,
+       bg = "darkgreen",
+       col = "black")
+
+points(x = log2(plotdata5$Concentration),
+       y = plotdata5$Cq.Mean,
+       cex = 1,
+       pch = 21,
+       bg = "grey",
+       col = "black")
+
+
+linearmodel=lm(as.numeric(plotdata1$Cq.Mean)~log2(plotdata1$Concentration))
+abline(a=linearmodel[[1]][[1]],b=linearmodel[[1]][2],lty=2,col="firebrick",lwd=2)
+text(x = 2, y = 21,paste0("vap33 slope = ", signif(linearmodel[[1]][2],3)),cex=.8)
+
+linearmodel=lm(as.numeric(plotdata2$Cq.Mean)~log2(plotdata2$Concentration))
+abline(a=linearmodel[[1]][[1]],b=linearmodel[[1]][2],lty=2,col="steelblue",lwd=2)
+text(x = 2, y = 20.5,paste0("Rp49 slope = ", signif(linearmodel[[1]][2],3)),cex=.8)
+
+linearmodel=lm(as.numeric(plotdata3$Cq.Mean)~log2(plotdata3$Concentration))
+abline(a=linearmodel[[1]][[1]],b=linearmodel[[1]][2],lty=2,col="gold",lwd=2)
+text(x = 2, y = 20,paste0("xbp1 slope = ", signif(linearmodel[[1]][2],3)),cex=.8)
+
+linearmodel=lm(as.numeric(plotdata4$Cq.Mean)~log2(plotdata4$Concentration))
+abline(a=linearmodel[[1]][[1]],b=linearmodel[[1]][2],lty=2,col="darkgreen",lwd=2)
+text(x = 2, y = 19.5,paste0("atf4 slope = ", signif(linearmodel[[1]][2],3)),cex=.8)
+
+linearmodel=lm(as.numeric(plotdata5$Cq.Mean)~log2(plotdata5$Concentration))
+abline(a=linearmodel[[1]][[1]],b=linearmodel[[1]][2],lty=2,col="grey",lwd=2)
+text(x = 2, y = 19,paste0("atf6 slope = ", signif(linearmodel[[1]][2],3)),cex=.8)
+
+
+legend("topright", legend = c("vap33", "Rp49", 'xbp1', 'atf4', 'atf5'), pch = 21, col = "black", pt.bg = c("firebrick", "steelblue", 'gold', 'darkgreen', 'grey'), bty = "n")
+
+```

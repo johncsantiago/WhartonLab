@@ -107,7 +107,9 @@ gbbKO.cpmdata=cpm(z)
 
 GeneIDKey = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GeneIDKey.csv", row.names = 1)
 
+A4V.cpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.cpmdata.csv",row.names = 1)
 
+A4V.FDR = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.FDRdata.csv")
 
 ```
 
@@ -125,11 +127,12 @@ GeneIDKey = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDa
 ##sod2 FBgn0010213
 ##catalase FBgn0000261
 ##gstd1 FBgn0001149
+## arc1 FBgn0033926
 
 ##cgs = c('CG10592','CG10827','CG1462','CG16771','CG1809','CG3264','CG3290','CG3292','CG5150','CG5361','CG5656','CG8105','CG8147')
 
 
-FBgn = 'FBgn0004362'
+FBgn = 'FBgn0033926'
 name = ''
 
 gene = data.frame(cpm = as.numeric(cpmdata[FBgn,]), condition = groups$Group, group = paste0(groups$Genotype, groups$Sex))
@@ -143,6 +146,46 @@ gene$condition = factor(gene$condition, levels = c('GR.F', "TktDfGR.F", "TktOEGR
 boxplot(gene$cpm~gene$condition, xlab="",     
         main= name,ylab="Counts per Million Reads", las = 2, cex.axis = .8)
 points(x=as.numeric(factor(gene$condition)),y=gene$cpm,cex=1,pch=21,bg=c('firebrick',"gold","darkgreen","dodgerblue")[as.numeric(factor(gene$group))])
+
+
+```
+
+
+```{r echo = F}
+
+A4V.groups = as.vector(colnames(A4V.cpm))
+
+A4V.groups = substr(A4V.groups,1, nchar(A4V.groups)-1)
+
+par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
+gene = data.frame(cpm = as.numeric(A4V.cpm[FBgn,]), 
+                  condition = A4V.groups, 
+                  group = paste0(substr(A4V.groups, 1,1), substr(A4V.groups, nchar(as.vector(A4V.groups))-1,nchar(as.vector(A4V.groups))-1)))
+
+gene$condition = factor(gene$condition, levels = c("A3FH", "A9FH", "A40FH",
+                                                   "S3FH", "S9FH", "S40FH",
+                                                   "A3FT", "A9FT", "A40FT",
+                                                   "S3FT", "S9FT", "S40FT",
+                                                   "A3FA", "A9FA", "A40FA",
+                                                   "S3FA", "S9FA", "S40FA",
+                                                   "A3MH", "A9MH",
+                                                   "S3MH", "S9MH",
+                                                   "A3MT", "A9MT",
+                                                   "S3MT", "S9MT",
+                                                   "A3MA", "A9MA",
+                                                   "S3MA", "S9MA"))
+gene$group = factor(gene$group, levels = c(unique(gene$group)))
+
+boxplot(gene$cpm~gene$condition, xlab="",     
+        main= name,ylab="Counts per Million Reads", las = 2, cex.axis = .8)
+points(x=as.numeric(factor(gene$condition)),y=gene$cpm,cex=1,pch=21,bg=c('firebrick',"gold","darkgreen","dodgerblue")[as.numeric(factor(gene$group))])
+legend('topright',
+       inset=c(-0.175,0),
+       legend = c('A4V F', 'Silent F', 'A4V M', 'Silent F'), 
+       fill = c('firebrick',"gold","darkgreen","dodgerblue"),
+       cex = .65,
+       bty = 'n',
+       pt.cex = .5)
 
 
 ```

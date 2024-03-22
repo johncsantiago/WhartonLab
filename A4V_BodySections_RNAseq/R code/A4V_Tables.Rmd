@@ -1,0 +1,621 @@
+---
+title: "A4V PCA"
+author: "John Santiago"
+date: "2024-01-22"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo=F, include=F}
+
+library(edgeR)
+library(goseq)
+library(org.Dm.eg.db)
+
+```
+
+
+```{r include =F}
+sample.names = list.files("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/Count_Tables/")
+
+meta = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.metadata.csv", row.names = 1)
+
+temp = read.csv(paste0("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/Count_Tables/", sample.names[1]), sep = '\t', row.names = 1)
+
+countdata = data.frame(temp = temp)
+colnames(countdata)[1] = substr(sample.names[1], 1, nchar(sample.names[1])-15)
+
+i=2
+while(i <= length(sample.names)){
+  temp = read.csv(paste0("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/Count_Tables/", sample.names[i]), sep = '\t', row.names = 1)
+  countdata = cbind(countdata, temp[row.names(countdata),1])
+  colnames(countdata)[i] = substr(sample.names[i], 1, nchar(sample.names[i])-15)
+  i=i+1
+}
+
+countdata = countdata[-(grep("ti",row.names(countdata))),]
+countdata = countdata[-(grep("trans",row.names(countdata))),]
+
+countdata=countdata[substr(row.names(countdata),1,2)=="FB",]
+
+
+
+##normalize data
+x <- countdata
+gr <- factor(substr(colnames(countdata), 1, nchar(colnames(countdata))-1))
+y <- DGEList(counts=x,group=gr)
+keep <- filterByExpr(y)
+y <- y[keep,,keep.lib.sizes=FALSE]
+z <- normLibSizes(y)
+##normalized cpm
+cpmdata=cpm(z)
+
+##updated edger analysis pipeline
+design<-model.matrix(~0 + gr)
+colnames(design) = unique(gr)
+z = estimateDisp(z, design)
+fit <- glmQLFit(z, design)
+
+contr = makeContrasts(A3FH - S3FH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS3FH = DEdata
+sigAvS3FH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3MH - S3MH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS3MH = DEdata
+sigAvS3MH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A9FH - S9FH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS9FH = DEdata
+sigAvS9FH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A9MH - S9MH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS9MH = DEdata
+sigAvS9MH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A40FH - S40FH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS40FH = DEdata
+sigAvS40FH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S3FH - S9FH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S3v9FH = DEdata
+sigS3v9FH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3FH - A9FH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A3v9FH = DEdata
+sigA3v9FH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S3MH - S9MH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S3v9MH = DEdata
+sigS3v9MH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3MH - A9MH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A3v9MH = DEdata
+sigA3v9MH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S9FH - S40FH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S9v40FH = DEdata
+sigS9v40FH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A9FH - A40FH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A9v40FH = DEdata
+sigA9v40FH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S3FH - S40FH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S3v40FH = DEdata
+sigS3v40FH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3FH - A40FH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A3v40FH = DEdata
+sigA3v40FH = DEdata[DEdata$FDR < 0.05, ]
+
+
+
+
+
+contr = makeContrasts(A3FT - S3FT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS3FT = DEdata
+sigAvS3FT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3MT - S3MT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS3MT = DEdata
+sigAvS3MT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A9FT - S9FT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS9FT = DEdata
+sigAvS9FT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A9MT - S9MT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS9MT = DEdata
+sigAvS9MT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A40FT - S40FT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS40FT = DEdata
+sigAvS40FT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S3FT - S9FT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S3v9FT = DEdata
+sigS3v9FT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3FT - A9FT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A3v9FT = DEdata
+sigA3v9FT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S3MT - S9MT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S3v9MT = DEdata
+sigS3v9MT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3MT - A9MT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A3v9MT = DEdata
+sigA3v9MT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S9FT - S40FT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S9v40FT = DEdata
+sigS9v40FT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A9FT - A40FT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A9v40FT = DEdata
+sigA9v40FT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S3FT - S40FT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S3v40FT = DEdata
+sigS3v40FT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3FT - A40FT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A3v40FT = DEdata
+sigA3v40FT = DEdata[DEdata$FDR < 0.05, ]
+
+
+
+
+
+contr = makeContrasts(A3FA - S3FA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS3FA = DEdata
+sigAvS3FA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3MA - S3MA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS3MA = DEdata
+sigAvS3MA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A9FA - S9FA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS9FA = DEdata
+sigAvS9FA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A9MA - S9MA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS9MA = DEdata
+sigAvS9MA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A40FA - S40FA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvS40FA = DEdata
+sigAvS40FA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S3FA - S9FA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S3v9FA = DEdata
+sigS3v9FA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3FA - A9FA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A3v9FA = DEdata
+sigA3v9FA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S3MA - S9MA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S3v9MA = DEdata
+sigS3v9MA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3MA - A9MA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A3v9MA = DEdata
+sigA3v9MA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S9FA - S40FA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S9v40FA = DEdata
+sigS9v40FA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A9FA - A40FA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A9v40FA = DEdata
+sigA9v40FA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S3FA - S40FA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S3v40FA = DEdata
+sigS3v40FA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3FA - A40FA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A3v40FA = DEdata
+sigA3v40FA = DEdata[DEdata$FDR < 0.05, ]
+
+
+
+
+
+contr = makeContrasts(A3FH - A3MH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A3FvMH = DEdata
+sigA3FvMH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S3FH - S3MH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S3FvMH = DEdata
+sigS3FvMH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A9FH - A9MH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A9FvMH = DEdata
+sigA9FvMH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S9FH - S9MH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S9FvMH = DEdata
+sigS9FvMH = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3FT - A3MT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A3FvMT = DEdata
+sigA3FvMT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S3FT - S3MT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S3FvMT = DEdata
+sigS3FvMT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A9FT - A9MT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A9FvMT = DEdata
+sigA9FvMT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S9FT - S9MT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S9FvMT = DEdata
+sigS9FvMT = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A3FA - A3MA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A3FvMA = DEdata
+sigA3FvMA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S3FA - S3MA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S3FvMA = DEdata
+sigS3FvMA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(A9FA - A9MA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+A9FvMA = DEdata
+sigA9FvMA = DEdata[DEdata$FDR < 0.05, ]
+
+contr = makeContrasts(S9FA - S9MA, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+S9FvMA = DEdata
+sigS9FvMA = DEdata[DEdata$FDR < 0.05, ]
+
+
+
+
+
+
+
+order = row.names(cpmdata)
+A4V.FDR = data.frame(AvS3FH = AvS3FH[order, "FDR"],
+                     AvS3MH = AvS3MH[order, "FDR"],
+                     AvS9FH = AvS9FH[order, "FDR"],
+                     AvS9MH = AvS9MH[order, "FDR"],
+                     AvS40FH = AvS40FH[order, "FDR"],
+                     A3v9FH = A3v9FH[order, "FDR"],
+                     S3v9FH = S3v9FH[order, "FDR"],
+                     A3v9MH = A3v9MH[order, "FDR"],
+                     S3v9MH = S3v9MH[order, "FDR"],
+                     A9v40FH = A9v40FH[order, "FDR"],
+                     S9v40FH = S9v40FH[order, "FDR"],
+                     A3v40FH = A3v40FH[order, "FDR"],
+                     S3v40FH = S3v40FH[order, "FDR"],
+                     
+                     AvS3FT = AvS3FT[order, "FDR"],
+                     AvS3MT = AvS3MT[order, "FDR"],
+                     AvS9FT = AvS9FT[order, "FDR"],
+                     AvS9MT = AvS9MT[order, "FDR"],
+                     AvS40FT = AvS40FT[order, "FDR"],
+                     A3v9FT = A3v9FT[order, "FDR"],
+                     S3v9FT = S3v9FT[order, "FDR"],
+                     A3v9MT = A3v9MT[order, "FDR"],
+                     S3v9MT = S3v9MT[order, "FDR"],
+                     A9v40FT = A9v40FT[order, "FDR"],
+                     S9v40FT = S9v40FT[order, "FDR"],
+                     A3v40FT = A3v40FT[order, "FDR"],
+                     S3v40FT = S3v40FT[order, "FDR"],
+                     
+                     AvS3FA = AvS3FA[order, "FDR"],
+                     AvS3MA = AvS3MA[order, "FDR"],
+                     AvS9FA = AvS9FA[order, "FDR"],
+                     AvS9MA = AvS9MA[order, "FDR"],
+                     AvS40FA = AvS40FA[order, "FDR"],
+                     A3v9FA = A3v9FA[order, "FDR"],
+                     S3v9FA = S3v9FA[order, "FDR"],
+                     A3v9MA = A3v9MA[order, "FDR"],
+                     S3v9MA = S3v9MA[order, "FDR"],
+                     A9v40FA = A9v40FA[order, "FDR"],
+                     S9v40FA = S9v40FA[order, "FDR"],
+                     A3v40FA = A3v40FA[order, "FDR"],
+                     S3v40FA = S3v40FA[order, "FDR"],
+                     
+                     A3FvMH = A3FvMH[order, "FDR"],
+                     S3FvMH = S3FvMH[order, "FDR"],
+                     A9FvMH = A9FvMH[order, "FDR"],
+                     S9FvMH = S9FvMH[order, "FDR"],
+                     A3FvMT = A3FvMT[order, "FDR"],
+                     S3FvMT = S3FvMT[order, "FDR"],
+                     A9FvMT = A9FvMT[order, "FDR"],
+                     S9FvMT = S9FvMT[order, "FDR"],
+                     A3FvMA = A3FvMA[order, "FDR"],
+                     S3FvMA = S3FvMA[order, "FDR"],
+                     A9FvMA = A9FvMA[order, "FDR"],
+                     S9FvMA = S9FvMA[order, "FDR"])
+row.names(A4V.FDR) = order
+
+A4V.FC = data.frame(AvS3FH = AvS3FH[order, "logFC"],
+                     AvS3MH = AvS3MH[order, "logFC"],
+                     AvS9FH = AvS9FH[order, "logFC"],
+                     AvS9MH = AvS9MH[order, "logFC"],
+                     AvS40FH = AvS40FH[order, "logFC"],
+                     A3v9FH = A3v9FH[order, "logFC"],
+                     S3v9FH = S3v9FH[order, "logFC"],
+                     A3v9MH = A3v9MH[order, "logFC"],
+                     S3v9MH = S3v9MH[order, "logFC"],
+                     A9v40FH = A9v40FH[order, "logFC"],
+                     S9v40FH = S9v40FH[order, "logFC"],
+                     A3v40FH = A3v40FH[order, "logFC"],
+                     S3v40FH = S3v40FH[order, "logFC"],
+                     
+                     AvS3FT = AvS3FT[order, "logFC"],
+                     AvS3MT = AvS3MT[order, "logFC"],
+                     AvS9FT = AvS9FT[order, "logFC"],
+                     AvS9MT = AvS9MT[order, "logFC"],
+                     AvS40FT = AvS40FT[order, "logFC"],
+                     A3v9FT = A3v9FT[order, "logFC"],
+                     S3v9FT = S3v9FT[order, "logFC"],
+                     A3v9MT = A3v9MT[order, "logFC"],
+                     S3v9MT = S3v9MT[order, "logFC"],
+                     A9v40FT = A9v40FT[order, "logFC"],
+                     S9v40FT = S9v40FT[order, "logFC"],
+                     A3v40FT = A3v40FT[order, "logFC"],
+                     S3v40FT = S3v40FT[order, "logFC"],
+                     
+                     AvS3FA = AvS3FA[order, "logFC"],
+                     AvS3MA = AvS3MA[order, "logFC"],
+                     AvS9FA = AvS9FA[order, "logFC"],
+                     AvS9MA = AvS9MA[order, "logFC"],
+                     AvS40FA = AvS40FA[order, "logFC"],
+                     A3v9FA = A3v9FA[order, "logFC"],
+                     S3v9FA = S3v9FA[order, "logFC"],
+                     A3v9MA = A3v9MA[order, "logFC"],
+                     S3v9MA = S3v9MA[order, "logFC"],
+                     A9v40FA = A9v40FA[order, "logFC"],
+                     S9v40FA = S9v40FA[order, "logFC"],
+                     A3v40FA = A3v40FA[order, "logFC"],
+                     S3v40FA = S3v40FA[order, "logFC"],
+                     
+                     A3FvMH = A3FvMH[order, "logFC"],
+                     S3FvMH = S3FvMH[order, "logFC"],
+                     A9FvMH = A9FvMH[order, "logFC"],
+                     S9FvMH = S9FvMH[order, "logFC"],
+                     A3FvMT = A3FvMT[order, "logFC"],
+                     S3FvMT = S3FvMT[order, "logFC"],
+                     A9FvMT = A9FvMT[order, "logFC"],
+                     S9FvMT = S9FvMT[order, "logFC"],
+                     A3FvMA = A3FvMA[order, "logFC"],
+                     S3FvMA = S3FvMA[order, "logFC"],
+                     A9FvMA = A9FvMA[order, "logFC"],
+                     S9FvMA = S9FvMA[order, "logFC"])
+row.names(A4V.FC) = order
+
+cpmdata = cpmdata[grep("FBgn",row.names(cpmdata)),]
+A4V.FDR = A4V.FDR[row.names(cpmdata),]
+
+A4V.meancpm = cpmdata[,1:30]
+colnames(A4V.meancpm) = unique(meta$Group)
+i=1
+while(i<=nrow(A4V.meancpm)){
+  j=1
+  while(j<=ncol(A4V.meancpm)){
+    A4V.meancpm[i,j]=mean(cpmdata[i,row.names(meta)[meta$Group == colnames(A4V.meancpm)[j]]])
+    j=j+1
+  }
+  i=i+1
+}
+
+
+##write.csv(cpmdata, "/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.cpmdata.csv")
+##write.csv(countdata, "/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.countdata.csv")
+##write.csv(A4V.FDR, "/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.FDRdata.csv")
+##write.csv(A4V.meancpm, "/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.meancpmdata.csv")
+##write.csv(A4V.FC, "/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.FCdata.csv")
+
+```
+
+##GO and KEGG Enrichment function
+```{r echo = F, include = F}
+
+Enrichment = function(sigs, bg){
+  genes = setNames(rep(0, length(bg)), bg)
+  genes[sigs] = 1
+  pwf=nullp(genes,"dm3","geneSymbol")
+  GO.wall=goseq(pwf,"dm3","geneSymbol")
+  GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+  row.names(GO.wall) = GO.wall$category
+  KEGG=goseq(pwf,gene2cat=kegg)
+  KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
+  row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
+  KEGG$Name=kegg.names[row.names(KEGG),1]
+
+  enrichment.data = list(GO.wall, KEGG)
+  names(enrichment.data) = c("GO", "KEGG")
+  return(enrichment.data)
+}
+
+```
+
+```{r echo = F, include = F}
+
+i=1
+
+while(i<=ncol(FDR)){
+compare = colnames(FDR)[i]
+
+sigs = row.names(FDR)[FDR[,i]<.05]
+bg = row.names(FDR)
+
+sigsKEY = GeneIDKey[sigs,]
+sigs = na.omit(sigsKEY$Symbol)
+bgKEY = GeneIDKey[bg,]
+bg = na.omit(bgKEY$Symbol)
+
+sig.cats = Enrichment(sigs, bg)
+
+##write.csv(sig.cats[[1]], paste0("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/GOterm Enrichment/", colnames(FDR)[i],"_GOTermAnalysis.csv"))
+
+##write.csv(sig.cats[[2]], paste0("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/KEGG Enrichment/", colnames(FDR)[i],"KEGGAnalysis.csv"))
+
+i = i +1
+
+}
+
+```
