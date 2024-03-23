@@ -1,0 +1,519 @@
+---
+title: "Anna Analysis with John"
+author: "John Santiago"
+date: "2024-03-21"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo = F}
+
+qPCR = read.csv("https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/Anna%20qPCR%20data/Anna_qPCR_allData.csv")
+
+```
+
+
+
+```{r echo = F}
+
+
+pcb = qPCR[qPCR$Primer == "PCB",]
+pcb = pcb[pcb$Censor != 'yes',]
+pcb = pcb[pcb$Concentration == 5,]
+pcb = pcb[pcb$Efficiency == 'no',]
+
+rp49 = qPCR[qPCR$Primer == "RP49",]
+rp49 = rp49[rp49$Censor != 'yes',]
+rp49 = rp49[rp49$Concentration == 5,]
+rp49 = rp49[rp49$Efficiency == 'no',]
+
+temp = unique(paste(pcb$Genotype, pcb$Biological.replicate))
+
+pcb.mean = rep(0, length(temp))
+rp49.mean = rep(0, length(temp)) 
+i=1
+while(i<=length(temp)){
+  pcb.mean[i] = mean(na.omit(as.numeric(pcb[paste(pcb$Genotype, pcb$Biological.replicate) == temp[i], "Cq"])))
+  rp49.mean[i] = mean(na.omit(as.numeric(rp49[paste(rp49$Genotype, rp49$Biological.replicate) == temp[i], "Cq"])))
+  i=i+1
+}
+
+mean.pcb = data.frame(Sample = temp,
+                     pcb = pcb.mean,
+                     rp49 = rp49.mean)
+
+mean.pcb$dCT = mean.pcb$pcb - mean.pcb$rp49
+
+```
+
+```{r echo = F}
+
+
+ldh = qPCR[qPCR$Primer == "LDH",]
+ldh = ldh[ldh$Censor != 'yes',]
+ldh = ldh[ldh$Concentration == 5,]
+ldh = ldh[ldh$Efficiency == 'no',]
+
+rp49 = qPCR[qPCR$Primer == "RP49",]
+rp49 = rp49[rp49$Censor != 'yes',]
+rp49 = rp49[rp49$Concentration == 5,]
+rp49 = rp49[rp49$Efficiency == 'no',]
+
+temp = unique(paste(ldh$Genotype, ldh$Biological.replicate))
+
+ldh.mean = rep(0, length(temp))
+rp49.mean = rep(0, length(temp)) 
+i=1
+while(i<=length(temp)){
+  ldh.mean[i] = mean(na.omit(as.numeric(ldh[paste(ldh$Genotype, ldh$Biological.replicate) == temp[i], "Cq"])))
+  rp49.mean[i] = mean(na.omit(as.numeric(rp49[paste(rp49$Genotype, rp49$Biological.replicate) == temp[i], "Cq"])))
+  i=i+1
+}
+
+mean.ldh = data.frame(Sample = temp,
+                     ldh = ldh.mean,
+                     rp49 = rp49.mean)
+
+mean.ldh$dCT = mean.ldh$ldh - mean.ldh$rp49
+
+```
+
+```{r echo = F}
+
+
+pdh = qPCR[qPCR$Primer == "PDH",]
+pdh = pdh[pdh$Censor != 'yes',]
+pdh = pdh[pdh$Concentration == 5,]
+pdh = pdh[pdh$Efficiency == 'no',]
+
+rp49 = qPCR[qPCR$Primer == "RP49",]
+rp49 = rp49[rp49$Censor != 'yes',]
+rp49 = rp49[rp49$Concentration == 5,]
+rp49 = rp49[rp49$Efficiency == 'no',]
+
+temp = unique(paste(pdh$Genotype, pdh$Biological.replicate))
+
+pdh.mean = rep(0, length(temp))
+rp49.mean = rep(0, length(temp)) 
+i=1
+while(i<=length(temp)){
+  pdh.mean[i] = mean(na.omit(as.numeric(pdh[paste(pdh$Genotype, pdh$Biological.replicate) == temp[i], "Cq"])))
+  rp49.mean[i] = mean(na.omit(as.numeric(rp49[paste(rp49$Genotype, rp49$Biological.replicate) == temp[i], "Cq"])))
+  i=i+1
+}
+
+mean.pdh = data.frame(Sample = temp,
+                     pdh = pdh.mean,
+                     rp49 = rp49.mean)
+
+mean.pdh$dCT = mean.pdh$pdh - mean.pdh$rp49
+
+```
+
+```{r echo = F}
+
+
+pepck = qPCR[qPCR$Primer == "Pepck-1",]
+pepck = pepck[pepck$Censor != 'yes',]
+pepck = pepck[pepck$Concentration == 5,]
+pepck = pepck[pepck$Efficiency == 'no',]
+
+
+rp49 = qPCR[qPCR$Primer == "RP49",]
+rp49 = rp49[rp49$Censor != 'yes',]
+rp49 = rp49[rp49$Concentration == 5,]
+rp49 = rp49[rp49$Efficiency == 'no',]
+
+
+temp = unique(paste(pepck$Genotype, pepck$Biological.replicate))
+
+pepck.mean = rep(0, length(temp))
+rp49.mean = rep(0, length(temp)) 
+i=1
+while(i<=length(temp)){
+  pepck.mean[i] = mean(na.omit(as.numeric(pepck[paste(pepck$Genotype, pepck$Biological.replicate) == temp[i], "Cq"])))
+  rp49.mean[i] = mean(na.omit(as.numeric(rp49[paste(rp49$Genotype, rp49$Biological.replicate) == temp[i], "Cq"])))
+  i=i+1
+}
+
+mean.pepck = data.frame(Sample = temp,
+                     pepck = pepck.mean,
+                     rp49 = rp49.mean)
+
+mean.pepck$dCT = mean.pepck$pepck - mean.pepck$rp49
+
+```
+
+
+```{r echo = F}
+
+
+idgf = qPCR[qPCR$Primer == "Idgf6",]
+idgf = idgf[idgf$Censor != 'yes',]
+idgf = idgf[idgf$Concentration == 5,]
+idgf = idgf[idgf$Efficiency == 'no',]
+
+rp49 = qPCR[qPCR$Primer == "RP49",]
+rp49 = rp49[rp49$Censor != 'yes',]
+rp49 = rp49[rp49$Concentration == 5,]
+rp49 = rp49[rp49$Efficiency == 'no',]
+
+temp = unique(paste(idgf$Genotype, idgf$Biological.replicate))
+
+idgf.mean = rep(0, length(temp))
+rp49.mean = rep(0, length(temp)) 
+i=1
+while(i<=length(temp)){
+  idgf.mean[i] = mean(na.omit(as.numeric(idgf[paste(idgf$Genotype, idgf$Biological.replicate) == temp[i], "Cq"])))
+  rp49.mean[i] = mean(na.omit(as.numeric(rp49[paste(rp49$Genotype, rp49$Biological.replicate) == temp[i], "Cq"])))
+  i=i+1
+}
+
+mean.idgf = data.frame(Sample = temp,
+                     idgf = idgf.mean,
+                     rp49 = rp49.mean)
+
+mean.idgf$dCT = mean.idgf$idgf - mean.idgf$rp49
+
+```
+
+
+
+
+```{r echo = F}
+
+
+p53 = qPCR[qPCR$Primer == "p53",]
+p53 = p53[p53$Censor != 'yes',]
+p53 = p53[p53$Concentration == 5,]
+p53 = p53[p53$Efficiency == 'no',]
+
+rp49 = qPCR[qPCR$Primer == "RP49",]
+rp49 = rp49[rp49$Censor != 'yes',]
+rp49 = rp49[rp49$Concentration == 5,]
+rp49 = rp49[rp49$Efficiency == 'no',]
+
+
+temp = unique(paste(p53$Genotype, p53$Biological.replicate))
+
+p53.mean = rep(0, length(temp))
+rp49.mean = rep(0, length(temp)) 
+i=1
+while(i<=length(temp)){
+  p53.mean[i] = mean(na.omit(as.numeric(p53[paste(p53$Genotype, p53$Biological.replicate) == temp[i], "Cq"])))
+  rp49.mean[i] = mean(na.omit(as.numeric(rp49[paste(rp49$Genotype, rp49$Biological.replicate) == temp[i], "Cq"])))
+  i=i+1
+}
+
+mean.p53 = data.frame(Sample = temp,
+                     p53 = p53.mean,
+                     rp49 = rp49.mean)
+
+mean.p53$dCT = mean.p53$p53 - mean.p53$rp49
+
+```
+
+```{r echo = F}
+
+
+PyK = qPCR[qPCR$Primer == "PyK",]
+PyK = PyK[PyK$Censor != 'yes',]
+PyK = PyK[PyK$Concentration == 5,]
+PyK = PyK[PyK$Efficiency == 'no',]
+
+rp49 = qPCR[qPCR$Primer == "RP49",]
+rp49 = rp49[rp49$Censor != 'yes',]
+rp49 = rp49[rp49$Concentration == 5,]
+rp49 = rp49[rp49$Efficiency == 'no',]
+
+temp = unique(paste(PyK$Genotype, PyK$Biological.replicate))
+
+PyK.mean = rep(0, length(temp))
+rp49.mean = rep(0, length(temp)) 
+i=1
+while(i<=length(temp)){
+  PyK.mean[i] = mean(na.omit(as.numeric(PyK[paste(PyK$Genotype, PyK$Biological.replicate) == temp[i], "Cq"])))
+  rp49.mean[i] = mean(na.omit(as.numeric(rp49[paste(rp49$Genotype, rp49$Biological.replicate) == temp[i], "Cq"])))
+  i=i+1
+}
+
+mean.PyK = data.frame(Sample = temp,
+                     PyK = PyK.mean,
+                     rp49 = rp49.mean)
+
+mean.PyK$dCT = mean.PyK$PyK - mean.PyK$rp49
+
+```
+
+```{r echo = F}
+
+plotdata = mean.pcb
+keep = plotdata$Sample != "WT-cr 1" & plotdata$Sample != "WT-cr 2"
+color = "cornflowerblue"
+main = "PCB"
+plotdata = plotdata[keep,]
+plotdata$Sample[grep("WT",plotdata$Sample)] = "WT"
+plotdata$Sample[grep("RNAi",plotdata$Sample)] = "RNAi"
+plotdata$Sample[grep("G85R",plotdata$Sample)] = "G85R"
+plotdata$Sample = factor(plotdata$Sample,
+                         levels = c("WT", "G85R", "RNAi"))
+
+
+boxplot(plotdata$dCT~plotdata$Sample,
+     ylab = "dCT",
+     xlab = "",
+     main = main,
+     las = 2)
+
+points(x = plotdata$Sample,
+       y = plotdata$dCT,
+       cex = 1.5,
+       pch = 21,
+       bg = color,
+       col = "black")
+
+```
+
+
+```{r echo = F}
+
+dCT.aov = aov(plotdata$dCT~plotdata$Sample)
+
+TukeyHSD(dCT.aov)
+
+```
+
+
+
+```{r echo = F}
+
+plotdata = mean.ldh
+keep = T
+color = "gold"
+main = "LDH"
+plotdata = plotdata[keep,]
+plotdata$Sample[grep("WT",plotdata$Sample)] = "WT"
+plotdata$Sample[grep("RNAi",plotdata$Sample)] = "RNAi"
+plotdata$Sample[grep("G85R",plotdata$Sample)] = "G85R"
+plotdata$Sample = factor(plotdata$Sample,
+                         levels = c("WT", "G85R", "RNAi"))
+
+
+boxplot(plotdata$dCT~plotdata$Sample,
+     ylab = "dCT",
+     xlab = "",
+     main = main,
+     las = 2)
+
+points(x = plotdata$Sample,
+       y = plotdata$dCT,
+       cex = 1.5,
+       pch = 21,
+       bg = color,
+       col = "black")
+
+```
+
+
+```{r echo = F}
+
+dCT.aov = aov(plotdata$dCT~plotdata$Sample)
+
+TukeyHSD(dCT.aov)
+
+```
+
+```{r echo = F}
+
+plotdata = mean.pdh
+keep = plotdata$Sample != "WT-cr 1" & plotdata$Sample != "WT-cr 2"
+color = "brown"
+main = "PDH"
+plotdata = plotdata[keep,]
+plotdata$Sample[grep("WT",plotdata$Sample)] = "WT"
+plotdata$Sample[grep("RNAi",plotdata$Sample)] = "RNAi"
+plotdata$Sample[grep("G85R",plotdata$Sample)] = "G85R"
+plotdata$Sample = factor(plotdata$Sample,
+                         levels = c("WT", "G85R", "RNAi"))
+
+
+boxplot(plotdata$dCT~plotdata$Sample,
+     ylab = "dCT",
+     xlab = "",
+     main = main,
+     las = 2)
+
+points(x = plotdata$Sample,
+       y = plotdata$dCT,
+       cex = 1.5,
+       pch = 21,
+       bg = color,
+       col = "black")
+
+```
+
+
+```{r echo = F}
+
+dCT.aov = aov(plotdata$dCT~plotdata$Sample)
+
+TukeyHSD(dCT.aov)
+
+```
+
+
+```{r echo = F}
+
+plotdata = mean.p53
+keep = plotdata$Sample != "WT-cr 1" & plotdata$Sample != "WT-cr 2"
+color = "black"
+main = "p53"
+plotdata = plotdata[keep,]
+plotdata$Sample[grep("WT",plotdata$Sample)] = "WT"
+plotdata$Sample[grep("RNAi",plotdata$Sample)] = "RNAi"
+plotdata$Sample[grep("G85R",plotdata$Sample)] = "G85R"
+plotdata$Sample = factor(plotdata$Sample,
+                         levels = c("WT", "G85R", "RNAi"))
+
+
+boxplot(plotdata$dCT~plotdata$Sample,
+     ylab = "dCT",
+     xlab = "",
+     main = main,
+     las = 2)
+
+points(x = plotdata$Sample,
+       y = plotdata$dCT,
+       cex = 1.5,
+       pch = 21,
+       bg = color,
+       col = "black")
+
+```
+
+```{r echo = F}
+
+dCT.aov = aov(plotdata$dCT~plotdata$Sample)
+
+TukeyHSD(dCT.aov)
+
+```
+
+
+```{r echo = F}
+
+plotdata = mean.PyK
+keep = plotdata$Sample != "WT-cr 1" & plotdata$Sample != "WT-cr 2"
+color = "deeppink"
+main = "PyK"
+plotdata = plotdata[keep,]
+plotdata$Sample[grep("WT",plotdata$Sample)] = "WT"
+plotdata$Sample[grep("RNAi",plotdata$Sample)] = "RNAi"
+plotdata$Sample[grep("G85R",plotdata$Sample)] = "G85R"
+plotdata$Sample = factor(plotdata$Sample,
+                         levels = c("WT", "G85R", "RNAi"))
+
+
+boxplot(plotdata$dCT~plotdata$Sample,
+     ylab = "dCT",
+     xlab = "",
+     main = main,
+     las = 2)
+
+points(x = plotdata$Sample,
+       y = plotdata$dCT,
+       cex = 1.5,
+       pch = 21,
+       bg = color,
+       col = "black")
+
+```
+
+```{r echo = F}
+
+dCT.aov = aov(plotdata$dCT~plotdata$Sample)
+
+TukeyHSD(dCT.aov)
+
+```
+
+
+```{r echo = F}
+
+plotdata = mean.idgf
+keep = T
+color = "limegreen"
+main = "idgf6"
+plotdata = plotdata[keep,]
+plotdata$Sample[grep("WT",plotdata$Sample)] = "WT"
+plotdata$Sample[grep("RNAi",plotdata$Sample)] = "RNAi"
+plotdata$Sample[grep("G85R",plotdata$Sample)] = "G85R"
+plotdata$Sample = factor(plotdata$Sample,
+                         levels = c("WT", "G85R", "RNAi"))
+
+
+boxplot(plotdata$dCT~plotdata$Sample,
+     ylab = "dCT",
+     xlab = "",
+     main = main,
+     las = 2)
+
+points(x = plotdata$Sample,
+       y = plotdata$dCT,
+       cex = 1.5,
+       pch = 21,
+       bg = color,
+       col = "black")
+
+```
+
+```{r echo = F}
+
+dCT.aov = aov(plotdata$dCT~plotdata$Sample)
+
+TukeyHSD(dCT.aov)
+
+```
+
+
+```{r echo = F}
+
+plotdata = mean.pepck
+keep = T
+color = "orange"
+main = "PEPCK-1"
+plotdata = plotdata[keep,]
+plotdata$Sample[grep("WT",plotdata$Sample)] = "WT"
+plotdata$Sample[grep("RNAi",plotdata$Sample)] = "RNAi"
+plotdata$Sample[grep("G85R",plotdata$Sample)] = "G85R"
+plotdata$Sample = factor(plotdata$Sample,
+                         levels = c("WT", "G85R", "RNAi"))
+
+
+boxplot(plotdata$dCT~plotdata$Sample,
+     ylab = "dCT",
+     xlab = "",
+     main = main,
+     las = 2)
+
+points(x = plotdata$Sample,
+       y = plotdata$dCT,
+       cex = 1.5,
+       pch = 21,
+       bg = color,
+       col = "black")
+
+```
+
+
+```{r echo = F}
+
+dCT.aov = aov(plotdata$dCT~plotdata$Sample)
+
+TukeyHSD(dCT.aov)
+
+```
+
