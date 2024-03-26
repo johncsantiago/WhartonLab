@@ -11,6 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r echo = F}
 
+library(reshape2)
 qPCR = read.csv("https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/Anna%20qPCR%20data/Anna_qPCR_allData.csv")
 
 ```
@@ -24,6 +25,7 @@ pcb = qPCR[qPCR$Primer == "PCB",]
 pcb = pcb[pcb$Censor != 'yes',]
 pcb = pcb[pcb$Concentration == 5,]
 pcb = pcb[pcb$Efficiency == 'no',]
+
 
 rp49 = qPCR[qPCR$Primer == "RP49",]
 rp49 = rp49[rp49$Censor != 'yes',]
@@ -116,7 +118,7 @@ mean.pdh$dCT = mean.pdh$pdh - mean.pdh$rp49
 ```{r echo = F}
 
 
-pepck = qPCR[qPCR$Primer == "Pepck-1",]
+pepck = qPCR[qPCR$Primer == "Pepck1",]
 pepck = pepck[pepck$Censor != 'yes',]
 pepck = pepck[pepck$Concentration == 5,]
 pepck = pepck[pepck$Efficiency == 'no',]
@@ -151,7 +153,7 @@ mean.pepck$dCT = mean.pepck$pepck - mean.pepck$rp49
 ```{r echo = F}
 
 
-idgf = qPCR[qPCR$Primer == "Idgf6",]
+idgf = qPCR[qPCR$Primer == "IDGF6",]
 idgf = idgf[idgf$Censor != 'yes',]
 idgf = idgf[idgf$Concentration == 5,]
 idgf = idgf[idgf$Efficiency == 'no',]
@@ -251,16 +253,15 @@ mean.PyK$dCT = mean.PyK$PyK - mean.PyK$rp49
 ```{r echo = F}
 
 plotdata = mean.pcb
-keep = plotdata$Sample != "WT-cr 1" & plotdata$Sample != "WT-cr 2"
 color = "cornflowerblue"
 main = "PCB"
-plotdata = plotdata[keep,]
+
+plotdata$Rep = substr(plotdata$Sample, nchar(plotdata$Sample), nchar(plotdata$Sample))
 plotdata$Sample[grep("WT",plotdata$Sample)] = "WT"
 plotdata$Sample[grep("RNAi",plotdata$Sample)] = "RNAi"
 plotdata$Sample[grep("G85R",plotdata$Sample)] = "G85R"
 plotdata$Sample = factor(plotdata$Sample,
                          levels = c("WT", "G85R", "RNAi"))
-
 
 boxplot(plotdata$dCT~plotdata$Sample,
      ylab = "dCT",
@@ -278,6 +279,9 @@ points(x = plotdata$Sample,
 ```
 
 
+
+
+
 ```{r echo = F}
 
 dCT.aov = aov(plotdata$dCT~plotdata$Sample)
@@ -286,6 +290,70 @@ TukeyHSD(dCT.aov)
 
 ```
 
+
+```{r echo = F}
+
+summary(aov(dCT ~ Sample + Rep, data = plotdata))
+
+
+```
+
+```{r echo = F}
+plotdata = plotdata[order(plotdata$Rep),]
+
+G85R = setNames(plotdata[plotdata$Sample == "G85R", 'dCT'],
+                plotdata[plotdata$Sample == "G85R", 'Rep'])
+WT = setNames(plotdata[plotdata$Sample == "WT", 'dCT'],
+                plotdata[plotdata$Sample == "WT", 'Rep'])
+RNAi = setNames(plotdata[plotdata$Sample == "RNAi", 'dCT'],
+                plotdata[plotdata$Sample == "RNAi", 'Rep'])
+
+paired.data = data.frame(G85R = G85R[unique(plotdata$Rep)],
+                         WT = WT[unique(plotdata$Rep)],
+                         RNAi = RNAi[unique(plotdata$Rep)])
+row.names(paired.data) = unique(plotdata$Rep)
+
+paired.p = data.frame('paired_t.test' = c("G85R-WT", "RNAi-WT", "G85R-RNAi"),
+                      'paired_p-val' = c(0,0,0))
+
+paired.p[1,2] = t.test(paired.data$G85R, paired.data$WT, paired = T)[3]
+paired.p[2,2] = t.test(paired.data$RNAi, paired.data$WT, paired = T)[3]
+paired.p[3,2] = t.test(paired.data$G85R, paired.data$RNAi, paired = T)[3]
+
+
+paired.p
+```
+
+```{r echo = F}
+
+ddCT = data.frame(Rep = unique(plotdata$Rep),
+                  G85R = rep(0, length(unique(plotdata$Rep))),
+                  RNAi = rep(0, length(unique(plotdata$Rep))))
+
+i=1
+while(i <= length(unique(plotdata$Rep))){
+  temp = plotdata[plotdata$Rep == i, ]
+  ddCT$G85R[i] = temp[temp$Sample == "G85R", 'dCT'] - temp[temp$Sample == "WT", 'dCT'] 
+  ddCT$RNAi[i] = temp[temp$Sample == "RNAi", 'dCT'] - temp[temp$Sample == "WT", 'dCT']   
+  i=i+1
+}
+
+ddCT = melt(ddCT, id.vars = "Rep", variable.name = "Sample", value.name = 'ddCT')
+
+boxplot(ddCT$ddCT~ddCT$Sample,
+     ylab = "ddCT",
+     xlab = "",
+     main = main,
+     las = 2)
+
+points(x = ddCT$Sample,
+       y = ddCT$ddCT,
+       cex = 1.5,
+       pch = 21,
+       bg = color,
+       col = "black")
+
+```
 
 
 ```{r echo = F}
@@ -294,7 +362,10 @@ plotdata = mean.ldh
 keep = T
 color = "gold"
 main = "LDH"
+
+
 plotdata = plotdata[keep,]
+plotdata$Rep = substr(plotdata$Sample, nchar(plotdata$Sample), nchar(plotdata$Sample))
 plotdata$Sample[grep("WT",plotdata$Sample)] = "WT"
 plotdata$Sample[grep("RNAi",plotdata$Sample)] = "RNAi"
 plotdata$Sample[grep("G85R",plotdata$Sample)] = "G85R"
@@ -323,16 +394,86 @@ points(x = plotdata$Sample,
 dCT.aov = aov(plotdata$dCT~plotdata$Sample)
 
 TukeyHSD(dCT.aov)
+
+```
+
+```{r echo = F}
+
+summary(aov(dCT ~ Sample + Rep, data = plotdata))
+
+
+```
+
+```{r echo = F}
+plotdata = plotdata[order(plotdata$Rep),]
+
+G85R = setNames(plotdata[plotdata$Sample == "G85R", 'dCT'],
+                plotdata[plotdata$Sample == "G85R", 'Rep'])
+WT = setNames(plotdata[plotdata$Sample == "WT", 'dCT'],
+                plotdata[plotdata$Sample == "WT", 'Rep'])
+RNAi = setNames(plotdata[plotdata$Sample == "RNAi", 'dCT'],
+                plotdata[plotdata$Sample == "RNAi", 'Rep'])
+
+paired.data = data.frame(G85R = G85R[unique(plotdata$Rep)],
+                         WT = WT[unique(plotdata$Rep)],
+                         RNAi = RNAi[unique(plotdata$Rep)])
+row.names(paired.data) = unique(plotdata$Rep)
+
+paired.p = data.frame('paired_t.test' = c("G85R-WT", "RNAi-WT", "G85R-RNAi"),
+                      'paired_p-val' = c(0,0,0))
+
+paired.p[1,2] = t.test(paired.data$G85R, paired.data$WT, paired = T)[3]
+paired.p[2,2] = t.test(paired.data$RNAi, paired.data$WT, paired = T)[3]
+paired.p[3,2] = t.test(paired.data$G85R, paired.data$RNAi, paired = T)[3]
+
+
+paired.p
+```
+
+```{r echo = F}
+
+ddCT = data.frame(Rep = unique(plotdata$Rep),
+                  G85R = rep(NA, length(unique(plotdata$Rep))),
+                  RNAi = rep(NA, length(unique(plotdata$Rep))))
+
+i=3
+while(i <= length(unique(plotdata$Rep))){
+  temp = plotdata[plotdata$Rep == unique(plotdata$Rep)[i], ]
+  if(length(grep('G85R',temp$Sample)) & length(grep('WT',temp$Sample))){
+    ddCT$G85R[i] = temp[temp$Sample == "G85R", 'dCT'] - temp[temp$Sample == "WT", 'dCT']
+  }
+    if(length(grep('RNAi',temp$Sample)) & length(grep('WT',temp$Sample))){
+      ddCT$RNAi[i] = temp[temp$Sample == "RNAi", 'dCT'] - temp[temp$Sample == "WT", 'dCT'] 
+    }
+  i=i+1
+}
+
+ddCT = melt(ddCT, id.vars = "Rep", variable.name = "Sample", value.name = 'ddCT')
+
+boxplot(ddCT$ddCT~ddCT$Sample,
+     ylab = "ddCT",
+     xlab = "",
+     main = main,
+     las = 2)
+
+points(x = ddCT$Sample,
+       y = ddCT$ddCT,
+       cex = 1.5,
+       pch = 21,
+       bg = color,
+       col = "black")
 
 ```
 
 ```{r echo = F}
 
 plotdata = mean.pdh
-keep = plotdata$Sample != "WT-cr 1" & plotdata$Sample != "WT-cr 2"
+keep = T
 color = "brown"
 main = "PDH"
+
 plotdata = plotdata[keep,]
+plotdata$Rep = substr(plotdata$Sample, nchar(plotdata$Sample), nchar(plotdata$Sample))
 plotdata$Sample[grep("WT",plotdata$Sample)] = "WT"
 plotdata$Sample[grep("RNAi",plotdata$Sample)] = "RNAi"
 plotdata$Sample[grep("G85R",plotdata$Sample)] = "G85R"
@@ -364,14 +505,82 @@ TukeyHSD(dCT.aov)
 
 ```
 
+```{r echo = F}
 
+summary(aov(dCT ~ Sample + Rep, data = plotdata))
+
+
+```
+
+```{r echo = F}
+plotdata = plotdata[order(plotdata$Rep),]
+
+G85R = setNames(plotdata[plotdata$Sample == "G85R", 'dCT'],
+                plotdata[plotdata$Sample == "G85R", 'Rep'])
+WT = setNames(plotdata[plotdata$Sample == "WT", 'dCT'],
+                plotdata[plotdata$Sample == "WT", 'Rep'])
+RNAi = setNames(plotdata[plotdata$Sample == "RNAi", 'dCT'],
+                plotdata[plotdata$Sample == "RNAi", 'Rep'])
+
+paired.data = data.frame(G85R = G85R[unique(plotdata$Rep)],
+                         WT = WT[unique(plotdata$Rep)],
+                         RNAi = RNAi[unique(plotdata$Rep)])
+row.names(paired.data) = unique(plotdata$Rep)
+
+paired.p = data.frame('paired_t.test' = c("G85R-WT", "RNAi-WT", "G85R-RNAi"),
+                      'paired_p-val' = c(0,0,0))
+
+paired.p[1,2] = t.test(paired.data$G85R, paired.data$WT, paired = T)[3]
+paired.p[2,2] = t.test(paired.data$RNAi, paired.data$WT, paired = T)[3]
+paired.p[3,2] = t.test(paired.data$G85R, paired.data$RNAi, paired = T)[3]
+
+
+paired.p
+```
+
+```{r echo = F}
+
+ddCT = data.frame(Rep = unique(plotdata$Rep),
+                  G85R = rep(0, length(unique(plotdata$Rep))),
+                  RNAi = rep(0, length(unique(plotdata$Rep))))
+
+i=1
+while(i <= length(unique(plotdata$Rep))){
+  temp = plotdata[plotdata$Rep == unique(plotdata$Rep)[i], ]
+  if(length(grep('G85R',temp$Sample)) & length(grep('WT',temp$Sample))){
+    ddCT$G85R[i] = temp[temp$Sample == "G85R", 'dCT'] - temp[temp$Sample == "WT", 'dCT']
+  }
+    if(length(grep('RNAi',temp$Sample)) & length(grep('WT',temp$Sample))){
+      ddCT$RNAi[i] = temp[temp$Sample == "RNAi", 'dCT'] - temp[temp$Sample == "WT", 'dCT'] 
+    }
+  i=i+1
+}
+
+ddCT = melt(ddCT, id.vars = "Rep", variable.name = "Sample", value.name = 'ddCT')
+
+boxplot(ddCT$ddCT~ddCT$Sample,
+     ylab = "ddCT",
+     xlab = "",
+     main = main,
+     las = 2)
+
+points(x = ddCT$Sample,
+       y = ddCT$ddCT,
+       cex = 1.5,
+       pch = 21,
+       bg = color,
+       col = "black")
+
+```
 ```{r echo = F}
 
 plotdata = mean.p53
 keep = plotdata$Sample != "WT-cr 1" & plotdata$Sample != "WT-cr 2"
 color = "black"
 main = "p53"
+
 plotdata = plotdata[keep,]
+plotdata$Rep = substr(plotdata$Sample, nchar(plotdata$Sample), nchar(plotdata$Sample))
 plotdata$Sample[grep("WT",plotdata$Sample)] = "WT"
 plotdata$Sample[grep("RNAi",plotdata$Sample)] = "RNAi"
 plotdata$Sample[grep("G85R",plotdata$Sample)] = "G85R"
@@ -402,6 +611,47 @@ TukeyHSD(dCT.aov)
 
 ```
 
+```{r echo = F}
+
+summary(aov(dCT ~ Sample + Rep, data = plotdata))
+
+
+```
+
+```{r echo = F}
+
+ddCT = data.frame(Rep = unique(plotdata$Rep),
+                  G85R = rep(0, length(unique(plotdata$Rep))),
+                  RNAi = rep(0, length(unique(plotdata$Rep))))
+
+i=1
+while(i <= length(unique(plotdata$Rep))){
+  temp = plotdata[plotdata$Rep == unique(plotdata$Rep)[i], ]
+  if(length(grep('G85R',temp$Sample)) & length(grep('WT',temp$Sample))){
+    ddCT$G85R[i] = temp[temp$Sample == "G85R", 'dCT'] - temp[temp$Sample == "WT", 'dCT']
+  }
+    if(length(grep('RNAi',temp$Sample)) & length(grep('WT',temp$Sample))){
+      ddCT$RNAi[i] = temp[temp$Sample == "RNAi", 'dCT'] - temp[temp$Sample == "WT", 'dCT'] 
+    }
+  i=i+1
+}
+
+ddCT = melt(ddCT, id.vars = "Rep", variable.name = "Sample", value.name = 'ddCT')
+
+boxplot(ddCT$ddCT~ddCT$Sample,
+     ylab = "ddCT",
+     xlab = "",
+     main = main,
+     las = 2)
+
+points(x = ddCT$Sample,
+       y = ddCT$ddCT,
+       cex = 1.5,
+       pch = 21,
+       bg = color,
+       col = "black")
+
+```
 
 ```{r echo = F}
 
@@ -409,7 +659,9 @@ plotdata = mean.PyK
 keep = plotdata$Sample != "WT-cr 1" & plotdata$Sample != "WT-cr 2"
 color = "deeppink"
 main = "PyK"
+
 plotdata = plotdata[keep,]
+plotdata$Rep = substr(plotdata$Sample, nchar(plotdata$Sample), nchar(plotdata$Sample))
 plotdata$Sample[grep("WT",plotdata$Sample)] = "WT"
 plotdata$Sample[grep("RNAi",plotdata$Sample)] = "RNAi"
 plotdata$Sample[grep("G85R",plotdata$Sample)] = "G85R"
@@ -440,6 +692,48 @@ TukeyHSD(dCT.aov)
 
 ```
 
+```{r echo = F}
+
+summary(aov(dCT ~ Sample + Rep, data = plotdata))
+
+
+```
+
+
+```{r echo = F}
+
+ddCT = data.frame(Rep = unique(plotdata$Rep),
+                  G85R = rep(0, length(unique(plotdata$Rep))),
+                  RNAi = rep(0, length(unique(plotdata$Rep))))
+
+i=1
+while(i <= length(unique(plotdata$Rep))){
+  temp = plotdata[plotdata$Rep == unique(plotdata$Rep)[i], ]
+  if(length(grep('G85R',temp$Sample)) & length(grep('WT',temp$Sample))){
+    ddCT$G85R[i] = temp[temp$Sample == "G85R", 'dCT'] - temp[temp$Sample == "WT", 'dCT']
+  }
+    if(length(grep('RNAi',temp$Sample)) & length(grep('WT',temp$Sample))){
+      ddCT$RNAi[i] = temp[temp$Sample == "RNAi", 'dCT'] - temp[temp$Sample == "WT", 'dCT'] 
+    }
+  i=i+1
+}
+
+ddCT = melt(ddCT, id.vars = "Rep", variable.name = "Sample", value.name = 'ddCT')
+
+boxplot(ddCT$ddCT~ddCT$Sample,
+     ylab = "ddCT",
+     xlab = "",
+     main = main,
+     las = 2)
+
+points(x = ddCT$Sample,
+       y = ddCT$ddCT,
+       cex = 1.5,
+       pch = 21,
+       bg = color,
+       col = "black")
+
+```
 
 ```{r echo = F}
 
@@ -447,7 +741,9 @@ plotdata = mean.idgf
 keep = T
 color = "limegreen"
 main = "idgf6"
+
 plotdata = plotdata[keep,]
+plotdata$Rep = substr(plotdata$Sample, nchar(plotdata$Sample), nchar(plotdata$Sample))
 plotdata$Sample[grep("WT",plotdata$Sample)] = "WT"
 plotdata$Sample[grep("RNAi",plotdata$Sample)] = "RNAi"
 plotdata$Sample[grep("G85R",plotdata$Sample)] = "G85R"
@@ -478,6 +774,73 @@ TukeyHSD(dCT.aov)
 
 ```
 
+```{r echo = F}
+
+summary(aov(dCT ~ Sample + Rep, data = plotdata))
+
+
+```
+
+```{r echo = F}
+plotdata = plotdata[order(plotdata$Rep),]
+
+G85R = setNames(plotdata[plotdata$Sample == "G85R", 'dCT'],
+                plotdata[plotdata$Sample == "G85R", 'Rep'])
+WT = setNames(plotdata[plotdata$Sample == "WT", 'dCT'],
+                plotdata[plotdata$Sample == "WT", 'Rep'])
+RNAi = setNames(plotdata[plotdata$Sample == "RNAi", 'dCT'],
+                plotdata[plotdata$Sample == "RNAi", 'Rep'])
+
+paired.data = data.frame(G85R = G85R[unique(plotdata$Rep)],
+                         WT = WT[unique(plotdata$Rep)],
+                         RNAi = RNAi[unique(plotdata$Rep)])
+row.names(paired.data) = unique(plotdata$Rep)
+
+paired.p = data.frame('paired_t.test' = c("G85R-WT", "RNAi-WT", "G85R-RNAi"),
+                      'paired_p-val' = c(0,0,0))
+
+paired.p[1,2] = t.test(paired.data$G85R, paired.data$WT, paired = T)[3]
+paired.p[2,2] = t.test(paired.data$RNAi, paired.data$WT, paired = T)[3]
+paired.p[3,2] = t.test(paired.data$G85R, paired.data$RNAi, paired = T)[3]
+
+
+paired.p
+```
+
+```{r echo = F}
+
+ddCT = data.frame(Rep = unique(plotdata$Rep),
+                  G85R = rep(0, length(unique(plotdata$Rep))),
+                  RNAi = rep(0, length(unique(plotdata$Rep))))
+
+i=1
+while(i <= length(unique(plotdata$Rep))){
+  temp = plotdata[plotdata$Rep == unique(plotdata$Rep)[i], ]
+  if(length(grep('G85R',temp$Sample)) & length(grep('WT',temp$Sample))){
+    ddCT$G85R[i] = temp[temp$Sample == "G85R", 'dCT'] - temp[temp$Sample == "WT", 'dCT']
+  }
+    if(length(grep('RNAi',temp$Sample)) & length(grep('WT',temp$Sample))){
+      ddCT$RNAi[i] = temp[temp$Sample == "RNAi", 'dCT'] - temp[temp$Sample == "WT", 'dCT'] 
+    }
+  i=i+1
+}
+
+ddCT = melt(ddCT, id.vars = "Rep", variable.name = "Sample", value.name = 'ddCT')
+
+boxplot(ddCT$ddCT~ddCT$Sample,
+     ylab = "ddCT",
+     xlab = "",
+     main = main,
+     las = 2)
+
+points(x = ddCT$Sample,
+       y = ddCT$ddCT,
+       cex = 1.5,
+       pch = 21,
+       bg = color,
+       col = "black")
+
+```
 
 ```{r echo = F}
 
@@ -485,7 +848,9 @@ plotdata = mean.pepck
 keep = T
 color = "orange"
 main = "PEPCK-1"
+
 plotdata = plotdata[keep,]
+plotdata$Rep = substr(plotdata$Sample, nchar(plotdata$Sample), nchar(plotdata$Sample))
 plotdata$Sample[grep("WT",plotdata$Sample)] = "WT"
 plotdata$Sample[grep("RNAi",plotdata$Sample)] = "RNAi"
 plotdata$Sample[grep("G85R",plotdata$Sample)] = "G85R"
@@ -517,3 +882,70 @@ TukeyHSD(dCT.aov)
 
 ```
 
+```{r echo = F}
+
+summary(aov(dCT ~ Sample + Rep, data = plotdata))
+
+
+```
+
+```{r echo = F}
+plotdata = plotdata[order(plotdata$Rep),]
+
+G85R = setNames(plotdata[plotdata$Sample == "G85R", 'dCT'],
+                plotdata[plotdata$Sample == "G85R", 'Rep'])
+WT = setNames(plotdata[plotdata$Sample == "WT", 'dCT'],
+                plotdata[plotdata$Sample == "WT", 'Rep'])
+RNAi = setNames(plotdata[plotdata$Sample == "RNAi", 'dCT'],
+                plotdata[plotdata$Sample == "RNAi", 'Rep'])
+
+paired.data = data.frame(G85R = G85R[unique(plotdata$Rep)],
+                         WT = WT[unique(plotdata$Rep)],
+                         RNAi = RNAi[unique(plotdata$Rep)])
+row.names(paired.data) = unique(plotdata$Rep)
+
+paired.p = data.frame('paired_t.test' = c("G85R-WT", "RNAi-WT", "G85R-RNAi"),
+                      'paired_p-val' = c(0,0,0))
+
+paired.p[1,2] = t.test(paired.data$G85R, paired.data$WT, paired = T)[3]
+paired.p[2,2] = t.test(paired.data$RNAi, paired.data$WT, paired = T)[3]
+paired.p[3,2] = t.test(paired.data$G85R, paired.data$RNAi, paired = T)[3]
+
+
+paired.p
+```
+
+```{r echo = F}
+
+ddCT = data.frame(Rep = unique(plotdata$Rep),
+                  G85R = rep(0, length(unique(plotdata$Rep))),
+                  RNAi = rep(0, length(unique(plotdata$Rep))))
+
+i=1
+while(i <= length(unique(plotdata$Rep))){
+  temp = plotdata[plotdata$Rep == unique(plotdata$Rep)[i], ]
+  if(length(grep('G85R',temp$Sample)) & length(grep('WT',temp$Sample))){
+    ddCT$G85R[i] = temp[temp$Sample == "G85R", 'dCT'] - temp[temp$Sample == "WT", 'dCT']
+  }
+    if(length(grep('RNAi',temp$Sample)) & length(grep('WT',temp$Sample))){
+      ddCT$RNAi[i] = temp[temp$Sample == "RNAi", 'dCT'] - temp[temp$Sample == "WT", 'dCT'] 
+    }
+  i=i+1
+}
+
+ddCT = melt(ddCT, id.vars = "Rep", variable.name = "Sample", value.name = 'ddCT')
+
+boxplot(ddCT$ddCT~ddCT$Sample,
+     ylab = "ddCT",
+     xlab = "",
+     main = main,
+     las = 2)
+
+points(x = ddCT$Sample,
+       y = ddCT$ddCT,
+       cex = 1.5,
+       pch = 21,
+       bg = color,
+       col = "black")
+
+```

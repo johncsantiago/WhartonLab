@@ -505,7 +505,7 @@ KEGG.diagram(PathwayID, out.id, FC.data, FDR.data)
 
 ```
 
-```{r echo = F, include = F}
+```{r echo = F, include = T}
 
 ##NMJ = GO:0031594
 ##synapse = GO:0045202

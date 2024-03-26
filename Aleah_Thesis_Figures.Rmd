@@ -1,0 +1,986 @@
+---
+title: "Aleah Thesis Analyses"
+author: "John Santiago"
+date: "2024-03-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo = F}
+
+library(org.Dm.eg.db)
+library(goseq)
+library(rrvgo)
+library(plotly)
+
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"
+
+counts = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.countdata.csv", row.names = 1)
+
+cpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.cpmdata.csv", row.names = 1)
+
+meancpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.meancpmdata.csv", row.names = 1)
+
+FDR = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.FDRdata.csv", row.names = 1)
+
+FC = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.FCdata.csv", row.names = 1)
+
+meta = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.metadata.csv", row.names = 1)
+
+GeneIDKey = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GeneIDKey.csv", row.names = 1)
+
+KEGG.Key = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/RawMetabolomicData.csv", row.names = 1)
+KEGG.Key = setNames(KEGG.Key[-c(1:2), 2], row.names(KEGG.Key)[-c(1:2)])
+
+genesingo=as.list(org.Dm.egGO2ALLEGS)
+
+kegg = readRDS(gzcon(url(paste0(git.dir,"GeneralDataFiles/kegg.symbol2path.RData"))))
+kegg.names = read.csv(paste0(git.dir, "GeneralDataFiles/KEGG.names.csv"), row.names = 1)
+
+```
+
+
+```{r echo = F}
+
+total.DEGs = c(length(FDR$AvS3FH[FDR$AvS3FH < .05]),
+               length(FDR$AvS9FH[FDR$AvS9FH < .05]),
+               length(FDR$AvS40FH[FDR$AvS40FH < .05]),
+               length(FDR$AvS3FT[FDR$AvS3FT < .05]),
+               length(FDR$AvS9FT[FDR$AvS9FT < .05]),
+               length(FDR$AvS40FT[FDR$AvS40FT < .05]),
+               length(FDR$AvS3FA[FDR$AvS3FA < .05]),
+               length(FDR$AvS9FA[FDR$AvS9FA < .05]),
+               length(FDR$AvS40FA[FDR$AvS40FA < .05]),
+               NA,
+               length(FDR$AvS3MH[FDR$AvS3MH < .05]),
+               length(FDR$AvS9MH[FDR$AvS9MH < .05]),
+               length(FDR$AvS3MT[FDR$AvS3MT < .05]),
+               length(FDR$AvS9MT[FDR$AvS9MT < .05]),
+               length(FDR$AvS3MA[FDR$AvS3MA < .05]),
+               length(FDR$AvS9MA[FDR$AvS9MA < .05]))
+
+names(total.DEGs) = c('FH3', 'FH9', 'FH40',
+                      'FT3', 'FT9', 'FT40',
+                      'FA3', 'FA9', 'FA40',
+                      NA,
+                      'MH3', 'MH9',
+                      'MT3', 'MT9',
+                      'MA3', 'MA9')
+xlabel = names(total.DEGs)
+
+bp.color = c(rep("steelblue", 3), rep("gold2", 3), rep("brown3", 3),
+             NA,
+             rep("steelblue", 2), rep("gold2", 2), rep("brown3", 2))
+
+```
+
+```{r echo = F}
+
+par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
+
+barplot(height = total.DEGs,
+        names.arg = xlabel,
+        beside = T,
+        col = bp.color,
+        las = 2,
+        xlab = "Sample",
+        ylab = "Total DEGs",
+        main = "Total DEGs in A4V vs Silent",
+        ylim = c(0, 4700))
+##abline(v = 11.5, lty =2)
+legend('topright',
+       inset=c(-.35,0),
+       bty = 'n',
+       legend = c('Head', 'Thorax', 'Abdomen'), 
+       fill = c('steelblue', 'gold2', 'brown3'),
+       pt.cex = 1,
+       cex = 1)
+text(x = c(5,16), 
+     y = c(4700, 4700),
+     labels = c("Female", "Male"))
+
+
+```
+
+
+
+```{r echo = F, warning=FALSE, message=F}
+library(VennDiagram)
+
+set1="Male 3 Day"
+set2="Female 3 Day"
+  
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1=row.names(FDR[FDR$AvS3MT <.05,])
+s2=row.names(FDR[FDR$AvS3FT <.05,])
+
+main = "3 Day Thorax DEGs"
+
+grid.newpage()
+draw.pairwise.venn(area1=length(s1),area2=length(s2),
+                   cross.area=length(intersect(s1,s2)),
+                   fill = c("royalblue1","brown1"),
+                   cex=1.5,
+                   cat.cex = 1,
+                   category = c(set1,set2),
+                   main = "main",
+                   cat.dist = c(.065,.05),
+                   cat.pos = c(-20,20))
+
+
+
+```
+
+```{r echo = F, include = F}
+
+Enrichment = function(sigs, bg){
+  sigsKEY = GeneIDKey[sigs,]
+  sigs = na.omit(sigsKEY$Symbol)
+  bgKEY = GeneIDKey[bg,]
+  bg = na.omit(bgKEY$Symbol)
+
+  genes = setNames(rep(0, length(bg)), bg)
+  genes[sigs] = 1
+  pwf=nullp(genes,"dm3","geneSymbol")
+  GO.wall=goseq(pwf,"dm3","geneSymbol")
+  GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+  row.names(GO.wall) = GO.wall$category
+  KEGG=goseq(pwf,gene2cat=kegg)
+  KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
+  row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
+  KEGG$Name=kegg.names[row.names(KEGG),1]
+
+  enrichment.data = list(GO.wall, KEGG)
+  names(enrichment.data) = c("GO", "KEGG")
+  return(enrichment.data)
+}
+
+```
+
+```{r echo = F, include = F}
+
+GO.Sim.PCA = function(use.data){
+    pca <- prcomp(t(use.data), scale.=TRUE) 
+    pc1=scale(pca$x[,1])
+    pc2=scale(pca$x[,2])
+    eigs <- pca$sdev^2
+    ve=signif(((eigs / sum(eigs))*100)[1:3],4)
+
+    pca.data=data.frame(PC1=pc1,
+                        PC2=pc2,
+                        sdev=pca$sdev,
+                        Percent1=ve[1],
+                        Percent2=ve[2],
+                        Group = use.data[row.names(use.data), "parentTerm"],
+                        Score = use.data[row.names(use.data), "score"],
+                        Term = use.data[row.names(use.data), "term"],
+                        TotalDE = GO.data[row.names(use.data), "numDEInCat"],
+                        Total = GO.data[row.names(use.data), "numInCat"],
+                        SigVal = signif(GO.data[row.names(use.data), "adjp"],3))
+
+    pca.data$Group = factor(pca.data$Group, levels = unique(pca.data$Group))
+    pca.data$Score = 20*(1+pca.data$Score/mean(pca.data$Score))
+    
+  fig  = plot_ly(data = pca.data, 
+                 x = ~PC1, 
+                 y = ~PC2,
+                 name = ~Group,
+                 type = 'scatter',
+                 mode = 'markers',
+                 showlegend = T,
+                 color = ~Group,
+                 ##symbol = ~Group,
+                 ##symbols = as.character(seq_along(unique(point.data$Set))),
+                 ##colors = c("firebrick","gold","deepskyblue"),
+                 marker = list(size = pca.data$Score,
+                               line = list(color = "black", width = 1.5)),
+                 hoverinfo = "text",
+                 hovertext = paste("Parent Group: ", pca.data$Group,
+                                   "\nSample: ", pca.data$Term, 
+                                   "\nTotal DE: ", pca.data$TotalDE, 
+                                   "\nTotal in Cat.: ", pca.data$Total, 
+                                   "\nFDR: ", pca.data$SigVal)) %>%
+    layout(xaxis = list(title = paste0("PC1", "(", ve[1], "%)")),
+           yaxis = list(title = paste0("PC2", "(", ve[2], "%)")),
+           title = "Enriched GO term similarity")
+           
+  return(fig)
+}
+
+```
+
+```{r echo = F, include =F}
+
+GO20 = function(GO.data, GO.ontology, FC.data, FDR.data){
+GO.data = GO.data[GO.data$ontology == GO.ontology,
+                  c("category", "term","adjp", "numDEInCat", "numInCat")]
+
+data = GO.data[20:1,c("term","adjp","numDEInCat", "numInCat", "category")]
+data$Score = -log10(data$adjp)
+
+temp = nchar(data$term)
+data$label = data$term
+##data$label[temp > 40] = paste0(substr(data$term[temp>40], 1 ,35), "...")
+
+data$term = factor(data$term, levels = c(unique(data$term)))
+data$up = 0
+data$down = 0
+data$allup = 0
+data$alldown = 0
+
+sigs = names(FDR.data[FDR.data <= 0.05])
+
+i = 1
+while(i <= nrow(data)){
+  go.id = row.names(data)[i]
+  go.genes = genesingo[[go.id]]
+  go.genes = GeneIDKey[GeneIDKey$ensembl %in% go.genes, "FBgn"]
+  go.genes = intersect(go.genes, names(FC.data))
+  sig.go.genes = intersect(go.genes, sigs)
+  go.FC = FC.data[go.genes]
+  sig.go.FC = FC.data[sig.go.genes]  
+  
+  data$allup[i] = length(go.FC[go.FC>0])
+  data$alldown[i] = length(go.FC[go.FC<0])
+  data$up[i] = length(sig.go.FC[sig.go.FC>0])
+  data$down[i] = length(sig.go.FC[sig.go.FC<0])
+  i = i +1
+}
+
+data$down = data$down * -1
+data$alldown = data$alldown * -1
+
+m <- list(
+  l = 50,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 4
+)
+
+data$label = factor(data$label, levels = data$label)
+
+fig <- plot_ly(data, 
+               x = ~up, y = ~label, 
+               type = 'bar',
+               name = "Sig. Increased FC",
+               marker = list(color = 'brown',
+                             line = list(color = "black", width = 1.5)),
+    hoverinfo = "text",
+    hovertext = paste("Sample:", data$term,
+                      "\nGO ID: ", data$category,
+                      "\nTotal DE: ", data$numDEInCat,
+                      "\nTotal in Cat.: ", data$numInCat,
+                      "\nDE up: ", data$up,
+                      "\nDE down: ", data$down,
+                      "\nFDR: ", signif(data$adjp, 3))) %>%
+    add_trace(x = ~down, 
+              y ~term, 
+              marker = list(color = 'steelblue', 
+                            line = list(color = "black", width = 1.5)), 
+              name = "Sig. Decreased FC")%>%
+   
+    layout(xaxis = list(title = "Number of Genes"),
+           yaxis = list(title = ""),
+           title = paste0("Top 20 Most Enriched ",GO.ontology, " GO Terms"),
+           margin = m, barmode = 'overlay')
+
+  return(fig)
+}
+
+```
+
+```{r, echo = F, include = F}
+
+KEGG20 = function(KEGG.data, FC.data, FDR.data){
+  
+data = KEGG.data[, c("category", "Name","adjp", "numDEInCat", "numInCat")]
+  
+data$term = data$Name
+if(length(unique(data$term)) < length(data$term)){
+  data$term[duplicated(data$term)] = paste(data$term[duplicated(data$term)], "2")
+}  
+data = na.omit(data[data$Name != 'Metabolic pathways',])
+data = data[20:1,]
+data$Score = -log10(data$adjp)
+data$term = factor(data$term, levels = c(unique(data$term)))
+data$up = 0
+data$down = 0
+data$allup = 0
+data$alldown = 0
+
+sigs = names(FDR.data[FDR.data <= 0.05])
+
+i = 1
+while(i <= nrow(data)){
+  kegg.id = data$category[i]
+  kegg.genes = names(kegg[grep(kegg.id, kegg)])
+  kegg.genes = GeneIDKey[GeneIDKey$Symbol %in% kegg.genes, "FBgn"]
+  kegg.genes = intersect(kegg.genes, names(FC.data))
+  sig.kegg.genes = intersect(kegg.genes, sigs)
+  kegg.FC = FC.data[kegg.genes]
+  sig.kegg.FC = FC.data[sig.kegg.genes]
+  data$allup[i] = length(kegg.FC[kegg.FC>0])
+  data$alldown[i] = length(kegg.FC[kegg.FC<0])
+  data$up[i] = length(sig.kegg.FC[sig.kegg.FC>0])
+  data$down[i] = length(sig.kegg.FC[sig.kegg.FC<0])
+  i = i +1
+}
+
+data$down = data$down * -1
+data$alldown = data$alldown * -1
+
+
+m <- list(
+  l = 50,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 4
+)
+
+fig <- plot_ly(data, 
+               x = ~up, y = ~term, 
+               type = 'bar',
+               name = "Sig. Increased FC",
+               marker = list(color = 'brown',
+                             line = list(color = "black", width = 1.5)),
+    hoverinfo = "text",
+    hovertext = paste("Sample:", data$term,
+                      "\nGO ID: ", data$category,
+                      "\nTotal DE: ", data$numDEInCat,
+                      "\nTotal in Cat.: ", data$numInCat,
+                      "\nDE up: ", data$up,
+                      "\nDE down: ", data$down,
+                      "\nFDR: ", signif(data$adjp, 3))) %>%
+    add_trace(x = ~down, 
+              y ~term, 
+              marker = list(color = 'steelblue', 
+                            line = list(color = "black", width = 1.5)), 
+              name = "Sig. Decreased FC")%>%
+    layout(xaxis = list(title = "Number of Genes"),
+           yaxis = list(title = ""),
+           title = paste0("Top 20 Most Enriched KEGG Terms"),
+           margin = m, barmode = 'overlay')
+
+return(fig)
+
+}
+
+```
+
+```{r include = F, echo = F}
+
+sigs = row.names(FDR)[FDR$AvS3MT < 0.05]
+FC.data = setNames(FC$AvS3MT, row.names(FC))
+FDR.data = setNames(FDR$AvS3MT, row.names(FDR))
+
+bg = row.names(FDR)
+sig.cats = Enrichment(sigs, bg)
+mt3.cats = sig.cats
+
+```
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "CC"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+CC.simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+CC.reducedTerms <- reduceSimMatrix(CC.simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "BP"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+BP.simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+BP.reducedTerms <- reduceSimMatrix(BP.simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "MF"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+MF.simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+MF.reducedTerms <- reduceSimMatrix(MF.simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+```{r echo = F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "BP"
+BP.GO.fig = GO20(GO.data, GO.ontology, FC.data, FDR.data)
+
+GO.ontology = "CC"
+CC.GO.fig = GO20(GO.data, GO.ontology, FC.data, FDR.data)
+
+GO.ontology = "MF"
+MF.GO.fig = GO20(GO.data, GO.ontology, FC.data, FDR.data)
+
+KEGG.data = sig.cats[["KEGG"]]
+KEGG.fig = KEGG20(KEGG.data, FC.data, FDR.data)
+
+```
+
+
+
+Male 3 Day Thorax Biological Process GO Terms
+```{r, echo = F,  fig.width= 10}
+
+BP.GO.fig
+
+```
+
+
+Male 3 Day Thorax Biological Process GO Terms
+```{r  echo = F, fig.align='left'}
+
+treemapPlot(BP.reducedTerms)
+
+```
+
+Male 3 Day Thorax Cellular Component GO Terms
+```{r, echo = F,  fig.width= 10}
+
+CC.GO.fig
+
+```
+
+Male 3 Day Thorax Cellular Component GO Terms
+```{r  echo = F, fig.align='left'}
+
+treemapPlot(CC.reducedTerms)
+
+```
+
+Male 3 Day Thorax Molecular Function GO Terms
+```{r, echo = F,  fig.width= 10}
+
+MF.GO.fig
+
+```
+
+Male 3 Day Thorax Molecular Function GO Terms
+```{r  echo = F, fig.align='left'}
+
+treemapPlot(MF.reducedTerms)
+
+```
+
+Male 3 Day Thorax KEGG Pathways
+```{r, echo = F,  fig.width= 10}
+
+KEGG.fig
+
+```
+
+
+
+
+
+
+
+
+
+```{r include = F, echo = F}
+
+sigs = row.names(FDR)[FDR$AvS3FT < 0.05]
+FC.data = setNames(FC$AvS3FT, row.names(FC))
+FDR.data = setNames(FDR$AvS3FT, row.names(FDR))
+
+bg = row.names(FDR)
+sig.cats = Enrichment(sigs, bg)
+ft3.cats = sig.cats
+
+```
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "CC"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+CC.simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+CC.reducedTerms <- reduceSimMatrix(CC.simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "BP"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+BP.simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+BP.reducedTerms <- reduceSimMatrix(BP.simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "MF"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+MF.simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+MF.reducedTerms <- reduceSimMatrix(MF.simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+```{r echo = F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "BP"
+BP.GO.fig = GO20(GO.data, GO.ontology, FC.data, FDR.data)
+
+GO.ontology = "CC"
+CC.GO.fig = GO20(GO.data, GO.ontology, FC.data, FDR.data)
+
+GO.ontology = "MF"
+MF.GO.fig = GO20(GO.data, GO.ontology, FC.data, FDR.data)
+
+KEGG.data = sig.cats[["KEGG"]]
+KEGG.fig = KEGG20(KEGG.data, FC.data, FDR.data)
+
+```
+
+
+
+Female 3 Day Thorax Biological Process GO Terms
+```{r, echo = F,  fig.width= 10}
+
+BP.GO.fig
+
+```
+
+Female 3 Day Thorax Biological Process GO Terms
+```{r  echo = F, fig.align='left'}
+
+treemapPlot(BP.reducedTerms)
+
+```
+
+Female 3 Day Thorax Cellular Component GO Terms
+```{r, echo = F,  fig.width= 10}
+
+CC.GO.fig
+
+```
+
+Female 3 Day Thorax Cellular Component GO Terms
+```{r  echo = F, fig.align='left'}
+
+treemapPlot(CC.reducedTerms)
+
+```
+
+Female 3 Day Thorax Molecular Function GO Terms
+```{r, echo = F,  fig.width= 10}
+
+MF.GO.fig
+
+```
+
+Female 3 Day Thorax Molecular Function GO Terms
+```{r  echo = F, fig.align='left'}
+
+treemapPlot(MF.reducedTerms)
+
+```
+
+Female 3 Day Thorax KEGG Pathways
+```{r, echo = F,  fig.width= 10}
+
+KEGG.fig
+
+```
+
+```{r echo = F, warning=FALSE, message=F}
+library(VennDiagram)
+
+set1="Male 9 Day"
+set2="Female 9 Day"
+  
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1=row.names(FDR[FDR$AvS9MT <.05,])
+s2=row.names(FDR[FDR$AvS9FT <.05,])
+
+main = "9 Day Thorax DEGs"
+
+grid.newpage()
+draw.pairwise.venn(area1=length(s1),area2=length(s2),
+                   cross.area=length(intersect(s1,s2)),
+                   fill = c("royalblue1","brown1"),
+                   cex=1.5,
+                   cat.cex = 1,
+                   category = c(set1,set2),
+                   main = "main",
+                   cat.dist = c(.065,.05),
+                   cat.pos = c(-20,20))
+
+
+
+```
+
+```{r include = F, echo = F}
+
+sigs = row.names(FDR)[FDR$AvS9MT < 0.05]
+FC.data = setNames(FC$AvS9MT, row.names(FC))
+FDR.data = setNames(FDR$AvS9MT, row.names(FDR))
+
+bg = row.names(FDR)
+sig.cats = Enrichment(sigs, bg)
+mt9.cats = sig.cats
+
+```
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "CC"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+CC.simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+CC.reducedTerms <- reduceSimMatrix(CC.simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "BP"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+BP.simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+BP.reducedTerms <- reduceSimMatrix(BP.simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "MF"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+MF.simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+MF.reducedTerms <- reduceSimMatrix(MF.simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+```{r echo = F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "BP"
+BP.GO.fig = GO20(GO.data, GO.ontology, FC.data, FDR.data)
+
+GO.ontology = "CC"
+CC.GO.fig = GO20(GO.data, GO.ontology, FC.data, FDR.data)
+
+GO.ontology = "MF"
+MF.GO.fig = GO20(GO.data, GO.ontology, FC.data, FDR.data)
+
+KEGG.data = sig.cats[["KEGG"]]
+KEGG.fig = KEGG20(KEGG.data, FC.data, FDR.data)
+
+```
+
+
+
+Male 9 Day Thorax Biological Process GO Terms
+```{r, echo = F,  fig.width= 10}
+
+BP.GO.fig
+
+```
+
+
+Male 9 Day Thorax Biological Process GO Terms
+```{r  echo = F, fig.align='left'}
+
+treemapPlot(BP.reducedTerms)
+
+```
+
+Male 3 Day Thorax Cellular Component GO Terms
+```{r, echo = F,  fig.width= 10}
+
+CC.GO.fig
+
+```
+
+Male 9 Day Thorax Cellular Component GO Terms
+```{r  echo = F, fig.align='left'}
+
+treemapPlot(CC.reducedTerms)
+
+```
+
+Male 9 Day Thorax Molecular Function GO Terms
+```{r, echo = F,  fig.width= 10}
+
+MF.GO.fig
+
+```
+
+Male 9 Day Thorax Molecular Function GO Terms
+```{r  echo = F, fig.align='left'}
+
+treemapPlot(MF.reducedTerms)
+
+```
+
+Male 9 Day Thorax KEGG Pathways
+```{r, echo = F,  fig.width= 10}
+
+KEGG.fig
+
+```
+
+
+
+
+
+
+
+
+
+```{r include = F, echo = F}
+
+sigs = row.names(FDR)[FDR$AvS9FT < 0.05]
+FC.data = setNames(FC$AvS9FT, row.names(FC))
+FDR.data = setNames(FDR$AvS9FT, row.names(FDR))
+
+bg = row.names(FDR)
+sig.cats = Enrichment(sigs, bg)
+ft9.cats = sig.cats
+
+```
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "CC"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+CC.simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+CC.reducedTerms <- reduceSimMatrix(CC.simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "BP"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+BP.simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+BP.reducedTerms <- reduceSimMatrix(BP.simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "MF"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+MF.simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+MF.reducedTerms <- reduceSimMatrix(MF.simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+```{r echo = F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "BP"
+BP.GO.fig = GO20(GO.data, GO.ontology, FC.data, FDR.data)
+
+GO.ontology = "CC"
+CC.GO.fig = GO20(GO.data, GO.ontology, FC.data, FDR.data)
+
+GO.ontology = "MF"
+MF.GO.fig = GO20(GO.data, GO.ontology, FC.data, FDR.data)
+
+KEGG.data = sig.cats[["KEGG"]]
+KEGG.fig = KEGG20(KEGG.data, FC.data, FDR.data)
+
+```
+
+
+
+Female 9 Day Thorax Biological Process GO Terms
+```{r, echo = F,  fig.width= 10}
+
+BP.GO.fig
+
+```
+
+Female 9 Day Thorax Biological Process GO Terms
+```{r  echo = F, fig.align='left'}
+
+treemapPlot(BP.reducedTerms)
+
+```
+
+Female 9 Day Thorax Cellular Component GO Terms
+```{r, echo = F,  fig.width= 10}
+
+CC.GO.fig
+
+```
+
+Female 9 Day Thorax Cellular Component GO Terms
+```{r  echo = F, fig.align='left'}
+
+treemapPlot(CC.reducedTerms)
+
+```
+
+Female 9 Day Thorax Molecular Function GO Terms
+```{r, echo = F,  fig.width= 10}
+
+MF.GO.fig
+
+```
+
+Female 9 Day Thorax Molecular Function GO Terms
+```{r  echo = F, fig.align='left'}
+
+treemapPlot(MF.reducedTerms)
+
+```
+
+Female 9 Day Thorax KEGG Pathways
+```{r, echo = F,  fig.width= 10}
+
+KEGG.fig
+
+```
+
+
+```{r echo = F}
+
+set1="Male 3 Day"
+set2="Female 3 Day"
+set3="Male 9 Day"
+set4="Female 40 Day"
+
+s1=row.names(FDR[FDR$AvS3MT <.05,])
+s2=row.names(FDR[FDR$AvS3FT <.05,])
+s3=row.names(FDR[FDR$AvS9MT <.05,])
+s4=row.names(FDR[FDR$AvS40FT <.05,])
+
+main = "3 and 9 Day Thorax "
+
+grid.newpage()
+tempvenn=draw.quad.venn(area1=length(s1),area2=length(s2),area3=length(s3),area4=length(s4), n12=length(intersect(s1,s2)),n13 = length(intersect(s1,s3)),n14 = length(intersect(s1,s4)),n23 = length(intersect(s2,s3)),n24 = length(intersect(s2,s4)),n34 = length(intersect(s3,s4)),n123 =  length(intersect(s1,intersect(s2,s3))),n124 =  length(intersect(s1,intersect(s2,s4))), n134 = length(intersect(s1,intersect(s3,s4))),n234 = length(intersect(s2,intersect(s3,s4))),n1234 = length(intersect(s1,intersect(s2,intersect(s3,s4)))),category =c(set1,set2,set3,set4),fill = c("royalblue1", "brown1","forestgreen","yellow2"),cex=2,cat.cex = 1, title = "main")
+
+```
