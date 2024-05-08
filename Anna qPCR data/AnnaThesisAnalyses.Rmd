@@ -480,6 +480,7 @@ plotdata$Sample[grep("G85R",plotdata$Sample)] = "G85R"
 plotdata$Sample = factor(plotdata$Sample,
                          levels = c("WT", "G85R", "RNAi"))
 
+plotdata = plotdata[plotdata$dCT < 0,]
 
 boxplot(plotdata$dCT~plotdata$Sample,
      ylab = "dCT",
@@ -557,6 +558,8 @@ while(i <= length(unique(plotdata$Rep))){
 }
 
 ddCT = melt(ddCT, id.vars = "Rep", variable.name = "Sample", value.name = 'ddCT')
+
+ddCT = ddCT[ddCT$ddCT != 0,]
 
 boxplot(ddCT$ddCT~ddCT$Sample,
      ylab = "ddCT",

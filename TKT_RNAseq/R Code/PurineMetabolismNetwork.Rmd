@@ -2,9 +2,7 @@
 title: "TKT_MetabPaper_Analyses"
 author: "John Santiago"
 date: "2023-09-29"
-output: 
-  bookdown::html_document2:
-    number_sections: false
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -44,8 +42,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r echo = F, include = F}
 library(plotly)
 library(org.Dm.eg.db)
-library(ggpubr)
-library(performance)
+##library(ggpubr)
+##library(performance)
 
 ##load all files from github
 git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"

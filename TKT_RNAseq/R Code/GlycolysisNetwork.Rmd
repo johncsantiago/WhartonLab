@@ -46,8 +46,8 @@ knitr::opts_chunk$set(dev='svg', fig.width=9, fig.height=12, out.width = "9in", 
 ```{r echo = F, include = F}
 library(plotly)
 library(org.Dm.eg.db)
-library(ggpubr)
-library(performance)
+##library(ggpubr)
+##library(performance)
 library(pathview)
 library(visNetwork)
 library(org.Dm.eg.db)
@@ -395,7 +395,7 @@ glycolysis.network(comparison.T = 'GRxWT.FC', comparison.M = GRxWT.C)
 
 ```{r, echo =F, fig2, fig.height=12, fig.width=9, fig.align='left', fig.cap = 'G85R relative to WT. Transcriptomic data is from males and metabolomic data is from both sexes.Grey is no data; Red is increase; Blue is decreae; Node size is relative to pval; Node color is relative to fold change (range: -1 to 1); Edge width is relative to FDR (max -log10(4)); edge color is relative to fold change (range: -2 to 2)'}
 
-glycolysis.network(comparison.T = 'GRxWT.MC', comparison.M = GR.CxDf)
+glycolysis.network(comparison.T = 'GRxWT.MC', comparison.M = GRxWT.C)
 
 
 

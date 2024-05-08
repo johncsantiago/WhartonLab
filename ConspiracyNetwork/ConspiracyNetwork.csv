@@ -1,0 +1,9 @@
+nodes,id,color,edges,from,to,color,note,arrows.to.type
+,SOD1,black,,G85R,arc1,red,increased transcription,arrow
+,arc1,darkgreen,,G85R,uric acid,blue,G85R decreased,bar
+,uric acid,gold,,A4V,peroxisome,blue,decreased trasnsciption,
+,peroxisome,antiquewhite,,A4V,arc1,red,increased transcription,arrow
+,G85R,red,,SOD1,A4V,black,,none
+,A4V,red,,SOD1,G85R,black,,none
+,mitochondria,black,,peroxisome,uric acid,red,,arrow
+,ER stress,black,,,,,,

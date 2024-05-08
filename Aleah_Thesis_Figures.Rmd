@@ -105,6 +105,110 @@ text(x = c(5,16),
 
 ```
 
+```{r echo = F}
+
+total.DEGs = c(length(FDR$AvS3FH[FDR$AvS3FH < .05]),
+               length(FDR$AvS9FH[FDR$AvS9FH < .05]),
+               length(FDR$AvS40FH[FDR$AvS40FH < .05]),
+               length(FDR$AvS3FT[FDR$AvS3FT < .05]),
+               length(FDR$AvS9FT[FDR$AvS9FT < .05]),
+               length(FDR$AvS40FT[FDR$AvS40FT < .05]),
+               length(FDR$AvS3FA[FDR$AvS3FA < .05]),
+               length(FDR$AvS9FA[FDR$AvS9FA < .05]),
+               length(FDR$AvS40FA[FDR$AvS40FA < .05]),
+               NA,
+               length(FDR$AvS3MH[FDR$AvS3MH < .05]),
+               length(FDR$AvS9MH[FDR$AvS9MH < .05]),
+               length(FDR$AvS3MT[FDR$AvS3MT < .05]),
+               length(FDR$AvS9MT[FDR$AvS9MT < .05]),
+               length(FDR$AvS3MA[FDR$AvS3MA < .05]),
+               length(FDR$AvS9MA[FDR$AvS9MA < .05]))
+
+names(total.DEGs) = c('FH3', 'FH9', 'FH40',
+                      'FT3', 'FT9', 'FT40',
+                      'FA3', 'FA9', 'FA40',
+                      NA,
+                      'MH3', 'MH9',
+                      'MT3', 'MT9',
+                      'MA3', 'MA9')
+
+
+
+total.DEGs = total.DEGs[c('FH3', 'MH3','FH9', 'MH9','FH40',
+                      NA,
+                      'FT3', 'MT3', 'FT9', 'MT9', 'FT40',
+                      NA,
+                      'FA3', 'MA3', 'FA9', 'MA9', 'FA40')]
+
+xlabel = names(total.DEGs)
+
+bp.color = c(rep("steelblue", 5), NA, 
+             rep("gold2", 5), NA,
+             rep("brown3", 5))
+
+```
+
+
+```{r echo = F}
+
+par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
+
+barplot(height = total.DEGs,
+        names.arg = xlabel,
+        beside = T,
+        density = c(1000,50,1000,50,1000,0,1000,50,1000,50,1000,0,1000,50,1000,50,1000),
+        col = bp.color,
+        las = 2,
+        xlab = "Sample",
+        ylab = "Total DEGs",
+        main = "Total DEGs in A4V vs Silent",
+        ylim = c(0, 4700))
+##abline(v = 11.5, lty =2)
+legend('topright',
+       inset=c(-.35,0),
+       bty = 'n',
+       legend = c('Head', 'Thorax', 'Abdomen'), 
+       fill = c('steelblue', 'gold2', 'brown3'),
+       pt.cex = 1,
+       cex = 1)
+
+
+```
+
+
+```{r echo = F}
+
+reorder = c(1,3,5,2,4,6,
+            7,9,11,8,10,12,
+            13,15,17,14,16)
+
+
+par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
+
+barplot(height = total.DEGs[reorder],
+        names.arg = xlabel[reorder],
+        beside = T,
+        density = c(1000,1000,1000, 75,75,0,
+                    1000,1000,1000, 75,75,0,
+                    1000,1000,1000, 75,75,0),
+        col = bp.color,
+        las = 2,
+        xlab = "Sample",
+        ylab = "Total DEGs",
+        main = "Total DEGs in A4V vs Silent",
+        ylim = c(0, 4700))
+##abline(v = 11.5, lty =2)
+legend('topright',
+       inset=c(-.3,0),
+       bty = 'n',
+       legend = c('Head', 'Thorax', 'Abdomen'), 
+       fill = c('steelblue', 'gold2', 'brown3'),
+       pt.cex = 1,
+       cex = 1)
+
+
+```
+
 
 
 ```{r echo = F, warning=FALSE, message=F}
@@ -659,13 +763,13 @@ KEGG.fig
 library(VennDiagram)
 
 set1="Male 9 Day"
-set2="Female 9 Day"
+set2="Female 40 Day"
   
 ##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
 s1=row.names(FDR[FDR$AvS9MT <.05,])
-s2=row.names(FDR[FDR$AvS9FT <.05,])
+s2=row.names(FDR[FDR$AvS40FT <.05,])
 
-main = "9 Day Thorax DEGs"
+main = "DEGs from 9 Day Male Thorax and 40 Day Female Thorax"
 
 grid.newpage()
 draw.pairwise.venn(area1=length(s1),area2=length(s2),
@@ -785,7 +889,7 @@ treemapPlot(BP.reducedTerms)
 
 ```
 
-Male 3 Day Thorax Cellular Component GO Terms
+Male 9 Day Thorax Cellular Component GO Terms
 ```{r, echo = F,  fig.width= 10}
 
 CC.GO.fig
@@ -830,9 +934,9 @@ KEGG.fig
 
 ```{r include = F, echo = F}
 
-sigs = row.names(FDR)[FDR$AvS9FT < 0.05]
-FC.data = setNames(FC$AvS9FT, row.names(FC))
-FDR.data = setNames(FDR$AvS9FT, row.names(FDR))
+sigs = row.names(FDR)[FDR$AvS40FT < 0.05]
+FC.data = setNames(FC$AvS40FT, row.names(FC))
+FDR.data = setNames(FDR$AvS40FT, row.names(FDR))
 
 bg = row.names(FDR)
 sig.cats = Enrichment(sigs, bg)
@@ -916,49 +1020,49 @@ KEGG.fig = KEGG20(KEGG.data, FC.data, FDR.data)
 
 
 
-Female 9 Day Thorax Biological Process GO Terms
+Female 40 Day Thorax Biological Process GO Terms
 ```{r, echo = F,  fig.width= 10}
 
 BP.GO.fig
 
 ```
 
-Female 9 Day Thorax Biological Process GO Terms
+Female 40 Day Thorax Biological Process GO Terms
 ```{r  echo = F, fig.align='left'}
 
 treemapPlot(BP.reducedTerms)
 
 ```
 
-Female 9 Day Thorax Cellular Component GO Terms
+Female 40 Day Thorax Cellular Component GO Terms
 ```{r, echo = F,  fig.width= 10}
 
 CC.GO.fig
 
 ```
 
-Female 9 Day Thorax Cellular Component GO Terms
+Female 40 Day Thorax Cellular Component GO Terms
 ```{r  echo = F, fig.align='left'}
 
 treemapPlot(CC.reducedTerms)
 
 ```
 
-Female 9 Day Thorax Molecular Function GO Terms
+Female 40 Day Thorax Molecular Function GO Terms
 ```{r, echo = F,  fig.width= 10}
 
 MF.GO.fig
 
 ```
 
-Female 9 Day Thorax Molecular Function GO Terms
+Female 40 Day Thorax Molecular Function GO Terms
 ```{r  echo = F, fig.align='left'}
 
 treemapPlot(MF.reducedTerms)
 
 ```
 
-Female 9 Day Thorax KEGG Pathways
+Female 40 Day Thorax KEGG Pathways
 ```{r, echo = F,  fig.width= 10}
 
 KEGG.fig

@@ -1,0 +1,246 @@
+---
+title: "Cami qPCR Thesis Figure"
+author: "John Santiago"
+date: "2024-04-02"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo = F, message = F}
+library(plotly)
+camiq = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Cami_qPCR_dCt_data.csv")
+
+camiq$Genotype = factor(camiq$Genotype,
+                        levels = c('OK371>',
+                                   'OK371>G4C2',
+                                   'OK371>atf6RNAi',
+                                   'OK371>atf6[c05075]',
+                                   'OK371>TBPH'))
+
+```
+
+
+```{r echo = F}
+primer = 'atf6'
+
+OK = camiq$Average.dCt[camiq$Genotype == 'OK371>' &
+                         camiq$Primer == primer]
+OKstd = c(sqrt(var(2^-OK)))
+OKmean = c('OK371>', mean(OK))
+
+plotdata = camiq[camiq$Primer == primer &
+                   camiq$Genotype != 'OK371>',
+                 c('Genotype', "Average.dCt")]
+plotdata = rbind(plotdata,OKmean)
+plotdata$Average.dCt = 2^-as.numeric(plotdata$Average.dCt)
+plotdata = plotdata[order(plotdata$Genotype),]
+
+plotdata$plotcolor = plotdata$Average.dCt -
+  plotdata$Average.dCt[plotdata$Genotype == 'OK371>']
+
+plotdata$plotcolor[plotdata$plotcolor < 0] = (plotdata$plotcolor[plotdata$plotcolor < 0] / min(plotdata$plotcolor[plotdata$plotcolor < 0]))*-1
+
+plotdata$plotcolor[plotdata$plotcolor > 0] = (plotdata$plotcolor[plotdata$plotcolor > 0] / max(plotdata$plotcolor[plotdata$plotcolor > 0]))
+
+plot_ly(data = plotdata,
+        x = ~Genotype,
+        y = ~Average.dCt,
+        type = 'bar',
+        name = primer,
+        marker = list(colorscale = list(c(0,.5,1),
+                                        c("firebrick","grey", "royalblue")),
+                      reversescale =T,
+                      colorbar = list(title = "delta FC",
+                                      len = .8, outlinewidth = 0,
+                                      tickformat = ".2f",
+                                      tick0 = 0),
+                      line = list(color = 'black',
+                                  width = 2),
+        color = ~plotcolor),
+        error_y = list(array = OKstd,
+                       color = 'black')) %>%
+  layout(yaxis = list(title = 'relative expression (atf6/rp49)'),
+         title = paste0(primer, ' Expression'))
+
+
+plotdata$primer = primer
+combined = plotdata
+combo.std = c(OKstd,"","","","")
+```
+
+```{r echo = F}
+primer = 'atf4'
+
+OK = camiq$Average.dCt[camiq$Genotype == 'OK371>' &
+                         camiq$Primer == primer]
+OKstd = c(sqrt(var(2^-OK)))
+OKmean = c('OK371>', mean(OK))
+
+plotdata = camiq[camiq$Primer == primer &
+                   camiq$Genotype != 'OK371>',
+                 c('Genotype', "Average.dCt")]
+plotdata = rbind(plotdata,OKmean)
+plotdata$Average.dCt = 2^-as.numeric(plotdata$Average.dCt)
+plotdata = plotdata[order(plotdata$Genotype),]
+
+plotdata$plotcolor = plotdata$Average.dCt -
+  plotdata$Average.dCt[plotdata$Genotype == 'OK371>']
+
+plotdata$plotcolor[plotdata$plotcolor < 0] = (plotdata$plotcolor[plotdata$plotcolor < 0] / min(plotdata$plotcolor[plotdata$plotcolor < 0]))*-1
+
+plotdata$plotcolor[plotdata$plotcolor > 0] = (plotdata$plotcolor[plotdata$plotcolor > 0] / max(plotdata$plotcolor[plotdata$plotcolor > 0]))
+
+plot_ly(data = plotdata,
+        x = ~Genotype,
+        y = ~Average.dCt,
+        type = 'bar',
+        name = primer,
+        marker = list(colorscale = list(c(0,.5,1),
+                                        c("firebrick","grey", "royalblue")),
+                      reversescale =T,
+                      colorbar = list(title = "delta FC",
+                                      len = .8, outlinewidth = 0,
+                                      tickformat = ".2f",
+                                      tick0 = 0),
+                      line = list(color = 'black',
+                                  width = 2),
+        color = ~plotcolor),
+        error_y = list(array = OKstd,
+                       color = 'black')) %>%
+  layout(yaxis = list(title = 'relative expression (atf6/rp49)'),
+         title = paste0(primer, ' Expression'))
+
+plotdata$primer = primer
+combined = rbind(combined, plotdata)
+combo.std = c(combo.std, OKstd,"","","","")
+
+```
+
+
+```{r echo = F}
+primer = 'vap33'
+
+OK = camiq$Average.dCt[camiq$Genotype == 'OK371>' &
+                         camiq$Primer == primer]
+OKstd = c(sqrt(var(2^-OK)))
+OKmean = c('OK371>', mean(OK))
+
+plotdata = camiq[camiq$Primer == primer &
+                   camiq$Genotype != 'OK371>',
+                 c('Genotype', "Average.dCt")]
+plotdata = rbind(plotdata,OKmean)
+plotdata$Average.dCt = 2^-as.numeric(plotdata$Average.dCt)
+plotdata = plotdata[order(plotdata$Genotype),]
+
+plotdata$plotcolor = plotdata$Average.dCt -
+  plotdata$Average.dCt[plotdata$Genotype == 'OK371>']
+
+plotdata$plotcolor[plotdata$plotcolor < 0] = (plotdata$plotcolor[plotdata$plotcolor < 0] / min(plotdata$plotcolor[plotdata$plotcolor < 0]))*-1
+
+plotdata$plotcolor[plotdata$plotcolor > 0] = (plotdata$plotcolor[plotdata$plotcolor > 0] / max(plotdata$plotcolor[plotdata$plotcolor > 0]))
+
+plot_ly(data = plotdata,
+        x = ~Genotype,
+        y = ~Average.dCt,
+        type = 'bar',
+        name = primer,
+        marker = list(colorscale = list(c(0,.5,1),
+                                        c("firebrick","grey", "royalblue")),
+                      reversescale =T,
+                      colorbar = list(title = "delta FC",
+                                      len = .8, outlinewidth = 0,
+                                      tickformat = ".2f",
+                                      tick0 = 0),
+                      line = list(color = 'black',
+                                  width = 2),
+        color = ~plotcolor),
+        error_y = list(array = OKstd,
+                       color = 'black')) %>%
+  layout(yaxis = list(title = 'relative expression (atf6/rp49)'),
+         title = paste0(primer, ' Expression'))
+
+plotdata$primer = primer
+combined = rbind(combined, plotdata)
+combo.std = c(combo.std, OKstd,"","","","")
+
+```
+
+
+```{r echo = F}
+primer = 'xbp1'
+
+OK = camiq$Average.dCt[camiq$Genotype == 'OK371>' &
+                         camiq$Primer == primer]
+OKstd = c(sqrt(var(2^-OK)))
+OKmean = c('OK371>', mean(OK))
+
+plotdata = camiq[camiq$Primer == primer &
+                   camiq$Genotype != 'OK371>',
+                 c('Genotype', "Average.dCt")]
+plotdata = rbind(plotdata,OKmean)
+plotdata$Average.dCt = 2^-as.numeric(plotdata$Average.dCt)
+plotdata = plotdata[order(plotdata$Genotype),]
+
+plotdata$plotcolor = plotdata$Average.dCt -
+  plotdata$Average.dCt[plotdata$Genotype == 'OK371>']
+
+plotdata$plotcolor[plotdata$plotcolor < 0] = (plotdata$plotcolor[plotdata$plotcolor < 0] / min(plotdata$plotcolor[plotdata$plotcolor < 0]))*-1
+
+plotdata$plotcolor[plotdata$plotcolor > 0] = (plotdata$plotcolor[plotdata$plotcolor > 0] / max(plotdata$plotcolor[plotdata$plotcolor > 0]))
+
+plot_ly(data = plotdata,
+        x = ~Genotype,
+        y = ~Average.dCt,
+        type = 'bar',
+        name = primer,
+        marker = list(colorscale = list(c(0,.5,1),
+                                        c("firebrick","grey", "royalblue")),
+                      reversescale =T,
+                      colorbar = list(title = "delta FC",
+                                      len = .8, outlinewidth = 0,
+                                      tickformat = ".2f",
+                                      tick0 = 0),
+                      line = list(color = 'black',
+                                  width = 2),
+        color = ~plotcolor),
+        error_y = list(array = OKstd,
+                       color = 'black')) %>%
+  layout(yaxis = list(title = 'relative expression (atf6/rp49)'),
+         title = paste0(primer, ' Expression'))
+
+plotdata$primer = primer
+combined = rbind(combined, plotdata)
+combo.std = c(combo.std, OKstd,"","","","")
+
+```
+
+```{r echo = FALSE}
+
+combined$GxT = paste0(combined$Genotype, "*", combined$primer)
+combined$GxT = factor(combined$GxT, levels = c(unique(combined$GxT)))
+
+plot_ly(data = combined,
+        x = ~GxT,
+        y = ~Average.dCt,
+        type = 'bar',
+        name = ~primer,
+        color = ~primer,
+        marker = list(line = list(color = 'black',
+                                  width = 2)),
+        error_y = list(array = as.numeric(combo.std),
+                       color = 'black')) %>%
+  layout(yaxis = list(title = 'normalized expression'),
+         xaxis = list( title = "Genotype",
+                       tickmode = 'array',
+                       ticktext = combined$Genotype,
+                       tickvals = (1:nrow(combined))-1),
+         title = 'expression relative to Rp49')
+
+
+```
+
+
+

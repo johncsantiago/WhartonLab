@@ -1,0 +1,53 @@
+Leg #,Organism #,Genotype ,Sex,Leg Location,Shortest Primary Branch um,Longest Primary Branch um,Mean Primary Branch Length um,#Primary,Primary Avg Mito:Branch ,Morphology Score,Notes
+1,13,G85R cr/hr,F,front,22.8,286.9,132,13,0.219259908,,less mitochondria in center axon bundle
+2,9,G85R cr/hr,M,middle,29.8,185.4,110,17,0.261641126,,scrunched at one end - less mitochondria at beginning of femur when compared to lower femur 
+3,17,G85R cr/hr,F,back,38.3,300.8,111.5,26,0.127953788,,Axon bundle thins out less than a quarter down the femur - decreased mitochondria
+4,26,G85R cr/hr,M,front,11.5,192.2,59.3,28,0.011932283,,scrunched in the middle and at proximal end - virtually no mitochondria - a few in tibia
+5,14,Sod WT,F,front,15.8,230.8,95.4,17,0.329719886,,axon bundle thins in the middle and splays at the end
+6,24,G85R cr/hr,M,middle,38.1,218.3,92,10,0.244400248,,"a bit scrunched but barely, axon bundle extremely thin in the middle - decreased mitochondria in this are, generally thin bundle"
+8,11,Sod WT,M,back,27.3,119.2,60,12,0.204324152,,"this leg is scrunched, bundle splays past 2/3 of femur"
+9,15,G85R cr/hr,F,back,21.1,124.1,64.2,14,0.182598729,,axon bundle thins in middle and splays a bit
+10,18,G85R cr/hr,F,front,7.3,110.8,45.6,23,0.277744948,,minor scrunching and splaying
+12,7,Sod WT,F,middle,17.4,111.4,62.9,18,0.235187607,,nothing noteworthy
+13,19,G85R cr/cr,M,middle,17.4,293.4,83.2,11,0.350487532,,"Scrunching at proximal end, lose axon bundle connection at that point, "
+15,8,Sod WT,F,front,12.8,251,73.5,20,0.314568562,,"minor scrunching, middle has less mitochondria"
+16,11,Sod WT,M,front,16.5,149.1,58.5,15,0.277074131,,"scrunched & tortuous, lots of branches look like they are branching backwards"
+17,21,G85R cr/cr,M,front,24.2,166.9,71,7,0.363397427,,"minor scrunching, axon bundle at proximal end is very thin but mitochondria look normal"
+18,12,G85R cr/hr,F,back,26.6,194.5,80,14,0.24537755,,"very scrunched, not straight at all"
+19,23,G85R cr/cr,F,middle,9.1,210.2,64,17,0.095363315,,"extremely scrunched, only distal third has mitochondria and some of the part where the hip meets the femur"
+20,25,G85R cr/hr,M,middle,24.6,114.8,74.8,15,0.265595468,,minor scrunching at proximal end
+25,6,Sod WT,F,middle,20.6,168.6,66,19,0.220003827,,"some scrunching at proximal end, axonal bundle has less mitochondria at this end"
+26,20,G85R cr/cr,M,middle,14.7,154.2,77.6,19,0.248668704,,"axon bundle splits in half around middle, disappears at distal end"
+27,14,Sod WT,F,back,43.7,183.11,110.1,9,0.295610544,,"very scrunched in middle, axon bundle splits in two with small branch connecting it - tortuous? "
+28,8,Sod WT,F,back,15.9,158.2,57.2,21,0.344207394,,some splaying at the end
+29,16,G85R cr/hr,F,front,25.6,97.5,51.8,9,0.19936614,,"extremely scrunched, super curved, axon completely ends in middle of the femur, some branches seen on distal end but not connected to anything"
+30,4,Sod WT,M,back,15.5,203.7,74.6,19,0.155510972,,"very minor scrunching, branches very straight"
+31,15,G85R cr/hr,F,middle,10.3,108.8,50.5,19,0.220662002,,"small scrunch at proximal end, lots of the proximal branches have almost no mitochondria, but the middle and distal ones look normal"
+32,22,G85R cr/cr,M,front,7.4,298.4,73.1,21,0.189367725,,big scrunch in middle
+33,25,G85R cr/hr,M,back,8.7,173.1,69.8,15,0.273570096,,"big scrunch at proximal end, axon bundle thins out at the scrunch"
+34,15,G85R cr/hr,F,front,19.9,243.4,78.2,9,0.032191812,,"only SOME mitochondria near knee, almost none anywhere else, lots of short secondary branches? "
+35,21,G85R cr/cr,M,middle,14.8,166.6,74.1,12,0.225154598,,don't see too many branches
+37,17,G85R cr/hr,F,middle,39.7,332.9,120,12,0.199053147,,nothing noteworthy
+39,3,G85R cr/cr,M,middle,20.8,177.3,80.3,19,0.270187783,,"some scrunching at proximal end, lots of secondary branching"
+40,22,G85R cr/cr,M,middle,4.5,262.1,84.3,16,0.261670555,,nothing noteworthy
+41,26,G85R cr/hr,M,back,39.7,189.9,86.8,15,0.018634777,,"lots of scrunching, almost NO mitochondria, some scattered near knee and more in tibia"
+42,17,G85R cr/hr,F,front,26.4,205.2,69.3,16,0.179573109,,"very tiny bit of scrunching, part of axon bundle with no mitochondria, few branches with less mitochondria"
+43,1,G85R cr/hr,M,front,11.1,217.3,91.9,18,0.345486154,,"scrunching near joint, very organized branching though, easier to count"
+44,2,G85R cr/cr,F,back,7.1,147,63.1,15,0.243653471,,lots of branches that are short and weird shaped and hard to count
+45,20,G85R cr/cr,M,front,32.3,155.5,62.8,10,0.243467047,,"axon bundle looks smushed at proximal end, don't see too many branches"
+46,16,G85R cr/hr,F,middle,25.7,156.5,75.6,18,0.248069072,,there's a section in the axon bundle with NO mitochondria (some scattered)
+47,5,Sod WT,F,front,10.7,193.4,56,23,0.257760553,,nothing noteworthy
+50,3,G85R cr/cr,F,back,15.2,220,65.8,22,0.258162392,,"scrunching at proximal end and middle, axon bundle looks disintegrated at distal end - splayed into a lot and then comes back together for tibia"
+51,3,G85R cr/cr,M,back,46.1,193.3,99,8,0.222572,,weird middle - main axon disappears and crunches and then reappears
+52,3,G85R cr/cr,F,front,10.2,147.8,68,20,0.328427123,,"very scrunched in middle and at proximal end, lots of small branches"
+53,19,G85R cr/cr,M,back,15.2,136.1,73.7,19,0.318364719,,"minor scrunching in proximal leg, minor splaying at end, don't see too much secondary branching"
+54,4,Sod WT,M,middle,13.8,197.5,97.8,20,0.23596209,,very minor scrunching at proximal end
+55,24,G85R cr/hr,M,back,6.7,123.9,51.9,29,0.253953342,,"some bloating? at proximal end of leg. not too much branching at distal emd - lots of short branches axonal bundle begins to splay here, section in proximal axonal bundle with no mitochondria"
+56,12,G85R cr/hr,F,front,7.7,144.7,56.9,20,0.300785853,,"bit of scrunching at proximal end, axon bundle thins at the beginning and end and looks a bit splayed in the middle, branching a bit disorganized - hard to count in middle because of splaying and disorganization"
+57,18,G85R cr/hr,F,back,13.7,191.5,86.3,17,0.268191577,,"bloating at proximal end? some disorganization and aplsying noted, especially at distal and proximal ends"
+58,11,Sod WT,M,middle,12.2,127.8,47.8,19,0.284475627,,"scrunching at proximal end, axonal bundle splays at the end"
+59,20,G85R cr/cr,M,back,15,171.7,95.2,14,0.234400174,,section of axonal bundle thin with no mitochondria
+61,3,G85R cr/cr,M,front,14.8,170.6,69.3,18,0.245055575,,"scruched in the middle and a bit at proximal end, axonal bundle looks separated in the middle, don't see too much branching, lots of large mitochondria"
+62,25,G85R cr/hr,M,front,5.9,147.2,60.8,19,0.300333043,,"scrunch in th emiddle, anxonal bundle doesn't stay together whole time and is splayed near the tibia, otherwise looks a kinda organized, theres also a section where the bundle is cut off and starts again from a curved direction?"
+63,13,G85R cr/hr,F,middle,14.5,198.6,64.2,24,0.266304141,,"section of axonaal bundle wider than the rest and just SLIGHTLY less mitochondria, some splaying at the end"
+64,13,G85R cr/hr,F,back,14,239,72.9,24,0.298992884,,"some splaying a the end, otherwise not very remarkable"

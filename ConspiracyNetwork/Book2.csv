@@ -1,0 +1,5 @@
+﻿nodes,id,color,edges,from,to,arrow,color,note
+,SOD1,red,,SOD1,arc1,to,red,increased transcription
+,arc1`,gold,,SOD1,uric acid,to,blue,G85R decreased
+,uric acid,gold,,SOD1,peroxisome,to,blue,decreased trasnsciption
+,peroxisome,antiquewhite,,,,,,

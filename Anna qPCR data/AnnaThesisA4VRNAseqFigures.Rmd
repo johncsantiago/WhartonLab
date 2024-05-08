@@ -1,0 +1,346 @@
+---
+title: "Anna Thesis A4V RNAseq KEGG Pathway Figures"
+author: "John Santiago"
+date: "2024-03-27"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+<br><br><br>
+
+```{r echo = F, include = F}
+library(plotly)
+library(org.Dm.eg.db)
+library(pathview)
+library(visNetwork)
+library(org.Dm.eg.db)
+
+##load all files from github
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"
+cpmdata = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT_cpmdata.csv"),row.names = 1)
+groups  = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.metadata.csv"),row.names = 1)
+TKT.EdgeR = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FDRTable.csv"),row.names = 1)
+TKT.EdgeR.FC = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FCTable.csv"),row.names = 1)
+
+GeneIDKey = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GeneIDKey.csv", row.names = 1)
+kegg = readRDS(gzcon(url(paste0(git.dir,"GeneralDataFiles/kegg.symbol2path.RData"))))
+kegg.names = read.csv(paste0(git.dir, "GeneralDataFiles/KEGG.names.csv"), row.names = 1)
+
+genesingo=as.list(org.Dm.egGO2ALLEGS)
+
+
+##mean.cpm; Mean cpm for each gene in each condition (groups$Group). Used for filtering
+mean.cpm = matrix(0, ncol = length(unique(groups$Group)), nrow = nrow(cpmdata))
+colnames(mean.cpm) = unique(groups$Group)
+row.names(mean.cpm) = row.names(cpmdata)
+i=1
+while(i<=ncol(mean.cpm)){
+  mean.cpm[,i]= apply(cpmdata[,row.names(groups[groups$Group == colnames(mean.cpm)[i],])], 1, mean)
+  i=i+1
+}
+
+i=1
+for(i in 1:ncol(TKT.EdgeR)){
+  TKT.EdgeR[TKT.EdgeR[,i] == 0,i] = 2
+  i=i+1
+}
+
+
+
+rawdata = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/MetabolomicsForMetaboanalyst.txt", sep = "\t", row.names = 1)
+
+KEGG.Key = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/RawMetabolomicData.csv", row.names = 1)
+KEGG.Key = setNames(KEGG.Key[-c(1:2), 2], row.names(KEGG.Key)[-c(1:2)])
+
+genotypes = setNames(c("WT", "GR", "TktOEWT", "TktOEGR", "TktDfWT", "TktDfGR"), c("C", "E", "A", "F", "B", "D"))
+
+metadata = data.frame(Sample = colnames(rawdata), 
+                      Group = as.character(rawdata[1,]), 
+                      TIC = as.numeric(rawdata[2,]), 
+                      Genotypes = genotypes[as.character(rawdata[1,])])
+
+row.names(metadata) = metadata$Sample
+
+norm.func = function(data){
+  nd = (as.numeric(data)/metadata$TIC)*1000
+  return(nd)
+}
+
+norm.data = t(apply(rawdata[3:nrow(rawdata),], 1, norm.func))
+colnames(norm.data) = colnames(rawdata)
+
+group.mean=function(data){
+  gm = mean(na.omit(data))
+}
+
+mean.data = matrix(0, nrow=nrow(norm.data), ncol = length(genotypes))
+row.names(mean.data) = row.names(norm.data)
+colnames(mean.data) = unique(metadata$Group)
+
+i=1
+while(i<=ncol(mean.data)){
+  mean.data[,i] = apply(norm.data[,metadata[metadata$Group == colnames(mean.data)[i], "Sample"]], 1, group.mean)
+  i = i+1
+}
+
+mean.cpm = as.data.frame(mean.cpm)
+
+compare.conditions = function(condition1, condition2){
+  columns1 = metadata[metadata$Group == condition1, "Sample"]
+  columns2 = metadata[metadata$Group == condition2, "Sample"]
+  p=setNames(rep(NA, nrow(norm.data)), row.names(norm.data))
+  i=1
+  while(i<=length(p)){
+    if(length(na.omit(norm.data[i,columns1]))>2 & 
+       length(na.omit(norm.data[i,columns2]))>2){
+      temp = t.test(na.omit(norm.data[i,columns1]),
+                    na.omit(norm.data[i,columns2]), paired = F, var.equal = T)
+      p[i] = temp[[3]]
+      }
+    i=i+1
+    }
+
+  fdr = p.adjust(p, "BH", length(p))
+
+  fc = mean.data[,condition1]/mean.data[,condition2]
+
+  comparison.table = data.frame(p = p, 
+                                FDR = fdr, 
+                                FC = fc, 
+                                KEGG = KEGG.Key[row.names(mean.data)])
+  
+  comparison.table = comparison.table[order(comparison.table$FDR),]
+}
+
+GRxWT.C = compare.conditions("E", "C")
+GRxWT.Df = compare.conditions("D", "B")
+GRxWT.OE = compare.conditions("F", "A")
+
+GR.CxDf = compare.conditions("D", "E")
+WT.CxDf = compare.conditions("B", "C")
+
+GR.CxOE = compare.conditions("F", "E")
+WT.CxOE = compare.conditions("A", "C")
+
+##Comparison cpm means
+ccm = data.frame(GRF.CxDf = apply(mean.cpm[,c("TktDfGR.F","GR.F")], MARGIN = 1, mean), 
+                 GRF.CxOE = apply(mean.cpm[,c("TktOEGR.F","GR.F")], MARGIN = 1, mean),
+                 WTF.CxDf = apply(mean.cpm[,c("TktDfWT.F","WT.F")], MARGIN = 1, mean),
+                 WTF.CxOE = apply(mean.cpm[,c("TktOEWT.F","WT.F")], MARGIN = 1, mean),
+                 GRxWT.FC = apply(mean.cpm[,c("GR.F","WT.F")], MARGIN = 1, mean), 
+                 GRxWT.FDf = apply(mean.cpm[,c("TktDfGR.F","TktDfWT.F")], MARGIN = 1, mean),
+                 GRxWT.FOE = apply(mean.cpm[,c("TktOEGR.F","TktOEWT.F")], MARGIN = 1, mean), 
+                 GRM.CxDf = apply(mean.cpm[,c("TktDfGR.M","GR.M")], MARGIN = 1, mean), 
+                 GRM.CxOE = apply(mean.cpm[,c("TktOEGR.M","GR.M")], MARGIN = 1, mean),
+                 WTM.CxDf = apply(mean.cpm[,c("TktDfWT.M","WT.M")], MARGIN = 1, mean),
+                 WTM.CxOE = apply(mean.cpm[,c("TktOEWT.M","WT.M")], MARGIN = 1, mean),
+                 GRxWT.MC = apply(mean.cpm[,c("GR.M","WT.M")], MARGIN = 1, mean), 
+                 GRxWT.MDf = apply(mean.cpm[,c("TktDfGR.M","TktDfWT.M")], MARGIN = 1, mean),
+                 GRxWT.MOE = apply(mean.cpm[,c("TktOEGR.M","TktOEWT.M")], MARGIN = 1, mean),
+                 GR.FxM = apply(mean.cpm[,c("GR.F","GR.M")], MARGIN = 1, mean),
+                 WT.FxM = apply(mean.cpm[,c("WT.F","WT.M")], MARGIN = 1, mean),
+                 row.names = row.names(mean.cpm))
+
+comparison.means = list(GRF.CxDf = c("TktDfGR.F","GR.F"), 
+                 GRF.CxOE = c("TktOEGR.F","GR.F"),
+                 WTF.CxDf = c("TktDfWT.F","WT.F"),
+                 WTF.CxOE = c("TktOEWT.F","WT.F"),
+                 GRxWT.FC = c("GR.F","WT.F"), 
+                 GRxWT.FDf = c("TktDfGR.F","TktDfWT.F"),
+                 GRxWT.FOE = c("TktOEGR.F","TktOEWT.F"), 
+                 GRM.CxDf = c("TktDfGR.M","GR.M"), 
+                 GRM.CxOE = c("TktOEGR.M","GR.M"),
+                 WTM.CxDf = c("TktDfWT.M","WT.M"),
+                 WTM.CxOE = c("TktOEWT.M","WT.M"),
+                 GRxWT.MC = c("GR.M","WT.M"), 
+                 GRxWT.MDf = c("TktDfGR.M","TktDfWT.M"),
+                 GRxWT.MOE = c("TktOEGR.M","TktOEWT.M"),
+                 GR.FxM = c("GR.F","GR.M"),
+                 WT.FxM = c("WT.F","WT.M"))
+
+
+metab.id = setNames(row.names(GRxWT.C), GRxWT.C$KEGG)
+mixed.id = unlist(strsplit(names(metab.id)[grep(" / ", names(metab.id))], " / "))
+mixed.id = mixed.id[mixed.id != "n/a"]
+mixed.id = setNames(rep("", length(mixed.id)), mixed.id)
+
+i = 1
+while(i<=length(mixed.id)){
+  mixed.id[i] = metab.id[grep(names(mixed.id)[i], names(metab.id))]
+  i = i +1
+}
+
+metab.id = metab.id[-grep(" / ", names(metab.id))]
+
+metab.id = c(metab.id, mixed.id)
+
+```
+
+
+
+```{r echo = F}
+KEGG.diagram = function(PathwayID, out.id, FC.data, FDR.data){
+  ##KEGG Mapping Function
+  if(length(intersect(list.files(), "KEGG_Image_Files")) == 0){
+    dir.create(paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/KEGG_Image_Files/"))
+    }
+  Home = dirname(rstudioapi::getSourceEditorContext()$path)
+  OutputDir = paste0(Home, "/KEGG_Image_Files/")
+  setwd(OutputDir)
+  sigs = names(FDR.data)
+  ##sigs = names(FDR.data[FDR.data <= .05])
+  
+  if(class(FC.data)=="numeric"){
+    deg.data=setNames(FC.data[sigs],GeneIDKey[sigs, "ensembl"])
+  }
+  
+  if(class(FC.data)=="data.frame"){
+    deg.data = as.matrix(FC.data)
+    row.names(deg.data) = GeneIDKey[row.names(FC.data), "ensembl"]
+  }
+
+  
+  metab.data = setNames(log2(metab.data[metab.id, 'FC']), names(metab.id))
+  
+  
+  pv.out <- pathview(gene.data =  deg.data,
+                     ##cpd.data = metab.data,
+                   pathway.id = PathwayID,
+                   species = "dme",
+                   kegg.native = T,
+                   limit=list(gene=c(-2,2)),
+                   node.sum="max.abs",
+                   low="royalblue",mid = "grey",high="firebrick",
+                   out.suffix = out.id,
+                   bins=list(genes=30),
+                   plot.col.key = F,
+                   match.data = F)
+  setwd(Home)
+  
+  
+    if(class(FC.data)=="numeric"){
+      img.file = paste0(OutputDir, "dme",PathwayID, ".", out.id, ".png")
+    }
+  
+    if(class(FC.data)=="data.frame"){
+      img.file = paste0(OutputDir, "dme",PathwayID, ".", out.id, ".multi.png")
+    }
+  knitr::include_graphics(img.file)
+}
+
+
+```
+
+```{r echo = F, message=F, fig.width=7}
+
+PathwayID = "00010"
+out.id = 'G85R_F'
+FC.data = setNames(TKT.EdgeR.FC$GRxWT.FC, row.names(TKT.EdgeR.FC))
+FDR.data = setNames(TKT.EdgeR$GRxWT.FC, row.names(TKT.EdgeR))
+
+FC.data = TKT.EdgeR.FC[,c('GRxWT.FC', 'GRxWT.MC')]
+FDR.data = setNames(TKT.EdgeR$GRxWT.MC, row.names(TKT.EdgeR))
+
+metab.data = GRxWT.C
+KEGG.diagram(PathwayID, out.id, FC.data, FDR.data)
+
+
+```
+
+
+
+```{r echo = F, message=F, fig.width=7}
+
+PathwayID = "00020"
+out.id = 'G85R_F'
+FC.data = setNames(TKT.EdgeR.FC$GRxWT.FC, row.names(TKT.EdgeR.FC))
+FDR.data = setNames(TKT.EdgeR$GRxWT.FC, row.names(TKT.EdgeR))
+
+FC.data = TKT.EdgeR.FC[,c('GRxWT.FC', 'GRxWT.MC')]
+FDR.data = setNames(TKT.EdgeR$GRxWT.MC, row.names(TKT.EdgeR))
+
+metab.data = GRxWT.C
+KEGG.diagram(PathwayID, out.id, FC.data, FDR.data)
+
+
+```
+
+
+
+```{r echo = F, message=F, fig.width=7}
+
+PathwayID = "00061"
+out.id = 'G85R_F'
+FC.data = setNames(TKT.EdgeR.FC$GRxWT.FC, row.names(TKT.EdgeR.FC))
+FDR.data = setNames(TKT.EdgeR$GRxWT.FC, row.names(TKT.EdgeR))
+
+FC.data = TKT.EdgeR.FC[,c('GRxWT.FC', 'GRxWT.MC')]
+FDR.data = setNames(TKT.EdgeR$GRxWT.MC, row.names(TKT.EdgeR))
+
+metab.data = GRxWT.C
+KEGG.diagram(PathwayID, out.id, FC.data, FDR.data)
+
+
+```
+
+
+
+
+
+
+```{r echo = F, message=F, fig.width=7}
+
+PathwayID = "04214"
+out.id = 'G85R_F'
+FC.data = setNames(TKT.EdgeR.FC$GRxWT.FC, row.names(TKT.EdgeR.FC))
+FDR.data = setNames(TKT.EdgeR$GRxWT.FC, row.names(TKT.EdgeR))
+
+FC.data = TKT.EdgeR.FC[,c('GRxWT.FC', 'GRxWT.MC')]
+FDR.data = setNames(TKT.EdgeR$GRxWT.MC, row.names(TKT.EdgeR))
+
+metab.data = GRxWT.C
+KEGG.diagram(PathwayID, out.id, FC.data, FDR.data)
+
+
+```
+
+
+
+
+
+
+
+
+```{r echo = F, message=F}
+
+PathwayID = "04137"
+out.id = 'G85R_F'
+FC.data = setNames(TKT.EdgeR.FC$GRxWT.FC, row.names(TKT.EdgeR.FC))
+FDR.data = setNames(TKT.EdgeR$GRxWT.FC, row.names(TKT.EdgeR))
+
+FC.data = TKT.EdgeR.FC[,c('GRxWT.FC', 'GRxWT.MC')]
+FDR.data = setNames(TKT.EdgeR$GRxWT.MC, row.names(TKT.EdgeR))
+
+metab.data = GRxWT.C
+KEGG.diagram(PathwayID, out.id, FC.data, FDR.data)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -132,7 +132,7 @@ A4V.FDR = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySec
 ##cgs = c('CG10592','CG10827','CG1462','CG16771','CG1809','CG3264','CG3290','CG3292','CG5150','CG5361','CG5656','CG8105','CG8147')
 
 
-FBgn = 'FBgn0033926'
+FBgn = 'FBgn0038659'
 name = ''
 
 gene = data.frame(cpm = as.numeric(cpmdata[FBgn,]), condition = groups$Group, group = paste0(groups$Genotype, groups$Sex))

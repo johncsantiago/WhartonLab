@@ -1,0 +1,58 @@
+---
+title: "20240507_pharate_axonal_branching"
+author: "John Santiago"
+date: "2024-05-08"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo = F}
+
+ab = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/20240507_pharate_axonal_branching_Raw_Data.csv", header = T)
+
+```
+
+
+```{r echo = F}
+
+plotdata = data.frame(x = paste(ab$Genotype, ab$Sex),
+                      y = ab$X.Primary,
+                      color = as.numeric(factor(ab$Genotype)))
+plotdata = plotdata[order(ab$Sex),]
+plotdata$x = factor(plotdata$x, levels = c(unique(plotdata$x)))
+boxplot(plotdata$y~plotdata$x, xlab="",     
+        main= "",ylab="Number of Primary Branches", las = 2, cex.axis = .8)
+points(x=as.numeric(factor(plotdata$x)),
+       y=plotdata$y,
+       cex=1,
+       pch=21,
+       bg=c('firebrick',"gold","darkgreen","dodgerblue")[plotdata$color])
+
+
+
+```
+
+
+
+
+```{r echo = F}
+
+plotdata = data.frame(x = paste(ab$Genotype, paste(ab$Sex, ab$Leg.Location)),
+                      y = ab$X.Primary,
+                      color = as.numeric(factor(ab$Genotype)))
+plotdata = plotdata[order(paste0(ab$Sex, ab$Leg.Location)),]
+plotdata$x = factor(plotdata$x, levels = c(unique(plotdata$x)))
+boxplot(plotdata$y~plotdata$x, xlab="",     
+        main= "",ylab="Number of Primary Branches", las = 2, cex.axis = .8)
+points(x=as.numeric(factor(plotdata$x)),
+       y=plotdata$y,
+       cex=1,
+       pch=21,
+       bg=c('firebrick',"gold","darkgreen","dodgerblue")[plotdata$color])
+
+
+
+```
