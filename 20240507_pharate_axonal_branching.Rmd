@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r echo = F}
 
-ab = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/20240507_pharate_axonal_branching_Raw_Data.csv", header = T)
+ab = read.csv("https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/20240507_pharate_axonal_branching_Raw_Data.csv", header = T)
 
 ```
 
