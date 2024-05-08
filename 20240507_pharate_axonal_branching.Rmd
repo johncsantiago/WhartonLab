@@ -31,8 +31,6 @@ points(x=as.numeric(factor(plotdata$x)),
        pch=21,
        bg=c('firebrick',"gold","darkgreen","dodgerblue")[plotdata$color])
 
-
-
 ```
 
 
@@ -43,7 +41,7 @@ points(x=as.numeric(factor(plotdata$x)),
 plotdata = data.frame(x = paste(ab$Genotype, paste(ab$Sex, ab$Leg.Location)),
                       y = ab$X.Primary,
                       color = as.numeric(factor(ab$Genotype)))
-plotdata = plotdata[order(paste0(ab$Sex, ab$Leg.Location)),]
+plotdata = plotdata[order(paste0(ab$Sex, paste0(ab$Leg.Location, ab$Genotype))),]
 plotdata$x = factor(plotdata$x, levels = c(unique(plotdata$x)))
 boxplot(plotdata$y~plotdata$x, xlab="",     
         main= "",ylab="Number of Primary Branches", las = 2, cex.axis = .8)
@@ -53,6 +51,129 @@ points(x=as.numeric(factor(plotdata$x)),
        pch=21,
        bg=c('firebrick',"gold","darkgreen","dodgerblue")[plotdata$color])
 
+```
 
+
+
+
+```{r echo = F}
+
+plotdata = data.frame(x = paste(ab$Genotype, ab$Sex),
+                      y = ab$Primary.Avg.Mito.Branch,
+                      color = as.numeric(factor(ab$Genotype)))
+plotdata = plotdata[order(ab$Sex),]
+plotdata$x = factor(plotdata$x, levels = c(unique(plotdata$x)))
+boxplot(plotdata$y~plotdata$x, xlab="",     
+        main= "",ylab="Average Mitochondria", las = 2, cex.axis = .8)
+points(x=as.numeric(factor(plotdata$x)),
+       y=plotdata$y,
+       cex=1,
+       pch=21,
+       bg=c('firebrick',"gold","darkgreen","dodgerblue")[plotdata$color])
 
 ```
+
+
+
+```{r echo = F}
+
+plotdata = data.frame(x = paste(ab$Genotype, paste(ab$Sex, ab$Leg.Location)),
+                      y = ab$Primary.Avg.Mito.Branch,
+                      color = as.numeric(factor(ab$Genotype)))
+plotdata = plotdata[order(paste0(ab$Sex, paste0(ab$Leg.Location, ab$Genotype))),]
+plotdata$x = factor(plotdata$x, levels = c(unique(plotdata$x)))
+boxplot(plotdata$y~plotdata$x, xlab="",     
+        main= "",ylab="Average Mitochondria", las = 2, cex.axis = .8)
+points(x=as.numeric(factor(plotdata$x)),
+       y=plotdata$y,
+       cex=1,
+       pch=21,
+       bg=c('firebrick',"gold","darkgreen","dodgerblue")[plotdata$color])
+
+```
+
+
+
+
+
+
+```{r echo = F}
+
+plotdata = data.frame(x = paste(ab$Genotype, ab$Sex),
+                      y = ab$Longest.Primary.Branch.um,
+                      color = as.numeric(factor(ab$Genotype)))
+plotdata = plotdata[order(ab$Sex),]
+plotdata$x = factor(plotdata$x, levels = c(unique(plotdata$x)))
+boxplot(plotdata$y~plotdata$x, xlab="",     
+        main= "",ylab="Longest Primary Branch", las = 2, cex.axis = .8)
+points(x=as.numeric(factor(plotdata$x)),
+       y=plotdata$y,
+       cex=1,
+       pch=21,
+       bg=c('firebrick',"gold","darkgreen","dodgerblue")[plotdata$color])
+
+```
+
+
+
+```{r echo = F}
+
+plotdata = data.frame(x = paste(ab$Genotype, paste(ab$Sex, ab$Leg.Location)),
+                      y = ab$Longest.Primary.Branch.um,
+                      color = as.numeric(factor(ab$Genotype)))
+plotdata = plotdata[order(paste0(ab$Sex, paste0(ab$Leg.Location, ab$Genotype))),]
+plotdata$x = factor(plotdata$x, levels = c(unique(plotdata$x)))
+boxplot(plotdata$y~plotdata$x, xlab="",     
+        main= "",ylab="Longest Primary Branch", las = 2, cex.axis = .8)
+points(x=as.numeric(factor(plotdata$x)),
+       y=plotdata$y,
+       cex=1,
+       pch=21,
+       bg=c('firebrick',"gold","darkgreen","dodgerblue")[plotdata$color])
+
+```
+
+
+
+
+
+
+```{r echo = F}
+
+plotdata = data.frame(x = paste(ab$Genotype, ab$Sex),
+                      y = ab$Shortest.Primary.Branch.um,
+                      color = as.numeric(factor(ab$Genotype)))
+plotdata = plotdata[order(ab$Sex),]
+plotdata$x = factor(plotdata$x, levels = c(unique(plotdata$x)))
+boxplot(plotdata$y~plotdata$x, xlab="",     
+        main= "",ylab="Shortest Primary Branch", las = 2, cex.axis = .8)
+points(x=as.numeric(factor(plotdata$x)),
+       y=plotdata$y,
+       cex=1,
+       pch=21,
+       bg=c('firebrick',"gold","darkgreen","dodgerblue")[plotdata$color])
+
+```
+
+
+
+```{r echo = F}
+
+plotdata = data.frame(x = paste(ab$Genotype, paste(ab$Sex, ab$Leg.Location)),
+                      y = ab$Shortest.Primary.Branch.um,
+                      color = as.numeric(factor(ab$Genotype)))
+plotdata = plotdata[order(paste0(ab$Sex, paste0(ab$Leg.Location, ab$Genotype))),]
+plotdata$x = factor(plotdata$x, levels = c(unique(plotdata$x)))
+boxplot(plotdata$y~plotdata$x, xlab="",     
+        main= "",ylab="Shortest Primary Branch", las = 2, cex.axis = .8)
+points(x=as.numeric(factor(plotdata$x)),
+       y=plotdata$y,
+       cex=1,
+       pch=21,
+       bg=c('firebrick',"gold","darkgreen","dodgerblue")[plotdata$color])
+
+```
+
+
+
+
