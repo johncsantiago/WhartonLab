@@ -1,0 +1,161 @@
+---
+title: "Punnett Square"
+author: "John Santiago"
+date: "2024-09-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo = F}
+
+##Genotypes
+male.genotype = 'w/w;arc1/arc1;+/+'
+female.genotype = 'elav-Gal4/Y;+/+;TM6c/UAS-lacz'
+
+
+##allele or combination of alleles separated by commas
+##eg c('x', 'CyO/CyO, 'x/y')
+##cells meeting multiple criteria will be colored in order
+allele1 = c('Y')
+allele2 = c('arc1', 'UAS-lacz', 'elav-Gal4')
+allele3 = 'CyO/CyO'
+##color for each different allele set listed
+color1 = 'lightblue'
+color2 = 'gold'
+color3 = 'black'
+
+```
+
+
+```{r echo = F}
+
+library(DT)
+
+male = strsplit(male.genotype, split = ";")[[1]]
+male = strsplit(male, split = "/")
+
+female = strsplit(female.genotype, split = ";")[[1]]
+female = strsplit(female, split = "/")
+
+nchroms = length(male)
+
+chr1 = male[[1]]
+chrdata = chr1
+if(nchroms > 1){
+  chr1 = c(chr1, chr1)
+  chr2 = c(rep(male[[2]][1], 2), rep(male[[2]][2], 2))
+  chr12 = paste(paste0(chr1, ";"),chr2)
+  chrdata = data.frame(chr1 = chr1,
+                       chr2 = chr2,
+                       chr12 = chr12)
+  if(nchroms > 2){
+    chr1 = c(chr1, chr1)
+    chr2 = c(chr2, chr2)
+    chr12 = paste0(c(chr12, chr12), ";")
+    chr3 = c(rep(male[[3]][1], 4), rep(male[[3]][2], 4))
+    chr123 = paste(chr12, chr3)
+    chrdata = data.frame(chr1 = chr1,
+                         chr2 = chr2,
+                         chr3 = chr3,
+                         chr123 = chr123)
+  }
+}
+
+male.chr = unique(chrdata)
+
+
+chr1 = female[[1]]
+chrdata = chr1
+if(nchroms > 1){
+  chr1 = c(chr1, chr1)
+  chr2 = c(rep(female[[2]][1], 2), rep(female[[2]][2], 2))
+  chr12 = paste(paste0(chr1, ";"),chr2)
+  chrdata = data.frame(chr1 = chr1,
+                       chr2 = chr2,
+                       chr12 = chr12)
+  if(nchroms > 2){
+    chr1 = c(chr1, chr1)
+    chr2 = c(chr2, chr2)
+    chr12 = paste0(c(chr12, chr12), ";")
+    chr3 = c(rep(female[[3]][1], 4), rep(female[[3]][2], 4))
+    chr123 = paste(chr12, chr3)
+    chrdata = data.frame(chr1 = chr1,
+                         chr2 = chr2,
+                         chr3 = chr3,
+                         chr123 = chr123)
+  }
+}
+
+female.chr = unique(chrdata)
+
+ps = matrix("", nrow = nrow(female.chr), ncol = nrow(male.chr))
+row.names(ps) = female.chr[, nchroms+1]
+colnames(ps) = male.chr[, nchroms+1]
+ps.print = ps
+i=1
+while(i <= ncol(ps)){
+  temp.ps = paste0(female.chr[,1], "/", male.chr[i,1])
+  if(nchroms > 1){
+    temp.ps2 = paste0(female.chr[,2], "/", male.chr[i,2])
+    temp.ps = paste0(temp.ps, ";", temp.ps2)
+    temp.print = paste0(temp.ps, ";\n", temp.ps2)
+  }
+  if(nchroms > 2){
+    temp.ps3 = paste0(female.chr[,3], "/", male.chr[i,3])
+    temp.ps = paste0(temp.ps, ";", temp.ps3)
+    temp.print = paste0(temp.ps3, ";\n", temp.ps3)
+  }
+  ps[,i] = temp.ps
+  ps.print[,i] = temp.print
+  i=i+1
+}
+
+
+allele.colors = ps
+allele.colors[1:nrow(ps),] = ''
+
+i = 1
+while(i<=3){
+  if(length(allele1)>1)){
+    j=1
+    temp = ps[grep(allele1[j], ps)]
+    j=2
+    while(j<=length(allele1)){
+      temp = intersect(temp, ps[grep(allele1[j], ps)])
+      j=j+1
+    }
+    if(length(temp) == 1){
+      allele.colors[ps == temp] = color1
+    }
+    if(length(temp) > 1){
+      j=1
+      while(j <= length(temp)){
+        allele.colors[ps == temp[j]] = color1
+        j = j+1
+      }
+    }
+  i=i+1
+  }
+
+
+
+write.csv(ps, "/Users/johncsantiago/Desktop/cross.csv")
+
+```
+
+
+
+```{r echo = F}
+
+df = datatable(ps) %>% 
+  formatStyle(1:ncol(ps), backgroundColor = styleEqual(ps, c(allele.colors)))
+
+
+df
+```
+
+
+

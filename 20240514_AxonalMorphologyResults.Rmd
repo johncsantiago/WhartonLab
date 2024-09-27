@@ -1,0 +1,103 @@
+---
+title: "20240514_AxonalMorphologyResults"
+author: "John Santiago"
+date: "2024-05-14"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r echo = F}
+
+morph = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/20240513_pharate_axonal_morphology_Raw_Data.csv")
+
+```
+
+```{r echo = F, warning= F}
+
+conditions = unique(morph$Genotype)
+
+sig.data = as.list(6:17)
+names(sig.data) = colnames(morph)[6:17]
+
+pvals = setNames(c(0,0,0), c('G85Rcr vs WT', 'G85Rcr vs G85Rhet', 'G85Rhet vs WT'))
+
+
+j = 6
+while(j <= 17){
+  morph.data = colnames(morph)[j]
+  sig.data[[morph.data]] = pvals
+k = 1
+while(k<4){
+  
+  comp.mat = matrix(c(1,1,2,3,2,3), ncol = 2)
+  
+  x = morph[morph$Genotype == conditions[comp.mat[k,1]], morph.data]
+  y = morph[morph$Genotype == conditions[comp.mat[k,2]], morph.data]
+
+  if(j != 8 & j != 17){
+    cont.table = data.frame(t = c(sum(x), sum(y)),
+             f = c((length(x)- sum(x)), (length(y)- sum(y))))
+    row.names(cont.table) = conditions[c(comp.mat[k,1],comp.mat[k,2])]
+    sig.data[[morph.data]][[k]]= signif(as.numeric(chisq.test(cont.table)[3]),2)
+  }
+
+  if(j == 8 | j == 17){
+    sig.data[[morph.data]][[k]]= signif(as.numeric(t.test(x, y)[3]),2)
+  }
+  k = k + 1
+}
+j=j+1
+}
+
+
+
+```
+
+```{r echo = F}
+
+j = 6
+
+while(j<=ncol(morph)){
+mean.cat = setNames(morph[,j],
+                    morph$Genotype)
+
+mean.data = setNames(rep(0, length(unique(names(mean.cat)))), unique(names(mean.cat)))
+
+i=1
+while(i<=length(mean.data)){
+  mean.data[i] = mean(mean.cat[names(mean.cat) == names(mean.data)[i]])
+  i=i+1
+}
+
+if(j != 8 & j != 17){
+barplot(height = mean.data,
+        names.arg = names(mean.data),
+        las = 2, 
+        main = colnames(morph)[j], 
+        cex.names = .8,
+        col = c('brown', 'gold', 'steelblue'), 
+        density = c(50),
+        ylim = c(0,1))
+}
+
+if(j == 8 | j == 17){
+barplot(height = mean.data,
+        names.arg = names(mean.data),
+        las = 2, 
+        main = colnames(morph)[j], 
+        cex.names = .8,
+        col = c('brown', 'gold', 'steelblue'), 
+        density = c(50))
+}
+
+print(sig.data[colnames(morph)[j]])
+
+j=j+1
+}
+
+
+```

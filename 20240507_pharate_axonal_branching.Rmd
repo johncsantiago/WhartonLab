@@ -13,6 +13,10 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ab = read.csv("https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/20240507_pharate_axonal_branching_Raw_Data.csv", header = T)
 
+morph = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/20240513_pharate_axonal_morphology_Raw_Data.csv")
+
+ab = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/UB7 - G85R Pharate Leg Axonal Branching & Mitochondria  - CSV_Branching.csv", header = T)
+
 ```
 
 
@@ -43,6 +47,8 @@ plotdata = data.frame(x = paste(ab$Genotype, paste(ab$Sex, ab$Leg.Location)),
                       color = as.numeric(factor(ab$Genotype)))
 plotdata = plotdata[order(paste0(ab$Sex, paste0(ab$Leg.Location, ab$Genotype))),]
 plotdata$x = factor(plotdata$x, levels = c(unique(plotdata$x)))
+
+par(mar = c(8,5,2,2))
 boxplot(plotdata$y~plotdata$x, xlab="",     
         main= "",ylab="Number of Primary Branches", las = 2, cex.axis = .8)
 points(x=as.numeric(factor(plotdata$x)),
@@ -59,7 +65,7 @@ points(x=as.numeric(factor(plotdata$x)),
 ```{r echo = F}
 
 plotdata = data.frame(x = paste(ab$Genotype, ab$Sex),
-                      y = ab$Primary.Avg.Mito.Branch,
+                      y = ab$Avg.Mito.Branch.Length,
                       color = as.numeric(factor(ab$Genotype)))
 plotdata = plotdata[order(ab$Sex),]
 plotdata$x = factor(plotdata$x, levels = c(unique(plotdata$x)))
@@ -78,10 +84,12 @@ points(x=as.numeric(factor(plotdata$x)),
 ```{r echo = F}
 
 plotdata = data.frame(x = paste(ab$Genotype, paste(ab$Sex, ab$Leg.Location)),
-                      y = ab$Primary.Avg.Mito.Branch,
+                      y = ab$Avg.Mito.Branch.Length,
                       color = as.numeric(factor(ab$Genotype)))
 plotdata = plotdata[order(paste0(ab$Sex, paste0(ab$Leg.Location, ab$Genotype))),]
 plotdata$x = factor(plotdata$x, levels = c(unique(plotdata$x)))
+
+par(mar = c(8,5,2,2))
 boxplot(plotdata$y~plotdata$x, xlab="",     
         main= "",ylab="Average Mitochondria", las = 2, cex.axis = .8)
 points(x=as.numeric(factor(plotdata$x)),
@@ -100,7 +108,7 @@ points(x=as.numeric(factor(plotdata$x)),
 ```{r echo = F}
 
 plotdata = data.frame(x = paste(ab$Genotype, ab$Sex),
-                      y = ab$Longest.Primary.Branch.um,
+                      y = ab$Longest.Primary.Branch..um.,
                       color = as.numeric(factor(ab$Genotype)))
 plotdata = plotdata[order(ab$Sex),]
 plotdata$x = factor(plotdata$x, levels = c(unique(plotdata$x)))
@@ -119,10 +127,12 @@ points(x=as.numeric(factor(plotdata$x)),
 ```{r echo = F}
 
 plotdata = data.frame(x = paste(ab$Genotype, paste(ab$Sex, ab$Leg.Location)),
-                      y = ab$Longest.Primary.Branch.um,
+                      y = ab$Longest.Primary.Branch..um.,
                       color = as.numeric(factor(ab$Genotype)))
 plotdata = plotdata[order(paste0(ab$Sex, paste0(ab$Leg.Location, ab$Genotype))),]
 plotdata$x = factor(plotdata$x, levels = c(unique(plotdata$x)))
+
+par(mar = c(8,5,2,2))
 boxplot(plotdata$y~plotdata$x, xlab="",     
         main= "",ylab="Longest Primary Branch", las = 2, cex.axis = .8)
 points(x=as.numeric(factor(plotdata$x)),
@@ -141,7 +151,7 @@ points(x=as.numeric(factor(plotdata$x)),
 ```{r echo = F}
 
 plotdata = data.frame(x = paste(ab$Genotype, ab$Sex),
-                      y = ab$Shortest.Primary.Branch.um,
+                      y = ab$Shortest.Primary.Branch..um.,
                       color = as.numeric(factor(ab$Genotype)))
 plotdata = plotdata[order(ab$Sex),]
 plotdata$x = factor(plotdata$x, levels = c(unique(plotdata$x)))
@@ -160,10 +170,12 @@ points(x=as.numeric(factor(plotdata$x)),
 ```{r echo = F}
 
 plotdata = data.frame(x = paste(ab$Genotype, paste(ab$Sex, ab$Leg.Location)),
-                      y = ab$Shortest.Primary.Branch.um,
+                      y = ab$Shortest.Primary.Branch..um.,
                       color = as.numeric(factor(ab$Genotype)))
 plotdata = plotdata[order(paste0(ab$Sex, paste0(ab$Leg.Location, ab$Genotype))),]
 plotdata$x = factor(plotdata$x, levels = c(unique(plotdata$x)))
+
+par(mar = c(8,5,2,2))
 boxplot(plotdata$y~plotdata$x, xlab="",     
         main= "",ylab="Shortest Primary Branch", las = 2, cex.axis = .8)
 points(x=as.numeric(factor(plotdata$x)),
@@ -173,7 +185,4 @@ points(x=as.numeric(factor(plotdata$x)),
        bg=c('firebrick',"gold","darkgreen","dodgerblue")[plotdata$color])
 
 ```
-
-
-
 

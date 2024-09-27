@@ -1,0 +1,53 @@
+---
+title: "Arc1/Ccs/Sod1 Network"
+author: "John Santiago"
+date: "2024-08-13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo = F, fig.width = 12, fig.height = 12}
+
+library(visNetwork)
+
+networkdata = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Arc1Sod1Network.csv", header = T)
+
+networkdata[networkdata == ''] = NA
+
+networkdata = networkdata[networkdata$from != "Sod1",]
+
+nodes = data.frame(id = na.omit(unique(c(networkdata[, 1], networkdata[, 2]))))
+parent = unique(networkdata$from)
+nodes$group = 'interacting'
+nodes[nodes$id %in% networkdata$to[duplicated(networkdata$to)], 'group'] = 'intersecting'
+nodes[nodes$id %in% parent, 'group'] = 'target'
+
+visedges = na.omit(networkdata[, 1:2])
+visedges$color = 'black'
+
+
+
+visNetwork(nodes,visedges)%>%
+  visLayout(hierarchical=F, improvedLayout=T)%>%
+  visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE)%>%
+  visGroups(groupname = 'interacting', 
+            shape = 'box', 
+            color = list(background = 'darkblue', border = 'black'), 
+            font = list(color= 'white',size=20))%>%
+    visGroups(groupname = 'intersecting', 
+            shape = 'box', 
+            color = list(background = 'deeppink', border = 'black'), 
+            font = list(color= 'black',size=20))%>%
+  visGroups(groupname = 'target',
+            shape = 'box', 
+            color = list(background = 'goldenrod', border = 'black'), 
+            font=list(color= 'black',size=20),
+            physics = FALSE)
+
+
+
+```
+

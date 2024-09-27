@@ -1,0 +1,3035 @@
+---
+title: "gbb conference analyses"
+author: "John Santiago"
+date: "2024-07-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include = F, echo = F}
+
+library(plotly)
+library(edgeR)
+library(org.Dm.eg.db)
+library(VennDiagram)
+
+gbb.genes = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/BMP Signaling Genes.csv",row.names=1)
+
+##Clean Trait Data and calculate CPMs
+countdata=read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT.counttable.csv",row.names=1)
+groups=read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/All.TKT.metadata.csv",row.names=1)
+
+groups = groups[setdiff(row.names(groups), c("GR.F3", "WT.F3", "TktDfWT.F3")),]
+##normalize data
+countdata=countdata[, row.names(groups)]
+countdata = countdata[-(grep("ti",row.names(countdata))),]
+countdata = countdata[-(grep("trans",row.names(countdata))),]
+
+x <- countdata
+gr <- factor(groups$Group)
+y <- DGEList(counts=x,group=gr)
+keep <- filterByExpr(y)
+y <- y[keep,,keep.lib.sizes=FALSE]
+z <- calcNormFactors(y, method = "TMM")
+##normalized cpm
+GR.cpmdata=cpm(z)
+
+design<-model.matrix(~0 + gr)
+colnames(design) = unique(gr)
+z = estimateDisp(z, design, robust = T)
+fit <- glmQLFit(z, design)
+plotQLDisp(fit)
+
+##Will calculate fold-change with the first over the second
+compare = makeContrasts(TktDfGR.F-WT.F, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+WT.FCxGR.FDf  = DEout
+sWT.FCxGR.FDf = DEout[DEout$FDR<.05,]
+
+compare = makeContrasts(TktDfGR.M-WT.M, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+WT.MCxGR.MDf  = DEout
+sWT.MCxGR.MDf = DEout[DEout$FDR<.05,]
+
+compare = makeContrasts(TktOEGR.F-GR.F, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+GR.FOExGR.F  = DEout
+sGR.FOExGR.F = DEout[DEout$FDR<.05,]
+
+compare = makeContrasts(TktOEGR.M-GR.M, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+GR.MOExGR.M  = DEout
+sGR.MOExGR.M = DEout[DEout$FDR<.05,]
+
+compare = makeContrasts(TktDfWT.F-WT.F, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+WT.FDfxWT.F  = DEout
+sWT.FDfxWT.F = DEout[DEout$FDR<.05,]
+
+
+compare = makeContrasts(TktDfWT.M-WT.M, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+WT.MDfxWT.M  = DEout
+sWT.MDfxWT.M = DEout[DEout$FDR<.05,]
+
+compare = makeContrasts(GR.F-WT.F, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+GR.F = DEout
+
+
+compare = makeContrasts(GR.M-WT.M, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+GR.M  = DEout
+
+
+compare = makeContrasts(TktOEGR.F-WT.F, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+GRDf.F  = DEout
+
+
+compare = makeContrasts(TktOEGR.M-WT.M, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+GRDf.M  = DEout
+
+
+
+compare = makeContrasts(TktOEWT.F-WT.F, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+WTDf.F  = DEout
+
+
+compare = makeContrasts(TktOEWT.M-WT.M, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+WTDf.M  = DEout
+
+
+
+
+
+gbbOE = read.csv("/Users/johncsantiago/Documents/GitHub/Datasets/gbbOE_CountTable.csv", row.names = 1)
+gbbOE.groups = read.csv("/Users/johncsantiago/Documents/GitHub/Datasets/gbbOE_Metadata.csv", row.names = 1)
+gbbOE = gbbOE[,row.names(gbbOE.groups)]
+gbbOE.groups$group = paste0(gbbOE.groups$genotype, "_",gbbOE.groups$stage)
+
+
+#anqi.sampletrim = c("AHH0001",	"AHH0002",	"AHH0003",	"AHH0004",	"AHH0007",	#"AHH0008",	"AHH0009",	"AHH0011",	"AHH0012",	"AHH0015",	"AHH0016",	#"AHH0018",	"AHH0019",	"AHH0026")
+#gbbOE= gbbOE[,anqi.sampletrim]
+#gbbOE.groups = gbbOE.groups[anqi.sampletrim,]
+
+#anqi.genetrim = row.names(read.csv('/Users/johncsantiago/Documents/gbbOE.CPM_c#ounts_all samples.csv', row.names =1))
+
+#gbbOE= na.omit(gbbOE[anqi.genetrim,anqi.sampletrim])
+#gbbOE.groups = gbbOE.groups[anqi.sampletrim,]
+
+##normalize data
+countdata=gbbOE
+x <- countdata
+gr <- factor(gbbOE.groups$group, levels=c(unique(gbbOE.groups$group)))
+y <- DGEList(counts=x,group=gr)
+keep <- filterByExpr(y)
+y <- y[keep,,keep.lib.sizes=FALSE]
+z <- calcNormFactors(y, method = "TMM")
+##normalized cpm
+gbbOE.cpmdata=cpm(z)
+
+design<-model.matrix(~0 + gr)
+colnames(design) = unique(gr)
+z = estimateDisp(z, design, robust = T)
+fit <- glmQLFit(z, design)
+plotQLDisp(fit)
+
+compare = makeContrasts(G85R_LL3-LoxP_LL3, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+GRxWT.LL3=DEout
+sGRxWT.LL3=DEout[DEout$FDR<.05,]
+
+compare = makeContrasts(LoxP_LL3-G85R_LL3, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+WTxGR.LL3=DEout
+sWTxGR.LL3=DEout[DEout$FDR<.05,]
+
+compare = makeContrasts(G85R_ML3-LoxP_ML3, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+GRxWT.ML3=DEout
+sGRxWT.ML3=DEout[DEout$FDR<.05,]
+
+compare = makeContrasts(G85R_LL3-G85R_ML3, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+GR.LL3xML3=DEout
+sGR.LL3xML3=DEout[DEout$FDR<.05,]
+
+compare = makeContrasts(LoxP_LL3-LoxP_ML3, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+WT.LL3xML3=DEout
+sWT.LL3xML3=DEout[DEout$FDR<.05,]
+
+compare = makeContrasts(G85R_gbb_LL3-G85R_gbb_ML3, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+G85R_gbb.LL3xML3=DEout
+sG85R_gbb.LL3xML3=DEout[DEout$FDR<.05,]
+
+compare = makeContrasts(G85R_gbb_LL3-G85R_LL3, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+G85R_gbbxGR.LL3=DEout
+sG85R_gbbxGR.LL3=DEout[DEout$FDR<.05,]
+
+compare = makeContrasts(G85R_gbb_LL3-LoxP_LL3, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+G85R_gbbxWT.LL3=DEout
+sG85R_gbbxWT.LL3=DEout[DEout$FDR<.05,]
+
+compare = makeContrasts(G85R_gbb_LL3-G85R_LL3, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+G85R_gbbxG85R.LL3=DEout
+sG85R_gbbxG85R.LL3=DEout[DEout$FDR<.05,]
+
+compare = makeContrasts(G85R_LL3-LoxP_LL3, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+G85RxLoxP.LL3=DEout
+sG85RxLoxP.LL3=DEout[DEout$FDR<.05,]
+
+compare = makeContrasts(G85R_gbb_LL3-LoxP_LL3, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+G85R_gbbxLoxP.LL3=DEout
+sG85R_gbbxLoxP.LL3=DEout[DEout$FDR<.05,]
+
+
+gbbKO = read.csv("/Users/johncsantiago/Documents/GitHub/Datasets/gbbKO_CountTable.csv", row.names = 1)
+gbbKO.groups = read.csv("/Users/johncsantiago/Documents/GitHub/Datasets/gbbKO_Metadata.csv", row.names = 1)
+
+gbbKO = gbbKO[,colnames(gbbKO)!= 'AHH0025']
+##gbbKO.groups = gbbKO.groups[row.names(gbbKO.groups)!= 'AHH0025',]
+
+anqi.genetrim = row.names(read.csv('/Users/johncsantiago/Documents/gbbKO.CPM_170629_gbbKnockout.csv', row.names =1))
+
+gbbKO = (gbbKO[anqi.genetrim,])
+
+##normalize data
+countdata=gbbKO
+x <- countdata
+gr <- factor(gbbKO.groups$Genotype[1:5], levels=c(unique(gbbKO.groups$Genotype[1:5])))
+y <- DGEList(counts=x,group=gr)
+keep <- filterByExpr(y)
+y <- y[keep,,keep.lib.sizes=FALSE]
+z <- calcNormFactors(y, method = "TMM")
+##normalized cpm
+gbbKO.cpmdata=cpm(z)
+
+design<-model.matrix(~0 + gr)
+colnames(design) = unique(gr)
+z = estimateDisp(z, design, robust = T)
+fit <- glmQLFit(z, design)
+plotQLDisp(fit)
+
+compare = makeContrasts(KO-WT, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+gbbKO.DEG=DEout
+sgbbKO.DEG=DEout[DEout$FDR<.05,]
+
+gbbKO.mean = data.frame(gbbKO.DEG[,1:2])
+gbbKO.mean[,1] = apply(gbbKO.cpmdata[row.names(gbbKO.mean),
+                                     c('AHH0020', 'AHH0021', 'AHH0027')], MARGIN = 1, mean)
+gbbKO.mean[,2] = apply(gbbKO.cpmdata[row.names(gbbKO.mean),
+                                     c('AHH0023', 'AHH0024')], MARGIN = 1, mean)
+                                     ##c('AHH0023', 'AHH0024', 'AHH0025')], MARGIN = 1, mean)
+colnames(gbbKO.mean) = c("WT", "KO")
+
+GeneIDKey = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GeneIDKey.csv", row.names = 1)
+
+
+```
+
+
+
+
+
+```{r echo = F}
+
+gbbKOGRxWT = row.names(gbbKO.DEG[gbbKO.DEG$FDR <.1,])
+tktDfWTxWT.F = row.names(WT.FDfxWT.F[WT.FDfxWT.F$FDR <.05,])
+tktDfWTxWT.M = row.names(WT.MDfxWT.M[WT.MDfxWT.M$FDR <.05,])
+
+##Sample titles as strings. Only fill in up to your number of selected categories
+set1 = "G85R-gbbKO vs WT (pvalue < .05)"
+set2 = "Female WT-TKT.Df vs WT (FDR < .05)"
+set3 = "Male WT-TKT.Df vs WT (FDR < .05)"
+set4 = "BMP Pathway"
+  
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1 = gbbKOGRxWT
+s2 = tktDfWTxWT.F
+s3 = tktDfWTxWT.M
+s4 = row.names(gbb.genes)
+
+grid.newpage()
+tempvenn=draw.quad.venn(area1=length(s1),area2=length(s2),area3=length(s3),area4=length(s4), n12=length(intersect(s1,s2)),n13 = length(intersect(s1,s3)),n14 = length(intersect(s1,s4)),n23 = length(intersect(s2,s3)),n24 = length(intersect(s2,s4)),n34 = length(intersect(s3,s4)),n123 =  length(intersect(s1,intersect(s2,s3))),n124 =  length(intersect(s1,intersect(s2,s4))), n134 = length(intersect(s1,intersect(s3,s4))),n234 = length(intersect(s2,intersect(s3,s4))),n1234 = length(intersect(s1,intersect(s2,intersect(s3,s4)))),category =c(set1,set2,set3,set4),fill = c("blue", "red","green","yellow"),cex=2,cat.cex = 1)
+
+
+```
+
+
+
+```{r echo = F}
+
+gbbKOGRxWT = row.names(G85R_gbbxG85R.LL3[G85R_gbbxG85R.LL3$PValue <.05,])
+tktOEGRxGR.F = row.names(GR.FOExGR.F[GR.FOExGR.F$FDR <.05,])
+tktOEGRxGR.M = row.names(GR.MOExGR.M[GR.MOExGR.M$FDR <.05,])
+
+##Sample titles as strings. Only fill in up to your number of selected categories
+set1 = "G85R-gbbKO vs WT (p-value < .05)"
+set2 = "Female G85R-TKT.OE vs WT (FDR < .05)"
+set3 = "Male G85R-TKT.OE vs WT (FDR < .05)"
+set4 = "BMP Pathway"
+  
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1 = gbbKOGRxWT
+s2 = tktOEGRxGR.F
+s3 = tktOEGRxGR.M
+s4 = row.names(gbb.genes)
+
+grid.newpage()
+tempvenn=draw.quad.venn(area1=length(s1),area2=length(s2),area3=length(s3),area4=length(s4), n12=length(intersect(s1,s2)),n13 = length(intersect(s1,s3)),n14 = length(intersect(s1,s4)),n23 = length(intersect(s2,s3)),n24 = length(intersect(s2,s4)),n34 = length(intersect(s3,s4)),n123 =  length(intersect(s1,intersect(s2,s3))),n124 =  length(intersect(s1,intersect(s2,s4))), n134 = length(intersect(s1,intersect(s3,s4))),n234 = length(intersect(s2,intersect(s3,s4))),n1234 = length(intersect(s1,intersect(s2,intersect(s3,s4)))),category =c(set1,set2,set3,set4),fill = c("blue", "red","green","yellow"),cex=2,cat.cex = 1)
+
+
+```
+
+
+
+```{r echo = F}
+
+gbbOExWT = row.names(G85R_gbbxLoxP.LL3[G85R_gbbxLoxP.LL3$PValue <.05,])
+GRxWT = row.names(G85RxLoxP.LL3[G85RxLoxP.LL3$PValue <.05,])
+gbbOExG85R = row.names(G85R_gbbxG85R.LL3[G85R_gbbxG85R.LL3$PValue <.05,])
+
+##Sample titles as strings. Only fill in up to your number of selected categories
+set1 = "G85R-gbbOE vs WT (pvalue < .05)"
+set2 = "G85R vs WT (FDR < .05)"
+set3 = "G85R-gbbOE vs G85R (FDR < .05)"
+set4 = "BMP Pathway"
+  
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1 = gbbOExWT
+s2 = GRxWT
+s3 = gbbOExG85R
+s4 = row.names(gbb.genes)
+
+grid.newpage()
+tempvenn=draw.quad.venn(area1=length(s1),area2=length(s2),area3=length(s3),area4=length(s4), n12=length(intersect(s1,s2)),n13 = length(intersect(s1,s3)),n14 = length(intersect(s1,s4)),n23 = length(intersect(s2,s3)),n24 = length(intersect(s2,s4)),n34 = length(intersect(s3,s4)),n123 =  length(intersect(s1,intersect(s2,s3))),n124 =  length(intersect(s1,intersect(s2,s4))), n134 = length(intersect(s1,intersect(s3,s4))),n234 = length(intersect(s2,intersect(s3,s4))),n1234 = length(intersect(s1,intersect(s2,intersect(s3,s4)))),category =c(set1,set2,set3,set4),fill = c("blue", "red","green","yellow"),cex=2,cat.cex = 1)
+
+
+```
+
+
+
+```{r echo = F}
+
+
+grid.newpage()
+draw.triple.venn(area1=length(s1),area2=length(s2),area3=length(s3),n12=length(intersect(s1,s2)),n23 = length(intersect(s2,s3)),n13 = length(intersect(s1,s3)),n123 = length(intersect(intersect(s1,s2),s3)),category=c(set1,set2,set3),fill = c("green", "blue","red"),cex=1.5,cat.cex = 1)
+
+#Quad Venn
+grid.newpage()
+tempvenn=draw.quad.venn(area1=length(s1),area2=length(s2),area3=length(s3),area4=length(s4), n12=length(intersect(s1,s2)),n13 = length(intersect(s1,s3)),n14 = length(intersect(s1,s4)),n23 = length(intersect(s2,s3)),n24 = length(intersect(s2,s4)),n34 = length(intersect(s3,s4)),n123 =  length(intersect(s1,intersect(s2,s3))),n124 =  length(intersect(s1,intersect(s2,s4))), n134 = length(intersect(s1,intersect(s3,s4))),n234 = length(intersect(s2,intersect(s3,s4))),n1234 = length(intersect(s1,intersect(s2,intersect(s3,s4)))),category =c(set1,set2,set3,set4),fill = c("blue", "red","green","yellow"),cex=2,cat.cex = 1)
+
+```
+
+
+```{r}
+
+  FC.data = setNames(gbbKO.DEG[,1], row.names(gbbKO.DEG))
+  FDR.data = setNames(gbbKO.DEG[,4], row.names(gbbKO.DEG))
+  mean.data = gbbKO.mean[,1:2]
+  
+  ##select F if you want point size to scale with mean cpm of variable data
+  set.size = F
+  ##select T if you only want the genes in category to show
+  catgenes.only = T
+  
+  volcano.data = data.frame(Symbol = GeneIDKey[names(FDR.data), "Symbol"], 
+                            FDR = -log2(FDR.data),
+                            FC = FC.data,
+                            Color = 'grey',
+                            size = 5*log(mean.data[,1]+2),
+                            Variable.cpm = mean.data[,1],
+                            Control.cpm = mean.data[,2])
+  
+  if(set.size == T){
+    volcano.data$size = 15
+    volcano.data$size[volcano.data$FDR <= -log2(.05)] = 5
+  }
+  
+  volcano.data$Color[volcano.data$FDR >= -log2(.05) & volcano.data$FC < 0] = 'lightblue'
+  volcano.data$Color[volcano.data$FDR >= -log2(.0001) & volcano.data$FC < 0] = 'steelblue'
+  volcano.data$Color[volcano.data$FDR >= -log2(.000001) & volcano.data$FC < 0] = 'dodgerblue'
+  
+  volcano.data$Color[volcano.data$FDR >= -log2(.05) & volcano.data$FC > 0] = 'lightcoral'
+  volcano.data$Color[volcano.data$FDR >= -log2(.0001) & volcano.data$FC > 0] = 'tomato'
+  volcano.data$Color[volcano.data$FDR >= -log2(.000001) & volcano.data$FC > 0] = 'firebrick'
+  
+  volcano.data$size[volcano.data$FDR <= -log2(.05)] = 3
+
+  main.title = paste(colnames(mean.data)[1], "vs. ", colnames(mean.data)[2])
+
+if(set.size == T){
+  volcano.data$size = 15
+  volcano.data$size[volcano.data$FDR <= -log2(.05)] = 5
+}
+
+
+volcano.data = volcano.data[volcano.data$FDR >= -log2(.1),]
+
+fig = plot_ly(data = volcano.data,
+              x = ~FC,
+              y = ~FDR,
+              type = 'scatter',
+              mode = 'markers',
+              marker = list(color = ~Color, colors = ~Color, size = volcano.data$size,
+                            line = list(color = 'black', width = .5)),
+              hoverinfo = "text",
+              hovertext = paste("Gene:", volcano.data$Symbol,
+                                "\n-log2(FDR): ", round(volcano.data$FDR,2),
+                                "\nFC: ", round(volcano.data$FC,2),
+                                "\n ", colnames(mean.data)[1], "mean cpm: ",
+                                round(volcano.data$Variable.cpm, 1),
+                                "\n ", colnames(mean.data)[2], "mean cpm: ",
+                                round(volcano.data$Control.cpm, 1)))
+fig = fig %>% layout(title = main.title,
+                     yaxis = list(ymin = 0, ymax = 9))
+
+fig
+
+```
+
+
+```{r echo = F, warning = F}
+
+library(goseq)
+
+FDR = gbbKO.DEG
+  sigs = row.names(FDR)[FDR[,'FDR'] < .05]
+  bg = row.names(FDR)
+  
+  
+  sigsKEY = GeneIDKey[sigs,]
+  sigs = na.omit(sigsKEY$Symbol)
+  bgKEY = GeneIDKey[bg,]
+  bg = na.omit(bgKEY$Symbol)
+  
+  genes = setNames(rep(0, length(bg)), bg)
+  genes[sigs] = 1
+  pwf=nullp(genes,"dm3","geneSymbol")
+  GO.wall=goseq(pwf,"dm3","geneSymbol")
+  GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+  row.names(GO.wall) = GO.wall$category
+  KEGG=goseq(pwf,gene2cat=GenesInKegg)
+  KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
+  row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
+  KEGG$Name=KEGG.Names[row.names(KEGG),1]
+  
+  enrichment.data = list(GO.wall, KEGG)
+  names(enrichment.data) = c("GO", "KEGG")
+
+
+```
+
+
+```{r}
+
+  GO.data = enrichment.data$GO
+  GO.ontology = "BP"
+
+
+  go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .05 & 
+                                   GO.data$ontology == GO.ontology]
+  scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+  
+  simMatrix <- calculateSimMatrix(go_analysis,
+                                  orgdb="org.Dm.eg.db",
+                                  ont=GO.ontology,
+                                  method="Rel")
+  
+  reducedTerms <- reduceSimMatrix(simMatrix,
+                                  scores,
+                                  threshold=0.7,
+                                  orgdb="org.Dm.eg.db")
+
+```
+
+```{r}
+
+treemapPlot(reducedTerms)
+
+```
+
+
+```{r echo = F, warning = F}
+
+library(goseq)
+
+FDR = G85R_gbbxG85R.LL3
+  sigs = row.names(FDR)[FDR[,'FDR'] < .1]
+  bg = row.names(FDR)
+  
+  
+  sigsKEY = GeneIDKey[sigs,]
+  sigs = na.omit(sigsKEY$Symbol)
+  bgKEY = GeneIDKey[bg,]
+  bg = na.omit(bgKEY$Symbol)
+  
+  genes = setNames(rep(0, length(bg)), bg)
+  genes[sigs] = 1
+  pwf=nullp(genes,"dm3","geneSymbol")
+  GO.wall=goseq(pwf,"dm3","geneSymbol")
+  GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+  row.names(GO.wall) = GO.wall$category
+  KEGG=goseq(pwf,gene2cat=GenesInKegg)
+  KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
+  row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
+  KEGG$Name=KEGG.Names[row.names(KEGG),1]
+  
+  enrichment.data = list(GO.wall, KEGG)
+  names(enrichment.data) = c("GO", "KEGG")
+
+
+```
+
+
+```{r}
+
+  GO.data = enrichment.data$GO
+  GO.ontology = "BP"
+
+
+  go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .05 & 
+                                   GO.data$ontology == GO.ontology]
+  scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+  
+  simMatrix <- calculateSimMatrix(go_analysis,
+                                  orgdb="org.Dm.eg.db",
+                                  ont=GO.ontology,
+                                  method="Rel")
+  
+  reducedTerms <- reduceSimMatrix(simMatrix,
+                                  scores,
+                                  threshold=0.7,
+                                  orgdb="org.Dm.eg.db")
+
+```
+
+```{r}
+
+treemapPlot(reducedTerms)
+
+```
+
+
+
+```{r echo = F, warning = F}
+
+library(goseq)
+temp = read.csv('/Users/johncsantiago/Downloads/LoxP-G85R_LL3.csv',
+                row.names = 1, header = T)
+
+FDR = G85RxLoxP.LL3
+  sigs = row.names(FDR)[FDR[,'FDR'] < .1]
+  bg = row.names(FDR)
+  
+  
+  sigsKEY = GeneIDKey[sigs,]
+  sigs = na.omit(sigsKEY$Symbol)
+  bgKEY = GeneIDKey[bg,]
+  bg = na.omit(bgKEY$Symbol)
+  
+  genes = setNames(rep(0, length(bg)), bg)
+  genes[sigs] = 1
+  pwf=nullp(genes,"dm3","geneSymbol")
+  GO.wall=goseq(pwf,"dm3","geneSymbol")
+  GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+  row.names(GO.wall) = GO.wall$category
+  KEGG=goseq(pwf,gene2cat=GenesInKegg)
+  KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
+  row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
+  KEGG$Name=KEGG.Names[row.names(KEGG),1]
+  
+  enrichment.data = list(GO.wall, KEGG)
+  names(enrichment.data) = c("GO", "KEGG")
+
+
+```
+
+
+```{r}
+
+  GO.data = enrichment.data$GO
+  GO.ontology = "BP"
+
+
+  go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .05 & 
+                                   GO.data$ontology == GO.ontology]
+  scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+  
+  simMatrix <- calculateSimMatrix(go_analysis,
+                                  orgdb="org.Dm.eg.db",
+                                  ont=GO.ontology,
+                                  method="Rel")
+  
+  reducedTerms <- reduceSimMatrix(simMatrix,
+                                  scores,
+                                  threshold=0.7,
+                                  orgdb="org.Dm.eg.db")
+
+```
+
+```{r}
+
+treemapPlot(reducedTerms)
+
+```
+
+
+
+
+```{r echo = F, message = F}
+
+library(heatmaply)
+library(dendextend)
+
+counts = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.countdata.csv", row.names = 1)
+
+cpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.cpmdata.csv", row.names = 1)
+
+meancpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.meancpmdata.csv", row.names = 1)
+
+FDR = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.FDRdata.csv", row.names = 1)
+
+FC = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.FCdata.csv", row.names = 1)
+
+meta = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.metadata.csv", row.names = 1)
+
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"
+GR.cpm = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT_cpmdata.csv"),row.names = 1)
+GR.meta  = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.metadata.csv"),row.names = 1)
+GR.FDR = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FDRTable.csv"),row.names = 1)
+
+bmp = read.csv('/Users/johncsantiago/Documents/GitHub/WhartonLab/BMP Signaling Genes annotated.csv', row.names = 1, header = T)
+#bmp = bmp[intersect(row.names(bmp), row.names(GR.cpm)),]
+
+bmp$fb = row.names(bmp)
+
+bmp = bmp[,1:4]
+
+bmp.set = GeneIDKey[GeneIDKey$Symbol %in% setdiff(c("cmpy", "nmo", "Neto", "LIMK1", 'trio',
+                                            "spartin", "GluRIIA", 'GluRIIB', 'Rac1',
+                                            'spin', 'hiw', 'faf'), bmp$X.1),]
+bmp.set = bmp.set[,2:5]
+colnames(bmp.set) =  colnames(bmp)
+bmp.set[,2] = "Others"
+bmp.set[,3] = ""
+bmp.set[,4] = ""
+
+bmp=rbind(bmp, bmp.set)
+
+bmpcpm = cpm[intersect(row.names(bmp), row.names(cpm)),]
+
+GR.bmp = GR.cpm[intersect(row.names(GR.cpm), row.names(bmp)),]
+
+GR.mean = matrix(rep(0, 12*nrow(GR.bmp)), ncol = 12)
+colnames(GR.mean) = unique(GR.meta$Group)
+row.names(GR.mean) = row.names(GR.bmp)
+
+i = 1
+while(i <= ncol(GR.mean)){
+  GR.mean[,i] = apply(GR.bmp[,row.names(GR.meta)[GR.meta$Group == colnames(GR.mean)[i]]], 1, mean)
+  i = i +1
+}
+
+GR.mean.meta = GR.meta[GR.meta$Replicate == 1, c(1:3,5)]
+row.names(GR.mean.meta) = GR.mean.meta$Group
+
+```
+
+
+```{r}
+
+GR.FC = data.frame(GR.F = GR.F[row.names(bmp), 'logFC'],
+                   GRDf.F = GRDf.F[row.names(bmp), 'logFC'],
+                   WTDf.F = WTDf.F[row.names(bmp), 'logFC'],
+                   GR.M = GR.M[row.names(bmp), 'logFC'],
+                   GRDf.M = GRDf.M[row.names(bmp), 'logFC'],
+                   WTDf.M = WTDf.M[row.names(bmp), 'logFC'])
+row.names(GR.FC) = bmp[,1]
+GR.FC = na.omit(GR.FC)
+
+
+##scaled = (2^(abs(GR.FC)))*(GR.FC/abs(GR.FC))
+scaled = GR.FC
+Title = " "
+branches=3
+
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
+colors = allcolors[1:branches]
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+
+
+heatmaply(scaled,
+          trace="none",
+          col=RdBu(5)[5:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = .9,
+          main = Title)
+
+
+
+```
+
+
+```{r}
+
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M', 'TktOEWT.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+#Mhmdata=hmdata
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F', 'TktOEWT.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+#Fhmdata=hmdata
+
+allscaled = cbind(Fhmdata,Mhmdata)
+allmean = GR.mean[,colnames(allscaled)]
+row.names(allmean) = bmp[row.names(allmean),1]
+
+scaled = allscaled
+Title = " "
+branches=3
+
+row.names(scaled) = bmp[row.names(scaled),1]
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
+colors = allcolors[1:branches]
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "both",
+          Rowv=colordend,
+          ##Colv="NA",
+          cexRow = .9,
+          main = Title)
+
+
+
+```
+
+
+```{r}
+
+A4V.groups = A4V.meta[A4V.meta$Replicate == 1,]
+row.names(A4V.groups) = A4V.groups$Group
+A4V.groups = A4V.groups[colnames(A4V.meancpm),]
+
+hmgroups = A4V.groups[A4V.groups$Sex == "M",]
+hmgroups = hmgroups[c('S3MT', 'S9MT', 'A3MT', 'A9MT'),]
+
+hmdata = A4V.meancpm[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+
+hmgroups = A4V.groups[A4V.groups$Sex == "F",]
+hmgroups = hmgroups[c('S3FT', 'S9FT', 'S40FT', 'A3FT', 'A9FT', 'A40FT'),]
+
+hmdata = A4V.meancpm[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+#Fhmdata=hmdata
+
+allscaled = cbind(Fhmdata,Mhmdata)
+
+scaled = allscaled[intersect(row.names(bmp), row.names(allscaled)),]
+Title = " "
+branches=3
+
+row.names(scaled) = bmp[row.names(scaled),1]
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
+colors = allcolors[1:branches]
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = .9,
+          main = Title)
+
+
+
+```
+
+```{r}
+
+A4V.groups = A4V.meta[A4V.meta$Replicate == 1,]
+row.names(A4V.groups) = A4V.groups$Group
+A4V.groups = A4V.groups[colnames(A4V.meancpm),]
+
+hmgroups = A4V.groups[A4V.groups$Sex == "M",]
+hmgroups = hmgroups[c('S3MT', 'S9MT', 'A3MT', 'A9MT'),]
+
+hmdata = A4V.meancpm[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+
+hmgroups = A4V.groups[A4V.groups$Sex == "F",]
+hmgroups = hmgroups[c('S3FT', 'S9FT', 'S40FT', 'A3FT', 'A9FT', 'A40FT'),]
+
+hmdata = A4V.meancpm[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+#Fhmdata=hmdata
+
+allscaled = cbind(Fhmdata)
+
+scaled = allscaled[intersect(row.names(bmp), row.names(allscaled)),]
+Title = " "
+branches=3
+
+row.names(scaled) = bmp[row.names(scaled),1]
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
+colors = allcolors[1:branches]
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = .9,
+          main = Title)
+
+
+
+```
+
+
+```{r}
+
+A4V.groups = A4V.meta[A4V.meta$Replicate == 1,]
+row.names(A4V.groups) = A4V.groups$Group
+A4V.groups = A4V.groups[colnames(A4V.meancpm),]
+
+hmgroups = A4V.groups[A4V.groups$Sex == "M",]
+hmgroups = hmgroups[c('S3MT', 'S9MT', 'A3MT', 'A9MT'),]
+
+hmdata = A4V.meancpm[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+
+hmgroups = A4V.groups[A4V.groups$Sex == "F",]
+hmgroups = hmgroups[c('S3FT', 'S9FT', 'S40FT', 'A3FT', 'A9FT', 'A40FT'),]
+
+hmdata = A4V.meancpm[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+#Fhmdata=hmdata
+
+allscaled = cbind(Mhmdata)
+
+scaled = allscaled[intersect(row.names(bmp), row.names(allscaled)),]
+Title = " "
+branches=3
+
+row.names(scaled) = bmp[row.names(scaled),1]
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
+colors = allcolors[1:branches]
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = .9,
+          main = Title)
+
+
+
+```
+
+```{r}
+
+hmgroups = gbbOE.groups[gbbOE.groups$stage == "LL3",]
+hmgroups = setNames(unique(hmgroups$group), unique(hmgroups$genotype))
+
+hmdata = gbbOEmean[, hmgroups]
+colnames(hmdata) = names(hmgroups)
+hmdata=t(scale(t(hmdata)))
+hmdata = hmdata[intersect(row.names(bmp), row.names(hmdata)),]
+row.names(hmdata) = bmp[row.names(hmdata), 1]
+
+
+scaled = hmdata
+Title = " "
+branches=3
+
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
+colors = allcolors[1:branches]
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = .9,
+          main = Title)
+
+
+
+```
+
+```{r}
+
+
+gbb.plotdata = data.frame(genotype = gbbOE.groups[colnames(gbbOE.cpmdata), 'group'],
+                          gbb = gbbOE.cpmdata["FBgn0037607",])
+                          ##gbb = gbbOE.cpmdata["FBgn0024234",])
+
+gbb.plotdata$genotype = factor(gbb.plotdata$genotype,
+                               levels = c("LoxP_ML3", "LoxP_LL3",
+                                          "G85R_ML3", "G85R_LL3",
+                                          "G85R_gbb_ML3", "G85R_gbb_LL3"))
+
+boxplot(gbb.plotdata$gbb ~ gbb.plotdata$genotype, 
+        xlab="",     
+        main= "",
+        ylab="gbb cpm", 
+        las = 1, 
+        cex.axis = .8)
+
+points(x=as.numeric(factor(gbb.plotdata$genotype)),
+       y=gbb.plotdata$gbb,
+       cex=2,
+       pch=21,
+       bg=c('red', 'firebrick',
+            'dodgerblue', "steelblue", 
+            "limegreen", 'darkgreen')
+       [as.numeric(factor(gbb.plotdata$genotype))])
+
+
+
+
+```
+
+```{r}
+
+gbbOE.plotdata = data.frame(GR.FC = G85RxLoxP.LL3[intersect(row.names(bmp), row.names(G85RxLoxP.LL3)), "logFC"],
+                            OE.FC = G85R_gbbxLoxP.LL3[intersect(row.names(bmp), row.names(G85RxLoxP.LL3)), "logFC"])
+row.names(gbbOE.plotdata) = bmp[intersect(row.names(bmp), row.names(G85RxLoxP.LL3)), 1]
+
+
+data = data.frame(Symbol = row.names(gbbOE.plotdata),
+                  FC1 = gbbOE.plotdata$GR.FC,
+                  FC2 = gbbOE.plotdata$OE.FC,
+                  Color = 'grey',
+                  size = gbbOEmean[intersect(row.names(bmp), row.names(G85RxLoxP.LL3)), 'LoxP_LL3'],
+                  LoxP = gbbOEmean[intersect(row.names(bmp), row.names(G85RxLoxP.LL3)), 'LoxP_LL3'])
+
+  main.title = 'FC relative to LoxP'
+  
+  data$Color[(data$FC1 - log2(1.5)) > data$FC2] = 'royalblue'
+  data$Color[(data$FC2 - log2(1.5)) > data$FC1] = 'firebrick' 
+  data$size = log2(data$size)
+  data$size[data$size < 2] = 2
+
+fig = plot_ly(data = data,
+                x = ~FC1,
+                y = ~FC2,
+                type = 'scatter',
+                mode = 'markers',
+                marker = list(color = ~Color,
+                              colors = ~Color,
+                              line = list(color = "black", width = 1.5),
+                              size = ~size),
+                hoverinfo = "text",
+                hovertext = paste("Symbol:", data$Symbol,
+                                  "\n ", colnames(FC.data)[1], "FC: ", round(data$FC1, 2),
+                                  "\n ", colnames(FC.data)[2], "FC: ", round(data$FC2, 2),
+              "\n LoxP mean cpm: ", round(data$LoxP, 2)))
+  fig = fig %>% layout(title = main.title,
+                       shapes = list(
+                         type = "line",
+                         line = list(color = "black", dash = 'dash', width = 2),
+                         x0 = -1,
+                         x1 = 1,
+                         y0 = -1.2,
+                         y1 = 1.2),
+                       xaxis = list(title = "G85R FC"),
+                       yaxis = list(title = "gbbOE FC"))
+
+  fig
+
+```
+
+
+```{r}
+
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+#Mhmdata=hmdata
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+#Fhmdata=hmdata
+
+allscaled = cbind(Mhmdata)
+allmean = GR.mean[,colnames(allscaled)]
+row.names(allmean) = bmp[row.names(allmean),1]
+
+scaled = allscaled
+Title = " "
+branches=3
+
+row.names(scaled) = bmp[row.names(scaled),1]
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
+colors = allcolors[1:branches]
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = .9,
+          main = Title)
+
+
+
+```
+
+```{r}
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+row.names(Mhmdata) = bmp[row.names(Mhmdata),1]
+Mhmdata = Mhmdata[row.names(scaled),]
+Mhmdata = Mhmdata[hc$order,]
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+row.names(Fhmdata) = bmp[row.names(Fhmdata),1]
+Fhmdata = Fhmdata[row.names(scaled),]
+Fhmdata = Fhmdata[hc$order,]
+
+heatmaply(Fhmdata,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "none",
+          Rowv= "NA",
+          Colv="NA",
+          cexRow = .9,
+          main = Title)
+
+
+
+```
+
+
+```{r}
+
+
+hmgroups = gbbOE.groups[gbbOE.groups$stage == "LL3",]
+hmgroups = setNames(unique(hmgroups$group), unique(hmgroups$genotype))
+
+hmdata = gbbOEmean[, hmgroups]
+colnames(hmdata) = names(hmgroups)
+hmdata=t(scale(t(hmdata)))
+hmdata = hmdata[intersect(row.names(bmp), row.names(hmdata)),]
+row.names(hmdata) = bmp[row.names(hmdata), 1]
+hmdata = hmdata[intersect(row.names(Fhmdata),row.names(hmdata)),]
+
+
+heatmaply(hmdata,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "none",
+          Rowv= "NA",
+          Colv="NA",
+          cexRow = .9,
+          main = Title)
+
+
+
+```
+
+
+```{r}
+
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+
+allscaled = cbind(Fhmdata, Mhmdata)
+allmean = GR.mean[,colnames(allscaled)]
+row.names(allmean) = bmp[row.names(allmean),1]
+
+scaled = allscaled
+Title = " "
+branches=3
+
+bmp.set = bmp[row.names(scaled),]
+
+row.names(scaled) = bmp[row.names(scaled),1]
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
+colors = allcolors[1:branches]
+
+
+bmp.set = bmp.set[bmp.set$X.2 == 'BMP binding',]
+scaled = scaled[bmp.set$X.1,]
+
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = 'BMP binding')
+
+
+
+```
+
+
+```{r}
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+row.names(Mhmdata) = bmp[row.names(Mhmdata),1]
+Mhmdata = Mhmdata[row.names(scaled),]
+Mhmdata = Mhmdata[hc$order,]
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+row.names(Fhmdata) = bmp[row.names(Fhmdata),1]
+Fhmdata = Fhmdata[row.names(scaled),]
+Fhmdata = Fhmdata[hc$order,]
+
+heatmaply(Fhmdata[row.names(scaled),],
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "none",
+          Rowv= "NA",
+          Colv="NA",
+          cexRow = .9,
+          main = "BMP Binding")
+
+
+
+```
+
+
+
+```{r}
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+row.names(Mhmdata) = bmp[row.names(Mhmdata),1]
+Mhmdata = Mhmdata[row.names(scaled),]
+Mhmdata = Mhmdata[hc$order,]
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+row.names(Fhmdata) = bmp[row.names(Fhmdata),1]
+Fhmdata = Fhmdata[row.names(scaled),]
+Fhmdata = Fhmdata[hc$order,]
+
+heatmaply(Mhmdata[row.names(scaled),],
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "none",
+          Rowv= "NA",
+          Colv="NA",
+          cexRow = .9,
+          main = 'BMP Binding')
+
+
+
+```
+
+
+```{r}
+
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+#Mhmdata=t(scale(t(hmdata)))
+Mhmdata=hmdata
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+#Fhmdata=t(scale(t(hmdata)))
+Fhmdata=hmdata
+
+allscaled = cbind(Fhmdata, Mhmdata)
+allmean = GR.mean[,colnames(allscaled)]
+row.names(allmean) = bmp[row.names(allmean),1]
+
+scaled = allscaled
+Title = " "
+branches=3
+
+bmp.set = bmp[row.names(scaled),]
+
+row.names(scaled) = bmp[row.names(scaled),1]
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
+colors = allcolors[1:branches]
+
+
+bmp.set = bmp.set[bmp.set$X.2 == 'ligand',]
+scaled = scaled[bmp.set$X.1,]
+
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = 'Ligand')
+
+
+
+```
+
+
+```{r}
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+row.names(Mhmdata) = bmp[row.names(Mhmdata),1]
+Mhmdata = Mhmdata[row.names(scaled),]
+Mhmdata = Mhmdata[hc$order,]
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+row.names(Fhmdata) = bmp[row.names(Fhmdata),1]
+Fhmdata = Fhmdata[row.names(scaled),]
+Fhmdata = Fhmdata[hc$order,]
+
+heatmaply(Fhmdata[row.names(scaled),],
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "none",
+          Rowv= "NA",
+          Colv="NA",
+          cexRow = .9,
+          main = 'Ligands')
+
+
+
+```
+
+
+
+```{r}
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+row.names(Mhmdata) = bmp[row.names(Mhmdata),1]
+Mhmdata = Mhmdata[row.names(scaled),]
+Mhmdata = Mhmdata[hc$order,]
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+row.names(Fhmdata) = bmp[row.names(Fhmdata),1]
+Fhmdata = Fhmdata[row.names(scaled),]
+Fhmdata = Fhmdata[hc$order,]
+
+heatmaply(Mhmdata[row.names(scaled),],
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "none",
+          Rowv= "NA",
+          Colv="NA",
+          cexRow = .9,
+          main = 'Ligands')
+
+
+
+```
+
+
+```{r}
+
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+
+allscaled = cbind(Fhmdata, Mhmdata)
+allmean = GR.mean[,colnames(allscaled)]
+row.names(allmean) = bmp[row.names(allmean),1]
+
+scaled = allscaled
+Title = " "
+branches=3
+
+bmp.set = bmp[row.names(scaled),]
+
+row.names(scaled) = bmp[row.names(scaled),1]
+
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
+colors = allcolors[1:branches]
+
+
+bmp.set = bmp.set[bmp.set$X.2 == 'receptor',]
+scaled = scaled[bmp.set$X.1,]
+scaled = scaled[row.names(scaled)!='lili',]
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = 'Receptor')
+
+
+
+```
+
+
+```{r}
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+row.names(Mhmdata) = bmp[row.names(Mhmdata),1]
+Mhmdata = Mhmdata[row.names(scaled),]
+Mhmdata = Mhmdata[hc$order,]
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+row.names(Fhmdata) = bmp[row.names(Fhmdata),1]
+Fhmdata = Fhmdata[row.names(scaled),]
+Fhmdata = Fhmdata[hc$order,]
+
+heatmaply(Fhmdata[row.names(scaled),],
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "none",
+          Rowv= "NA",
+          Colv="NA",
+          cexRow = .9,
+          main = 'Receptors')
+
+
+
+```
+
+```{r}
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+row.names(Mhmdata) = bmp[row.names(Mhmdata),1]
+Mhmdata = Mhmdata[row.names(scaled),]
+Mhmdata = Mhmdata[hc$order,]
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+row.names(Fhmdata) = bmp[row.names(Fhmdata),1]
+Fhmdata = Fhmdata[row.names(scaled),]
+Fhmdata = Fhmdata[hc$order,]
+
+heatmaply(Mhmdata[row.names(scaled),],
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "none",
+          Rowv= "NA",
+          Colv="NA",
+          cexRow = .9,
+          main = 'Receptors')
+
+
+
+```
+
+```{r}
+
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+
+allscaled = cbind(Fhmdata, Mhmdata)
+allmean = GR.mean[,colnames(allscaled)]
+row.names(allmean) = bmp[row.names(allmean),1]
+
+scaled = allscaled
+Title = " "
+branches=3
+
+bmp.set = bmp[row.names(scaled),]
+
+row.names(scaled) = bmp[row.names(scaled),1]
+
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
+colors = allcolors[1:branches]
+
+
+bmp.set = c("Mad", "Med", 'smox', 'Dad')
+scaled = scaled[bmp.set,]
+
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = 'Smads')
+
+
+
+```
+
+
+
+```{r}
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+row.names(Mhmdata) = bmp[row.names(Mhmdata),1]
+Mhmdata = Mhmdata[row.names(scaled),]
+Mhmdata = Mhmdata[hc$order,]
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+row.names(Fhmdata) = bmp[row.names(Fhmdata),1]
+Fhmdata = Fhmdata[row.names(scaled),]
+Fhmdata = Fhmdata[hc$order,]
+
+heatmaply(Fhmdata[row.names(scaled),],
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "none",
+          Rowv= "NA",
+          Colv="NA",
+          cexRow = .9,
+          main = 'Smads')
+
+
+
+```
+
+
+
+```{r}
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+row.names(Mhmdata) = bmp[row.names(Mhmdata),1]
+Mhmdata = Mhmdata[row.names(scaled),]
+Mhmdata = Mhmdata[hc$order,]
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+row.names(Fhmdata) = bmp[row.names(Fhmdata),1]
+Fhmdata = Fhmdata[row.names(scaled),]
+Fhmdata = Fhmdata[hc$order,]
+
+heatmaply(Mhmdata[row.names(scaled),],
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "none",
+          Rowv= "NA",
+          Colv="NA",
+          cexRow = .9,
+          main = 'Smads')
+
+
+
+```
+
+```{r}
+
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+#Mhmdata=t(scale(t(hmdata)))
+Mhmdata=hmdata
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+#Fhmdata=t(scale(t(hmdata)))
+Fhmdata=hmdata
+
+
+allscaled = cbind(Fhmdata, Mhmdata)
+allmean = GR.mean[,colnames(allscaled)]
+row.names(allmean) = bmp[row.names(allmean),1]
+
+scaled = allscaled
+Title = " "
+branches=3
+
+
+
+bmp.set = bmp[row.names(scaled),]
+
+
+
+row.names(scaled) = bmp[row.names(scaled),1]
+
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
+colors = allcolors[1:branches]
+
+
+bmp.set = c("cmpy", "nmo", "Neto", "LIMK1", 'trio',
+            "spartin", "GluRIIA", 'GluRIIB', 'Rac1',
+            'spin', 'hiw', 'faf')
+
+scaled = scaled[bmp.set,]
+
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = 'Others')
+
+
+
+```
+
+
+```{r}
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+row.names(Mhmdata) = bmp[row.names(Mhmdata),1]
+Mhmdata = Mhmdata[row.names(scaled),]
+Mhmdata = Mhmdata[hc$order,]
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+row.names(Fhmdata) = bmp[row.names(Fhmdata),1]
+Fhmdata = Fhmdata[row.names(scaled),]
+Fhmdata = Fhmdata[hc$order,]
+
+heatmaply(Fhmdata[row.names(scaled),],
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "none",
+          Rowv= "NA",
+          Colv="NA",
+          cexRow = .9,
+          main = 'Others')
+
+
+
+```
+
+
+
+```{r}
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+row.names(Mhmdata) = bmp[row.names(Mhmdata),1]
+Mhmdata = Mhmdata[row.names(scaled),]
+Mhmdata = Mhmdata[hc$order,]
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+row.names(Fhmdata) = bmp[row.names(Fhmdata),1]
+Fhmdata = Fhmdata[row.names(scaled),]
+Fhmdata = Fhmdata[hc$order,]
+
+heatmaply(Mhmdata[row.names(scaled),],
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "none",
+          Rowv= "NA",
+          Colv="NA",
+          cexRow = .9,
+          main = 'Others')
+
+
+
+```
+```{r}
+
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+
+allscaled = cbind(Fhmdata, Mhmdata)
+allmean = GR.mean[,colnames(allscaled)]
+row.names(allmean) = bmp[row.names(allmean),1]
+
+scaled = allscaled
+Title = " "
+branches=3
+
+bmp.set = bmp[row.names(scaled),]
+
+row.names(scaled) = bmp[row.names(scaled),1]
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
+colors = allcolors[1:branches]
+
+
+bmp.set = bmp.set[bmp.set$X.2 == 'TF',]
+scaled = scaled[bmp.set$X.1,]
+
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = 'Transcription Factor')
+
+
+
+```
+
+
+
+
+```{r}
+
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+
+allscaled = cbind(Fhmdata, Mhmdata)
+allmean = GR.mean[,colnames(allscaled)]
+row.names(allmean) = bmp[row.names(allmean),1]
+
+scaled = allscaled
+Title = " "
+branches=3
+
+bmp.set = bmp[row.names(scaled),]
+
+row.names(scaled) = bmp[row.names(scaled),1]
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
+colors = allcolors[1:branches]
+
+
+bmp.set = bmp.set[bmp.set$pathway.regulator == 'negative',]
+scaled = scaled[bmp.set$X.1,]
+
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = 'Negative Regulators')
+
+
+
+```
+
+```{r}
+
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+
+allscaled = cbind(Fhmdata, Mhmdata)
+allmean = GR.mean[,colnames(allscaled)]
+row.names(allmean) = bmp[row.names(allmean),1]
+
+scaled = allscaled
+Title = " "
+branches=3
+
+bmp.set = bmp[row.names(scaled),]
+
+row.names(scaled) = bmp[row.names(scaled),1]
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
+colors = allcolors[1:branches]
+
+
+bmp.set = bmp.set[bmp.set$pathway.regulator == 'positive',]
+scaled = scaled[bmp.set$X.1,]
+
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = 'Positive Regulators')
+
+
+
+```
+
+
+```{r}
+
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M', 'TktOEWT.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+
+allscaled = cbind(Fhmdata)
+allmean = GR.mean[,colnames(allscaled)]
+row.names(allmean) = bmp[row.names(allmean),1]
+
+scaled = allscaled
+Title = " "
+branches=3
+
+bmp.set = bmp[row.names(scaled),]
+
+row.names(scaled) = bmp[row.names(scaled),1]
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
+colors = allcolors[1:branches]
+
+
+bmp.set = bmp.set[bmp.set$pathway.regulator == 'negative',]
+scaled = scaled[bmp.set$X.1,]
+
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = 'Negative Regulators')
+
+
+
+```
+
+```{r}
+
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M', 'TktOEWT.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+
+allscaled = cbind(Fhmdata)
+allmean = GR.mean[,colnames(allscaled)]
+row.names(allmean) = bmp[row.names(allmean),1]
+
+scaled = allscaled
+Title = " "
+branches=3
+
+bmp.set = bmp[row.names(scaled),]
+
+row.names(scaled) = bmp[row.names(scaled),1]
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
+colors = allcolors[1:branches]
+
+
+bmp.set = bmp.set[bmp.set$pathway.regulator == 'positive',]
+scaled = scaled[bmp.set$X.1,]
+
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = 'Positive Regulators')
+
+
+
+```
+
+
+
+
+```{r}
+
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+
+allscaled = cbind(Mhmdata)
+allmean = GR.mean[,colnames(allscaled)]
+row.names(allmean) = bmp[row.names(allmean),1]
+
+scaled = allscaled
+Title = " "
+branches=3
+
+bmp.set = bmp[row.names(scaled),]
+
+row.names(scaled) = bmp[row.names(scaled),1]
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
+colors = allcolors[1:branches]
+
+
+bmp.set = bmp.set[bmp.set$pathway.regulator == 'negative',]
+scaled = scaled[bmp.set$X.1,]
+
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = 'Negative Regulators')
+
+
+
+```
+
+
+
+```{r}
+
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+
+allscaled = cbind(Mhmdata)
+allmean = GR.mean[,colnames(allscaled)]
+row.names(allmean) = bmp[row.names(allmean),1]
+
+scaled = allscaled
+Title = " "
+branches=3
+
+bmp.set = bmp[row.names(scaled),]
+
+row.names(scaled) = bmp[row.names(scaled),1]
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
+colors = allcolors[1:branches]
+
+
+bmp.set = bmp.set[bmp.set$pathway.regulator == 'positive',]
+scaled = scaled[bmp.set$X.1,]
+
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = 'Positive Regulators')
+
+
+
+```
+
+
+
+
+```{r}
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M', 'TktOEWT.M'),]
+Mhmgroups = hmgroups
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F', 'TktOEWT.F'),]
+Fhmgroups = hmgroups
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+
+allscaled = cbind(Fhmdata,Mhmdata)
+allgroups = rbind(Fhmgroups, Mhmgroups)
+allgroups$Group = paste(allgroups$Genotype, allgroups$TKT)
+allgroups$Labels = paste(row.names(allgroups), allgroups$TKT)
+allmean = GR.mean[,colnames(allscaled)]
+row.names(allmean) = bmp[row.names(allmean),1]
+
+    use.data   = allscaled
+    use.groups = allgroups
+    pca <- prcomp(t(use.data), scale.=TRUE) 
+    gr <- as.data.frame(use.groups)
+    PC1=scale(pca$x[,1])
+    PC2=scale(pca$x[,2])
+    eigs <- pca$sdev^2
+    ve=signif(((eigs / sum(eigs))*100)[1:3],4)
+
+    pca.data=data.frame(Sample=row.names(gr),
+                        PC1=scale(pca$x[,1]),
+                        PC2=scale(pca$x[,2]),
+                        sdev=pca$sdev,
+                        Genotype=gr$Genotype, 
+                        Sex=gr$Sex, 
+                        TKT=gr$TKT,
+                        Percent1=ve[1],
+                        Percent2=ve[2],
+                        Group=gr$Group,
+                        Label = gr$Label)
+
+  fig  = plot_ly(data = pca.data, 
+                 x = ~PC1, 
+                 y = ~PC2,
+                 name = ~Label,
+                 type = 'scatter',
+                 mode = 'markers',
+                 showlegend = T,
+                 color = ~Group,
+                 symbol = ~Sex,
+                 ##symbols = as.character(seq_along(unique(point.data$Set))),
+                 colors = c("firebrick","gold","royalblue", 'darkgreen'),
+                 marker = list(size = 25,
+                               line = list(color = "black", width = 1.5)),
+                 hoverinfo = "text",
+                 hovertext = paste("Sample:", pca.data$Sample)) %>%
+    layout(xaxis = list(title = paste0("PC1", "(", ve[1], "%)")),
+           yaxis = list(title = paste0("PC2", "(", ve[2], "%)")))
+
+fig
+
+```
+
+```{r}
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M', 'TktOEWT.M'),]
+hmgroups = GR.meta[GR.meta$Group %in% row.names(hmgroups),]
+
+hmdata = GR.bmp[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+Mhmgroups = hmgroups
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F', 'TktOEWT.F'),]
+hmgroups = GR.meta[GR.meta$Group %in% row.names(hmgroups),]
+
+hmdata = GR.bmp[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+Fhmgroups = hmgroups
+
+allscaled = cbind(Fhmdata,Mhmdata)
+allgroups = rbind(Fhmgroups, Mhmgroups)
+allgroups$Group = paste(allgroups$Genotype, allgroups$TKT)
+allgroups$Labels = paste(allgroups$Genotype, paste(allgroups$Sex, allgroups$TKT))
+alldata = GR.bmp[,colnames(allscaled)]
+row.names(allmean) = bmp[row.names(allmean),1]
+
+    use.data   = allscaled
+    use.groups = allgroups
+    pca <- prcomp(t(use.data), scale.=TRUE) 
+    gr <- as.data.frame(use.groups)
+    PC1=scale(pca$x[,1])
+    PC2=scale(pca$x[,2])
+    eigs <- pca$sdev^2
+    ve=signif(((eigs / sum(eigs))*100)[1:3],4)
+
+    pca.data=data.frame(Sample=row.names(gr),
+                        PC1=scale(pca$x[,1]),
+                        PC2=scale(pca$x[,2]),
+                        sdev=pca$sdev,
+                        Genotype=gr$Genotype, 
+                        Sex=gr$Sex, 
+                        TKT=gr$TKT,
+                        Percent1=ve[1],
+                        Percent2=ve[2],
+                        Group=gr$Group,
+                        Label = gr$Label)
+
+  fig  = plot_ly(data = pca.data, 
+                 x = ~PC1, 
+                 y = ~PC2,
+                 name = ~Label,
+                 type = 'scatter',
+                 mode = 'markers',
+                 showlegend = T,
+                 color = ~Group,
+                 symbol = ~Sex,
+                 ##symbols = as.character(seq_along(unique(point.data$Set))),
+                 colors = c("firebrick","gold","royalblue", 'darkgreen'),
+                 marker = list(size = 25,
+                               line = list(color = "black", width = 1.5)),
+                 hoverinfo = "text",
+                 hovertext = paste("Sample:", pca.data$Sample)) %>%
+    layout(xaxis = list(title = paste0("PC1", "(", ve[1], "%)")),
+           yaxis = list(title = paste0("PC2", "(", ve[2], "%)")))
+
+fig
+
+```
+
+
+
+
+```{r}
+
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+
+allscaled = cbind(Fhmdata)
+allmean = GR.mean[,colnames(allscaled)]
+row.names(allmean) = bmp[row.names(allmean),1]
+
+scaled = allscaled
+Title = " "
+branches=3
+
+row.names(scaled) = bmp[row.names(scaled),1]
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
+colors = allcolors[1:branches]
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = Title)
+
+
+
+```
+
+
+```{r}
+
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M', 'TktOEWT.M'),]
+hmgroups = GR.meta[GR.meta$Group %in% row.names(hmgroups),]
+
+hmdata = GR.bmp[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F', 'TktOEWT.F'),]
+hmgroups = GR.meta[GR.meta$Group %in% row.names(hmgroups),]
+
+hmdata = GR.bmp[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+
+allscaled = cbind(Fhmdata, Mhmdata)
+row.names(allmean) = bmp[row.names(allmean),1]
+
+scaled = allscaled
+Title = " "
+branches=3
+
+row.names(scaled) = bmp[row.names(scaled),1]
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
+colors = allcolors[1:branches]
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = Title)
+
+
+
+```
+
+
+```{r}
+
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+
+allscaled = cbind(Mhmdata)
+allmean = GR.mean[,colnames(allscaled)]
+row.names(allmean) = bmp[row.names(allmean),1]
+
+scaled = allscaled
+Title = " "
+branches=3
+
+row.names(scaled) = bmp[row.names(scaled),1]
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
+colors = allcolors[1:branches]
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = Title)
+
+
+
+```
+
+
+
+```{r}
+
+GeneIDKey = read.csv(paste0(git.dir,"GeneralDataFiles/GeneIDKey.csv"),row.names = 1)
+Df.data = read.csv(paste0(git.dir,"DeficiencyScreen/DataFiles/DeficiencyModifierGenes.csv"),row.names = 1)
+Df.key = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/DfKey.csv", row.names = 1)
+
+bmp.df = Df.data[row.names(Df.data) %in% row.names(bmp),]
+
+bmp.df = bmp.df[bmp.df$Repress == 1 | bmp.df$Enhancer == 1,]
+
+bmp.df.info = GeneIDKey[row.names(GeneIDKey) %in% row.names(bmp.df),]
+
+bmp.df.info$MLE = 0
+i = 1
+while(i<=nrow(bmp.df.info)){
+  temp = Df.key[Df.key$Chr == bmp.df.info$CHR[i],]
+  temp = temp[(temp$Start < bmp.df.info$Start[i] & temp$End > bmp.df.info$Start[i]) | 
+                (temp$Start < bmp.df.info$End[i] & temp$End > bmp.df.info$End[i]) |
+                (temp$Start > bmp.df.info$Start[i] & temp$End < bmp.df.info$End[i]),]
+  bmp.df.info[i, 'MLE'] = max(as.numeric(temp$MLE))
+  i = i + 1
+}
+
+bmp.df.info = na.omit(bmp.df.info)
+bmp.df.info = bmp.df.info[order(bmp.df.info$MLE),]
+bmp.df.info = bmp.df.info[abs(bmp.df.info$MLE)>=2 & abs(bmp.df.info$MLE)<=100, ]
+bmp.df.info$color = 'brown'
+bmp.df.info$color[bmp.df.info$MLE <= 5] = "orangered3"
+bmp.df.info$color[bmp.df.info$MLE <= 3] = "orange3"
+bmp.df.info$color[bmp.df.info$MLE <= 2.5] = "orange"
+bmp.df.info$color[bmp.df.info$MLE <= 2] = "goldenrod1"
+bmp.df.info$color[bmp.df.info$MLE < 0] = "steelblue"
+
+
+barplot(height = bmp.df.info$MLE,
+        names.arg = bmp.df.info$Symbol,
+        beside =T,
+        horiz = T,
+        las = 1,
+        cex.names = .55,
+        cex.axis = .55,
+        col = bmp.df.info$color,
+        xlim = c(-4,8))
+
+```
+
+
+```{r warning=FALSE}
+
+bmp.df.info = GeneIDKey[row.names(GeneIDKey) %in% row.names(bmp),]
+
+bmp.df.info$MLE = 0
+i = 1
+while(i<=nrow(bmp.df.info)){
+  temp = Df.key[Df.key$Chr == bmp.df.info$CHR[i],]
+  temp = temp[(temp$Start < bmp.df.info$Start[i] & temp$End > bmp.df.info$Start[i]) | 
+                (temp$Start < bmp.df.info$End[i] & temp$End > bmp.df.info$End[i]) |
+                (temp$Start > bmp.df.info$Start[i] & temp$End < bmp.df.info$End[i]),]
+  bmp.df.info[i, 'MLE'] = max(as.numeric(temp$MLE))
+  i = i + 1
+}
+
+bmp.df.info = na.omit(bmp.df.info)
+bmp.df.info = bmp.df.info[order(bmp.df.info$MLE),]
+bmp.df.info = bmp.df.info[abs(bmp.df.info$MLE)<=100, ]
+bmp.df.info$color = 'green4'
+bmp.df.info$color[bmp.df.info$MLE <= 5] = "limegreen"
+bmp.df.info$color[bmp.df.info$MLE <= 3] = "yellowgreen"
+bmp.df.info$color[bmp.df.info$MLE <= 2.5] = "gold"
+bmp.df.info$color[bmp.df.info$MLE <= 2] = "yellow2"
+bmp.df.info$color[bmp.df.info$MLE <= 1.5] = "antiquewhite2"
+bmp.df.info$color[bmp.df.info$MLE <= 1] = "antiquewhite"
+bmp.df.info$color[bmp.df.info$MLE <= .5] = "white"
+bmp.df.info$color[bmp.df.info$MLE < -1] = "antiquewhite"
+bmp.df.info$color[bmp.df.info$MLE <= -1.5] = "antiquewhite2"
+bmp.df.info$color[bmp.df.info$MLE < -2] = "firebrick"
+
+barplot(height = bmp.df.info$MLE,
+        names.arg = bmp.df.info$Symbol,
+        beside =T,
+        horiz = T,
+        las = 1,
+        cex.names = .75,
+        cex.axis = .75,
+        col = bmp.df.info$color,
+        xlim = c(-4,8),
+        xlab = "MLE")
+
+```
+
+

@@ -50,7 +50,7 @@ library(org.Dm.eg.db)
 ##library(performance)
 library(pathview)
 library(visNetwork)
-library(org.Dm.eg.db)
+
 
 ##load all files from github
 git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"

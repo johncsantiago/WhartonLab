@@ -2,7 +2,7 @@
 title: "Russo Manuscript Climbing Plot"
 author: "John Santiago"
 date: "2024-03-29"
-output: pdf_document
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -17,9 +17,378 @@ library(edgeR)
 
 ```
 
+
+```{r include = F, echo = F, include = F}
+
+fig2ab = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Figure 2AB.csv", header = T)
+fig2ab$Sample = paste(fig2ab$Genotype, paste(fig2ab$Sex, fig2ab$Day))
+
+mean.fig2 = rep(0, length(unique(fig2ab$Sample)))
+names(mean.fig2) = unique(fig2ab$Sample)
+var.fig2 = mean.fig2
+
+i=1
+while(i<=length(mean.fig2)){
+  mean.fig2[i] = mean(as.numeric(na.omit(fig2ab[fig2ab$Sample == names(mean.fig2)[i], 'Rate'])))
+  
+    var.fig2[i] = var(as.numeric(na.omit(fig2ab[fig2ab$Sample == names(mean.fig2)[i], 'Rate'])))
+  
+  i = i+1
+}
+
+eb = data.frame(sample = names(mean.fig2),
+                y0 = mean.fig2 - var.fig2,
+                y1 = mean.fig2 + var.fig2)
+
+```
+
+
+```{r echo = F, include = F}
+
+f.fig2ab = fig2ab[fig2ab$Sex == 'F' &
+                  (fig2ab$Day == 3 |
+                  fig2ab$Day == 28 |
+                  fig2ab$Day == 35) &
+                  fig2ab$Genotype != 'w1118',]
+
+f.fig2ab = f.fig2ab[order(fig2ab$Day),]
+f.fig2ab$Sample = paste(f.fig2ab$Genotype, f.fig2ab$Day)
+f.fig2ab$Sample = factor(f.fig2ab$Sample, levels = c('dSodWT 3', 'A4V 3',
+                                                     'dSodWT 28', 'A4V 28',
+                                                     'dSodWT 35', 'A4V 35'))
+f.fig2ab = na.omit(f.fig2ab)
+f.fig2ab$x = as.numeric(f.fig2ab$Sample)
+f.fig2ab$x[f.fig2ab$x > 4] = f.fig2ab$x[f.fig2ab$x > 4] + 1
+f.fig2ab$x[f.fig2ab$x > 2] = f.fig2ab$x[f.fig2ab$x > 2] + 1
+f.fig2ab$color = 'brown'
+f.fig2ab$color[f.fig2ab$Genotype == 'dSodWT'] = 'steelblue'
+f.fig2ab = f.fig2ab[order(f.fig2ab$Rate),]
+f.fig2ab = f.fig2ab[order(f.fig2ab$Sample),]
+f.fig2ab$x.adj = rep(c(-.25, .25 ,0), 12)
+f.fig2ab$x.adj = c(0, -.15, .15, -.1, .1, 0,
+                   0, -.1, .1, -.1, .1, 0,
+                   
+                   -.15, .15, 0, 0, 0, 0,
+                   -.15, .15, 0, 0, 0, 0,
+                   
+                   -.15, .15, 0, -.15, .15, 0,
+                   -.15, .15, 0, -.15, .15, 0)
+
+f.fig2ab$x = f.fig2ab$x + f.fig2ab$x.adj
+
+par(mar=c(5.1, 4.1, 4.1, 5.6))
+
+boxplot(f.fig2ab$Rate~f.fig2ab$Sample,
+        at = c(1,2, 4,5, 7,8),
+        xaxt = 'none',
+        xlab = "Day",
+        ylab = 'Veloxicty (cm/sec)',
+        main = "Female Climbing Velocity")
+points(x = f.fig2ab$x,
+       y = f.fig2ab$Rate,
+       pch = 21,
+       bg = f.fig2ab$color)
+axis(side = 1,
+     at = c(1.5, 4.5, 7.5),
+     labels = c(3, 28,35))
+
+legend('topright',
+       inset=c(-0.175,0),
+       legend = c('Silent', 'A4V'), 
+       fill = c('steelblue', 'brown'),
+       cex = .65,
+       bty = 'n',
+       pt.cex = .5,
+       xpd = T)
+
+
+
+```
+
+
+```{r echo = F, include = F}
+
+m.fig2ab = fig2ab[fig2ab$Sex == 'M' &
+                  (fig2ab$Day == 3 |
+                  fig2ab$Day == 10 |
+                  fig2ab$Day == 16) &
+                  fig2ab$Genotype != 'w1118',]
+
+m.fig2ab = m.fig2ab[order(fig2ab$Day),]
+m.fig2ab$Sample = paste(m.fig2ab$Genotype, m.fig2ab$Day)
+m.fig2ab$Sample = factor(m.fig2ab$Sample, levels = c('dSodWT 3', 'A4V 3',
+                                                     'dSodWT 10', 'A4V 10',
+                                                     'dSodWT 16', 'A4V 16'))
+m.fig2ab = na.omit(m.fig2ab)
+m.fig2ab$x = as.numeric(m.fig2ab$Sample)
+m.fig2ab$x[m.fig2ab$x > 4] = m.fig2ab$x[m.fig2ab$x > 4] + 1
+m.fig2ab$x[m.fig2ab$x > 2] = m.fig2ab$x[m.fig2ab$x > 2] + 1
+m.fig2ab$color = 'brown'
+m.fig2ab$color[m.fig2ab$Genotype == 'dSodWT'] = 'steelblue'
+
+m.fig2ab = m.fig2ab[order(m.fig2ab$Rate),]
+m.fig2ab = m.fig2ab[order(m.fig2ab$Sample),]
+m.fig2ab$x.adj = rep(c(-.25, .25 ,0), 12)
+m.fig2ab$x.adj = c(0, -.25, 0, .25, .15, 0,
+                   0, -.25, 0, .25, -.15, .15,
+                   
+                   0, 0, 0, -.1, .1, 0,
+                   0, 0, -.1, .1, -.1, .1,
+                   
+                   0, 0, 0, 0, 0, 0,
+                   0, -.25, .25, 0, 0, 0)
+
+m.fig2ab$x = m.fig2ab$x + m.fig2ab$x.adj
+
+par(mar=c(5.1, 4.1, 4.1, 5.6))
+
+boxplot(m.fig2ab$Rate~m.fig2ab$Sample,
+        at = c(1,2, 4,5, 7,8),
+        xaxt = 'none',
+        xlab = "Day",
+        ylab = 'Veloxicty (cm/sec)',
+        main = "Male Climbing Velocity")
+points(x = m.fig2ab$x,
+       y = m.fig2ab$Rate,
+       pch = 21,
+       bg = m.fig2ab$color)
+axis(side = 1,
+     at = c(1.5, 4.5, 7.5),
+     labels = c(3, 10, 16))
+
+legend('topright',
+       inset=c(-0.175,0),
+       legend = c('Silent', 'A4V'), 
+       fill = c('steelblue', 'brown'),
+       cex = .65,
+       bty = 'n',
+       pt.cex = .5,
+       xpd = T)
+
+
+
+
+```
+
+
+```{r echo = F, include = F}
+
+f.fig2ab = fig2ab[fig2ab$Sex == 'F' &
+                 (fig2ab$Day == 3 |
+                  fig2ab$Day == 14 |
+                  fig2ab$Day == 24 |
+                  fig2ab$Day == 35) &
+                  fig2ab$Genotype != 'w1118',]
+
+f.fig2ab = f.fig2ab[order(fig2ab$Day),]
+f.fig2ab$Sample = paste(f.fig2ab$Genotype, f.fig2ab$Day)
+f.fig2ab$Sample = factor(f.fig2ab$Sample, levels = c('dSodWT 3', 'A4V 3',
+                                                     'dSodWT 14', 'A4V 14',
+                                                     'dSodWT 24', 'A4V 24',
+                                                     'dSodWT 35', 'A4V 35'))
+f.fig2ab = na.omit(f.fig2ab)
+f.fig2ab$x = as.numeric(f.fig2ab$Sample)
+f.fig2ab$x[f.fig2ab$x > 6] = f.fig2ab$x[f.fig2ab$x > 6] + 1
+f.fig2ab$x[f.fig2ab$x > 4] = f.fig2ab$x[f.fig2ab$x > 4] + 1
+f.fig2ab$x[f.fig2ab$x > 2] = f.fig2ab$x[f.fig2ab$x > 2] + 1
+f.fig2ab$color = 'brown'
+f.fig2ab$color[f.fig2ab$Genotype == 'dSodWT'] = 'steelblue'
+f.fig2ab = f.fig2ab[order(f.fig2ab$Rate),]
+f.fig2ab = f.fig2ab[order(f.fig2ab$Sample),]
+f.fig2ab$x.adj = rep(c(-.25, .25 ,0), 16)
+f.fig2ab$x.adj = c(0, -.25, .25, -.15, .15, 0,
+                   0, -.15, .15, -.15, .15, 0,
+                   
+                   0, 0, .2, -.2, 0, 0,
+                   -.15, .15, 0, 0, -.15, .15,
+                   
+                   0, 0, -.15, .15, 0, 0,
+                   0, .2, -.2, 0, -.15, .15,
+                   
+                   0, -.25, .25, -.15, .15, 0,
+                   -.25, .25, 0, -.25, .25, 0)
+
+f.fig2ab$x = f.fig2ab$x + f.fig2ab$x.adj
+
+par(mar=c(5.1, 4.1, 4.1, 5.6))
+
+boxplot(f.fig2ab$Rate~f.fig2ab$Sample,
+        at = c(1,2, 4,5, 7,8, 10,11),
+        xaxt = 'none',
+        xlab = "Day",
+        ylab = 'Veloxicty (cm/sec)',
+        main = "Female Climbing Velocity")
+points(x = f.fig2ab$x,
+       y = f.fig2ab$Rate,
+       pch = 21,
+       bg = f.fig2ab$color)
+axis(side = 1,
+     at = c(1.5, 4.5, 7.5, 10.5),
+     labels = c(3, 14, 24, 35))
+
+legend('topright',
+       inset=c(-0.175,0),
+       legend = c('Silent', 'A4V'), 
+       fill = c('steelblue', 'brown'),
+       cex = .65,
+       bty = 'n',
+       pt.cex = .5,
+       xpd = T)
+
+
+
+```
+
+
+```{r echo = F, fig.width=7.5}
+
+f.fig2ab = fig2ab[fig2ab$Sex == 'F' &
+                 (fig2ab$Day == 3 |
+                  fig2ab$Day == 14 |
+                  fig2ab$Day == 20 |
+                  fig2ab$Day == 28 |
+                  fig2ab$Day == 35) &
+                  fig2ab$Genotype != 'w1118',]
+
+f.fig2ab = f.fig2ab[order(fig2ab$Day),]
+f.fig2ab$Sample = paste(f.fig2ab$Genotype, f.fig2ab$Day)
+f.fig2ab$Sample = factor(f.fig2ab$Sample, levels = c('dSodWT 3', 'A4V 3',
+                                                     'dSodWT 14', 'A4V 14',
+                                                     'dSodWT 20', 'A4V 20',
+                                                     'dSodWT 28', 'A4V 28',
+                                                     'dSodWT 35', 'A4V 35'))
+f.fig2ab = na.omit(f.fig2ab)
+f.fig2ab$x = as.numeric(f.fig2ab$Sample)
+f.fig2ab$x[f.fig2ab$x > 8] = f.fig2ab$x[f.fig2ab$x > 8] + 1
+f.fig2ab$x[f.fig2ab$x > 6] = f.fig2ab$x[f.fig2ab$x > 6] + 1
+f.fig2ab$x[f.fig2ab$x > 4] = f.fig2ab$x[f.fig2ab$x > 4] + 1
+f.fig2ab$x[f.fig2ab$x > 2] = f.fig2ab$x[f.fig2ab$x > 2] + 1
+f.fig2ab$color = 'brown'
+f.fig2ab$color[f.fig2ab$Genotype == 'dSodWT'] = 'steelblue'
+f.fig2ab = f.fig2ab[order(f.fig2ab$Rate),]
+f.fig2ab = f.fig2ab[order(f.fig2ab$Sample),]
+f.fig2ab$x.adj = rep(c(-.25, .25 ,0), 20)
+f.fig2ab$x.adj = c(0, -.25, .25, -.15, .15, 0,
+                   0, -.15, .15, -.15, .15, 0,
+                   
+                   0, 0, .2, -.2, 0, 0,
+                   -.15, .15, 0, 0, -.15, .15,
+                   
+                   0, 0, -.15, .15, 0, 0,
+                   0, 0, -.25, .25, 0, 0,
+                   
+                   0, -.25, .25, 0, 0, 0,
+                   -.15, .15, 0, 0, 0, 0,
+                   
+                   0, -.25, .25, -.15, .15, 0,
+                   -.25, .25, 0, -.25, .25, 0)
+
+f.fig2ab$x = f.fig2ab$x + f.fig2ab$x.adj
+
+par(mar=c(5.1, 4.1, 4.1, 5.6))
+
+boxplot(f.fig2ab$Rate~f.fig2ab$Sample,
+        at = c(1,2, 4,5, 7,8, 10,11, 13,14),
+        xaxt = 'none',
+        xlab = "Day",
+        ylab = 'Veloxicty (cm/sec)',
+        main = "Female Climbing Velocity")
+points(x = f.fig2ab$x,
+       y = f.fig2ab$Rate,
+       pch = 21,
+       bg = f.fig2ab$color)
+axis(side = 1,
+     at = c(1.5, 4.5, 7.5, 10.5, 13.5),
+     labels = c(3, 14, 20, 28, 35))
+
+legend('topright',
+       inset=c(-0.175,0),
+       legend = c('Silent', 'A4V'), 
+       fill = c('steelblue', 'brown'),
+       cex = 1,
+       bty = 'n',
+       pt.cex = .5,
+       xpd = T)
+
+
+
+```
+
+
+```{r echo = F, fig.width=7.5}
+
+m.fig2ab = fig2ab[fig2ab$Sex == 'M' &
+                 (fig2ab$Day == 3 |
+                  fig2ab$Day == 7 |
+                  fig2ab$Day == 12 |
+                  fig2ab$Day == 16) &
+                  fig2ab$Genotype != 'w1118',]
+
+m.fig2ab = m.fig2ab[order(fig2ab$Day),]
+m.fig2ab$Sample = paste(m.fig2ab$Genotype, m.fig2ab$Day)
+m.fig2ab$Sample = factor(m.fig2ab$Sample, levels = c('dSodWT 3', 'A4V 3',
+                                                     'dSodWT 7', 'A4V 7',
+                                                     'dSodWT 12', 'A4V 12',
+                                                     'dSodWT 16', 'A4V 16'))
+m.fig2ab = na.omit(m.fig2ab)
+m.fig2ab$x = as.numeric(m.fig2ab$Sample)
+m.fig2ab$x[m.fig2ab$x > 6] = m.fig2ab$x[m.fig2ab$x > 6] + 1
+m.fig2ab$x[m.fig2ab$x > 4] = m.fig2ab$x[m.fig2ab$x > 4] + 1
+m.fig2ab$x[m.fig2ab$x > 2] = m.fig2ab$x[m.fig2ab$x > 2] + 1
+m.fig2ab$color = 'brown'
+m.fig2ab$color[m.fig2ab$Genotype == 'dSodWT'] = 'steelblue'
+
+m.fig2ab = m.fig2ab[order(m.fig2ab$Rate),]
+m.fig2ab = m.fig2ab[order(m.fig2ab$Sample),]
+m.fig2ab$x.adj = rep(c(-.25, .25 ,0), 16)
+m.fig2ab$x.adj = c(0, -.25, .25, 0, -.1, .1,
+                   0, -.25, .25, .0, -.1, .1,
+                   
+                   0, 0, -.1, .1, 0, 0,
+                   0, -.1, .1, 0, 0, 0,
+                   
+                   0, -.1, .1, 0, 0, 0,
+                   0, -.1, .1, 0, -.1, .1,
+                   
+                   0, -.25, 0, .25, .15, 0,
+                   0, -.25, 0, .25, -.15, .15)
+
+m.fig2ab$x = m.fig2ab$x + m.fig2ab$x.adj
+
+par(mar=c(5.1, 4.1, 4.1, 5.6))
+
+boxplot(m.fig2ab$Rate~m.fig2ab$Sample,
+        at = c(1,2, 4,5, 7,8, 10,11),
+        xaxt = 'none',
+        xlab = "Day",
+        ylab = 'Veloxicty (cm/sec)',
+        main = "Male Climbing Velocity")
+points(x = m.fig2ab$x,
+       y = m.fig2ab$Rate,
+       pch = 21,
+       bg = m.fig2ab$color)
+axis(side = 1,
+     at = c(1.5, 4.5, 7.5, 10.5),
+     labels = c(3, 7, 12, 16))
+
+legend('topright',
+       inset=c(-0.175,0),
+       legend = c('Silent', 'A4V'), 
+       fill = c('steelblue', 'brown'),
+       cex = 1,
+       bty = 'n',
+       pt.cex = .5,
+       xpd = T)
+
+
+
+
+```
+
+
 ```{r include = F, echo = F}
 
-fig4ab = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Figure 4AB Climbing Data ok371 cha gbb climbing cm_sec.csv", header = T)
+fig4ab = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Figure 4AB.csv", header = T)
 
 female = fig4ab[grep('f', fig4ab$vial_ID),]
 male = fig4ab[grep('m', fig4ab$vial_ID),]
@@ -43,6 +412,228 @@ while(i<=nrow(fcha.mean)){
 fcha.mean = fcha.mean[order(fcha.mean$day),]
 
 
+m.con = na.omit(male[male$geno == 'silent' | male$geno == 'A4V',])
+m.cha = na.omit(male[grep('cha', male$geno),])
+
+mallcha = rbind(m.con, m.cha)
+mallcha$sample = paste0(mallcha$geno, mallcha$day)
+
+mcha.mean = unique(mallcha[,c('geno', 'day')])
+mcha.mean$sample = paste0(mcha.mean$geno, mcha.mean$day)
+mcha.mean$mean = 0
+
+i=1
+while(i<=nrow(mcha.mean)){
+  mcha.mean$mean[i] = mean(mallcha[mallcha$sample == mcha.mean$sample[i], 'corrected.values'])
+  i = i+1
+}
+
+mcha.mean = mcha.mean[order(mcha.mean$day),]
+
+
+
+```
+
+
+```{r echo = F, include = F}
+
+f.fig4a = fig4ab[grep('f', fig4ab$vial_ID),]
+f.fig4a = f.fig4a[f.fig4a$day == 6 |
+                  f.fig4a$day == 13 |
+                  #f.fig4a$day == 19 |
+                  f.fig4a$day == 27,]
+
+f.fig4a$Sample = paste(f.fig4a$geno, f.fig4a$day)
+f.fig4a$geno = factor(f.fig4a$geno, levels = c("silent", 'silentcha', 'silentok',
+                                               'A4V', 'A4Vcha', 'A4Vok'))
+
+f.fig4a = f.fig4a[order(f.fig4a$day),]
+f.fig4a = f.fig4a[order(f.fig4a$geno),]
+f.fig4a$Sample = factor(f.fig4a$Sample, levels = unique(f.fig4a$Sample))
+
+f.fig4a = na.omit(f.fig4a)
+f.fig4a$x = as.numeric(f.fig4a$Sample)
+f.fig4a$x[f.fig4a$x > 15] = f.fig4a$x[f.fig4a$x > 15] + 1
+f.fig4a$x[f.fig4a$x > 12] = f.fig4a$x[f.fig4a$x > 12] + 1
+f.fig4a$x[f.fig4a$x > 9] = f.fig4a$x[f.fig4a$x > 9] + 2
+f.fig4a$x[f.fig4a$x > 6] = f.fig4a$x[f.fig4a$x > 6] + 1
+f.fig4a$x[f.fig4a$x > 3] = f.fig4a$x[f.fig4a$x > 3] + 1
+#f.fig4a$x[f.fig4a$x > 18] = f.fig4a$x[f.fig4a$x > 18] + 1
+#f.fig4a$x[f.fig4a$x > 12] = f.fig4a$x[f.fig4a$x > 12] + 1
+#f.fig4a$x[f.fig4a$x > 6] = f.fig4a$x[f.fig4a$x > 6] + 1
+f.fig4a$color = 'steelblue'
+f.fig4a$color[f.fig4a$geno == 'A4V'] = 'navy'
+f.fig4a$color[f.fig4a$geno == 'silentcha'] = 'limegreen'
+f.fig4a$color[f.fig4a$geno == 'A4Vcha'] = 'darkgreen'
+f.fig4a$color[f.fig4a$geno == 'silentok'] = 'brown1'
+f.fig4a$color[f.fig4a$geno == 'A4Vok'] = 'firebrick'
+
+f.fig4a = f.fig4a[order(f.fig4a$corrected.values),]
+f.fig4a = f.fig4a[order(f.fig4a$Sample),]
+f.fig4a$x.adj = rep(c(-.25, .25 ,0), 36)
+
+
+f.fig4a$x = f.fig4a$x + f.fig4a$x.adj
+
+par(mar=c(5.1, 4.1, 4.1, 5.6))
+
+boxplot(f.fig4a$corrected.values~f.fig4a$Sample,
+        ##at = c(1:6, 8:13, 15:20, 22:27),
+        at = c(1:3, 5:7, 9:11, 14:16, 18:20, 22:24),
+        xaxt = 'none',
+        xlab = "Day",
+        ylab = 'Veloxicty (cm/sec)',
+        main = "Female Climbing Velocity")
+points(x = f.fig4a$x,
+       y = f.fig4a$corrected.values,
+       pch = 21,
+       bg = f.fig4a$color,
+       cex = 1)
+axis(side = 1,
+     #at = c(3.5, 10.5, 17.5, 24.5),
+     at = c(1:3, 5:7, 9:11, 14:16, 18:20, 22:24),
+     labels = c(rep("", 18)),
+     cex.axis = .5,
+     line = 0)
+
+axis(side = 1,
+     #at = c(3.5, 10.5, 17.5, 24.5),
+     at = c(1:3, 5:7, 9:11, 14:16, 18:20, 22:24),
+     labels = c(rep(c(6, 13, 27), 6)),
+     cex.axis = .5,
+     tick = F,
+     line = -.5)
+
+axis(side = 3,
+     #at = c(3.5, 10.5, 17.5, 24.5),
+     at = c(6, 19),
+     labels = c('Silent', 'A4V'),
+     cex.axis = 1,
+     tick = F,
+     line = -.75)
+
+legend('topright',
+       inset=c(-0.225,0),
+       legend = c('Silent', 'A4V',
+                  'ChAT>gbb;Silent', 'ChAT>gbb;A4V',
+                  'OK371>gbb;Silent', 'OK371>gbb;A4V'), 
+       fill = c('steelblue', 'limegreen', 'brown1',
+                'navy', 'darkgreen', 'firebrick'),
+       cex = .65,
+       bty = 'n',
+       pt.cex = .75,
+       xpd = T)
+
+
+abline(v = 12.5, lty = 2, lwd =2)
+
+
+
+```
+
+
+```{r echo = F, include = F}
+
+f.fig4a = fig4ab[grep('f', fig4ab$vial_ID),]
+f.fig4a = f.fig4a[f.fig4a$day == 6 |
+                  f.fig4a$day == 13 |
+                  #f.fig4a$day == 19 |
+                  f.fig4a$day == 27,]
+
+f.fig4a$Sample = paste(f.fig4a$geno, f.fig4a$day)
+f.fig4a$geno = factor(f.fig4a$geno, levels = c("silent", 'A4V',
+                                               'silentcha', 'A4Vcha',
+                                               'silentok', 'A4Vok'))
+
+f.fig4a = f.fig4a[order(f.fig4a$day),]
+f.fig4a = f.fig4a[order(f.fig4a$geno),]
+f.fig4a$Sample = factor(f.fig4a$Sample, levels = unique(f.fig4a$Sample))
+
+f.fig4a = na.omit(f.fig4a)
+f.fig4a$x = as.numeric(f.fig4a$Sample)
+f.fig4a$x[f.fig4a$x > 15] = f.fig4a$x[f.fig4a$x > 15] + 1
+f.fig4a$x[f.fig4a$x > 12] = f.fig4a$x[f.fig4a$x > 12] + 2
+f.fig4a$x[f.fig4a$x > 9] = f.fig4a$x[f.fig4a$x > 9] + 1
+f.fig4a$x[f.fig4a$x > 6] = f.fig4a$x[f.fig4a$x > 6] + 2
+f.fig4a$x[f.fig4a$x > 3] = f.fig4a$x[f.fig4a$x > 3] + 1
+#f.fig4a$x[f.fig4a$x > 18] = f.fig4a$x[f.fig4a$x > 18] + 1
+#f.fig4a$x[f.fig4a$x > 12] = f.fig4a$x[f.fig4a$x > 12] + 1
+#f.fig4a$x[f.fig4a$x > 6] = f.fig4a$x[f.fig4a$x > 6] + 1
+f.fig4a$color = 'steelblue'
+f.fig4a$color[f.fig4a$geno == 'A4V'] = 'navy'
+f.fig4a$color[f.fig4a$geno == 'silentcha'] = 'limegreen'
+f.fig4a$color[f.fig4a$geno == 'A4Vcha'] = 'darkgreen'
+f.fig4a$color[f.fig4a$geno == 'silentok'] = 'brown1'
+f.fig4a$color[f.fig4a$geno == 'A4Vok'] = 'firebrick'
+
+f.fig4a = f.fig4a[order(f.fig4a$corrected.values),]
+f.fig4a = f.fig4a[order(f.fig4a$Sample),]
+f.fig4a$x.adj = rep(c(-.25, .25 ,0), 36)
+
+
+f.fig4a$x = f.fig4a$x + f.fig4a$x.adj
+
+par(mar=c(5.1, 4.1, 4.1, 5.6))
+
+boxplot(f.fig4a$corrected.values~f.fig4a$Sample,
+        ##at = c(1:6, 8:13, 15:20, 22:27),
+        at = c(1:3, 5:7, 10:12, 14:16, 19:21, 23:25),
+        xaxt = 'none',
+        xlab = "Day",
+        ylab = 'Veloxicty (cm/sec)',
+        main = "Female Climbing Velocity")
+points(x = f.fig4a$x,
+       y = f.fig4a$corrected.values,
+       pch = 21,
+       bg = f.fig4a$color,
+       cex = 1)
+axis(side = 1,
+     #at = c(3.5, 10.5, 17.5, 24.5),
+     at = c(1:3, 5:7, 10:12, 14:16, 19:21, 23:25),
+     labels = c(rep("", 18)),
+     cex.axis = .5,
+     line = 0)
+
+axis(side = 1,
+     #at = c(3.5, 10.5, 17.5, 24.5),
+     at = c(1:3, 5:7, 10:12, 14:16, 19:21, 23:25),
+     labels = c(rep(c(6, 13, 27), 6)),
+     cex.axis = .75,
+     tick = F,
+     line = -.5)
+axis(side = 1,
+     #at = c(3.5, 10.5, 17.5, 24.5),
+     at = c(2, 6, 11, 15, 20, 24),
+     labels = c(rep(c('Silent', 'A4V'), 3)),
+     cex.axis = 1,
+     tick = F,
+     line = .5)
+
+axis(side = 3,
+     #at = c(3.5, 10.5, 17.5, 24.5),
+     at = c(4, 13, 22),
+     labels = c('Control', 'ChAT>gbb', 'OK371>gbb'),
+     cex.axis = 1,
+     tick = F,
+     line = -.75)
+
+legend('topright',
+       inset=c(-0.225,0),
+       legend = c('Silent', 'A4V',
+                  'ChAT>gbb;Silent', 'ChAT>gbb;A4V',
+                  'OK371>gbb;Silent', 'OK371>gbb;A4V'), 
+       fill = c('steelblue', 'navy',
+                'limegreen', 'darkgreen',
+                'brown1', 'firebrick'),
+       cex = .65,
+       bty = 'n',
+       pt.cex = .75,
+       xpd = T)
+
+
+abline(v = c(8.5, 17.5), lty = 2, lwd =2)
+
+
 
 ```
 
@@ -64,7 +655,7 @@ plot_ly(x = fallcha$day,
 ```
 
 
-```{r echo = F}
+```{r echo = F, include = F}
 
 female = fig4ab[grep('f', fig4ab$vial_ID),]
 female$sample = paste0(female$geno, female$day)
@@ -111,235 +702,147 @@ eb$y1 = fmean$mean + fstd$std
 ```
 
 
-```{r echo = F}
+```{r echo = F, include = F}
 
-norm.female = na.omit(female)
-norm.female$normval = 0
-i=1
-while(i <= nrow(norm.female)){
-  norm.female$normval[i] = norm.female$corrected.values[i]/
-    fmean$mean[fmean$geno == 'silent' & fmean$day == norm.female$day[i]]
-  i = i +1
-}
+male = fig4ab[grep('m', fig4ab$vial_ID),]
+male$sample = paste0(male$geno, male$day)
 
-norm.fmean = unique(norm.female[,c('geno', 'day', 'sample')])
-norm.fstd = norm.fmean
-norm.feb = norm.fmean
-norm.fmean$mean = 0
-norm.fstd$std = 0
+mmean = unique(male[,c('geno', 'day', 'sample')])
+mstd = mmean
+eb = mmean
+mmean$mean = 0
+mstd$std = 0
 
 i=1
-while(i<=nrow(norm.fmean)){
-  norm.fmean$mean[i] = mean(na.omit(norm.female[norm.female$sample == norm.fmean$sample[i], 'normval']))
+while(i<=nrow(mmean)){
+  mmean$mean[i] = mean(na.omit(male[male$sample == mmean$sample[i], 'corrected.values']))
   
-  norm.fstd$std[i] = (var(na.omit(norm.female[norm.female$sample == norm.fmean$sample[i], 'normval'])))
+  mstd$std[i] = (var(na.omit(male[male$sample == mmean$sample[i], 'corrected.values'])))
   
   i = i+1
 }
 
-norm.fmean = norm.fmean[order(norm.fmean$day),]
-norm.fstd = norm.fstd[order(norm.fstd$day),]
-norm.feb = norm.feb[order(norm.feb$day),]
-
-norm.feb$y0 = norm.fmean$mean - norm.fstd$std
-norm.feb$y1 = norm.fmean$mean + norm.fstd$std
-
-norm.flm = data.frame(geno = unique(norm.female$geno),
+mlm = data.frame(geno = unique(male$geno),
                 x0 = 2,
                 x1 = 27,
                 y0 = 0,
                 y1 = 0)
 
 i=1
-while(i<=nrow(norm.flm)){
-  temp=na.omit(norm.female[norm.female$geno == norm.flm$geno[i], ])
-  temp.lm = lm(temp$normval~temp$day)
-  norm.flm$y0[i] = temp.lm[[1]][2]*2 + temp.lm[[1]][1]
-  norm.flm$y1[i] = temp.lm[[1]][2]*27 + temp.lm[[1]][1]
+while(i<=nrow(mlm)){
+  temp=na.omit(male[male$geno == mlm$geno[i], ])
+  temp.lm = lm(temp$corrected.values~temp$day)
+  mlm$y0[i] = temp.lm[[1]][2]*2 + temp.lm[[1]][1]
+  mlm$y1[i] = temp.lm[[1]][2]*27 + temp.lm[[1]][1]
   i = i +1
 }
 
-row.names(norm.flm) = norm.flm$geno
+row.names(mlm) = mlm$geno
+
+mmean = mmean[order(mmean$day),]
+mstd = mstd[order(mstd$day),]
+eb = eb[order(eb$day),]
+
+eb$y0 = mmean$mean - mstd$std
+eb$y1 = mmean$mean + mstd$std
 
 ```
 
-```{r echo = F, fig.height=10}
 
-silent = norm.fmean[norm.fmean$geno == "silent", ]
-a4v = norm.fmean[norm.fmean$geno == "A4V", ]
-silentcha = norm.fmean[norm.fmean$geno == "silentcha", ]
-a4vcha = norm.fmean[norm.fmean$geno == "A4Vcha", ]
-silentok = norm.fmean[norm.fmean$geno == "silentok", ]
-a4vok = norm.fmean[norm.fmean$geno == "A4Vok", ]
+```{r echo = F, fig.width=10}
 
-ls = norm.fmean[norm.fmean$geno == 'silent',]
-la = norm.fmean[norm.fmean$geno == 'A4V',]
-lsc = norm.fmean[norm.fmean$geno == 'silentcha',]
-lac = norm.fmean[norm.fmean$geno == 'A4Vcha',]
-lso = norm.fmean[norm.fmean$geno == 'silentok',]
-lao = norm.fmean[norm.fmean$geno == 'A4Vok',]
-
-
+lcol = c('steelblue', 'navy', 'limegreen', 'darkgreen', 'brown1', 'firebrick', 'grey')
 pcol = c('steelblue', 'navy', 'limegreen', 'darkgreen', 'brown1', 'firebrick', 'grey')
-
 hex = function(color, alpha){
   rgbvals = col2rgb(color)
   rgb2hex = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
   return(rgb2hex)
 }
 
-par(mar=c(5.1, 4.1, 4.1, 9.1))
+par(mar=c(5.1, 4.1, 4.1, 15.1))
 
 plot(x = NA,
       y = NA,
      type = 'n',
-     ylim = c(0,1.85),
+     ylim = c(0, max(c(fmean$mean, mmean$mean))),
      xlim = c(2,27),
-     ylab = 'Relative Velocity (cm/s)',
+     ylab = 'Mean Velocity (cm/s)',
      xlab = 'Day',
      xaxt = 'n',
      main = "Females")
 
-axis(1, at=silent$day)
+axis(1, at = fmean[fmean$geno == 'silent', 'day'])
 
-abline(v = 2, lty =2, lwd = 1, col = hex(pcol[7], .5))
-abline(v = 6, lty =2, lwd = 1, col = hex(pcol[7], .5))
-abline(v = 9, lty =2, lwd = 1, col = hex(pcol[7], .5))
-abline(v = 13, lty =2, lwd = 1, col = hex(pcol[7], .5))
-abline(v = 19, lty =2, lwd = 1, col = hex(pcol[7], .5))
-abline(v = 22, lty =2, lwd = 1, col = hex(pcol[7], .5))
-abline(v = 27, lty =2, lwd = 1, col = hex(pcol[7], .5))
-
-lines(x = norm.flm['silent', c("x0", "x1")],
-      y = norm.flm['silent', c("y0", "y1")],
+lines(x = fmean[fmean$geno == 'silent', 'day'],
+      y = fmean[fmean$geno == 'silent', 'mean'],
       type = 'l',
-      col = pcol[1],
+      col = lcol[1],
       lwd = 2)
 
-lines(x = norm.flm['A4V', c("x0", "x1")],
-      y = norm.flm['A4V', c("y0", "y1")],
+lines(x = fmean[fmean$geno == 'A4V', 'day'],
+      y = fmean[fmean$geno == 'A4V', 'mean'],
       type = 'l',
       col = pcol[2],
       lwd = 2)
 
-lines(x = norm.flm['silentcha', c("x0", "x1")],
-      y = norm.flm['silentcha', c("y0", "y1")],
+lines(x = fmean[fmean$geno == 'silentcha', 'day'],
+      y = fmean[fmean$geno == 'silentcha', 'mean'],
       type = 'l',
       col = pcol[3],
       lwd = 2)
 
-lines(x = norm.flm['A4Vcha', c("x0", "x1")],
-      y = norm.flm['A4Vcha', c("y0", "y1")],
+lines(x = fmean[fmean$geno == 'A4Vcha', 'day'],
+      y = fmean[fmean$geno == 'A4Vcha', 'mean'],
       type = 'l',
       col = pcol[4],
       lwd = 2)
 
-lines(x = norm.flm['silentok', c("x0", "x1")],
-      y = norm.flm['silentok', c("y0", "y1")],
+lines(x = fmean[fmean$geno == 'silentok', 'day'],
+      y = fmean[fmean$geno == 'silentok', 'mean'],
       type = 'l',
       col = pcol[5],
       lwd = 2)
 
-lines(x = norm.flm['A4Vok', c("x0", "x1")],
-      y = norm.flm['A4Vok', c("y0", "y1")],
+lines(x = fmean[fmean$geno == 'A4Vok', 'day'],
+      y = fmean[fmean$geno == 'A4Vok', 'mean'],
       type = 'l',
       col = pcol[6],
       lwd = 2)
 
 
-arrows(x0 = norm.feb$day[norm.feb$geno == 'silent'],
-       x1 = norm.feb$day[norm.feb$geno == 'silent'],
-       y0 = norm.feb$y0[norm.feb$geno == 'silent'],
-       y1 = norm.feb$y1[norm.feb$geno == 'silent'], 
-       code = 3, 
-       angle = 90, 
-       length = 0.1, 
-       col = pcol[1], 
-       lwd=1)
 
-arrows(x0 = norm.feb$day[norm.feb$geno == 'A4V'],
-       x1 = norm.feb$day[norm.feb$geno == 'A4V'],
-       y0 = norm.feb$y0[norm.feb$geno == 'A4V'],
-       y1 = norm.feb$y1[norm.feb$geno == 'A4V'], 
-       code = 3, 
-       angle = 90, 
-       length = 0.1, 
-       col = pcol[2], 
-       lwd=1)
-
-arrows(x0 = norm.feb$day[norm.feb$geno == 'silentcha'],
-       x1 = norm.feb$day[norm.feb$geno == 'silentcha'],
-       y0 = norm.feb$y0[norm.feb$geno == 'silentcha'],
-       y1 = norm.feb$y1[norm.feb$geno == 'silentcha'], 
-       code = 3, 
-       angle = 90, 
-       length = 0.1, 
-       col = pcol[3], 
-       lwd=1)
-
-arrows(x0 = norm.feb$day[norm.feb$geno == 'A4Vcha'],
-       x1 = norm.feb$day[norm.feb$geno == 'A4Vcha'],
-       y0 = norm.feb$y0[norm.feb$geno == 'A4Vcha'],
-       y1 = norm.feb$y1[norm.feb$geno == 'A4Vcha'], 
-       code = 3, 
-       angle = 90, 
-       length = 0.1, 
-       col = pcol[4], 
-       lwd=1)
-
-arrows(x0 = norm.feb$day[norm.feb$geno == 'silentok'],
-       x1 = norm.feb$day[norm.feb$geno == 'silentok'],
-       y0 = norm.feb$y0[norm.feb$geno == 'silentok'],
-       y1 = norm.feb$y1[norm.feb$geno == 'silentok'], 
-       code = 3, 
-       angle = 90, 
-       length = 0.1, 
-       col = pcol[5], 
-       lwd=1)
-
-arrows(x0 = norm.feb$day[norm.feb$geno == 'A4Vok'],
-       x1 = norm.feb$day[norm.feb$geno == 'A4Vok'],
-       y0 = norm.feb$y0[norm.feb$geno == 'A4Vok'],
-       y1 = norm.feb$y1[norm.feb$geno == 'A4Vok'], 
-       code = 3, 
-       angle = 90, 
-       length = 0.1, 
-       col = pcol[6], 
-       lwd=1)
-
-
-points(x = silent$day,
-       y = silent$mean,
+points(x = fmean[fmean$geno == 'silent', 'day'],
+       y = fmean[fmean$geno == 'silent', 'mean'],
        bg = 'white',
        col = 'white',
        pch = 23,
        cex =2)
-points(x = a4v$day,
-       y = a4v$mean,
+points(x = fmean[fmean$geno == 'A4V', 'day'],
+       y = fmean[fmean$geno == 'A4V', 'mean'],
        bg = 'white',
        col = 'white',
        pch = 21,
        cex =2)
-points(x = silentcha$day,
-       y = silentcha$mean,
+points(x = fmean[fmean$geno == 'silentcha', 'day'],
+       y = fmean[fmean$geno == 'silentcha', 'mean'],
        bg = 'white',
        col = 'white',
        pch = 23,
        cex =2)
-points(x = a4vcha$day,
-       y = a4vcha$mean,
+points(x = fmean[fmean$geno == 'A4Vcha', 'day'],
+       y = fmean[fmean$geno == 'A4Vcha', 'mean'],
        bg = 'white',
        col = 'white',
        pch = 21,
        cex =2)
-points(x = silentok$day,
-       y = silentok$mean,
+points(x = fmean[fmean$geno == 'silentok', 'day'],
+       y = fmean[fmean$geno == 'silentok', 'mean'],
        bg = 'white',
        col = 'white',
        pch = 23,
        cex =2)
-points(x = a4vok$day,
-       y = a4vok$mean,
+points(x = fmean[fmean$geno == 'A4Vok', 'day'],
+       y = fmean[fmean$geno == 'A4Vok', 'mean'],
        bg = 'white',
        col = 'white',
        pch = 21,
@@ -347,39 +850,39 @@ points(x = a4vok$day,
 
 
 
-points(x = silent$day,
-       y = silent$mean,
+points(x = fmean[fmean$geno == 'silent', 'day'],
+       y = fmean[fmean$geno == 'silent', 'mean'],
        bg = hex(pcol[1], .5),
        col = pcol[1],
        pch = 23,
        cex =2)
 
-points(x = a4v$day,
-       y = a4v$mean,
+points(x = fmean[fmean$geno == 'A4V', 'day'],
+       y = fmean[fmean$geno == 'A4V', 'mean'],
        bg = hex(pcol[2], .5),
        col = pcol[2],
        pch = 21,
        cex =2)
-points(x = silentcha$day,
-       y = silentcha$mean,
+points(x = fmean[fmean$geno == 'silentcha', 'day'],
+       y = fmean[fmean$geno == 'silentcha', 'mean'],
        bg = hex(pcol[3], .5),
        col = pcol[3],
        pch = 23,
        cex =2)
-points(x = a4vcha$day,
-       y = a4vcha$mean,
+points(x = fmean[fmean$geno == 'A4Vcha', 'day'],
+       y = fmean[fmean$geno == 'A4Vcha', 'mean'],
        bg = hex(pcol[4], .5),
        col = pcol[4],
        pch = 21,
        cex =2)
-points(x = silentok$day,
-       y = silentok$mean,
+points(x = fmean[fmean$geno == 'silentok', 'day'],
+       y = fmean[fmean$geno == 'silentok', 'mean'],
        bg = hex(pcol[5], .5),
        col = pcol[5],
        pch = 23,
        cex =2)
-points(x = a4vok$day,
-       y = a4vok$mean,
+points(x = fmean[fmean$geno == 'A4Vok', 'day'],
+       y = fmean[fmean$geno == 'A4Vok', 'mean'],
        bg = hex(pcol[6], .5),
        col = pcol[6],
        pch = 21,
@@ -396,19 +899,583 @@ legend(x = 29,
                   'ChAT>gbb;Silent', 'ChAT>gbb;A4V', 
                   'OK371>gbb;Silent', 'OK371>gbb;A4V'),
        pch = c(23,21,23,21,23,21),
-       pt.bg = c(pcol[1], pcol[2], pcol[3],
-                pcol[4], pcol[5], pcol[6]),
+       pt.bg = c(hex(pcol[1], .5), hex(pcol[2], .5), hex(pcol[3], .5),
+                hex(pcol[4], .5), hex(pcol[5], .5), hex(pcol[6], .5)),
        bty = 'n',
        y.intersp = 1,
        pt.cex = 2,
        xpd=TRUE)
 
+```
+
+
+```{r echo = F, fig.width=10}
+
+lcol = c('steelblue', 'navy', 'limegreen', 'darkgreen', 'brown1', 'firebrick', 'grey')
+pcol = c('steelblue', 'navy', 'limegreen', 'darkgreen', 'brown1', 'firebrick', 'grey')
+hex = function(color, alpha){
+  rgbvals = col2rgb(color)
+  rgb2hex = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+  return(rgb2hex)
+}
+
+par(mar=c(5.1, 4.1, 4.1, 15.1))
+
+plot(x = NA,
+      y = NA,
+     type = 'n',
+     ylim = c(0, max(c(fmean$mean, mmean$mean))),
+     xlim = c(2,27),
+     ylab = 'Mean Velocity (cm/s)',
+     xlab = 'Day',
+     xaxt = 'n',
+     main = "Males")
+
+axis(1, at = mmean[mmean$geno == 'silent', 'day'])
+
+lines(x = mmean[mmean$geno == 'silent', 'day'],
+      y = mmean[mmean$geno == 'silent', 'mean'],
+      type = 'l',
+      col = lcol[1],
+      lwd = 2)
+
+lines(x = mmean[mmean$geno == 'A4V', 'day'],
+      y = mmean[mmean$geno == 'A4V', 'mean'],
+      type = 'l',
+      col = pcol[2],
+      lwd = 2)
+
+lines(x = mmean[mmean$geno == 'silentcha', 'day'],
+      y = mmean[mmean$geno == 'silentcha', 'mean'],
+      type = 'l',
+      col = pcol[3],
+      lwd = 2)
+
+lines(x = mmean[mmean$geno == 'A4Vcha', 'day'],
+      y = mmean[mmean$geno == 'A4Vcha', 'mean'],
+      type = 'l',
+      col = pcol[4],
+      lwd = 2)
+
+lines(x = mmean[mmean$geno == 'silentok', 'day'],
+      y = mmean[mmean$geno == 'silentok', 'mean'],
+      type = 'l',
+      col = pcol[5],
+      lwd = 2)
+
+lines(x = mmean[mmean$geno == 'A4Vok', 'day'],
+      y = mmean[mmean$geno == 'A4Vok', 'mean'],
+      type = 'l',
+      col = pcol[6],
+      lwd = 2)
+
+
+
+points(x = mmean[mmean$geno == 'silent', 'day'],
+       y = mmean[mmean$geno == 'silent', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = mmean[mmean$geno == 'A4V', 'day'],
+       y = mmean[mmean$geno == 'A4V', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+points(x = mmean[mmean$geno == 'silentcha', 'day'],
+       y = mmean[mmean$geno == 'silentcha', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = mmean[mmean$geno == 'A4Vcha', 'day'],
+       y = mmean[mmean$geno == 'A4Vcha', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+points(x = mmean[mmean$geno == 'silentok', 'day'],
+       y = mmean[mmean$geno == 'silentok', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = mmean[mmean$geno == 'A4Vok', 'day'],
+       y = mmean[mmean$geno == 'A4Vok', 'mean'],
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+
+
+
+points(x = mmean[mmean$geno == 'silent', 'day'],
+       y = mmean[mmean$geno == 'silent', 'mean'],
+       bg = hex(pcol[1], .5),
+       col = pcol[1],
+       pch = 23,
+       cex =2)
+
+points(x = mmean[mmean$geno == 'A4V', 'day'],
+       y = mmean[mmean$geno == 'A4V', 'mean'],
+       bg = hex(pcol[2], .5),
+       col = pcol[2],
+       pch = 21,
+       cex =2)
+points(x = mmean[mmean$geno == 'silentcha', 'day'],
+       y = mmean[mmean$geno == 'silentcha', 'mean'],
+       bg = hex(pcol[3], .5),
+       col = pcol[3],
+       pch = 23,
+       cex =2)
+points(x = mmean[mmean$geno == 'A4Vcha', 'day'],
+       y = mmean[mmean$geno == 'A4Vcha', 'mean'],
+       bg = hex(pcol[4], .5),
+       col = pcol[4],
+       pch = 21,
+       cex =2)
+points(x = mmean[mmean$geno == 'silentok', 'day'],
+       y = mmean[mmean$geno == 'silentok', 'mean'],
+       bg = hex(pcol[5], .5),
+       col = pcol[5],
+       pch = 23,
+       cex =2)
+points(x = mmean[mmean$geno == 'A4Vok', 'day'],
+       y = mmean[mmean$geno == 'A4Vok', 'mean'],
+       bg = hex(pcol[6], .5),
+       col = pcol[6],
+       pch = 21,
+       cex =2)
+
+
+
+
+
+
+legend(x = 29,
+       y = 1.8,
+       legend = c('Silent', 'A4V',
+                  'ChAT>gbb;Silent', 'ChAT>gbb;A4V', 
+                  'OK371>gbb;Silent', 'OK371>gbb;A4V'),
+       pch = c(23,21,23,21,23,21),
+       pt.bg = c(hex(pcol[1], .5), hex(pcol[2], .5), hex(pcol[3], .5),
+                hex(pcol[4], .5), hex(pcol[5], .5), hex(pcol[6], .5)),
+       bty = 'n',
+       y.intersp = 1,
+       pt.cex = 2,
+       xpd=TRUE)
 
 ```
 
-      
 
-```{r echo = F}
+
+```{r echo = F, fig.width=10}
+
+lcol = c('steelblue', 'navy', 'limegreen', 'darkgreen', 'brown1', 'firebrick', 'grey')
+pcol = c('steelblue', 'navy', 'limegreen', 'darkgreen', 'brown1', 'firebrick', 'grey')
+hex = function(color, alpha){
+  rgbvals = col2rgb(color)
+  rgb2hex = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+  return(rgb2hex)
+}
+
+fmean.percent = fmean
+fmean.percent$percent = 0
+
+fmean.percent = fmean.percent[fmean.percent$day != 2, ]
+
+fmean.percent[fmean.percent$geno == 'silent', 'percent'] = fmean.percent[fmean.percent$geno == 'silent', 'mean']/fmean.percent[fmean.percent$geno == 'silent' & fmean.percent$day == 6, 'mean']
+
+fmean.percent[fmean.percent$geno == 'A4V', 'percent'] = fmean.percent[fmean.percent$geno == 'A4V', 'mean']/fmean.percent[fmean.percent$geno == 'A4V' & fmean.percent$day == 6, 'mean']
+
+fmean.percent[fmean.percent$geno == 'silentok', 'percent'] = fmean.percent[fmean.percent$geno == 'silentok', 'mean']/fmean.percent[fmean.percent$geno == 'silentok' & fmean.percent$day == 6, 'mean']
+
+fmean.percent[fmean.percent$geno == 'A4Vok', 'percent'] = fmean.percent[fmean.percent$geno == 'A4Vok', 'mean']/fmean.percent[fmean.percent$geno == 'A4Vok' & fmean.percent$day == 6, 'mean']
+
+fmean.percent[fmean.percent$geno == 'A4Vcha', 'percent'] = fmean.percent[fmean.percent$geno == 'A4Vcha', 'mean']/fmean.percent[fmean.percent$geno == 'A4Vcha' & fmean.percent$day == 6, 'mean']
+
+fmean.percent[fmean.percent$geno == 'silentcha', 'percent'] = fmean.percent[fmean.percent$geno == 'silentcha', 'mean']/fmean.percent[fmean.percent$geno == 'silentcha' & fmean.percent$day == 6, 'mean']
+
+par(mar=c(5.1, 4.1, 4.1, 15.1))
+
+plot(x = NA,
+      y = NA,
+     type = 'n',
+     ylim = c(0, 1.25),
+     xlim = c(6,27),
+     ylab = 'Percent of Initial Mean Velocity',
+     xlab = 'Day',
+     xaxt = 'n',
+     main = "Females")
+
+axis(1, at = fmean.percent[fmean.percent$geno == 'silent', 'day'])
+
+lines(x = fmean.percent[fmean.percent$geno == 'silent', 'day'],
+      y = fmean.percent[fmean.percent$geno == 'silent', 'percent'],
+      type = 'l',
+      col = lcol[1],
+      lwd = 2)
+
+lines(x = fmean.percent[fmean.percent$geno == 'A4V', 'day'],
+      y = fmean.percent[fmean.percent$geno == 'A4V', 'percent'],
+      type = 'l',
+      col = pcol[2],
+      lwd = 2)
+
+lines(x = fmean.percent[fmean.percent$geno == 'silentcha', 'day'],
+      y = fmean.percent[fmean.percent$geno == 'silentcha', 'percent'],
+      type = 'l',
+      col = pcol[3],
+      lwd = 2)
+
+lines(x = fmean.percent[fmean.percent$geno == 'A4Vcha', 'day'],
+      y = fmean.percent[fmean.percent$geno == 'A4Vcha', 'percent'],
+      type = 'l',
+      col = pcol[4],
+      lwd = 2)
+
+lines(x = fmean.percent[fmean.percent$geno == 'silentok', 'day'],
+      y = fmean.percent[fmean.percent$geno == 'silentok', 'percent'],
+      type = 'l',
+      col = pcol[5],
+      lwd = 2)
+
+lines(x = fmean.percent[fmean.percent$geno == 'A4Vok', 'day'],
+      y = fmean.percent[fmean.percent$geno == 'A4Vok', 'percent'],
+      type = 'l',
+      col = pcol[6],
+      lwd = 2)
+
+
+
+points(x = fmean.percent[fmean.percent$geno == 'silent', 'day'],
+       y = fmean.percent[fmean.percent$geno == 'silent', 'percent'],
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = fmean.percent[fmean.percent$geno == 'A4V', 'day'],
+       y = fmean.percent[fmean.percent$geno == 'A4V', 'percent'],
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+points(x = fmean.percent[fmean.percent$geno == 'silentcha', 'day'],
+       y = fmean.percent[fmean.percent$geno == 'silentcha', 'percent'],
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = fmean.percent[fmean.percent$geno == 'A4Vcha', 'day'],
+       y = fmean.percent[fmean.percent$geno == 'A4Vcha', 'percent'],
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+points(x = fmean.percent[fmean.percent$geno == 'silentok', 'day'],
+       y = fmean.percent[fmean.percent$geno == 'silentok', 'percent'],
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = fmean.percent[fmean.percent$geno == 'A4Vok', 'day'],
+       y = fmean.percent[fmean.percent$geno == 'A4Vok', 'percent'],
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+
+
+
+points(x = fmean.percent[fmean.percent$geno == 'silent', 'day'],
+       y = fmean.percent[fmean.percent$geno == 'silent', 'percent'],
+       bg = hex(pcol[1], .5),
+       col = pcol[1],
+       pch = 23,
+       cex =2)
+
+points(x = fmean.percent[fmean.percent$geno == 'A4V', 'day'],
+       y = fmean.percent[fmean.percent$geno == 'A4V', 'percent'],
+       bg = hex(pcol[2], .5),
+       col = pcol[2],
+       pch = 21,
+       cex =2)
+points(x = fmean.percent[fmean.percent$geno == 'silentcha', 'day'],
+       y = fmean.percent[fmean.percent$geno == 'silentcha', 'percent'],
+       bg = hex(pcol[3], .5),
+       col = pcol[3],
+       pch = 23,
+       cex =2)
+points(x = fmean.percent[fmean.percent$geno == 'A4Vcha', 'day'],
+       y = fmean.percent[fmean.percent$geno == 'A4Vcha', 'percent'],
+       bg = hex(pcol[4], .5),
+       col = pcol[4],
+       pch = 21,
+       cex =2)
+points(x = fmean.percent[fmean.percent$geno == 'silentok', 'day'],
+       y = fmean.percent[fmean.percent$geno == 'silentok', 'percent'],
+       bg = hex(pcol[5], .5),
+       col = pcol[5],
+       pch = 23,
+       cex =2)
+points(x = fmean.percent[fmean.percent$geno == 'A4Vok', 'day'],
+       y = fmean.percent[fmean.percent$geno == 'A4Vok', 'percent'],
+       bg = hex(pcol[6], .5),
+       col = pcol[6],
+       pch = 21,
+       cex =2)
+
+
+
+
+
+
+legend(x = 29,
+       y = 1,
+       legend = c('Silent', 'A4V',
+                  'ChAT>gbb;Silent', 'ChAT>gbb;A4V', 
+                  'OK371>gbb;Silent', 'OK371>gbb;A4V'),
+       pch = c(23,21,23,21,23,21),
+       pt.bg = c(hex(pcol[1], .5), hex(pcol[2], .5), hex(pcol[3], .5),
+                hex(pcol[4], .5), hex(pcol[5], .5), hex(pcol[6], .5)),
+       bty = 'n',
+       y.intersp = 1,
+       pt.cex = 2,
+       xpd=TRUE)
+
+```
+
+
+```{r echo = F, fig.width=10}
+
+lcol = c('steelblue', 'navy', 'limegreen', 'darkgreen', 'brown1', 'firebrick', 'grey')
+pcol = c('steelblue', 'navy', 'limegreen', 'darkgreen', 'brown1', 'firebrick', 'grey')
+hex = function(color, alpha){
+  rgbvals = col2rgb(color)
+  rgb2hex = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+  return(rgb2hex)
+}
+
+mmean.percent = mmean
+mmean.percent$percent = 0
+
+mmean.percent[mmean.percent$geno == 'silent', 'percent'] = mmean.percent[mmean.percent$geno == 'silent', 'mean']/mmean.percent[mmean.percent$geno == 'silent' & mmean.percent$day == 2, 'mean']
+
+mmean.percent[mmean.percent$geno == 'A4V', 'percent'] = mmean.percent[mmean.percent$geno == 'A4V', 'mean']/mmean.percent[mmean.percent$geno == 'A4V' & mmean.percent$day == 2, 'mean']
+
+mmean.percent[mmean.percent$geno == 'silentok', 'percent'] = mmean.percent[mmean.percent$geno == 'silentok', 'mean']/mmean.percent[mmean.percent$geno == 'silentok' & mmean.percent$day == 2, 'mean']
+
+mmean.percent[mmean.percent$geno == 'A4Vok', 'percent'] = mmean.percent[mmean.percent$geno == 'A4Vok', 'mean']/mmean.percent[mmean.percent$geno == 'A4Vok' & mmean.percent$day == 2, 'mean']
+
+mmean.percent[mmean.percent$geno == 'A4Vcha', 'percent'] = mmean.percent[mmean.percent$geno == 'A4Vcha', 'mean']/mmean.percent[mmean.percent$geno == 'A4Vcha' & mmean.percent$day == 2, 'mean']
+
+mmean.percent[mmean.percent$geno == 'silentcha', 'percent'] = mmean.percent[mmean.percent$geno == 'silentcha', 'mean']/mmean.percent[mmean.percent$geno == 'silentcha' & mmean.percent$day == 2, 'mean']
+
+par(mar=c(5.1, 4.1, 4.1, 15.1))
+
+plot(x = NA,
+      y = NA,
+     type = 'n',
+     ylim = c(0, 1.25),
+     xlim = c(2,27),
+     ylab = 'Percent of Initial Mean Velocity',
+     xlab = 'Day',
+     xaxt = 'n',
+     main = "Males")
+
+axis(1, at = mmean.percent[mmean.percent$geno == 'silent', 'day'])
+
+lines(x = mmean.percent[mmean.percent$geno == 'silent', 'day'],
+      y = mmean.percent[mmean.percent$geno == 'silent', 'percent'],
+      type = 'l',
+      col = lcol[1],
+      lwd = 2)
+
+lines(x = mmean.percent[mmean.percent$geno == 'A4V', 'day'],
+      y = mmean.percent[mmean.percent$geno == 'A4V', 'percent'],
+      type = 'l',
+      col = pcol[2],
+      lwd = 2)
+
+lines(x = mmean.percent[mmean.percent$geno == 'silentcha', 'day'],
+      y = mmean.percent[mmean.percent$geno == 'silentcha', 'percent'],
+      type = 'l',
+      col = pcol[3],
+      lwd = 2)
+
+lines(x = mmean.percent[mmean.percent$geno == 'A4Vcha', 'day'],
+      y = mmean.percent[mmean.percent$geno == 'A4Vcha', 'percent'],
+      type = 'l',
+      col = pcol[4],
+      lwd = 2)
+
+lines(x = mmean.percent[mmean.percent$geno == 'silentok', 'day'],
+      y = mmean.percent[mmean.percent$geno == 'silentok', 'percent'],
+      type = 'l',
+      col = pcol[5],
+      lwd = 2)
+
+lines(x = mmean.percent[mmean.percent$geno == 'A4Vok', 'day'],
+      y = mmean.percent[mmean.percent$geno == 'A4Vok', 'percent'],
+      type = 'l',
+      col = pcol[6],
+      lwd = 2)
+
+
+
+points(x = mmean.percent[mmean.percent$geno == 'silent', 'day'],
+       y = mmean.percent[mmean.percent$geno == 'silent', 'percent'],
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = mmean.percent[mmean.percent$geno == 'A4V', 'day'],
+       y = mmean.percent[mmean.percent$geno == 'A4V', 'percent'],
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+points(x = mmean.percent[mmean.percent$geno == 'silentcha', 'day'],
+       y = mmean.percent[mmean.percent$geno == 'silentcha', 'percent'],
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = mmean.percent[mmean.percent$geno == 'A4Vcha', 'day'],
+       y = mmean.percent[mmean.percent$geno == 'A4Vcha', 'percent'],
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+points(x = mmean.percent[mmean.percent$geno == 'silentok', 'day'],
+       y = mmean.percent[mmean.percent$geno == 'silentok', 'percent'],
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = mmean.percent[mmean.percent$geno == 'A4Vok', 'day'],
+       y = mmean.percent[mmean.percent$geno == 'A4Vok', 'percent'],
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+
+
+
+points(x = mmean.percent[mmean.percent$geno == 'silent', 'day'],
+       y = mmean.percent[mmean.percent$geno == 'silent', 'percent'],
+       bg = hex(pcol[1], .5),
+       col = pcol[1],
+       pch = 23,
+       cex =2)
+
+points(x = mmean.percent[mmean.percent$geno == 'A4V', 'day'],
+       y = mmean.percent[mmean.percent$geno == 'A4V', 'percent'],
+       bg = hex(pcol[2], .5),
+       col = pcol[2],
+       pch = 21,
+       cex =2)
+points(x = mmean.percent[mmean.percent$geno == 'silentcha', 'day'],
+       y = mmean.percent[mmean.percent$geno == 'silentcha', 'percent'],
+       bg = hex(pcol[3], .5),
+       col = pcol[3],
+       pch = 23,
+       cex =2)
+points(x = mmean.percent[mmean.percent$geno == 'A4Vcha', 'day'],
+       y = mmean.percent[mmean.percent$geno == 'A4Vcha', 'percent'],
+       bg = hex(pcol[4], .5),
+       col = pcol[4],
+       pch = 21,
+       cex =2)
+points(x = mmean.percent[mmean.percent$geno == 'silentok', 'day'],
+       y = mmean.percent[mmean.percent$geno == 'silentok', 'percent'],
+       bg = hex(pcol[5], .5),
+       col = pcol[5],
+       pch = 23,
+       cex =2)
+points(x = mmean.percent[mmean.percent$geno == 'A4Vok', 'day'],
+       y = mmean.percent[mmean.percent$geno == 'A4Vok', 'percent'],
+       bg = hex(pcol[6], .5),
+       col = pcol[6],
+       pch = 21,
+       cex =2)
+
+
+
+
+
+
+legend(x = 29,
+       y = 1,
+       legend = c('Silent', 'A4V',
+                  'ChAT>gbb;Silent', 'ChAT>gbb;A4V', 
+                  'OK371>gbb;Silent', 'OK371>gbb;A4V'),
+       pch = c(23,21,23,21,23,21),
+       pt.bg = c(hex(pcol[1], .5), hex(pcol[2], .5), hex(pcol[3], .5),
+                hex(pcol[4], .5), hex(pcol[5], .5), hex(pcol[6], .5)),
+       bty = 'n',
+       y.intersp = 1,
+       pt.cex = 2,
+       xpd=TRUE)
+
+```
+
+
+```{r echo = F, include = F}
+
+norm.male = na.omit(male)
+norm.male$normval = 0
+i=1
+while(i <= nrow(norm.male)){
+  norm.male$normval[i] = norm.male$corrected.values[i]/
+    mmean$mean[mmean$geno == 'silent' & mmean$day == norm.male$day[i]]
+  i = i +1
+}
+
+norm.mmean = unique(norm.male[,c('geno', 'day', 'sample')])
+norm.mstd = norm.mmean
+norm.meb = norm.mmean
+norm.mmean$mean = 0
+norm.mstd$std = 0
+
+i=1
+while(i<=nrow(norm.mmean)){
+  norm.mmean$mean[i] = mean(na.omit(norm.male[norm.male$sample == norm.mmean$sample[i], 'normval']))
+  
+  norm.mstd$std[i] = (var(na.omit(norm.male[norm.male$sample == norm.mmean$sample[i], 'normval'])))
+  
+  i = i+1
+}
+
+norm.mmean = norm.mmean[order(norm.mmean$day),]
+norm.mstd = norm.mstd[order(norm.mstd$day),]
+norm.meb = norm.meb[order(norm.meb$day),]
+
+norm.meb$y0 = norm.mmean$mean - norm.mstd$std
+norm.meb$y1 = norm.mmean$mean + norm.mstd$std
+
+norm.mlm = data.frame(geno = unique(norm.male$geno),
+                x0 = 2,
+                x1 = 27,
+                y0 = 0,
+                y1 = 0)
+
+i=1
+while(i<=nrow(norm.mlm)){
+  temp=na.omit(norm.male[norm.male$geno == norm.mlm$geno[i], ])
+  temp.lm = lm(temp$normval~temp$day)
+  norm.mlm$y0[i] = temp.lm[[1]][2]*2 + temp.lm[[1]][1]
+  norm.mlm$y1[i] = temp.lm[[1]][2]*27 + temp.lm[[1]][1]
+  i = i +1
+}
+
+row.names(norm.mlm) = norm.mlm$geno
+
+```
+
+
+```{r echo = F, include = F}
 
 male$sample = paste0(male$geno, male$day)
 
@@ -505,7 +1572,7 @@ row.names(norm.mlm) = norm.mlm$geno
 ```
 
 
-```{r echo = F, fig.height=10}
+```{r echo = F, fig.height=10, include = F}
 
 silent = norm.mmean[norm.mmean$geno == "silent", ]
 a4v = norm.mmean[norm.mmean$geno == "A4V", ]
@@ -749,7 +1816,7 @@ legend(x = 29,
 ```
 
 
-```{r  echo = F}
+```{r  echo = F, include = F}
 
 fig4cd = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Figure 4CD.csv", header = T)
 
@@ -962,7 +2029,251 @@ row.names(norm.flm) = norm.flm$geno
 ```
 
 
-```{r echo = F, fig.height=10}
+```{r echo = F, fig.height=10, include = F}
+
+silent = norm.fmean[norm.fmean$geno == "silent", ]
+a4v = norm.fmean[norm.fmean$geno == "A4V", ]
+silentcha = norm.fmean[norm.fmean$geno == "silentcha", ]
+a4vcha = norm.fmean[norm.fmean$geno == "A4Vcha", ]
+silentok = norm.fmean[norm.fmean$geno == "silentok", ]
+a4vok = norm.fmean[norm.fmean$geno == "A4Vok", ]
+
+ls = norm.fmean[norm.fmean$geno == 'silent',]
+la = norm.fmean[norm.fmean$geno == 'A4V',]
+lsc = norm.fmean[norm.fmean$geno == 'silentcha',]
+lac = norm.fmean[norm.fmean$geno == 'A4Vcha',]
+lso = norm.fmean[norm.fmean$geno == 'silentok',]
+lao = norm.fmean[norm.fmean$geno == 'A4Vok',]
+
+
+pcol = c('steelblue', 'navy', 'limegreen', 'darkgreen', 'brown1', 'firebrick', 'grey')
+
+hex = function(color, alpha){
+  rgbvals = col2rgb(color)
+  rgb2hex = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+  return(rgb2hex)
+}
+
+par(mar=c(5.1, 4.1, 4.1, 9.1))
+
+plot(x = NA,
+      y = NA,
+     type = 'n',
+     ylim = c(0,1.85),
+     xlim = c(2,27),
+     ylab = 'Relative Velocity (cm/s)',
+     xlab = 'Day',
+     xaxt = 'n',
+     main = "Females")
+
+axis(1, at=silent$day)
+
+abline(v = 2, lty =2, lwd = 1, col = hex(pcol[7], .5))
+abline(v = 6, lty =2, lwd = 1, col = hex(pcol[7], .5))
+abline(v = 9, lty =2, lwd = 1, col = hex(pcol[7], .5))
+abline(v = 13, lty =2, lwd = 1, col = hex(pcol[7], .5))
+abline(v = 19, lty =2, lwd = 1, col = hex(pcol[7], .5))
+abline(v = 22, lty =2, lwd = 1, col = hex(pcol[7], .5))
+abline(v = 27, lty =2, lwd = 1, col = hex(pcol[7], .5))
+
+lines(x = norm.flm['silent', c("x0", "x1")],
+      y = norm.flm['silent', c("y0", "y1")],
+      type = 'l',
+      col = pcol[1],
+      lwd = 2)
+
+lines(x = norm.flm['A4V', c("x0", "x1")],
+      y = norm.flm['A4V', c("y0", "y1")],
+      type = 'l',
+      col = pcol[2],
+      lwd = 2)
+
+lines(x = norm.flm['silentcha', c("x0", "x1")],
+      y = norm.flm['silentcha', c("y0", "y1")],
+      type = 'l',
+      col = pcol[3],
+      lwd = 2)
+
+lines(x = norm.flm['A4Vcha', c("x0", "x1")],
+      y = norm.flm['A4Vcha', c("y0", "y1")],
+      type = 'l',
+      col = pcol[4],
+      lwd = 2)
+
+lines(x = norm.flm['silentok', c("x0", "x1")],
+      y = norm.flm['silentok', c("y0", "y1")],
+      type = 'l',
+      col = pcol[5],
+      lwd = 2)
+
+lines(x = norm.flm['A4Vok', c("x0", "x1")],
+      y = norm.flm['A4Vok', c("y0", "y1")],
+      type = 'l',
+      col = pcol[6],
+      lwd = 2)
+
+
+arrows(x0 = norm.feb$day[norm.feb$geno == 'silent'],
+       x1 = norm.feb$day[norm.feb$geno == 'silent'],
+       y0 = norm.feb$y0[norm.feb$geno == 'silent'],
+       y1 = norm.feb$y1[norm.feb$geno == 'silent'], 
+       code = 3, 
+       angle = 90, 
+       length = 0.1, 
+       col = pcol[1], 
+       lwd=1)
+
+arrows(x0 = norm.feb$day[norm.feb$geno == 'A4V'],
+       x1 = norm.feb$day[norm.feb$geno == 'A4V'],
+       y0 = norm.feb$y0[norm.feb$geno == 'A4V'],
+       y1 = norm.feb$y1[norm.feb$geno == 'A4V'], 
+       code = 3, 
+       angle = 90, 
+       length = 0.1, 
+       col = pcol[2], 
+       lwd=1)
+
+arrows(x0 = norm.feb$day[norm.feb$geno == 'silentcha'],
+       x1 = norm.feb$day[norm.feb$geno == 'silentcha'],
+       y0 = norm.feb$y0[norm.feb$geno == 'silentcha'],
+       y1 = norm.feb$y1[norm.feb$geno == 'silentcha'], 
+       code = 3, 
+       angle = 90, 
+       length = 0.1, 
+       col = pcol[3], 
+       lwd=1)
+
+arrows(x0 = norm.feb$day[norm.feb$geno == 'A4Vcha'],
+       x1 = norm.feb$day[norm.feb$geno == 'A4Vcha'],
+       y0 = norm.feb$y0[norm.feb$geno == 'A4Vcha'],
+       y1 = norm.feb$y1[norm.feb$geno == 'A4Vcha'], 
+       code = 3, 
+       angle = 90, 
+       length = 0.1, 
+       col = pcol[4], 
+       lwd=1)
+
+arrows(x0 = norm.feb$day[norm.feb$geno == 'silentok'],
+       x1 = norm.feb$day[norm.feb$geno == 'silentok'],
+       y0 = norm.feb$y0[norm.feb$geno == 'silentok'],
+       y1 = norm.feb$y1[norm.feb$geno == 'silentok'], 
+       code = 3, 
+       angle = 90, 
+       length = 0.1, 
+       col = pcol[5], 
+       lwd=1)
+
+arrows(x0 = norm.feb$day[norm.feb$geno == 'A4Vok'],
+       x1 = norm.feb$day[norm.feb$geno == 'A4Vok'],
+       y0 = norm.feb$y0[norm.feb$geno == 'A4Vok'],
+       y1 = norm.feb$y1[norm.feb$geno == 'A4Vok'], 
+       code = 3, 
+       angle = 90, 
+       length = 0.1, 
+       col = pcol[6], 
+       lwd=1)
+
+
+points(x = silent$day,
+       y = silent$mean,
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = a4v$day,
+       y = a4v$mean,
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+points(x = silentcha$day,
+       y = silentcha$mean,
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = a4vcha$day,
+       y = a4vcha$mean,
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+points(x = silentok$day,
+       y = silentok$mean,
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = a4vok$day,
+       y = a4vok$mean,
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+
+
+
+points(x = silent$day,
+       y = silent$mean,
+       bg = hex(pcol[1], .5),
+       col = pcol[1],
+       pch = 23,
+       cex =2)
+
+points(x = a4v$day,
+       y = a4v$mean,
+       bg = hex(pcol[2], .5),
+       col = pcol[2],
+       pch = 21,
+       cex =2)
+points(x = silentcha$day,
+       y = silentcha$mean,
+       bg = hex(pcol[3], .5),
+       col = pcol[3],
+       pch = 23,
+       cex =2)
+points(x = a4vcha$day,
+       y = a4vcha$mean,
+       bg = hex(pcol[4], .5),
+       col = pcol[4],
+       pch = 21,
+       cex =2)
+points(x = silentok$day,
+       y = silentok$mean,
+       bg = hex(pcol[5], .5),
+       col = pcol[5],
+       pch = 23,
+       cex =2)
+points(x = a4vok$day,
+       y = a4vok$mean,
+       bg = hex(pcol[6], .5),
+       col = pcol[6],
+       pch = 21,
+       cex =2)
+
+
+
+
+
+
+legend(x = 29,
+       y = 1.8,
+       legend = c('Silent', 'A4V',
+                  'ChAT>gbb;Silent', 'ChAT>gbb;A4V', 
+                  'OK371>gbb;Silent', 'OK371>gbb;A4V'),
+       pch = c(23,21,23,21,23,21),
+       pt.bg = c(pcol[1], pcol[2], pcol[3],
+                pcol[4], pcol[5], pcol[6]),
+       bty = 'n',
+       y.intersp = 1,
+       pt.cex = 2,
+       xpd=TRUE)
+
+
+```
+
+
+```{r echo = F, fig.height=10, include = F}
 
 silent = norm.fmean[norm.fmean$geno == "silent", ]
 a4v = norm.fmean[norm.fmean$geno == "A4V", ]
@@ -1206,7 +2517,7 @@ legend(x = 29,
 ```
 
 
-```{r echo = F, fig.height=10}
+```{r echo = F, fig.height=10, include = F}
 
 silent = norm.mmean[norm.mmean$geno == "silent", ]
 a4v = norm.mmean[norm.mmean$geno == "A4V", ]
@@ -1445,9 +2756,11 @@ legend(x = 29,
        y.intersp = 1,
        pt.cex = 2,
        xpd=TRUE)
-
-
 ```
+
+
+
+
 
 
 

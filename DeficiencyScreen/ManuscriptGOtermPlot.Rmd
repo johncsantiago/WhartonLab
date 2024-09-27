@@ -195,13 +195,13 @@ fig3 <- fig2 %>% layout(xaxis = list(title = "Number of Genes"),
                               line = list(color = "black", width = 2.5), 
                               opacity = 1,
                               x0 = -30, x1 = -5, xref = "x",
-                              y0 = 15.5, y1 = 22.5, yref = "y"),
+                              y0 = 15.5, y1 = 21.5, yref = "y"),
                          list(type = "rect",
                               fillcolor = "white", 
                               line = list(color = "black", width = 2.5), 
                               opacity = 1,
                               x0 = -30, x1 = -5, xref = "x",
-                              y0 = 22.5, y1 = 34.5, yref = "y")
+                              y0 = 21.5, y1 = 31.5, yref = "y")
                          ))
 
 fig4 <- fig3 %>% add_annotations(x = -17.5,
@@ -212,20 +212,62 @@ fig4 <- fig3 %>% add_annotations(x = -17.5,
                         font = list(size = 15))
 
 fig5 <- fig4 %>% add_annotations(x = -17.5,
-                        y = 19,
+                        y = 18.5,
                         text = "Cellular Component",
                         showarrow = F,
                         textangle = -90,
                         font = list(size = 15))
 
 fig6 <- fig5 %>% add_annotations(x = -17.5,
-                        y = 29,
+                        y = 27,
                         text = "Biological Process",
                         showarrow = F,
                         textangle = -90,
                         font = list(size = 15))
 
 ```
+
+
+```{r}
+
+treemapPlot(Sup.CC.RT)
+
+```
+
+
+```{r}
+
+scatterPlot(Sup.CC.SM, Sup.CC.RT)
+
+```
+
+```{r}
+
+treemapPlot(Sup.BP.RT)
+
+```
+
+
+```{r}
+
+scatterPlot(Sup.BP.SM, Sup.BP.RT)
+
+```
+
+
+```{r}
+
+treemapPlot(Sup.MF.RT)
+
+```
+
+
+```{r}
+
+scatterPlot(Sup.MF.SM, Sup.MF.RT)
+
+```
+
 
 ```{r fig.height=12, fig.width=15, fig.align='left'}
 
@@ -234,7 +276,7 @@ fig6
 ```
 
 
-```{r}
+```{r include = FALSE}
 
 
 color.function <- colorRampPalette( c( "steelblue" , "gold", "brown" ) )
@@ -344,7 +386,7 @@ Enh.MF.RT = Enh.MF.RT[order(Enh.MF.RT$Freq, decreasing = T),]
 ```{r echo = F}
 
 
-sigGO = Enhance.GO[c(row.names(Enh.BP.RT), 
+sigGO = Enhancer.GO[c(row.names(Enh.BP.RT), 
                      row.names(Enh.CC.RT), 
                      row.names(Enh.MF.RT)), ]
 
@@ -445,6 +487,50 @@ fig6 <- fig5 %>% add_annotations(x = -6.5,
 
 ```
 
+
+##All Suppressors
+```{r}
+
+treemapPlot(Enh.CC.RT)
+
+```
+
+
+```{r}
+
+scatterPlot(Enh.CC.SM, Enh.CC.RT)
+
+```
+
+```{r}
+
+treemapPlot(Enh.BP.RT)
+
+```
+
+
+
+
+```{r}
+
+scatterPlot(Enh.BP.SM, Enh.BP.RT)
+
+```
+
+
+```{r}
+
+treemapPlot(Enh.MF.RT)
+
+```
+
+
+```{r}
+
+scatterPlot(Enh.MF.SM, Enh.MF.RT)
+
+```
+
 ```{r fig.height=8, fig.width=15, fig.align='left'}
 
 fig6
@@ -455,7 +541,220 @@ fig6
 
 
 
+#Enhancers
+```{r echo=F, include=F}
+
+GO.data = Moderate.GO
+GO.ontology = "BP"
+
+go_analysis = GO.data$category[GO.data$adjp <= .05 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$adjp), go_analysis)
+
+simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+Mod.BP.SM = simMatrix
+Mod.BP.RT = reducedTerms
+Mod.BP.RT$Freq = 1
+i=1
+while(i<=nrow(Mod.BP.RT)){
+  Mod.BP.RT$Freq[i] =  sum(Mod.BP.RT$parentTerm == Mod.BP.RT$parentTerm[i])
+  i=i+1
+}
+Mod.BP.RT = Mod.BP.RT[order(Mod.BP.RT$Freq, decreasing = T),]
 
 
+GO.ontology = "CC"
+
+go_analysis = GO.data$category[GO.data$adjp <= .05 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$adjp), go_analysis)
+
+simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+Mod.CC.SM = simMatrix
+Mod.CC.RT = reducedTerms
+Mod.CC.RT$Freq = 1
+i=1
+while(i<=nrow(Mod.CC.RT)){
+  Mod.CC.RT$Freq[i] =  sum(Mod.CC.RT$parentTerm == Mod.CC.RT$parentTerm[i])
+  i=i+1
+}
+Mod.CC.RT = Mod.CC.RT[order(Mod.CC.RT$Freq, decreasing = T),]
+
+GO.ontology = "MF"
+
+go_analysis = GO.data$category[GO.data$adjp <= .05 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$adjp), go_analysis)
+
+simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+Mod.MF.SM = simMatrix
+Mod.MF.RT = reducedTerms
+Mod.MF.RT$Freq = 1
+i=1
+while(i<=nrow(Mod.MF.RT)){
+  Mod.MF.RT$Freq[i] =  sum(Mod.MF.RT$parentTerm == Mod.MF.RT$parentTerm[i])
+  i=i+1
+}
+Mod.MF.RT = Mod.MF.RT[order(Mod.MF.RT$Freq, decreasing = T),]
+
+```
+
+```{r echo = F}
+
+sigGO = Repress.GO[c(row.names(Mod.BP.RT), 
+                     row.names(Mod.CC.RT), 
+                     row.names(Mod.MF.RT)), ]
+sigGO = sigGO[row.names(sigGO)!="GO:0032991",]
+
+sigGO = sigGO[, c("category", "term","adjp", "numDEInCat", "numInCat", "ontology")]
+
+sigGO$notInCat = sigGO$numInCat - sigGO$numDEInCat
+
+data = sigGO[nrow(sigGO):1,c("term","adjp","numDEInCat", "numInCat", "category", "ontology", "notInCat")]
+data$Score = -log10(data$adjp)
+data$term = factor(data$term, levels = c(unique(data$term)))
+
+m <- list(
+  l = 100,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 10
+)
+
+
+
+
+fig <- plot_ly(data, 
+               x = ~numDEInCat, y = ~term, 
+               type = 'bar',
+               name = "Candidate Modpressor Genes",
+               marker = list(colorscale = list(c(0,.9,1), c("brown","gold", "steelblue")),
+    reversescale =T,
+                             colorbar = list(title = "-log10(FDR)",
+                                      len = .8, outlinewidth = 0,
+                                      tickformat = ".2f",
+                                      tick0 = 0, xpad = 10),
+                             color = ~Score,
+                             line = list(color = "black", width = 1.5)),
+    hoverinfo = "text",
+    hovertext = paste("Sample:", data$term,
+                      "\nGO ID: ", data$category,
+                      "\nTotal DE: ", data$numDEInCat,
+                      "\nTotal in Cat.: ", data$numInCat,
+                      "\nFDR: ", signif(data$adjp, 3)))
+
+
+fig2 <- fig %>% add_trace(fig, data, x = ~notInCat, y = ~term,
+                       type = 'bar',
+                       name = "Total Genes",
+                       ##colors = rep("lightgrey", nrow(data)),
+                       marker = list(color = "lightgrey",line = list(color = "black", width = 1.5), colorbar = F),
+               hoverinfo = "text",
+               hovertext = "")
+
+
+
+fig3 <- fig2 %>% layout(xaxis = list(title = "Number of Genes"),
+           yaxis = list(title = ""),
+           title = "Modpressor Enriched GO Terms",
+           margin = m,
+           barmode = 'stack',
+           shapes = list(
+                         list(type = "rect",
+                              fillcolor = "white", 
+                              line = list(color = "black", width = 2.5), 
+                              opacity = 1,
+                              x0 = -30, x1 = -5, xref = "x",
+                              y0 = -.5, y1 = 15.5, yref = "y",
+                              layer = "below"),
+                         list(type = "rect",
+                              fillcolor = "white", 
+                              line = list(color = "black", width = 2.5), 
+                              opacity = 1,
+                              x0 = -30, x1 = -5, xref = "x",
+                              y0 = 15.5, y1 = 22.5, yref = "y"),
+                         list(type = "rect",
+                              fillcolor = "white", 
+                              line = list(color = "black", width = 2.5), 
+                              opacity = 1,
+                              x0 = -30, x1 = -5, xref = "x",
+                              y0 = 22.5, y1 = 34.5, yref = "y")
+                         ))
+
+fig4 <- fig3 %>% add_annotations(x = -17.5,
+                        y = 7.5,
+                        text = "Molecular Function",
+                        showarrow = F,
+                        textangle = -90,
+                        font = list(size = 15))
+
+fig5 <- fig4 %>% add_annotations(x = -17.5,
+                        y = 19,
+                        text = "Cellular Component",
+                        showarrow = F,
+                        textangle = -90,
+                        font = list(size = 15))
+
+fig6 <- fig5 %>% add_annotations(x = -17.5,
+                        y = 29,
+                        text = "Biological Process",
+                        showarrow = F,
+                        textangle = -90,
+                        font = list(size = 15))
+
+```
+
+#Moderate Suppressors
+```{r}
+
+treemapPlot(Mod.CC.RT)
+
+```
+
+
+```{r}
+
+treemapPlot(Mod.BP.RT)
+
+```
+
+
+```{r}
+
+treemapPlot(Mod.MF.RT)
+
+```
+
+
+```{r fig.height=12, fig.width=15, fig.align='left'}
+
+fig6
+
+```
 
 

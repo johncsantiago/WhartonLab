@@ -1,0 +1,990 @@
+---
+title: "arc1 gene expression"
+author: "John Santiago"
+date: "2024-08-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+```{r include = F, echo = F}
+
+library(plotly)
+library(edgeR)
+library(heatmaply)
+library(org.Dm.eg.db)
+
+##load all files from github
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"
+cpmdata = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT_cpmdata.csv"),row.names = 1)
+groups  = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.metadata.csv"),row.names = 1)
+TKT.EdgeR = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FDRTable.csv"),row.names = 1)
+TKT.EdgeR.FC = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FCTable.csv"),row.names = 1)
+
+G85R.meancpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT_meancpmdata.csv", row.names = 1)
+
+groups = groups[colnames(cpmdata),]
+
+
+GeneIDKey = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GeneIDKey.csv", row.names = 1)
+
+A4V.cpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.cpmdata.csv", row.names = 1)
+
+A4V.meancpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.meancpmdata.csv", row.names = 1)
+
+A4V.FDR = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.FDRdata.csv", row.names = 1)
+
+A4V.FC = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.FCdata.csv", row.names = 1)
+
+A4V.meta = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.metadata.csv", row.names = 1)
+
+```
+
+
+```{r}
+
+
+  FC.data = TKT.EdgeR.FC[, c("GRxWT.FC", "GRxWT.MC")]
+  FDR.data = TKT.EdgeR[, c("GRxWT.FC", "GRxWT.MC")]
+  mean.data = G85R.meancpm[, c('GRFC', 'WTFC', 'GRMC', 'WTMC')]
+  
+  go.genes = row.names(FDR.data[FDR.data$GRxWT.FC < .05 &
+                             FDR.data$GRxWT.MC < .05 ,])
+  
+  
+data = data.frame(Symbol = GeneIDKey[go.genes, "Symbol"],
+                  FBgn = go.genes,
+                  FDR1 = -log2(FDR.data[go.genes, 1]),
+                  FDR2 = -log2(FDR.data[go.genes, 2]),
+                  FC1 = FC.data[go.genes, 1],
+                  FC2 = FC.data[go.genes, 2],
+                  Color = 'grey',
+                  size = 1,
+                  Variable1.cpm = mean.data[go.genes,1],
+                  Control1.cpm = mean.data[go.genes,2],
+                  Variable2.cpm = mean.data[go.genes,3],
+                  Control2.cpm = mean.data[go.genes,4])
+
+  main.title = "Female vs Male DEGs"
+  
+  ##data$Color[(data$FC1 - 1) > data$FC2] = 'royalblue'
+  ##data$Color[(data$FC2 - 1) > data$FC1] = 'firebrick' 
+  data$Color[data$Symbol == "Arc1"] = 'gold'
+  size = data.frame(G85R = apply(mean.data[go.genes,c(1,3)], 1, mean),
+                    WT = apply(mean.data[go.genes,c(2,4)], 1, mean))
+  size = size + .001
+  data$size = log2(apply(size, 1, max))
+  data$size[data$size<3] = 1
+  
+  data = na.omit(data)
+  ##data = data[data$size > log2(20),]
+  data$size = 5*data$size
+  
+  fig = plot_ly(data = data,
+                x = ~FC1,
+                y = ~FC2,
+                type = 'scatter',
+                mode = 'markers',
+                marker = list(color = ~Color,
+                              colors = ~Color,
+                              line = list(color = "black", width = 1.5),
+                              size = ~size),
+                hoverinfo = "text",
+                hovertext = paste("Symbol:", data$Symbol,
+                                  "\nFBgn:", data$FBgn,
+                                  "\n ", colnames(FDR.data)[1], "FDR: ", round(2^-data$FDR1, 2),
+                                  "\n ", colnames(FDR.data)[2], "FDR: ", round(2^-data$FDR2,2),
+                                  "\n ", colnames(FC.data)[1], "FC: ", round(data$FC1, 2),
+                                  "\n ", colnames(FC.data)[2], "FC: ", round(data$FC2,2),
+                                  "\n ", colnames(mean.data)[1], "mean CPM: ", signif(data$Variable1,2),
+                                  "\n ", colnames(mean.data)[2], "mean CPM: ", signif(data$Control1,2),
+                                  "\n ", colnames(mean.data)[3], "mean CPM: ", signif(data$Variable2,2),
+                                  "\n ", colnames(mean.data)[4], "mean CPM: ", signif(data$Control2,2)))
+
+  fig = fig %>% layout(title = main.title,
+                       shapes = list(
+                         type = "line",
+                         line = list(color = "black", dash = 'dash', width = 2),
+                         x0 = min(data$FC1, data$FC2) - 1,
+                         x1 = max(data$FC1, data$FC2) + 1,
+                         y0 = min(data$FC1, data$FC2) - 1,
+                         y1 = max(data$FC1, data$FC2) + 1),
+                       xaxis = list(title = paste(colnames(FC.data)[1], "FC")),
+                       yaxis = list(title = paste(colnames(FC.data)[2], "FC")),
+                       showlegend = F)
+  
+    fig = fig %>% add_markers(data = data[data$Symbol == "Arc1",],
+                x = ~FC1,
+                y = ~FC2,
+                type = 'scatter',
+                mode = 'markers',
+                hoverinfo = "text",
+                hovertext = paste("Symbol:", data$Symbol[data$Symbol == "Arc1"],
+                                  "\nFBgn:", data$FBgn[data$Symbol == "Arc1"],
+                                  "\n ", colnames(FDR.data)[1], "FDR: ", round(2^-data$FDR1[data$Symbol == "Arc1"], 2),
+                                  "\n ", colnames(FDR.data)[2], "FDR: ", round(2^-data$FDR2[data$Symbol == "Arc1"],2),
+                                  "\n ", colnames(FC.data)[1], "FC: ", round(data$FC1[data$Symbol == "Arc1"], 2),
+                                  "\n ", colnames(FC.data)[2], "FC: ", round(data$FC2[data$Symbol == "Arc1"],2),
+                                  "\n ", colnames(mean.data)[1], "mean CPM: ", signif(data$Variable1[data$Symbol == "Arc1"],2),
+                                  "\n ", colnames(mean.data)[2], "mean CPM: ", signif(data$Control1[data$Symbol == "Arc1"],2),
+                                  "\n ", colnames(mean.data)[3], "mean CPM: ", signif(data$Variable2[data$Symbol == "Arc1"],2),
+                                  "\n ", colnames(mean.data)[4], "mean CPM: ", signif(data$Control2[data$Symbol == "Arc1"],2)))
+  fig
+```
+
+
+```{r echo = F}
+
+gene = data.frame(cpm = as.numeric(cpmdata[FBgn,]), 
+                  condition = groups$Group, 
+                  group = paste0(groups$Genotype, groups$Sex),
+                  TKT = groups$TKT)
+
+gene = gene[gene$TKT != 'OE',]
+
+gene$group = factor(gene$group, levels = c("WTF", "GRF", "WTM", "GRM"))
+gene$condition = factor(gene$condition, levels = c('WT.F','GR.F',
+                                                   'WT.M','GR.M'))
+
+hex = function(color, alpha){
+  rgbvals = col2rgb(color)
+  rgb2hex = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+  return(rgb2hex)
+}
+
+par(mar = c(5,7,4,2))
+plot(x = NA,
+      y = NA,
+     type = 'n',
+     ylim = c(150, 2900),
+     xlim = c(.5, 4.5),
+     xaxt = "n",
+     yaxt = "n",
+     ylab = NA,
+     xlab = NA)
+rect(0, 0, 4.75, 3050, col = hex('whitesmoke', .5))
+boxplot(gene$cpm~gene$condition,    
+        main = "",
+        ylab="",
+        xlab = "",
+        las = 2,
+        cex.axis = 1.5,
+        boxlwd = 3,
+        lwd = 3,
+        xaxt="n",
+        ylim = c(10, 3000),
+        xlim = c(0,4.5),
+        col = c("grey90", hex("hotpink", .25), 
+                "grey90", hex("deepskyblue", .2)),
+        add = T)
+
+box(lwd = 3)
+axis(1, 
+     at = c(1:4), 
+     cex.axis = 1.5,
+     labels = c("Control", "G85R", "Control", "G85R"), 
+     las=1)
+points(x=as.numeric(factor(gene$condition)),
+       y=gene$cpm,
+       cex=2,
+       pch=21,
+       lwd = 2,
+       bg=c('grey65',"firebrick","grey65","deepskyblue")[as.numeric(factor(gene$group))])
+abline(v=2.5, lty = 2, lwd = 3)
+text(x = c(1.5, 3.5), y = c(3100,3100), c("Female", "Male"),cex= 2, xpd = T)
+title(ylab="Counts per Million", line=5, cex.lab=2)
+title(xlab = "Genotype", line = 3.5, cex.lab=2)
+
+```
+
+
+```{r echo = F}
+
+gene = data.frame(cpm = as.numeric(A4V.cpm[FBgn,]), 
+                  condition = A4V.groups$Group, 
+                  group = paste0(groups$Genotype, groups$Sex),
+                  TKT = groups$TKT)
+
+
+gene$group = factor(gene$group, levels = c("WTF", "GRF", "WTM", "GRM"))
+gene$condition = factor(gene$condition, levels = c('WT.F', "TktDfWT.F", "TktOEWT.F",
+                                                   'GR.F', "TktDfGR.F", "TktOEGR.F",
+                                                 
+                                                   'WT.M', "TktDfWT.M", "TktOEWT.M",
+                                                   'GR.M', "TktDfGR.M", "TktOEGR.M"))
+
+hex = function(color, alpha){
+  rgbvals = col2rgb(color)
+  rgb2hex = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+  return(rgb2hex)
+}
+
+par(mar = c(6,7,4,2))
+boxplot(gene$cpm~gene$condition,    
+        main = "",
+        ylab="",
+        xlab = "",
+        las = 2,
+        cex.axis = 1.5,
+        boxlwd = 3,
+        lwd = 3,
+        xaxt="n",
+        ylim = c(100, 3500),
+        xlim = c(.945, 12.055),
+        col = c(rep(hex("lightgrey", .5),3), rep(hex("mistyrose", .5),3), 
+                rep(hex("lightgrey", .5),3), rep(hex("lightcyan", .5),3)))
+box(lwd = 3)
+axis(1, 
+     at = c(1:12), 
+     cex.axis = 1,
+     labels = rep(c("Control", "TKT Df", "TKT OE"),4), 
+     las=1)
+text(x = c(2, 5, 8, 11), 
+     y = c(-300,-300, -300, -300), 
+     c("Control", "G85R", "Control", "G85R"),
+     cex= 1.25, xpd = T)
+points(x=as.numeric(factor(gene$condition)),
+       y=gene$cpm,
+       cex=2,
+       pch=21,
+       lwd = 2,
+       bg=c('grey25',"firebrick","grey25","deepskyblue")[as.numeric(factor(gene$group))])
+abline(v=6.5, lty = 2, lwd = 3)
+lines(x=c(3.5,3.5), y = c(-40,-350), lty = 1, lwd = 3, xpd = T)
+lines(x=c(.5,.5), y = c(-40,-350), lty = 1, lwd = 3, xpd = T)
+lines(x=c(6.5,6.5), y = c(-40,-350), lty = 1, lwd = 3, xpd = T)
+lines(x=c(9.5,9.5), y = c(-40,-350), lty = 1, lwd = 3, xpd = T)
+lines(x=c(12.5,12.5), y = c(-40,-350), lty = 1, lwd = 3, xpd = T)
+text(x = c(3.5, 9.5), y = c(3750,3750), c("Female", "Male"),cex= 2, xpd = T)
+title(ylab="Counts per Million", line=5, cex.lab=2)
+title(xlab = "Genotype", line = 5, cex.lab=2)
+
+```
+
+
+```{r echo = F, fig.width=10}
+
+fs = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Figure 1F left_females.csv", header = T)
+
+ms = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Figure 1G left_males.csv", header = T)
+
+
+lcol = c('brown1', 'firebrick','steelblue', 'navy', 'limegreen', 'darkgreen',  'grey')
+pcol = c('brown1', 'firebrick','steelblue', 'navy', 'limegreen', 'darkgreen',  'grey')
+hex = function(color, alpha){
+  rgbvals = col2rgb(color)
+  rgb2hex = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+  return(rgb2hex)
+}
+
+
+par(mar=c(5.1, 4.1, 4.1, 6))
+
+plot(x = NA,
+      y = NA,
+     type = 'n',
+     ylim = c(0, 100),
+     xlim = c(0,82),
+     ylab = 'Percent Alive',
+     xlab = 'Day',
+     xaxt = 'n',
+     main = "A4V Survival")
+
+axis(1, at= 1:82, lwd.ticks = .5, labels = NA)
+axis(1, at= c(0, 10, 20, 30, 40, 50, 60, 70, 80, 90), 
+     lwd.ticks = 1, cex.axis = 1,
+     col.axis = 'lightgrey')
+axis(1, at= c(0, 10, 20, 30, 40, 50, 60, 70, 80, 90), 
+     lwd.ticks = 1, cex.axis = 1,
+     col.axis = 'black')
+
+
+lines(x = fs$day,
+      y = fs$dsodWT,
+      type = 'l',
+      col = lcol[1],
+      lwd = 2)
+
+lines(x = fs$day,
+      y = fs$A4V,
+      type = 'l',
+      col = pcol[2],
+      lwd = 2)
+
+lines(x = ms$day,
+      y = ms$dsodWT,
+      type = 'l',
+      col = pcol[3],
+      lwd = 2)
+
+lines(x = ms$day,
+      y = ms$A4V,
+      type = 'l',
+      col = pcol[4],
+      lwd = 2)
+
+
+points(x = fs$day,
+       y = fs$dsodWT,
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+points(x = fs$day,
+       y = fs$A4V,
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+points(x = ms$day,
+       y = ms$dsodWT,
+       bg = 'white',
+       col = 'white',
+       pch = 21,
+       cex =2)
+points(x = ms$day,
+       y = ms$A4V,
+       bg = 'white',
+       col = 'white',
+       pch = 23,
+       cex =2)
+
+
+
+
+points(x = fs$day,
+       y = fs$dsodWT,
+       bg = hex(pcol[1], .5),
+       col = pcol[1],
+       pch = 21,
+       cex =2)
+
+points(x = fs$day,
+       y = fs$A4V,
+       bg = hex(pcol[2], .5),
+       col = pcol[2],
+       pch = 23,
+       cex =2)
+points(x = ms$day,
+       y = ms$dsodWT,
+       bg = hex(pcol[3], .5),
+       col = pcol[3],
+       pch = 21,
+       cex =2)
+points(x = ms$day,
+       y = ms$A4V,
+       bg = hex(pcol[4], .5),
+       col = pcol[4],
+       pch = 23,
+       cex =2)
+
+legend('topright',
+       legend = c('Female Silent', 'Female A4V',
+                  'Male Silent', 'Male A4V'),
+       pch = c(23,21,23,21,23,21),
+       pt.bg = c(hex(pcol[1], .5), hex(pcol[2], .5), hex(pcol[3], .5),
+                hex(pcol[4], .5), hex(pcol[5], .5), hex(pcol[6], .5)),
+       bty = 'n',
+       y.intersp = 1,
+       pt.cex = 2,
+       xpd=TRUE)
+
+
+#abline(v = 3, lty = 2, lwd = 2, col = 'black')
+#abline(v = 9, lty = 2, lwd = 2, col = 'black')
+#abline(v = 40, lty = 2, lwd = 2, col = 'black')
+
+#points(x = c(3,9,40),
+#       y = c(-11.75,-11.75,-11.75),
+#       pch = 21,
+#       cex = 4,
+#       bg = hex('gold', .25),
+#       col = 'grey25',
+#       xpd = T)
+
+#axis(1, at= c(3, 9, 40), lwd.ticks = 2, labels = c(3,9,40))
+
+```
+
+
+```{r echo = F}
+
+gene = data.frame(cpm = as.numeric(A4V.cpm[FBgn, row.names(A4V.meta)]),
+                  group = A4V.meta$Group,
+                  condition = paste(substring(A4V.meta$Genotype,1,1),
+                                    substring(A4V.meta$Sex,1,1)))
+
+gene = gene[A4V.meta$Section == 'Head',]
+
+gene$group = factor(gene$group, levels = c("S3FH", "S9FH", "S40FH",
+                                           "A3FH", "A9FH", "A40FH",
+                                           "S3MH", "S9MH",
+                                           "A3MH", "A9MH"))
+
+gene$condition = factor(gene$condition, levels = c("S F", "A F", "S M", "A M"))
+
+hex = function(color, alpha){
+  rgbvals = col2rgb(color)
+  rgb2hex = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+  return(rgb2hex)
+}
+
+par(mar = c(6,7,4,2))
+boxplot(gene$cpm~gene$group,    
+        main = "",
+        ylab="",
+        xlab = "",
+        las = 2,
+        cex.axis = 1.5,
+        boxlwd = 3,
+        lwd = 3,
+        xaxt="n",
+        ylim = c(0, 750),
+        xlim = c(.75, 10.25),
+        col = c(rep(hex("lightgrey", .5),3), rep(hex("mistyrose", .5),3), 
+                rep(hex("lightgrey", .5),3), rep(hex("lightcyan", .5),3)))
+box(lwd = 3)
+axis(1, 
+     at = c(1:10), 
+     cex.axis = 1,
+     labels = c(rep(c("3 Day", "9 Day", "40 Day"),2),
+                rep(c("3 Day", "9 Day"),2)),
+     las=1)
+text(x = c(2, 5, 7.5, 9.5), 
+     y = c(-125,-125, -125, -125), 
+     c("Control", "A4V", "Control", "A4V"),
+     cex= 1.25, xpd = T)
+points(x=as.numeric(factor(gene$group)),
+       y=gene$cpm,
+       cex=2,
+       pch=21,
+       lwd = 2,
+       bg=c('grey25',"firebrick","grey25","deepskyblue")[as.numeric(factor(gene$condition))])
+abline(v=6.5, lty = 2, lwd = 3)
+lines(x=c(3.5,3.5), y = c(-33,-125), lty = 1, lwd = 3, xpd = T)
+lines(x=c(.37,.37), y = c(-33,-125), lty = 1, lwd = 3, xpd = T)
+lines(x=c(6.5,6.5), y = c(-33,-125), lty = 1, lwd = 3, xpd = T)
+lines(x=c(8.5,8.5), y = c(-33,-125), lty = 1, lwd = 3, xpd = T)
+lines(x=c(10.63,10.63), y = c(-33,-125), lty = 1, lwd = 3, xpd = T)
+text(x = c(3.5, 8.5), y = c(825,825), c("Female", "Male"),cex= 2, xpd = T)
+title(ylab="Counts per Million", line=5, cex.lab=2)
+title(xlab = "Genotype", line = 5, cex.lab=2)
+
+```
+
+
+```{r echo = F}
+
+gene = data.frame(cpm = as.numeric(A4V.cpm[FBgn, row.names(A4V.meta)]),
+                  group = A4V.meta$Group,
+                  condition = paste(substring(A4V.meta$Genotype,1,1),
+                                    substring(A4V.meta$Sex,1,1)))
+
+gene = gene[A4V.meta$Section == 'Abdomen',]
+
+gene$group = factor(gene$group, levels = c("S3FA", "S9FA", "S40FA",
+                                           "A3FA", "A9FA", "A40FA",
+                                           "S3MA", "S9MA",
+                                           "A3MA", "A9MA"))
+
+gene$condition = factor(gene$condition, levels = c("S F", "A F", "S M", "A M"))
+
+hex = function(color, alpha){
+  rgbvals = col2rgb(color)
+  rgb2hex = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+  return(rgb2hex)
+}
+
+par(mar = c(6,7,4,2))
+boxplot(gene$cpm~gene$group,    
+        main = "",
+        ylab="",
+        xlab = "",
+        las = 2,
+        cex.axis = 1.5,
+        boxlwd = 3,
+        lwd = 3,
+        xaxt="n",
+        ylim = c(0, 1450),
+        xlim = c(.75, 10.25),
+        col = c(rep(hex("lightgrey", .5),3), rep(hex("mistyrose", .5),3), 
+                rep(hex("lightgrey", .5),3), rep(hex("lightcyan", .5),3)))
+box(lwd = 3)
+axis(1, 
+     at = c(1:10), 
+     cex.axis = 1,
+     labels = c(rep(c("3 Day", "9 Day", "40 Day"),2),
+                rep(c("3 Day", "9 Day"),2)),
+     las=1)
+text(x = c(2, 5, 7.5, 9.5), 
+     y = c(-250,-250, -250, -250), 
+     c("Control", "A4V", "Control", "A4V"),
+     cex= 1.25, xpd = T)
+points(x=as.numeric(factor(gene$group)),
+       y=gene$cpm,
+       cex=2,
+       pch=21,
+       lwd = 2,
+       bg=c('grey25',"firebrick","grey25","deepskyblue")[as.numeric(factor(gene$condition))])
+abline(v=6.5, lty = 2, lwd = 3)
+lines(x=c(3.5,3.5), y = c(-60,-250), lty = 1, lwd = 3, xpd = T)
+lines(x=c(.37,.37), y = c(-60,-250), lty = 1, lwd = 3, xpd = T)
+lines(x=c(6.5,6.5), y = c(-60,-250), lty = 1, lwd = 3, xpd = T)
+lines(x=c(8.5,8.5), y = c(-60,-250), lty = 1, lwd = 3, xpd = T)
+lines(x=c(10.63,10.63), y = c(-60,-250), lty = 1, lwd = 3, xpd = T)
+text(x = c(3.5, 8.5), y = c(1600,1600), c("Female", "Male"),cex= 2, xpd = T)
+title(ylab="Counts per Million", line=5, cex.lab=2)
+title(xlab = "Genotype", line = 5, cex.lab=2)
+
+```
+
+
+```{r echo = F}
+
+gene = data.frame(cpm = as.numeric(A4V.cpm[FBgn, row.names(A4V.meta)]),
+                  group = A4V.meta$Group,
+                  condition = paste(substring(A4V.meta$Genotype,1,1),
+                                    substring(A4V.meta$Sex,1,1)))
+
+gene = gene[A4V.meta$Section == 'Thorax',]
+
+gene$group = factor(gene$group, levels = c("S3FT", "S9FT", "S40FT",
+                                           "A3FT", "A9FT", "A40FT",
+                                           "S3MT", "S9MT",
+                                           "A3MT", "A9MT"))
+
+gene$condition = factor(gene$condition, levels = c("S F", "A F", "S M", "A M"))
+
+hex = function(color, alpha){
+  rgbvals = col2rgb(color)
+  rgb2hex = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+  return(rgb2hex)
+}
+
+par(mar = c(6,7,4,2))
+boxplot(gene$cpm~gene$group,    
+        main = "",
+        ylab="",
+        xlab = "",
+        las = 2,
+        cex.axis = 1.5,
+        boxlwd = 3,
+        lwd = 3,
+        xaxt="n",
+        ylim = c(0, 8500),
+        xlim = c(.75, 10.25),
+        col = c(rep(hex("lightgrey", .5),3), rep(hex("mistyrose", .5),3), 
+                rep(hex("lightgrey", .5),3), rep(hex("lightcyan", .5),3)))
+box(lwd = 3)
+axis(1, 
+     at = c(1:10), 
+     cex.axis = 1,
+     labels = c(rep(c("3 Day", "9 Day", "40 Day"),2),
+                rep(c("3 Day", "9 Day"),2)),
+     las=1)
+text(x = c(2, 5, 7.5, 9.5), 
+     y = c(-1400,-1400, -1400, -1400), 
+     c("Control", "A4V", "Control", "A4V"),
+     cex= 1.25, xpd = T)
+points(x=as.numeric(factor(gene$group)),
+       y=gene$cpm,
+       cex=2,
+       pch=21,
+       lwd = 2,
+       bg=c('grey25',"firebrick","grey25","deepskyblue")[as.numeric(factor(gene$condition))])
+abline(v=6.5, lty = 2, lwd = 3)
+lines(x=c(3.5,3.5), y = c(-370,-1500), lty = 1, lwd = 3, xpd = T)
+lines(x=c(.37,.37), y = c(-370,-1500), lty = 1, lwd = 3, xpd = T)
+lines(x=c(6.5,6.5), y = c(-370,-1500), lty = 1, lwd = 3, xpd = T)
+lines(x=c(8.5,8.5), y = c(-370,-1500), lty = 1, lwd = 3, xpd = T)
+lines(x=c(10.63,10.63), y = c(-370,-1500), lty = 1, lwd = 3, xpd = T)
+text(x = c(3.5, 8.5), y = c(9500,9500), c("Female", "Male"),cex= 2, xpd = T)
+title(ylab="Counts per Million", line=5, cex.lab=2)
+title(xlab = "Genotype", line = 5, cex.lab=2)
+
+```
+
+
+
+```{r echo = F}
+
+gene = data.frame(cpm = as.numeric(A4V.cpm[FBgn, row.names(A4V.meta)]),
+                  group = A4V.meta$Group,
+                  condition = paste(substring(A4V.meta$Genotype,1,1),
+                                    substring(A4V.meta$Sex,1,1)))
+
+gene = gene[A4V.meta$Section == 'Head',]
+
+gene$group = factor(gene$group, levels = c("S3FH", "S9FH", "S40FH",
+                                           "A3FH", "A9FH", "A40FH",
+                                           "S3MH", "S9MH",
+                                           "A3MH", "A9MH"))
+
+gene$condition = factor(gene$condition, levels = c("S F", "A F", "S M", "A M"))
+
+hex = function(color, alpha){
+  rgbvals = col2rgb(color)
+  rgb2hex = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+  return(rgb2hex)
+}
+
+par(mar = c(6,7,4,2))
+boxplot(gene$cpm~gene$group,    
+        main = "",
+        ylab="",
+        xlab = "",
+        las = 2,
+        cex.axis = 1.5,
+        boxlwd = 3,
+        lwd = 3,
+        xaxt="n",
+        ylim = c(0, 8500),
+        xlim = c(.75, 10.25),
+        col = c(rep(hex("lightgrey", .5),3), rep(hex("mistyrose", .5),3), 
+                rep(hex("lightgrey", .5),3), rep(hex("lightcyan", .5),3)))
+box(lwd = 3)
+axis(1, 
+     at = c(1:10), 
+     cex.axis = 1,
+     labels = c(rep(c("3 Day", "9 Day", "40 Day"),2),
+                rep(c("3 Day", "9 Day"),2)),
+     las=1)
+text(x = c(2, 5, 7.5, 9.5), 
+     y = c(-1000,-1000, -1000, -1000), 
+     c("Control", "A4V", "Control", "A4V"),
+     cex= 1.25, xpd = T)
+points(x=as.numeric(factor(gene$group)),
+       y=gene$cpm,
+       cex=2,
+       pch=21,
+       lwd = 2,
+       bg=c('grey25',"firebrick","grey25","deepskyblue")[as.numeric(factor(gene$condition))])
+abline(v=6.5, lty = 2, lwd = 3)
+lines(x=c(3.5,3.5), y = c(-370,-1100), lty = 1, lwd = 3, xpd = T)
+lines(x=c(.37,.37), y = c(-370,-1100), lty = 1, lwd = 3, xpd = T)
+lines(x=c(6.5,6.5), y = c(-370,-1100), lty = 1, lwd = 3, xpd = T)
+lines(x=c(8.5,8.5), y = c(-370,-1100), lty = 1, lwd = 3, xpd = T)
+lines(x=c(10.63,10.63), y = c(-370,-1100), lty = 1, lwd = 3, xpd = T)
+text(x = c(3.5, 8.5), y = c(9200,9200), c("Female", "Male"),cex= 2, xpd = T)
+title(ylab="Counts per Million", line=5, cex.lab=2)
+title(xlab = "Genotype", line = 5, cex.lab=2)
+
+```
+
+
+```{r echo = F}
+
+gene = data.frame(cpm = as.numeric(A4V.cpm[FBgn, row.names(A4V.meta)]),
+                  group = A4V.meta$Group,
+                  condition = paste(substring(A4V.meta$Genotype,1,1),
+                                    substring(A4V.meta$Sex,1,1)))
+
+gene = gene[A4V.meta$Section == 'Abdomen',]
+
+gene$group = factor(gene$group, levels = c("S3FA", "S9FA", "S40FA",
+                                           "A3FA", "A9FA", "A40FA",
+                                           "S3MA", "S9MA",
+                                           "A3MA", "A9MA"))
+
+gene$condition = factor(gene$condition, levels = c("S F", "A F", "S M", "A M"))
+
+hex = function(color, alpha){
+  rgbvals = col2rgb(color)
+  rgb2hex = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+  return(rgb2hex)
+}
+
+par(mar = c(6,7,4,2))
+boxplot(gene$cpm~gene$group,    
+        main = "",
+        ylab="",
+        xlab = "",
+        las = 2,
+        cex.axis = 1.5,
+        boxlwd = 3,
+        lwd = 3,
+        xaxt="n",
+        ylim = c(0, 8500),
+        xlim = c(.75, 10.25),
+        col = c(rep(hex("lightgrey", .5),3), rep(hex("mistyrose", .5),3), 
+                rep(hex("lightgrey", .5),3), rep(hex("lightcyan", .5),3)))
+box(lwd = 3)
+axis(1, 
+     at = c(1:10), 
+     cex.axis = 1,
+     labels = c(rep(c("3 Day", "9 Day", "40 Day"),2),
+                rep(c("3 Day", "9 Day"),2)),
+     las=1)
+text(x = c(2, 5, 7.5, 9.5), 
+     y = c(-1000,-1000, -1000, -1000), 
+     c("Control", "A4V", "Control", "A4V"),
+     cex= 1.25, xpd = T)
+points(x=as.numeric(factor(gene$group)),
+       y=gene$cpm,
+       cex=2,
+       pch=21,
+       lwd = 2,
+       bg=c('grey25',"firebrick","grey25","deepskyblue")[as.numeric(factor(gene$condition))])
+abline(v=6.5, lty = 2, lwd = 3)
+lines(x=c(3.5,3.5), y = c(-370,-1100), lty = 1, lwd = 3, xpd = T)
+lines(x=c(.37,.37), y = c(-370,-1100), lty = 1, lwd = 3, xpd = T)
+lines(x=c(6.5,6.5), y = c(-370,-1100), lty = 1, lwd = 3, xpd = T)
+lines(x=c(8.5,8.5), y = c(-370,-1100), lty = 1, lwd = 3, xpd = T)
+lines(x=c(10.63,10.63), y = c(-370,-1100), lty = 1, lwd = 3, xpd = T)
+text(x = c(3.5, 8.5), y = c(9200,9200), c("Female", "Male"),cex= 2, xpd = T)
+title(ylab="Counts per Million", line=5, cex.lab=2)
+title(xlab = "Genotype", line = 5, cex.lab=2)
+
+```
+
+
+
+```{r echo = F}
+
+gene = data.frame(cpm = as.numeric(A4V.cpm[FBgn, row.names(A4V.meta)]),
+                  group = A4V.meta$Group,
+                  condition = paste(substring(A4V.meta$Genotype,1,1),
+                                    substring(A4V.meta$Sex,1,1)))
+
+gene = gene[A4V.meta$Section == 'Thorax',]
+
+gene$group = factor(gene$group, levels = c("S3FT", "S9FT", "S40FT",
+                                           "A3FT", "A9FT", "A40FT",
+                                           "S3MT", "S9MT",
+                                           "A3MT", "A9MT"))
+
+gene$condition = factor(gene$condition, levels = c("S F", "A F", "S M", "A M"))
+
+hex = function(color, alpha){
+  rgbvals = col2rgb(color)
+  rgb2hex = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+  return(rgb2hex)
+}
+
+par(mar = c(6,7,4,2))
+boxplot(gene$cpm~gene$group,    
+        main = "",
+        ylab="",
+        xlab = "",
+        las = 2,
+        cex.axis = 1.5,
+        boxlwd = 3,
+        lwd = 3,
+        xaxt="n",
+        ylim = c(0, 8500),
+        xlim = c(.75, 10.25),
+        col = c(rep(hex("lightgrey", .5),3), rep(hex("mistyrose", .5),3), 
+                rep(hex("lightgrey", .5),3), rep(hex("lightcyan", .5),3)))
+box(lwd = 3)
+axis(1, 
+     at = c(1:10), 
+     cex.axis = 1,
+     labels = c(rep(c("3 Day", "9 Day", "40 Day"),2),
+                rep(c("3 Day", "9 Day"),2)),
+     las=1)
+text(x = c(2, 5, 7.5, 9.5), 
+     y = c(-1000,-1000, -1000, -1000), 
+     c("Control", "A4V", "Control", "A4V"),
+     cex= 1.25, xpd = T)
+points(x=as.numeric(factor(gene$group)),
+       y=gene$cpm,
+       cex=2,
+       pch=21,
+       lwd = 2,
+       bg=c('grey25',"firebrick","grey25","deepskyblue")[as.numeric(factor(gene$condition))])
+abline(v=6.5, lty = 2, lwd = 3)
+lines(x=c(3.5,3.5), y = c(-370,-1100), lty = 1, lwd = 3, xpd = T)
+lines(x=c(.37,.37), y = c(-370,-1100), lty = 1, lwd = 3, xpd = T)
+lines(x=c(6.5,6.5), y = c(-370,-1100), lty = 1, lwd = 3, xpd = T)
+lines(x=c(8.5,8.5), y = c(-370,-1100), lty = 1, lwd = 3, xpd = T)
+lines(x=c(10.63,10.63), y = c(-370,-1100), lty = 1, lwd = 3, xpd = T)
+text(x = c(3.5, 8.5), y = c(9200,9200), c("Female", "Male"),cex= 2, xpd = T)
+title(ylab="Counts per Million", line=5, cex.lab=2)
+title(xlab = "Genotype", line = 5, cex.lab=2)
+
+```
+
+
+```{r}
+
+
+  FC.data = A4V.FC[, c("AvS9FT", "AvS9MT")]
+  FDR.data = A4V.FDR[, c("AvS9FT", "AvS9MT")]
+  mean.data = A4V.meancpm[, c('A9FT', 'S9FT', 'A9MT', 'S9MT')]
+  
+  go.genes = row.names(FDR.data[FDR.data$AvS9FT < .05 |
+                             FDR.data$AvS9MT < .05 ,])
+  
+  
+data = data.frame(Symbol = GeneIDKey[go.genes, "Symbol"],
+                  FBgn = go.genes,
+                  FDR1 = -log2(FDR.data[go.genes, 1]),
+                  FDR2 = -log2(FDR.data[go.genes, 2]),
+                  FC1 = FC.data[go.genes, 1],
+                  FC2 = FC.data[go.genes, 2],
+                  Color = 'grey',
+                  size = 1,
+                  Variable1.cpm = mean.data[go.genes,1],
+                  Control1.cpm = mean.data[go.genes,2],
+                  Variable2.cpm = mean.data[go.genes,3],
+                  Control2.cpm = mean.data[go.genes,4])
+
+  main.title = "Female vs Male DEGs"
+  
+  ##data$Color[(data$FC1 - 1) > data$FC2] = 'royalblue'
+  ##data$Color[(data$FC2 - 1) > data$FC1] = 'firebrick' 
+  data$Color[data$Symbol == "Arc1"] = 'gold'
+  size = data.frame(G85R = apply(mean.data[go.genes,c(1,3)], 1, mean),
+                    WT = apply(mean.data[go.genes,c(2,4)], 1, mean))
+  size = size + .001
+  data$size = log2(apply(size, 1, max))
+  data$size[data$size<3] = 1
+  
+  data = na.omit(data)
+  data = data[data$size > log2(10),]
+  data$size = 5*data$size
+  
+  fig = plot_ly(data = data,
+                x = ~FC1,
+                y = ~FC2,
+                type = 'scatter',
+                mode = 'markers',
+                marker = list(color = ~Color,
+                              colors = ~Color,
+                              line = list(color = "black", width = 1.5),
+                              size = ~size),
+                hoverinfo = "text",
+                hovertext = paste("Symbol:", data$Symbol,
+                                  "\nFBgn:", data$FBgn,
+                                  "\n ", colnames(FDR.data)[1], "FDR: ", round(2^-data$FDR1, 2),
+                                  "\n ", colnames(FDR.data)[2], "FDR: ", round(2^-data$FDR2,2),
+                                  "\n ", colnames(FC.data)[1], "FC: ", round(data$FC1, 2),
+                                  "\n ", colnames(FC.data)[2], "FC: ", round(data$FC2,2),
+                                  "\n ", colnames(mean.data)[1], "mean CPM: ", signif(data$Variable1,2),
+                                  "\n ", colnames(mean.data)[2], "mean CPM: ", signif(data$Control1,2),
+                                  "\n ", colnames(mean.data)[3], "mean CPM: ", signif(data$Variable2,2),
+                                  "\n ", colnames(mean.data)[4], "mean CPM: ", signif(data$Control2,2)))
+
+  fig = fig %>% layout(title = main.title,
+                       shapes = list(
+                         type = "line",
+                         line = list(color = "black", dash = 'dash', width = 2),
+                         x0 = min(data$FC1, data$FC2) - 1,
+                         x1 = max(data$FC1, data$FC2) + 1,
+                         y0 = min(data$FC1, data$FC2) - 1,
+                         y1 = max(data$FC1, data$FC2) + 1),
+                       xaxis = list(title = paste(colnames(FC.data)[1], "FC")),
+                       yaxis = list(title = paste(colnames(FC.data)[2], "FC")),
+                       showlegend = F)
+  
+    fig = fig %>% add_markers(data = data[data$Symbol == "Arc1",],
+                x = ~FC1,
+                y = ~FC2,
+                type = 'scatter',
+                mode = 'markers',
+                hoverinfo = "text",
+                hovertext = paste("Symbol:", data$Symbol[data$Symbol == "Arc1"],
+                                  "\nFBgn:", data$FBgn[data$Symbol == "Arc1"],
+                                  "\n ", colnames(FDR.data)[1], "FDR: ", round(2^-data$FDR1[data$Symbol == "Arc1"], 2),
+                                  "\n ", colnames(FDR.data)[2], "FDR: ", round(2^-data$FDR2[data$Symbol == "Arc1"],2),
+                                  "\n ", colnames(FC.data)[1], "FC: ", round(data$FC1[data$Symbol == "Arc1"], 2),
+                                  "\n ", colnames(FC.data)[2], "FC: ", round(data$FC2[data$Symbol == "Arc1"],2),
+                                  "\n ", colnames(mean.data)[1], "mean CPM: ", signif(data$Variable1[data$Symbol == "Arc1"],2),
+                                  "\n ", colnames(mean.data)[2], "mean CPM: ", signif(data$Control1[data$Symbol == "Arc1"],2),
+                                  "\n ", colnames(mean.data)[3], "mean CPM: ", signif(data$Variable2[data$Symbol == "Arc1"],2),
+                                  "\n ", colnames(mean.data)[4], "mean CPM: ", signif(data$Control2[data$Symbol == "Arc1"],2)))
+  fig
+```
+
+
+```{r echo = F}
+
+sun = "FBgn0014391"
+mbl = "FBgn0265487"
+  ##could not find mblA, just mbl
+NimC1 = "FBgn0259896"
+
+gene = data.frame(cpm = as.numeric(A4V.cpm[sun, row.names(A4V.meta)]),
+                  group = A4V.meta$Group,
+                  condition = paste(substring(A4V.meta$Genotype,1,1),
+                                    substring(A4V.meta$Sex,1,1)))
+
+gene = gene[A4V.meta$Section == 'Thorax',]
+
+gene$group = factor(gene$group, levels = c("S3FT", "S9FT", "S40FT",
+                                           "A3FT", "A9FT", "A40FT",
+                                           "S3MT", "S9MT",
+                                           "A3MT", "A9MT"))
+
+gene$condition = factor(gene$condition, levels = c("S F", "A F", "S M", "A M"))
+
+hex = function(color, alpha){
+  rgbvals = col2rgb(color)
+  rgb2hex = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+  return(rgb2hex)
+}
+
+par(mar = c(6,7,4,2))
+boxplot(gene$cpm~gene$group,    
+        main = "",
+        ylab="",
+        xlab = "",
+        las = 2,
+        cex.axis = 1.5,
+        boxlwd = 3,
+        lwd = 3,
+        xaxt="n",
+        ylim = c(0, 8500),
+        xlim = c(.75, 10.25),
+        col = c(rep(hex("lightgrey", .5),3), rep(hex("mistyrose", .5),3), 
+                rep(hex("lightgrey", .5),3), rep(hex("lightcyan", .5),3)))
+box(lwd = 3)
+axis(1, 
+     at = c(1:10), 
+     cex.axis = 1,
+     labels = c(rep(c("3 Day", "9 Day", "40 Day"),2),
+                rep(c("3 Day", "9 Day"),2)),
+     las=1)
+text(x = c(2, 5, 7.5, 9.5), 
+     y = c(-1000,-1000, -1000, -1000), 
+     c("Control", "A4V", "Control", "A4V"),
+     cex= 1.25, xpd = T)
+points(x=as.numeric(factor(gene$group)),
+       y=gene$cpm,
+       cex=2,
+       pch=21,
+       lwd = 2,
+       bg=c('grey25',"firebrick","grey25","deepskyblue")[as.numeric(factor(gene$condition))])
+abline(v=6.5, lty = 2, lwd = 3)
+lines(x=c(3.5,3.5), y = c(-370,-1100), lty = 1, lwd = 3, xpd = T)
+lines(x=c(.37,.37), y = c(-370,-1100), lty = 1, lwd = 3, xpd = T)
+lines(x=c(6.5,6.5), y = c(-370,-1100), lty = 1, lwd = 3, xpd = T)
+lines(x=c(8.5,8.5), y = c(-370,-1100), lty = 1, lwd = 3, xpd = T)
+lines(x=c(10.63,10.63), y = c(-370,-1100), lty = 1, lwd = 3, xpd = T)
+text(x = c(3.5, 8.5), y = c(9200,9200), c("Female", "Male"),cex= 2, xpd = T)
+title(ylab="Counts per Million", line=5, cex.lab=2)
+title(xlab = "Genotype", line = 5, cex.lab=2)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

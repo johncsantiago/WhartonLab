@@ -127,6 +127,39 @@ WT.CxDf = compare.conditions("B", "C")
 GR.CxOE = compare.conditions("F", "E")
 WT.CxOE = compare.conditions("A", "C")
 
+
+metab.p = data.frame(KEGG =  GRxWT.C[mo, "KEGG"],
+                     GRxWT.C =  GRxWT.C[mo, "p"],
+                     GRxWT.Df =  GRxWT.Df[mo, "p"],
+                     GRxWT.OE =  GRxWT.OE[mo, "p"],
+                     GR.CxDf =  GR.CxDf[mo, "p"],
+                     WT.CxDf =  WT.CxDf[mo, "p"],
+                     GR.CxOE =  GR.CxOE[mo, "p"],
+                     WT.CxOE =  WT.CxOE[mo, "p"])
+row.names(metab.p) = mo
+
+metab.FDR = data.frame(KEGG =  GRxWT.C[mo, "KEGG"],
+                     GRxWT.C =  GRxWT.C[mo, "FDR"],
+                     GRxWT.Df =  GRxWT.Df[mo, "FDR"],
+                     GRxWT.OE =  GRxWT.OE[mo, "FDR"],
+                     GR.CxDf =  GR.CxDf[mo, "FDR"],
+                     WT.CxDf =  WT.CxDf[mo, "FDR"],
+                     GR.CxOE =  GR.CxOE[mo, "FDR"],
+                     WT.CxOE =  WT.CxOE[mo, "FDR"])
+row.names(metab.FDR) = mo
+
+metab.FC = data.frame(KEGG =  GRxWT.C[mo, "KEGG"],
+                     GRxWT.C =  GRxWT.C[mo, "FC"],
+                     GRxWT.Df =  GRxWT.Df[mo, "FC"],
+                     GRxWT.OE =  GRxWT.OE[mo, "FC"],
+                     GR.CxDf =  GR.CxDf[mo, "FC"],
+                     WT.CxDf =  WT.CxDf[mo, "FC"],
+                     GR.CxOE =  GR.CxOE[mo, "FC"],
+                     WT.CxOE =  WT.CxOE[mo, "FC"])
+row.names(metab.FC) = mo
+
+
+
 ##Comparison cpm means
 ccm = data.frame(GRF.CxDf = apply(mean.cpm[,c("TktDfGR.F","GR.F")], MARGIN = 1, mean), 
                  GRF.CxOE = apply(mean.cpm[,c("TktOEGR.F","GR.F")], MARGIN = 1, mean),
@@ -178,6 +211,9 @@ while(i<=length(mixed.id)){
 metab.id = metab.id[-grep(" / ", names(metab.id))]
 
 metab.id = c(metab.id, mixed.id)
+
+metab.id = data.frame(KEGG = names(metab.id),
+                      metab = metab.id)
 
 ```
 
@@ -312,13 +348,29 @@ KEGG.diagram(PathwayID, out.id, FC.data, FDR.data)
 
 
 
+```{r echo = F, message=F}
+
+PathwayID = "04137"
+out.id = 'G85R_F'
+FC.data = setNames(TKT.EdgeR.FC$GRxWT.FC, row.names(TKT.EdgeR.FC))
+FDR.data = setNames(TKT.EdgeR$GRxWT.FC, row.names(TKT.EdgeR))
+
+FC.data = TKT.EdgeR.FC[,c('GRxWT.FC', 'GRxWT.MC')]
+FDR.data = setNames(TKT.EdgeR$GRxWT.MC, row.names(TKT.EdgeR))
+
+metab.data = GRxWT.C
+KEGG.diagram(PathwayID, out.id, FC.data, FDR.data)
+
+
+```
+
 
 
 
 
 ```{r echo = F, message=F}
 
-PathwayID = "04137"
+PathwayID = "04146"
 out.id = 'G85R_F'
 FC.data = setNames(TKT.EdgeR.FC$GRxWT.FC, row.names(TKT.EdgeR.FC))
 FDR.data = setNames(TKT.EdgeR$GRxWT.FC, row.names(TKT.EdgeR))

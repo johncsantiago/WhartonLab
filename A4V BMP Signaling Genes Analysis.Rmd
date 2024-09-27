@@ -955,7 +955,7 @@ Title = "Female Larvae"
 branches=3
 
 row.names(scaled) = bmp[row.names(scaled),1]
-
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
 colors = allcolors[1:branches]
 
 hc <- hclust(dist(scaled), "complete")
@@ -1022,6 +1022,8 @@ row.names(FBgn) = FBgn[,1]
 
 df$mean = meandf$value
 df$fbgn = FBgn[as.character(df$row), 'fb']
+
+
 
 fig = plot_ly(x = df$col, 
               y = df$row,
@@ -1125,6 +1127,213 @@ return(fig)
 }
 
 ```
+
+
+```{r}
+
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M', 'TktOEWT.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F', 'TktOEWT.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+
+allscaled = cbind(Fhmdata,Mhmdata)
+allmean = GR.mean[,colnames(allscaled)]
+row.names(allmean) = bmp[row.names(allmean),1]
+
+scaled = allscaled
+Title = " "
+branches=3
+
+row.names(scaled) = bmp[row.names(scaled),1]
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
+colors = allcolors[1:branches]
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = Title)
+
+
+
+```
+
+
+
+```{r}
+
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktOEGR.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktOEGR.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+
+allscaled = cbind(Fhmdata)
+allmean = GR.mean[,colnames(allscaled)]
+row.names(allmean) = bmp[row.names(allmean),1]
+
+scaled = allscaled
+Title = " "
+branches=3
+
+row.names(scaled) = bmp[row.names(scaled),1]
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
+colors = allcolors[1:branches]
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = Title)
+
+
+
+```
+
+
+
+```{r}
+
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "M",]
+hmgroups = hmgroups[c('WT.M', 'GR.M', 'TktDfGR.M', 'TktDfWT.M'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Mhmdata=t(scale(t(hmdata)))
+
+
+hmgroups = GR.mean.meta[GR.mean.meta$Sex == "F",]
+hmgroups = hmgroups[c('WT.F', 'GR.F', 'TktDfGR.F', 'TktDfWT.F'),]
+
+hmdata = GR.mean[, row.names(hmgroups)]
+Fhmdata=t(scale(t(hmdata)))
+
+
+allscaled = cbind(Fhmdata,Mhmdata)
+allmean = GR.mean[,colnames(allscaled)]
+row.names(allmean) = bmp[row.names(allmean),1]
+
+scaled = allscaled
+Title = " "
+branches=3
+
+row.names(scaled) = bmp[row.names(scaled),1]
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
+colors = allcolors[1:branches]
+
+hc <- hclust(dist(scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+
+
+heatmaply(scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = Title)
+
+
+
+```
+
 
 ```{r echo = F}
 
