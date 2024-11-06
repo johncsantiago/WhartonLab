@@ -18,10 +18,10 @@ source('/Users/johncsantiago/Documents/GitHub/WhartonLab/GOandKEGGPlottingFuncti
 
 ```{r echo = F, message = F}
 
-Variable.Condition = "A9MT" 
-Control.Condition = "S9MT"
-secondary.Variable.Condition = "A40FT"
-secondary.Control.Condition = "S40FT"
+Variable.Condition = "GRFC" 
+Control.Condition = "WTFC"
+secondary.Variable.Condition = "GRMC"
+secondary.Control.Condition = "WTMC"
 
 
 

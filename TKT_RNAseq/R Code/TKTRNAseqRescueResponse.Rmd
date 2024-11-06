@@ -19,7 +19,7 @@ library(org.Dm.eg.db)
 library(KEGGREST)
 library(RcisTarget)
 library(DT)
-##source('/Users/johncsantiago/Documents/GitHub/WhartonLab/GOandKEGGPlottingFunctions.R')
+source('/Users/johncsantiago/Documents/GitHub/WhartonLab/GOandKEGGPlottingFunctions.R')
 library(VennDiagram)
 
 ```

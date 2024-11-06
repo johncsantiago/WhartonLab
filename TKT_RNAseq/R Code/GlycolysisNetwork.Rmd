@@ -210,6 +210,8 @@ glycolysis.edges = read.csv('/Users/johncsantiago/Documents/GitHub/WhartonLab/Ge
 ##Metabolites in the KEGG pathway with their ID
 glycolysis.metabs = read.csv('/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GlycolysisMetaboliteKEGGinfo.csv')
 
+
+
 node.data = node.info('/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/R Code/dme00010.xml')
 
 glycolysis.network = function(comparison.T, comparison.M){

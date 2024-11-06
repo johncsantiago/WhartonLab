@@ -1,0 +1,1409 @@
+---
+title: "G85R Analysis: Rescue Response"
+author: "John Santiago"
+date: "2024-09-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r include = F, echo = F}
+
+library(plotly)
+library(edgeR)
+library(heatmaply)
+library(org.Dm.eg.db)
+library(KEGGREST)
+library(RcisTarget)
+library(DT)
+source('/Users/johncsantiago/Documents/GitHub/WhartonLab/GOandKEGGPlottingFunctions.R')
+library(VennDiagram)
+
+```
+
+
+```{r include = F, echo = F}
+##load all files from github
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"
+cpmdata = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT_cpmdata.csv"),row.names = 1)
+groups  = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.metadata.csv"),row.names = 1)
+TKT.EdgeR = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FDRTable.csv"),row.names = 1)
+TKT.EdgeR.FC = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FCTable.csv"),row.names = 1)
+
+G85R.meancpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT_meancpmdata.csv", row.names = 1)
+
+groups = groups[colnames(cpmdata),]
+
+
+GeneIDKey = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GeneIDKey.csv", row.names = 1)
+
+##Clean Trait Data and calculate CPMs
+countdata=read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT.counttable.csv",row.names=1)
+
+
+##normalize data
+countdata=countdata[, row.names(groups)]
+x <- countdata
+gr <- factor(groups$Group)
+y <- DGEList(counts=x,group=gr)
+keep <- filterByExpr(y)
+y <- y[keep,,keep.lib.sizes=FALSE]
+z <- calcNormFactors(y, method = "TMM")
+design<-model.matrix(~0 + gr)
+colnames(design) = unique(gr)
+z = estimateDisp(z, design, robust = T)
+fit <- glmQLFit(z, design)
+
+compare = makeContrasts(TktDfGR.F-WT.F, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+GR.FDfxWT.FC=DEout
+sGR.FDfxWT.FC=DEout[DEout$FDR<.05,]
+
+TKT.EdgeR = cbind(TKT.EdgeR, GR.FDfxWT.FC[row.names(TKT.EdgeR), "FDR"])
+colnames(TKT.EdgeR)[17] = 'GR.FDfxWT.FC'
+
+TKT.EdgeR.FC = cbind(TKT.EdgeR.FC, GR.FDfxWT.FC[row.names(TKT.EdgeR), "logFC"])
+colnames(TKT.EdgeR.FC)[17] = 'GR.FDfxWT.FC'
+
+compare = makeContrasts(TktDfGR.M-WT.M, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+GR.MDfxWT.MC=DEout
+sGR.MDfxWT.MC=DEout[DEout$FDR<.05,]
+
+TKT.EdgeR = cbind(TKT.EdgeR, GR.MDfxWT.MC[row.names(TKT.EdgeR), "FDR"])
+colnames(TKT.EdgeR)[18] = 'GR.MDfxWT.MC'
+
+TKT.EdgeR.FC = cbind(TKT.EdgeR.FC, GR.MDfxWT.MC[row.names(TKT.EdgeR), "logFC"])
+colnames(TKT.EdgeR.FC)[18] = 'GR.MDfxWT.MC'
+
+
+compare = makeContrasts(TktOEGR.F-WT.F, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+GR.FOExWT.FC=DEout
+sGR.FOExWT.FC=DEout[DEout$FDR<.05,]
+
+TKT.EdgeR = cbind(TKT.EdgeR, GR.FOExWT.FC[row.names(TKT.EdgeR), "FDR"])
+colnames(TKT.EdgeR)[19] = 'GR.FOExWT.FC'
+
+TKT.EdgeR.FC = cbind(TKT.EdgeR.FC, GR.FOExWT.FC[row.names(TKT.EdgeR), "logFC"])
+colnames(TKT.EdgeR.FC)[19] = 'GR.FOExWT.FC'
+
+compare = makeContrasts(TktOEGR.M-WT.M, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+GR.MOExWT.MC=DEout
+sGR.MOExWT.MC=DEout[DEout$FDR<.05,]
+
+TKT.EdgeR = cbind(TKT.EdgeR, GR.MOExWT.MC[row.names(TKT.EdgeR), "FDR"])
+colnames(TKT.EdgeR)[20] = 'GR.MOExWT.MC'
+
+TKT.EdgeR.FC = cbind(TKT.EdgeR.FC, GR.MOExWT.MC[row.names(TKT.EdgeR), "logFC"])
+colnames(TKT.EdgeR.FC)[20] = 'GR.MOExWT.MC'
+
+rawdata = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/MetabolomicsForMetaboanalyst.txt", sep = "\t", row.names = 1)
+KEGG.Key = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/RawMetabolomicData.csv", row.names = 1)
+KEGG.Key = setNames(KEGG.Key[-c(1:2), 2], row.names(KEGG.Key)[-c(1:2)])
+
+genotypes = setNames(c("WT", "GR", "TktOEWT", "TktOEGR", "TktDfWT", "TktDfGR"), c("C", "E", "A", "F", "B", "D"))
+
+metadata = data.frame(Sample = colnames(rawdata), 
+                      Group = as.character(rawdata[1,]), 
+                      TIC = as.numeric(rawdata[2,]), 
+                      Genotypes = genotypes[as.character(rawdata[1,])])
+
+row.names(metadata) = metadata$Sample
+
+norm.func = function(data){
+  nd = (as.numeric(data)/metadata$TIC)*1000
+  return(nd)
+}
+
+norm.data = t(apply(rawdata[3:nrow(rawdata),], 1, norm.func))
+colnames(norm.data) = colnames(rawdata)
+
+group.mean=function(data){
+  gm = mean(na.omit(data))
+}
+
+mean.data = matrix(0, nrow=nrow(norm.data), ncol = length(genotypes))
+row.names(mean.data) = row.names(norm.data)
+colnames(mean.data) = unique(metadata$Group)
+
+i=1
+while(i<=ncol(mean.data)){
+  mean.data[,i] = apply(norm.data[,metadata[metadata$Group == colnames(mean.data)[i], "Sample"]], 1, group.mean)
+  i = i+1
+}
+
+mean.metab = mean.data
+
+compare.conditions = function(condition1, condition2){
+  columns1 = metadata[metadata$Group == condition1, "Sample"]
+  columns2 = metadata[metadata$Group == condition2, "Sample"]
+  p=setNames(rep(NA, nrow(norm.data)), row.names(norm.data))
+  i=1
+  while(i<=length(p)){
+    if(length(na.omit(norm.data[i,columns1]))>2 & 
+       length(na.omit(norm.data[i,columns2]))>2){
+      temp = t.test(na.omit(norm.data[i,columns1]),
+                    na.omit(norm.data[i,columns2]), paired = F, var.equal = T)
+      p[i] = temp[[3]]
+      }
+    i=i+1
+    }
+
+  fdr = p.adjust(p, "BH", length(p))
+
+  fc = mean.metab[,condition1]/mean.metab[,condition2]
+
+  comparison.table = data.frame(p = p, 
+                                FDR = fdr, 
+                                FC = fc, 
+                                KEGG = KEGG.Key[row.names(mean.metab)])
+  
+  comparison.table = comparison.table[order(comparison.table$FDR),]
+}
+
+GRxWT.C = compare.conditions("E", "C")
+GRxWT.Df = compare.conditions("D", "B")[row.names(GRxWT.C),]
+GRxWT.OE = compare.conditions("F", "A")[row.names(GRxWT.C),]
+
+GR.CxDf = compare.conditions("D", "E")[row.names(GRxWT.C),]
+WT.CxDf = compare.conditions("B", "C")[row.names(GRxWT.C),]
+
+GR.CxOE = compare.conditions("F", "E")[row.names(GRxWT.C),]
+WT.CxOE = compare.conditions("A", "C")[row.names(GRxWT.C),]
+
+GR.DfxWT.C = compare.conditions("D", "C")[row.names(GRxWT.C),]
+GR.OExWT.C = compare.conditions("F", "C")[row.names(GRxWT.C),]
+
+
+
+comparison.means = list(GRF.CxDf = c("TktDfGR.F","GR.F"), 
+                 GRF.CxOE = c("TktOEGR.F","GR.F"),
+                 WTF.CxDf = c("TktDfWT.F","WT.F"),
+                 WTF.CxOE = c("TktOEWT.F","WT.F"),
+                 GRxWT.FC = c("GR.F","WT.F"), 
+                 GRxWT.FDf = c("TktDfGR.F","TktDfWT.F"),
+                 GRxWT.FOE = c("TktOEGR.F","TktOEWT.F"), 
+                 GRM.CxDf = c("TktDfGR.M","GR.M"), 
+                 GRM.CxOE = c("TktOEGR.M","GR.M"),
+                 WTM.CxDf = c("TktDfWT.M","WT.M"),
+                 WTM.CxOE = c("TktOEWT.M","WT.M"),
+                 GRxWT.MC = c("GR.M","WT.M"), 
+                 GRxWT.MDf = c("TktDfGR.M","TktDfWT.M"),
+                 GRxWT.MOE = c("TktOEGR.M","TktOEWT.M"),
+                 GR.FxM = c("GR.F","GR.M"),
+                 WT.FxM = c("WT.F","WT.M"))
+
+
+metab.FC = data.frame('GRxWT.C' = GRxWT.C$FC,
+                      'GRxWT.Df' = GRxWT.Df$FC,
+                      'GRxWT.OE' = GRxWT.OE$FC,
+                      'GR.CxDf' = GR.CxDf$FC,
+                      'WT.CxDf' = WT.CxDf$FC,
+                      'GR.CxOE' = GR.CxOE$FC,
+                      'WT.CxOE' = WT.CxOE$FC,
+                      'GR.DfxWT.C' = GR.DfxWT.C$FC,
+                      'GR.OExWT.C' = GR.OExWT.C$FC)
+row.names(metab.FC) = row.names(GRxWT.C)
+metab.FC = log2(metab.FC)
+
+metab.FDR = data.frame(GRxWT.C = GRxWT.C$p,
+                       GRxWT.Df = GRxWT.Df$p,
+                       GRxWT.OE = GRxWT.OE$p,
+                       GR.CxDf = GR.CxDf$p,
+                       WT.CxDf = WT.CxDf$p,
+                       GR.CxOE = GR.CxOE$p,
+                       WT.CxOE = WT.CxOE$p,
+                       GR.DfxWT.C = GR.DfxWT.C$p,
+                       GR.OExWT.C = GR.OExWT.C$p)
+row.names(metab.FDR) = row.names(GRxWT.C)
+
+colnames(mean.metab) = as.character(genotypes[colnames(mean.metab)])
+
+enzyme2KEGG = as.list(org.Dm.egENZYME2EG)
+
+
+```
+
+
+```{r echo = F}
+
+TKT.biplot = function(x, y, mean.data, main.title){
+min.expression = 10
+
+FDR.data = TKT.EdgeR[, c(x, y)]
+x.genes = row.names(FDR.data[FDR.data[,x] < 0.05,])
+y.genes = row.names(FDR.data[FDR.data[,y] < 0.05,])
+xy.genes = intersect(x.genes, y.genes)
+DEGs = unique(c(x.genes, y.genes))
+
+
+FC.data = TKT.EdgeR.FC[DEGs, c(x, y)]
+FDR.data = TKT.EdgeR[DEGs, c(x, y)]
+mean.data = mean.data[DEGs, ]
+  
+
+  
+  
+data = data.frame(Symbol = GeneIDKey[DEGs, "Symbol"],
+                  FBgn = DEGs,
+                  FDR1 = FDR.data[, x],
+                  FDR2 = FDR.data[, y],
+                  FC1 = FC.data[, x],
+                  FC2 = FC.data[, y],
+                  Color = 'grey',
+                  size = 1,
+                  Variable1.cpm = mean.data[,1],
+                  Control1.cpm = mean.data[,2],
+                  Variable2.cpm = mean.data[,3],
+                  Control2.cpm = mean.data[,4])
+  row.names(data) = data$FBgn
+
+  
+  data[x.genes, 'Color'] = 'royalblue'
+  data[y.genes, 'Color'] = 'firebrick' 
+  data[xy.genes, 'Color'] = 'gold'
+  
+  data$size = log2(apply(mean.data, 1, max))
+  data$size[data$size<3] = 1
+  data = na.omit(data)
+  data = data[data$size > log2(min.expression),]
+  data$size = 2.5*data$size
+  
+  fig = plot_ly(data = data,
+                x = ~FC1,
+                y = ~FC2,
+                type = 'scatter',
+                mode = 'markers',
+                marker = list(color = ~Color,
+                              colors = ~Color,
+                              line = list(color = "black", width = 1.5),
+                              size = ~size),
+                hoverinfo = "text",
+                hovertext = paste("Symbol:", data$Symbol,
+                                  "\nFBgn:", data$FBgn,
+                                  "\n ", colnames(FDR.data)[1], "FDR: ", round(data$FDR1, 2),
+                                  "\n ", colnames(FDR.data)[2], "FDR: ", round(data$FDR2,2),
+                                  "\n ", colnames(FC.data)[1], "FC: ", round(data$FC1, 2),
+                                  "\n ", colnames(FC.data)[2], "FC: ", round(data$FC2,2),
+                                  "\n ", colnames(mean.data)[1], "mean CPM: ", signif(data$Variable1,2),
+                                  "\n ", colnames(mean.data)[2], "mean CPM: ", signif(data$Control1,2),
+                                  "\n ", colnames(mean.data)[3], "mean CPM: ", signif(data$Variable2,2),
+                                  "\n ", colnames(mean.data)[4], "mean CPM: ", signif(data$Control2,2)))
+
+  fig = fig %>% layout(title = main.title,
+                       shapes = list(
+                         type = "line",
+                         line = list(color = "black", dash = 'dash', width = 2),
+                         x0 = min(data$FC1, data$FC2) - 1,
+                         x1 = max(data$FC1, data$FC2) + 1,
+                         y0 = min(data$FC1, data$FC2) - 1,
+                         y1 = max(data$FC1, data$FC2) + 1),
+                       xaxis = list(title = paste(colnames(FC.data)[1], "FC")),
+                       yaxis = list(title = paste(colnames(FC.data)[2], "FC")),
+                       showlegend = F)
+
+  return(list(fig, data))
+}
+```
+
+
+```{r include = F, echo = F}
+Subset.Enrichment = function(bg, geneset){
+  
+  sigs = geneset
+  
+  
+  sigsKEY = GeneIDKey[sigs,]
+  sigs = na.omit(sigsKEY$Symbol)
+  bgKEY = GeneIDKey[bg,]
+  bg = na.omit(bgKEY$Symbol)
+  
+  genes = setNames(rep(0, length(bg)), bg)
+  genes[sigs] = 1
+  pwf=nullp(genes,"dm3","geneSymbol")
+  GO.wall=goseq(pwf,"dm3","geneSymbol")
+  GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+  row.names(GO.wall) = GO.wall$category
+  KEGG=goseq(pwf,gene2cat=GenesInKegg)
+  KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
+  row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
+  KEGG$Name=KEGG.Names[row.names(KEGG),1]
+  
+  enrichment.data = list(GO.wall, KEGG)
+  names(enrichment.data) = c("GO", "KEGG")
+  return(enrichment.data)
+}
+
+```
+
+```{r echo = F}
+
+compoundandgenes = function(CompoundData, x, y, mean.data, Fx, My, Fmean, Mmean){
+KEGG.ID = unlist(strsplit(CompoundData$compoundID, " / "))
+KEGG.ID = unlist(strsplit(KEGG.ID, "-"))
+  
+symbols = schema(F)$traces$scatter$attributes$marker$symbol$values
+symbols = symbols[c(3, 15, 27, 63, 39, 51, 159, 207, 75, 87, 99)]
+i = 1
+enzymes = keggGet(KEGG.ID[i])[[1]]$ENZYME
+if(length(enzymes > 0)){
+  enzymes = unlist(enzyme2KEGG[intersect(enzymes, names(enzyme2KEGG))])
+  if(length(enzymes > 0)){
+    enzymes = GeneIDKey[GeneIDKey$Name %in% enzymes,]
+    enzymes$Compound = CompoundData[grep(KEGG.ID[i], CompoundData$compoundID),'Metab']
+  }
+}
+
+if(length(KEGG.ID)>1){
+  i = 2
+  while(i <= length(KEGG.ID)){
+    temp.enzymes = keggGet(KEGG.ID[i])[[1]]$ENZYME
+    if(length(temp.enzymes > 0)){
+      temp.enzymes = unlist(enzyme2KEGG[intersect(temp.enzymes, names(enzyme2KEGG))])
+      if(length(temp.enzymes > 0)){
+        temp.enzymes = GeneIDKey[GeneIDKey$Name %in% temp.enzymes,]
+        temp.enzymes$Compound = CompoundData[grep(KEGG.ID[i], CompoundData$compoundID),'Metab']
+        enzymes = rbind(enzymes, temp.enzymes)
+      }
+    }
+    i = i + 1
+  }
+}
+
+enzymes$symbol = symbols[as.numeric(factor(enzymes$Symbol))]
+
+colnames(CompoundData)[1:2] = c('Molecule', 'ID')
+bg = setNames(c('firebrick',"gold","darkgreen","dodgerblue", 'deeppink', 'grey', 'darkorange')[as.numeric(factor(CompoundData$Molecule))], factor(CompoundData$Molecule))
+CompoundData$shape = 'hexagon'
+#CompoundData$Color = bg[CompoundData$Molecule]
+CompoundData$Color = 'grey'
+CompoundData$size = 35
+CompoundData$group = 'Metabolite'
+
+enzymes = data.frame(Molecule = enzymes$Symbol,
+                     ID = enzymes$FBgn,
+                     FDR1 = TKT.EdgeR[enzymes$FBgn, Fx],
+                     FDR2 = TKT.EdgeR[enzymes$FBgn, My],
+                     FC1 = TKT.EdgeR.FC[enzymes$FBgn, Fx],
+                     FC2 = TKT.EdgeR.FC[enzymes$FBgn, My],
+                     Color = 'gold',
+                     size = 20,
+                     Variable1.mean = Fmean[enzymes$FBgn,1],
+                     Control1.mean  = Fmean[enzymes$FBgn,2],
+                     Variable2.mean = Mmean[enzymes$FBgn,1],
+                     Control2.mean  = Mmean[enzymes$FBgn,2],
+                     shape = enzymes$symbol,
+                     group = 'Enzyme')
+
+GeneData = na.omit(enzymes)
+
+metabs = data.frame(Molecule = CompoundData$Molecule,
+                     ID = CompoundData$ID,
+                     FDR1 = CompoundData$FDR,
+                     FDR2 = CompoundData$FDR,
+                     FC1 = CompoundData$FC,
+                     FC2 = CompoundData$FC,
+                     Color = CompoundData$Color,
+                     size = CompoundData$size,
+                     Variable1.mean = CompoundData$Variable1.mean,
+                     Control1.mean  = CompoundData$Control1.mean,
+                     Variable2.mean = CompoundData$Variable1.mean,
+                     Control2.mean  = CompoundData$Variable1.mean,
+                     shape = 'hexagon',
+                     group = 'Metabolite')
+
+CompoundData = na.omit(metabs)
+
+data = rbind(CompoundData, GeneData)
+      
+ 
+
+  fig = plot_ly(type = 'scatter',
+                mode = 'markers')
+  fig = fig %>% add_trace(x = enzymes$FC1,
+                          y = enzymes$FC2,
+                          name = 'Genes',
+                          marker = list(
+                            color = enzymes$Color,
+                            size = enzymes$size,
+                            symbol = enzymes$shape,
+                            line = list(
+                              color = 'black',
+                              width = 2
+                            )
+                          ),
+                hoverinfo = "text",
+                hovertext = paste("Gene Symbol:", enzymes$Molecule,
+                                  "\nCompound ID:", enzymes$ID,
+                                  "\n", Fx, "p: ", round(2^-enzymes$FDR1, 2),
+                                  "\n", My, "p: ", round(2^-enzymes$FDR2,2),
+                                  "\n", Fx, "FC: ", round(enzymes$FC1, 2),
+                                  "\n", My, "FC: ", round(enzymes$FC2,2),
+                                  "\n", Fx, "mean: ", signif(enzymes$Variable1,2),
+                                  "\n ", My, "mean: ", signif(enzymes$Control1,2)))
+  
+    
+    
+      fig = fig %>% add_trace(x = CompoundData$FC1,
+                          y = CompoundData$FC2,
+                          name = 'Metabolites',
+                          marker = list(
+                            color = CompoundData$Color,
+                            size = CompoundData$size,
+                            symbol = CompoundData$shape,
+                            line = list(
+                              color = 'black',
+                              width = 2
+                            )
+                          ),
+                hoverinfo = "text",
+                hovertext = paste("Gene Symbol:", CompoundData$Molecule,
+                                  "\nCompound ID:", CompoundData$ID,
+                                  "\nSex: Male",
+                                  "\n", x, "p: ", round(2^-CompoundData$FDR1, 2),
+                                  "\n", y, "p: ", round(2^-CompoundData$FDR2,2),
+                                  "\n", x, "FC: ", round(CompoundData$FC1, 2),
+                                  "\n", y, "FC: ", round(CompoundData$FC2,2),
+                                  "\n", colnames(mean.data)[1], "mean: ", signif(CompoundData$Variable1,2),
+                                  "\n ", colnames(mean.data)[2], "mean: ", signif(CompoundData$Control1,2),
+                                  "\n ", colnames(mean.data)[3], "mean: ", signif(CompoundData$Variable2,2),
+                                  "\n ", colnames(mean.data)[4], "mean: ", signif(CompoundData$Control2,2)))
+                          
+        fig = fig %>% layout(title = data$Molecule[1],
+                       shapes = list(
+                         type = "line",
+                         line = list(color = "black", dash = 'dash', width = 2),
+                         x0 = min(data$FC1, data$FC2) - 1,
+                         x1 = max(data$FC1, data$FC2) + 1,
+                         y0 = min(data$FC1, data$FC2) - 1,
+                         y1 = max(data$FC1, data$FC2) + 1),
+                       xaxis = list(title = paste(Fx, "FC")),
+                       yaxis = list(title = paste(My, "FC")),
+                       showlegend = T)
+  
+   fig
+   
+}
+```
+
+## Response Genes in G85R relative to WT
+
+```{r echo = F}
+
+x = "GRF.CxOE"
+y = "GRM.CxOE"
+
+mean.data = G85R.meancpm[, c('GR.F', 'GR.M',
+                             'TktOEGR.F', 'TktOEGR.M')]
+main.title = "G85R Control vs TKT-OE: Female and Male DE Genes"
+
+
+##RG = Response Genes
+GR.CxOE.RG = TKT.biplot(x, y, mean.data, main.title)
+
+GR.CxOE.RG[[1]]
+
+```
+
+
+```{r echo = F}
+
+##Sample titles as strings. Only fill in up to your number of selected categories
+set1 = "Female Increased"
+set2 = "Female Decreased"
+set3 = "Male Increased"
+set4 = "Male Decreased"
+  
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1 = GR.CxOE.RG[[2]][GR.CxOE.RG[[2]][,'FDR1'] <= 0.05 &
+                     GR.CxOE.RG[[2]][,'FC1'] > 0, "FBgn"]
+s2 = GR.CxOE.RG[[2]][GR.CxOE.RG[[2]][,'FDR1'] <= 0.05 &
+                     GR.CxOE.RG[[2]][,'FC1'] < 0, "FBgn"]
+s3 = GR.CxOE.RG[[2]][GR.CxOE.RG[[2]][,'FDR2'] <= 0.05 &
+                     GR.CxOE.RG[[2]][,'FC2'] > 0, "FBgn"]
+s4 = GR.CxOE.RG[[2]][GR.CxOE.RG[[2]][,'FDR2'] <= 0.05 &
+                     GR.CxOE.RG[[2]][,'FC2'] < 0, "FBgn"]
+
+NormalResponse = data.frame(Female = c(length(s2), length(s1)),
+                            Male =  c(length(s4), length(s3)))
+row.names(NormalResponse) = c("Decreased", "Increased")
+NormalResponse = as.matrix(NormalResponse)
+
+par(mar = c(2,4,2,7.5))
+barplot(NormalResponse,
+        beside = T,
+        ylab = "Total DEGs",
+        main = "G85R Control vs TKT-OE",
+        col = c('navy', 'firebrick'),
+        angle = c(45, 45, 315, 315), density = 50,
+        legend.text = c("Decreased", "Increased"),
+        args.legend = list(x = 8,
+                           y = 700,
+                           bty = 'n'))
+#legend(x = 6.25, 
+#       y = 700, 
+#       legend = c("Increased", "Decreased"),
+#       pt.bg = c('grey35', 'lightgrey'),
+#       xpd = T, 
+#       bty = "o",
+#       pch = 22,
+#       pt.cex = 1.5)
+
+
+```
+
+```{r echo = F}
+
+##Sample titles as strings. Only fill in up to your number of selected categories
+set3 = "Female Increased"
+set1 = "Female Decreased"
+set4 = "Male Increased"
+set2 = "Male Decreased"
+  
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s3 = GR.CxOE.RG[[2]][GR.CxOE.RG[[2]][,'FDR1'] <= 0.05 &
+                     GR.CxOE.RG[[2]][,'FC1'] > 0, "FBgn"]
+s1 = GR.CxOE.RG[[2]][GR.CxOE.RG[[2]][,'FDR1'] <= 0.05 &
+                     GR.CxOE.RG[[2]][,'FC1'] < 0, "FBgn"]
+s4 = GR.CxOE.RG[[2]][GR.CxOE.RG[[2]][,'FDR2'] <= 0.05 &
+                     GR.CxOE.RG[[2]][,'FC2'] > 0, "FBgn"]
+s2 = GR.CxOE.RG[[2]][GR.CxOE.RG[[2]][,'FDR2'] <= 0.05 &
+                     GR.CxOE.RG[[2]][,'FC2'] < 0, "FBgn"]
+
+main = ""
+
+
+grid.newpage()
+tempvenn=draw.quad.venn(area1=length(s1),area2=length(s2),area3=length(s3),area4=length(s4), n12=length(intersect(s1,s2)),n13 = length(intersect(s1,s3)),n14 = length(intersect(s1,s4)),n23 = length(intersect(s2,s3)),n24 = length(intersect(s2,s4)),n34 = length(intersect(s3,s4)),n123 =  length(intersect(s1,intersect(s2,s3))),n124 =  length(intersect(s1,intersect(s2,s4))), n134 = length(intersect(s1,intersect(s3,s4))),n234 = length(intersect(s2,intersect(s3,s4))),n1234 = length(intersect(s1,intersect(s2,intersect(s3,s4)))),category =c(set1,set2,set3,set4),fill = c("navy", "darkgreen","gold","firebrick"),cex=2,cat.cex = 1, title = "main")
+
+```
+
+
+##Female and Male Shared DEGs
+```{r echo = F, include = F}
+
+s1 = GR.CxOE.RG[[2]][GR.CxOE.RG[[2]][,'FDR1'] <= 0.05 &
+                     GR.CxOE.RG[[2]][,'FC1'] > 0, "FBgn"]
+s2 = GR.CxOE.RG[[2]][GR.CxOE.RG[[2]][,'FDR1'] <= 0.05 &
+                     GR.CxOE.RG[[2]][,'FC1'] < 0, "FBgn"]
+s3 = GR.CxOE.RG[[2]][GR.CxOE.RG[[2]][,'FDR2'] <= 0.05 &
+                     GR.CxOE.RG[[2]][,'FC2'] > 0, "FBgn"]
+s4 = GR.CxOE.RG[[2]][GR.CxOE.RG[[2]][,'FDR2'] <= 0.05 &
+                     GR.CxOE.RG[[2]][,'FC2'] < 0, "FBgn"]
+
+MF.shared.DEGs = c(intersect(s1,s3), intersect(s2,s4))
+
+bg = row.names(TKT.EdgeR)
+GR.CxOE.MF.Enr = Subset.Enrichment(bg, MF.shared.DEGs)
+
+```
+
+
+##Female Only DEGs
+```{r echo = F, include = F}
+
+F.only.DEGs = c(setdiff(GR.CxOE.RG[[2]][GR.CxOE.RG[[2]][,'FDR1'] <= 0.05, "FBgn"],
+                        GR.CxOE.RG[[2]][GR.CxOE.RG[[2]][,'FDR2'] <= 0.05, "FBgn"]))
+
+bg = row.names(TKT.EdgeR)
+GR.CxOE.Fonly.Enr = Subset.Enrichment(bg, F.only.DEGs)
+
+```
+
+
+##Male Only DEGs
+```{r echo = F, include = F}
+
+
+M.only.DEGs = c(setdiff(GR.CxOE.RG[[2]][GR.CxOE.RG[[2]][,'FDR2'] <= 0.05, "FBgn"],
+                        GR.CxOE.RG[[2]][GR.CxOE.RG[[2]][,'FDR1'] <= 0.05, "FBgn"]))
+
+bg = row.names(TKT.EdgeR)
+GR.CxOE.Monly.Enr = Subset.Enrichment(bg, M.only.DEGs)
+
+
+```
+
+##no significantly enriched GO terms in sex independent or sex dependent DEG sets
+
+##All Female DEGs
+
+##Female Only DEGs
+```{r echo = F, include = F}
+
+F.DEGs = c(GR.CxOE.RG[[2]][GR.CxOE.RG[[2]][,'FDR1'] <= 0.05, "FBgn"])
+
+bg = row.names(TKT.EdgeR)
+GR.CxOE.F.Enr = Subset.Enrichment(bg, F.DEGs)
+
+```
+
+
+```{r echo = F, include = F}
+
+RTCC.GR.CxOE.F = tree(GR.CxOE.F.Enr, "CC")
+treemapPlot(RTCC.GR.CxOE.F)
+
+```
+
+
+
+```{r echo = F}
+
+cat.data = GRWTMonly.Enr
+GO.ontology = "CC"
+FC = setNames(GRxWT.RG[[2]][, "FC2"], row.names(GRxWT.RG[[2]]))
+FDR = setNames(GRxWT.RG[[2]][, "FDR2"], row.names(GRxWT.RG[[2]]))
+usecats = c(1:28)
+sigs = M.only.DEGs
+  
+reversal.GO20(cat.data, GO.ontology, FC, FDR, usecats, sigs)
+
+```
+
+
+```{r echo = F}
+
+cat.data = GRWTMonly.Enr
+GO.ontology = "BP"
+FC = setNames(GRxWT.RG[[2]][, "FC2"], row.names(GRxWT.RG[[2]]))
+FDR = setNames(GRxWT.RG[[2]][, "FDR2"], row.names(GRxWT.RG[[2]]))
+usecats = c(1:50)
+sigs = M.only.DEGs
+  
+reversal.GO20(cat.data, GO.ontology, FC, FDR, usecats, sigs)
+
+```
+
+
+
+```{r echo = F}
+
+cat.data = GRWTMonly.Enr
+GO.ontology = "MF"
+FC = setNames(GRxWT.RG[[2]][, "FC2"], row.names(GRxWT.RG[[2]]))
+FDR = setNames(GRxWT.RG[[2]][, "FDR2"], row.names(GRxWT.RG[[2]]))
+usecats = c(1:50)
+sigs = M.only.DEGs
+  
+reversal.GO20(cat.data, GO.ontology, FC, FDR, usecats, sigs)
+
+```
+
+```{r echo = F}
+
+##Sample titles as strings. Only fill in up to your number of selected categories
+set1 = "Female"
+set2 = "Male"
+
+  
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1 = GRWTFonly.Enr$GO[GRWTFonly.Enr$GO$adjp <= 0.05, "term"]
+s2 = GRWTMonly.Enr$GO[GRWTMonly.Enr$GO$adjp <= 0.05, "term"]
+
+main = ""
+
+grid.newpage()
+tempvenn=draw.pairwise.venn(area1 = length(s1),
+                            area2 = length(s2),
+                            cross.area = length(intersect(s1,s2)),
+                            fill = c("blue", "red"),
+                            cex = 2,
+                            cat.cex = 1,
+                            category = c(set1, set2),
+                            title = "main")
+
+```
+
+
+```{r echo = F, include = F}
+
+data("motifAnnotations_dmel_v9")
+motifRankings = importRankings("/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/DataFiles/dm6_v10_clust.genes_vs_motifs.rankings.feather")
+motifAnnotations = motifAnnotations_dmel_v9
+
+##motif rankings table for every TF
+motif.data = getRanking(motifRankings)
+##motifs associated with a TF
+##TF.data = motifAnnotations[motifAnnotations$TF == 'Tudor-SN',]
+###TF.data = motifAnnotations[motifAnnotations$TF == 'Mad',]
+
+##TF.motif.data = motif.data[motif.data$motifs %in% TF.data$motif,]
+
+##Motif collection data directory
+motif.collection.dir = "/Users/johncsantiago/Documents/GitHub/WhartonLab/DrosophilaMotifsSingletonData/"
+
+##geneLists = GeneIDKey[MF.shared.DEGs, 'Symbol']
+geneLists = GeneIDKey[F.only.DEGs, 'Symbol']
+geneLists = GeneIDKey[M.only.DEGs, 'Symbol']
+
+motifEnrichmentTable_wGenes <- cisTarget(geneLists, 
+         motifRankings,
+         motifAnnot=motifAnnotations)
+
+motifs_AUC <- calcAUC(geneLists, motifRankings, nCores=1)
+
+auc <- getAUC(motifs_AUC)
+hist(auc, xlab="dAUC histogram",
+     breaks=100, col="#ff000050", border="darkred")
+nes3 <- (3*sd(auc)) + mean(auc)
+abline(v=nes3, col="red")
+
+motifEnrichmentTable <- addMotifAnnotation(motifs_AUC, nesThreshold=3,
+     motifAnnot=motifAnnotations)
+
+motifEnrichmentTable_wGenes <- addSignificantGenes(motifEnrichmentTable,
+                      rankings=motifRankings, 
+                      geneSets=geneLists)
+dim(motifEnrichmentTable_wGenes)
+
+
+resultsSubset <- motifEnrichmentTable_wGenes
+
+```
+
+
+```{r echo = F}
+
+showLogo(resultsSubset)
+
+```
+
+
+```{r echo = F, include = F}
+
+anotatedTfs <- lapply(split(motifEnrichmentTable_wGenes$TF_highConf,
+                            motifEnrichmentTable$geneSet),
+                      function(x) {
+                        genes <- gsub(" \\(.*\\). ", "; ", x, fixed=FALSE)
+                        genesSplit <- unique(unlist(strsplit(genes, "; ")))
+                        return(genesSplit)
+                        })
+                      
+anotatedTfs$hypoxia
+
+
+```
+
+
+```{r echo = F}
+
+##comparisons
+primary = 'GRxWT.C'
+
+x = 'GRxWT.C'
+
+mean.data = mean.metab[, c('GR', 'WT')]
+
+min.expression = 0
+
+##Reversal pattern
+FC.data = metab.FC[, c(primary)]
+FC.data = na.omit(FC.data)
+
+##Sig cutoff. Currently, at least 1 significant change
+sig.metab = metab.FDR[metab.FDR[,primary]  < .05, ]
+sig.metab = na.omit(sig.metab)
+sig.metab = row.names(sig.metab)
+
+
+FC.data = metab.FC[sig.metab, c(x)]
+FDR.data = metab.FDR[sig.metab, c(x)]
+mean.data = mean.data[sig.metab, ]
+  
+
+  
+  
+data = data.frame(Metab = sig.metab,
+                  compoundID = KEGG.Key[sig.metab],
+                  FDR = -log2(FDR.data),
+                  FC = FC.data,
+                  Color = 'grey',
+                  size = 1,
+                  Variable1.mean = mean.data[,1],
+                  Control1.mean = mean.data[,2])
+
+sig.metabs = data
+
+main.title = "G85R Metabolites"
+  
+  data$Color[data$FC < 0] = 'royalblue'
+  data$Color[data$FC > 0] = 'firebrick' 
+  #data$Color[data$Symbol == "Arc1"] = 'gold'
+  data$size = log10(apply(mean.data[,c(1,2)], 1, max))
+  data$size[data$size<3] = 1
+  
+  data = na.omit(data)
+  data = data[data$size > log2(min.expression),]
+  data$size = data$size
+
+  
+  fig = plot_ly(data = data,
+                x = ~FC,
+                y = ~FDR,
+                type = 'scatter',
+                mode = 'markers',
+                marker = list(color = ~Color,
+                              colors = ~Color,
+                              line = list(color = "black", width = 1.5),
+                              size = ~size),
+                hoverinfo = "text",
+                hovertext = paste("Metabolite:", data$Metab,
+                                  "\n Compound ID:", data$compoundID,
+                                  "\n ", x, "p: ", round(2^-data$FDR, 2),
+                                  "\n ", x, "FC: ", round(data$FC, 2),
+                                  "\n ", colnames(mean.data)[1], "mean: ", signif(data$Variable1,2),
+                                  "\n ", colnames(mean.data)[2], "mean: ", signif(data$Control1,2)))
+
+  fig = fig %>% layout(title = main.title,
+                       xaxis = list(title = paste(x, "FC")),
+                       yaxis = list(title = paste(x, "-log2(p-value)")),
+                       showlegend = F)
+
+  fig
+  
+
+```
+
+
+
+```{r echo = F}
+
+CompoundData = sig.metabs[1,]
+
+x = 'GRxWT.C'
+y = 'GRxWT.C'
+
+mean.data = mean.metab[, c('GR', 'WT')]
+
+Fx = 'GRxWT.FC'
+My = 'GRxWT.MC'
+
+Fmean = G85R.meancpm[, c('GR.F', 'WT.F')]
+Mmean = G85R.meancpm[, c('GR.M', 'WT.M')]
+
+compoundandgenes(CompoundData, x, y, mean.data, Fx, My, Fmean, Mmean)
+
+```
+
+
+
+```{r echo = F}
+
+CompoundData = sig.metabs[2,]
+
+x = 'GRxWT.C'
+y = 'GRxWT.C'
+
+mean.data = mean.metab[, c('GR', 'WT')]
+
+Fx = 'GRxWT.FC'
+My = 'GRxWT.MC'
+
+Fmean = G85R.meancpm[, c('GR.F', 'WT.F')]
+Mmean = G85R.meancpm[, c('GR.M', 'WT.M')]
+
+compoundandgenes(CompoundData, x, y, mean.data, Fx, My, Fmean, Mmean)
+
+```
+
+
+```{r echo = F}
+
+CompoundData = sig.metabs[3,]
+
+x = 'GRxWT.C'
+y = 'GRxWT.C'
+
+mean.data = mean.metab[, c('GR', 'WT')]
+
+Fx = 'GRxWT.FC'
+My = 'GRxWT.MC'
+
+Fmean = G85R.meancpm[, c('GR.F', 'WT.F')]
+Mmean = G85R.meancpm[, c('GR.M', 'WT.M')]
+
+compoundandgenes(CompoundData, x, y, mean.data, Fx, My, Fmean, Mmean)
+
+```
+
+
+```{r echo = F}
+
+CompoundData = sig.metabs[4,]
+
+x = 'GRxWT.C'
+y = 'GRxWT.C'
+
+mean.data = mean.metab[, c('GR', 'WT')]
+
+Fx = 'GRxWT.FC'
+My = 'GRxWT.MC'
+
+Fmean = G85R.meancpm[, c('GR.F', 'WT.F')]
+Mmean = G85R.meancpm[, c('GR.M', 'WT.M')]
+
+compoundandgenes(CompoundData, x, y, mean.data, Fx, My, Fmean, Mmean)
+
+```
+
+
+```{r echo = F}
+
+CompoundData = sig.metabs[5,]
+
+x = 'GRxWT.C'
+y = 'GRxWT.C'
+
+mean.data = mean.metab[, c('GR', 'WT')]
+
+Fx = 'GRxWT.FC'
+My = 'GRxWT.MC'
+
+Fmean = G85R.meancpm[, c('GR.F', 'WT.F')]
+Mmean = G85R.meancpm[, c('GR.M', 'WT.M')]
+
+compoundandgenes(CompoundData, x, y, mean.data, Fx, My, Fmean, Mmean)
+
+```
+
+
+```{r echo = F}
+
+CompoundData = sig.metabs[41,]
+
+x = 'GRxWT.C'
+y = 'GRxWT.C'
+
+mean.data = mean.metab[, c('GR', 'WT')]
+
+Fx = 'GRxWT.FC'
+My = 'GRxWT.MC'
+
+Fmean = G85R.meancpm[, c('GR.F', 'WT.F')]
+Mmean = G85R.meancpm[, c('GR.M', 'WT.M')]
+
+compoundandgenes(CompoundData, x, y, mean.data, Fx, My, Fmean, Mmean)
+
+```
+
+
+##  Are there genes that respond to rescue in Silent and G85R for both sexes?
+
+
+##  TKT-Df Response
+```{r echo = F}
+
+x = "GRF.CxDf"
+y = "WTF.CxDf"
+
+mean.data = G85R.meancpm[, c('GR.F', 'WT.F',
+                             'TktDfGR.F', 'TktDfWT.F')]
+main.title = "Female TKT-Df DE Genes"
+
+
+##RG = Response Genes
+FDf.RG = TKT.biplot(x, y, mean.data, main.title)
+
+FDf.RG[[1]]
+
+```
+
+
+```{r echo = F}
+
+x = "GRM.CxDf"
+y = "WTM.CxDf"
+
+mean.data = G85R.meancpm[, c('GR.M', 'WT.M',
+                             'TktDfGR.M', 'TktDfWT.M')]
+main.title = "Male TKT-Df DE Genes"
+
+
+##RG = Response Genes
+MDf.RG = TKT.biplot(x, y, mean.data, main.title)
+
+MDf.RG[[1]]
+
+```
+
+
+```{r echo = F}
+
+x = "GRF.CxDf"
+y = "GRM.CxDf"
+
+mean.data = G85R.meancpm[, c('GR.F', 'GR.M',
+                             'TktDfGR.F', 'TktDfGR.M')]
+main.title = "G85R TKT-Df DE Genes"
+
+
+##RG = Response Genes
+GRDf.RG = TKT.biplot(x, y, mean.data, main.title)
+
+GRDf.RG[[1]]
+
+```
+
+
+```{r echo = F}
+
+x = "WTF.CxDf"
+y = "WTM.CxDf"
+
+mean.data = G85R.meancpm[, c('WT.F', 'WT.M',
+                             'TktDfWT.F', 'TktDfWT.M')]
+main.title = "Silent TKT-Df DE Genes"
+
+
+##RG = Response Genes
+WTDf.RG = TKT.biplot(x, y, mean.data, main.title)
+
+WTDf.RG[[1]]
+
+```
+
+
+```{r echo = F}
+
+##Sample titles as strings. Only fill in up to your number of selected categories
+set1 = "Silent Female Df"
+set2 = "Silent Male Df"
+set3 = "G85R Female Df"
+set4 = "G85R Male Df"
+  
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1 = FDf.RG[[2]][FDf.RG[[2]][,'FDR2'] <= 0.05, "FBgn"]
+s2 = MDf.RG[[2]][MDf.RG[[2]][,'FDR2'] <= 0.05, "FBgn"]
+s3 = FDf.RG[[2]][FDf.RG[[2]][,'FDR1'] <= 0.05, "FBgn"]
+s4 = MDf.RG[[2]][MDf.RG[[2]][,'FDR1'] <= 0.05, "FBgn"]
+
+NormalResponse = data.frame(Rescue = c(set1, set2, set3, set4),
+                            TotalGenes =  c(length(s1), length(s2), length(s3), length(s4)))
+
+
+fig <- plot_ly(data = NormalResponse, x = ~Rescue, y = ~TotalGenes, type = 'bar', name = 'Normal Response',
+               marker = list(color = 'lightgrey',
+                      line = list(color = 'rgb(8,48,107)',
+                                  width = 3)))
+fig <- fig %>% layout(yaxis = list(title = 'Total Response Genes (Control vs TKT-Df'))
+
+fig
+
+
+```
+
+```{r echo = F}
+
+##Sample titles as strings. Only fill in up to your number of selected categories
+set1 = "Silent Female Df"
+set2 = "Silent Male Df"
+set3 = "G85R Female Df"
+set4 = "G85R Male Df"
+  
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1 = FDf.RG[[2]][FDf.RG[[2]][,'FDR2'] <= 0.05, "FBgn"]
+s2 = MDf.RG[[2]][MDf.RG[[2]][,'FDR2'] <= 0.05, "FBgn"]
+s3 = FDf.RG[[2]][FDf.RG[[2]][,'FDR1'] <= 0.05, "FBgn"]
+s4 = MDf.RG[[2]][MDf.RG[[2]][,'FDR1'] <= 0.05, "FBgn"]
+
+main = ""
+
+grid.newpage()
+tempvenn=draw.quad.venn(area1=length(s1),area2=length(s2),area3=length(s3),area4=length(s4), n12=length(intersect(s1,s2)),n13 = length(intersect(s1,s3)),n14 = length(intersect(s1,s4)),n23 = length(intersect(s2,s3)),n24 = length(intersect(s2,s4)),n34 = length(intersect(s3,s4)),n123 =  length(intersect(s1,intersect(s2,s3))),n124 =  length(intersect(s1,intersect(s2,s4))), n134 = length(intersect(s1,intersect(s3,s4))),n234 = length(intersect(s2,intersect(s3,s4))),n1234 = length(intersect(s1,intersect(s2,intersect(s3,s4)))),category =c(set1,set2,set3,set4),fill = c("blue", "red","green","yellow"),cex=2,cat.cex = 1, title = "main")
+
+```
+
+##WTF.C vs WTF.TKT-Df
+```{r echo = F, include = F}
+
+bg = row.names(TKT.EdgeR)
+WTF.Df.Enr = Subset.Enrichment(bg, FDf.RG[[2]][FDf.RG[[2]][,'FDR2'] <= 0.05, "FBgn"])
+
+```
+
+
+```{r echo = F}
+
+RTCC.WTF.Df = tree(WTF.Df.Enr, "CC")
+treemapPlot(RTCC.WTF.Df)
+
+```
+
+```{r echo = F}
+
+RTBP.WTF.Df = tree(WTF.Df.Enr, "BP")
+treemapPlot(RTBP.WTF.Df)
+
+```
+
+
+```{r echo = F}
+
+RTMF.WTF.Df = tree(WTF.Df.Enr, "MF")
+treemapPlot(RTMF.WTF.Df)
+
+```
+
+
+##WTM.C vs WTM.TKT-Df
+```{r echo = F, include = F}
+
+bg = row.names(TKT.EdgeR)
+WTM.Df.Enr = Subset.Enrichment(bg, MDf.RG[[2]][MDf.RG[[2]][,'FDR2'] <= 0.05, "FBgn"])
+
+```
+
+
+```{r echo = F}
+
+RTCC.WTM.Df = tree(WTM.Df.Enr, "CC")
+treemapPlot(RTCC.WTM.Df)
+
+```
+
+```{r echo = F}
+
+RTBP.WTF.Df = tree(WTF.Df.Enr, "BP")
+treemapPlot(RTBP.WTF.Df)
+
+```
+
+
+```{r echo = F}
+
+RTMF.WTF.Df = tree(WTF.Df.Enr, "MF")
+treemapPlot(RTMF.WTF.Df)
+
+```
+
+
+##GRF.C vs GRF.TKT-Df
+```{r echo = F, include = F}
+
+bg = row.names(TKT.EdgeR)
+GRF.Df.Enr = Subset.Enrichment(bg, FDf.RG[[2]][FDf.RG[[2]][,'FDR1'] <= 0.05, "FBgn"])
+
+```
+
+
+```{r echo = F}
+
+RTCC.WTF.Df = tree(WTF.Df.Enr, "CC")
+treemapPlot(RTCC.WTF.Df)
+
+```
+
+```{r echo = F}
+
+RTBP.WTF.Df = tree(WTF.Df.Enr, "BP")
+treemapPlot(RTBP.WTF.Df)
+
+```
+
+
+```{r echo = F}
+
+RTMF.WTF.Df = tree(WTF.Df.Enr, "MF")
+treemapPlot(RTMF.WTF.Df)
+
+```
+
+
+##GRM.C vs GRM.TKT-Df
+```{r echo = F, include = F}
+
+bg = row.names(TKT.EdgeR)
+GRM.Df.Enr = Subset.Enrichment(bg, MDf.RG[[2]][MDf.RG[[2]][,'FDR1'] <= 0.05, "FBgn"])
+
+```
+
+
+```{r echo = F}
+
+RTCC.WTF.Df = tree(WTF.Df.Enr, "CC")
+treemapPlot(RTCC.WTF.Df)
+
+```
+
+```{r echo = F}
+
+RTBP.WTF.Df = tree(WTF.Df.Enr, "BP")
+treemapPlot(RTBP.WTF.Df)
+
+```
+
+
+```{r echo = F}
+
+RTMF.WTF.Df = tree(WTF.Df.Enr, "MF")
+treemapPlot(RTMF.WTF.Df)
+
+```
+
+
+```{r echo = F}
+
+##Sample titles as strings. Only fill in up to your number of selected categories
+set1 = "Silent Female Df"
+set2 = "Silent Male Df"
+set3 = "G85R Female Df"
+set4 = "G85R Male Df"
+  
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1 = WTF.Df.Enr$GO$term[WTF.Df.Enr$GO$adjp <= .05]
+s2 = WTM.Df.Enr$GO$term[WTM.Df.Enr$GO$adjp <= .05]
+s3 = GRF.Df.Enr$GO$term[GRF.Df.Enr$GO$adjp <= .05]
+s4 = GRM.Df.Enr$GO$term[GRM.Df.Enr$GO$adjp <= .05]
+
+main = ""
+
+grid.newpage()
+tempvenn=draw.quad.venn(area1=length(s1),area2=length(s2),area3=length(s3),area4=length(s4), n12=length(intersect(s1,s2)),n13 = length(intersect(s1,s3)),n14 = length(intersect(s1,s4)),n23 = length(intersect(s2,s3)),n24 = length(intersect(s2,s4)),n34 = length(intersect(s3,s4)),n123 =  length(intersect(s1,intersect(s2,s3))),n124 =  length(intersect(s1,intersect(s2,s4))), n134 = length(intersect(s1,intersect(s3,s4))),n234 = length(intersect(s2,intersect(s3,s4))),n1234 = length(intersect(s1,intersect(s2,intersect(s3,s4)))),category =c(set1,set2,set3,set4),fill = c("blue", "red","green","yellow"),cex=2,cat.cex = 1, title = "main")
+
+```
+
+
+###################################
+
+###################################
+
+###################################
+
+
+## TKT-OE Response
+```{r echo = F}
+
+x = "GRF.CxOE"
+y = "WTF.CxOE"
+
+mean.data = G85R.meancpm[, c('GR.F', 'WT.F',
+                             'TktOEGR.F', 'TktOEWT.F')]
+main.title = "Female TKT-OE DE Genes"
+
+
+##RG = Response Genes
+FOE.RG = TKT.biplot(x, y, mean.data, main.title)
+
+FOE.RG[[1]]
+
+```
+
+
+```{r echo = F}
+
+x = "GRM.CxOE"
+y = "WTM.CxOE"
+
+mean.data = G85R.meancpm[, c('GR.M', 'WT.M',
+                             'TktOEGR.M', 'TktOEWT.M')]
+main.title = "Male TKT-OE DE Genes"
+
+
+##RG = Response Genes
+MOE.RG = TKT.biplot(x, y, mean.data, main.title)
+
+MOE.RG[[1]]
+
+```
+
+
+```{r echo = F}
+
+x = "GRF.CxOE"
+y = "GRM.CxOE"
+
+mean.data = G85R.meancpm[, c('GR.F', 'GR.M',
+                             'TktOEGR.F', 'TktOEGR.M')]
+main.title = "G85R TKT-OE DE Genes"
+
+
+##RG = Response Genes
+GROE.RG = TKT.biplot(x, y, mean.data, main.title)
+
+GROE.RG[[1]]
+
+```
+
+
+```{r echo = F}
+
+x = "WTF.CxOE"
+y = "WTM.CxOE"
+
+mean.data = G85R.meancpm[, c('WT.F', 'WT.M',
+                             'TktOEWT.F', 'TktOEWT.M')]
+main.title = "Silent TKT-OE DE Genes"
+
+
+##RG = Response Genes
+WTOE.RG = TKT.biplot(x, y, mean.data, main.title)
+
+WTOE.RG[[1]]
+
+```
+
+
+```{r echo = F}
+
+##Sample titles as strings. Only fill in up to your number of selected categories
+set1 = "Silent Female OE"
+set2 = "Silent Male OE"
+set3 = "G85R Female OE"
+set4 = "G85R Male OE"
+  
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1 = FOE.RG[[2]][FOE.RG[[2]][,'FDR2'] <= 0.05, "FBgn"]
+s2 = MOE.RG[[2]][MOE.RG[[2]][,'FDR2'] <= 0.05, "FBgn"]
+s3 = FOE.RG[[2]][FOE.RG[[2]][,'FDR1'] <= 0.05, "FBgn"]
+s4 = MOE.RG[[2]][MOE.RG[[2]][,'FDR1'] <= 0.05, "FBgn"]
+
+NormalResponse = data.frame(Rescue = c(set1, set2, set3, set4),
+                            TotalGenes =  c(length(s1), length(s2), length(s3), length(s4)))
+
+
+fig <- plot_ly(data = NormalResponse, x = ~Rescue, y = ~TotalGenes, type = 'bar', name = 'Normal Response',
+               marker = list(color = 'lightgrey',
+                      line = list(color = 'rgb(8,48,107)',
+                                  width = 3)))
+fig <- fig %>% layout(yaxis = list(title = 'Total Response Genes (Control vs TKT-Df'))
+
+fig
+
+
+```
+
+```{r echo = F}
+
+##Sample titles as strings. Only fill in up to your number of selected categories
+set1 = "Silent Female OE"
+set2 = "Silent Male OE"
+set3 = "G85R Female OE"
+set4 = "G85R Male OE"
+  
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1 = FOE.RG[[2]][FOE.RG[[2]][,'FDR2'] <= 0.05, "FBgn"]
+s2 = MOE.RG[[2]][MOE.RG[[2]][,'FDR2'] <= 0.05, "FBgn"]
+s3 = FOE.RG[[2]][FOE.RG[[2]][,'FDR1'] <= 0.05, "FBgn"]
+s4 = MOE.RG[[2]][MOE.RG[[2]][,'FDR1'] <= 0.05, "FBgn"]
+
+main = ""
+
+grid.newpage()
+tempvenn=draw.quad.venn(area1=length(s1),area2=length(s2),area3=length(s3),area4=length(s4), n12=length(intersect(s1,s2)),n13 = length(intersect(s1,s3)),n14 = length(intersect(s1,s4)),n23 = length(intersect(s2,s3)),n24 = length(intersect(s2,s4)),n34 = length(intersect(s3,s4)),n123 =  length(intersect(s1,intersect(s2,s3))),n124 =  length(intersect(s1,intersect(s2,s4))), n134 = length(intersect(s1,intersect(s3,s4))),n234 = length(intersect(s2,intersect(s3,s4))),n1234 = length(intersect(s1,intersect(s2,intersect(s3,s4)))),category =c(set1,set2,set3,set4),fill = c("blue", "red","green","yellow"),cex=2,cat.cex = 1, title = "main")
+
+```
+

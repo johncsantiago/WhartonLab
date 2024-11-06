@@ -1,0 +1,181 @@
+---
+title: "G85R Arc1 Analysis"
+author: "John Santiago"
+date: "2024-10-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+Arc1 = read.csv('/Users/johncsantiago/Documents/GitHub/WhartonLab/qPCR/G85R and Silent Arc1_2024-10-10.csv', header = T)
+Arc1$Group = substr(Arc1$Sample, 1, nchar(Arc1$Sample)-1)
+Arc1 = Arc1[Arc1$Well != "A8" & Arc1$Well != "B8" & Arc1$Well != "C8" & Arc1$Well != "D8",]
+
+Rp49 = read.csv('/Users/johncsantiago/Documents/GitHub/WhartonLab/qPCR/G85R and Silent Rp49_2024-10-10.csv', header = T)
+Rp49$Group = substr(Rp49$Sample, 1, nchar(Rp49$Sample)-1)
+Rp49 = Rp49[Rp49$Well != "A8" & Rp49$Well != "B8" & Rp49$Well != "C8",]
+
+```
+
+
+
+```{r}
+
+mean.cq = setNames(rep(0, length(unique(Arc1$Sample))), unique(Arc1$Sample))
+i=1
+while(i<=length(mean.cq)){
+  mean.cq[i] = mean(Arc1$Cq[Arc1$Sample == names(mean.cq)[i]])
+  i=i+1
+}
+
+
+
+
+
+boxplotdata = data.frame(Sample = names(mean.cq),
+                         Group = substr(names(mean.cq), 1, nchar(names(mean.cq))-1),
+                         mean = as.numeric(mean.cq))
+boxplotdata$Group = factor(boxplotdata$Group, levels = c("WTLF", "WTLM", 
+                                                         "GRLF", "GRLM", 
+                                                         "OreR", "Arc1OreR", "Arc1G85R"))
+
+pointdata = data.frame(Cq = Arc1$Cq,
+                       Group = Arc1$Group,
+                       rep = as.numeric(substr(Arc1$Sample, nchar(Arc1$Sample), nchar(Arc1$Sample))))
+
+Arc1Mean = boxplotdata
+
+
+boxplot(boxplotdata$mean ~ boxplotdata$Group, 
+        xlab="",     
+        main= "Arc1 Cq",
+        ylab="Cq", 
+        las = 1, 
+        cex.axis = .8,
+        ylim = c(17,20))
+
+points(x=as.numeric(factor(boxplotdata$Group)),
+       y=boxplotdata$mean,
+       cex=1,
+       pch=c(22),
+       bg=c('firebrick',"gold","darkgreen","dodgerblue", 'mediumorchid', "orange", "blue")[as.numeric(factor(boxplotdata$Group))])
+
+
+```
+
+
+```{r}
+
+mean.cq = setNames(rep(0, length(unique(Rp49$Sample))), unique(Rp49$Sample))
+i=1
+while(i<=length(mean.cq)){
+  mean.cq[i] = mean(Rp49$Cq[Rp49$Sample == names(mean.cq)[i]])
+  i=i+1
+}
+
+
+
+
+
+boxplotdata = data.frame(Sample = names(mean.cq),
+                         Group = substr(names(mean.cq), 1, nchar(names(mean.cq))-1),
+                         mean = as.numeric(mean.cq))
+boxplotdata$Group = factor(boxplotdata$Group, levels = c("WTLF", "WTLM", 
+                                                         "GRLF", "GRLM", 
+                                                         "OreR", "Arc1OreR", "Arc1G85R"))
+
+pointdata = data.frame(Cq = Rp49$Cq,
+                       Group = Rp49$Group,
+                       rep = as.numeric(substr(Rp49$Sample, nchar(Rp49$Sample), nchar(Rp49$Sample))))
+
+
+Rp49Mean = boxplotdata
+
+
+boxplot(boxplotdata$mean ~ boxplotdata$Group, 
+        xlab="",     
+        main= "Rp49 Cq",
+        ylab="Cq", 
+        las = 1, 
+        cex.axis = .8,
+        ylim = c(17,20))
+
+points(x=as.numeric(factor(boxplotdata$Group)),
+       y=boxplotdata$mean,
+       cex=1,
+       pch=c(22),
+       bg=c('firebrick',"gold","darkgreen","dodgerblue", 'mediumorchid', "orange", "blue")[as.numeric(factor(boxplotdata$Group))])
+
+```
+
+
+
+```{r}
+
+row.names(Rp49Mean) = Rp49Mean$Sample
+
+dCt = data.frame(Sample = Arc1Mean$Sample,
+                 Group = Arc1Mean$Group,
+                 Arc1 = Arc1Mean$mean,
+                 Rp49 = Rp49Mean[Arc1Mean$Sample, "mean"])
+
+dCt$dCt = dCt$Arc1 - dCt$Rp49
+dCt$FC = 2^-dCt$dCt
+
+boxplot(dCt$FC ~ dCt$Group, 
+        xlab="",     
+        main= "Arc1/Rp49 dCt",
+        ylab="FC", 
+        las = 1, 
+        cex.axis = .8)
+
+points(x=as.numeric(factor(dCt$Group)),
+       y=dCt$FC,
+       cex=1,
+       pch=c(22),
+       bg=c('firebrick',"gold","darkgreen","dodgerblue", 'mediumorchid', "orange", "blue")[as.numeric(factor(dCt$Group))])
+
+```
+
+
+```{r}
+
+mean.dCt = data.frame(Group = unique(dCt$Group),
+                      mean.dCt = 0)
+mean.dCt$Group = factor(mean.dCt$Group, levels = c("WTLF", "WTLM",
+                                                   "GRLF", "GRLM",
+                                                   "OreR", "Arc1OreR", "Arc1G85R"))
+
+i=1
+while(i<=nrow(mean.dCt)){
+  mean.dCt$mean.dCt[i] = mean(dCt$dCt[dCt$Group == mean.dCt$Group[i]])
+  i = i + 1
+}
+
+row.names(mean.dCt) =  mean.dCt$Group
+
+ddCt = setNames(c(mean.dCt["GRLF", "mean.dCt"] - mean.dCt["WTLF", "mean.dCt"],
+                  mean.dCt["GRLM", "mean.dCt"] - mean.dCt["WTLM", "mean.dCt"],
+                  mean.dCt["Arc1OreR", "mean.dCt"] - mean.dCt["OreR", "mean.dCt"],
+                  mean.dCt["Arc1G85R", "mean.dCt"] - mean.dCt["OreR", "mean.dCt"],
+                  mean.dCt["Arc1G85R", "mean.dCt"] - mean.dCt["Arc1OreR", "mean.dCt"]),
+               nm = c("GRLF/WTLF", "GRLM/WTLM",
+                      "Arc1OreR/OreR", "Arc1G85R/OreR", "Arc1G85R/Arc1OreR"))
+
+ddCt.FC = 2^-ddCt
+
+#ddCt.FC = ddCt.FC[substr(names(ddCt.FC),1,3) == "Arc"]
+
+barplot(ddCt.FC,
+        names.arg = names(ddCt.FC),
+        ylim = c(0, 1.5),
+        ylab = "Arc1 Relative Expression")
+abline(h = 1, lty = 2, lwd = 1.5)
+
+
+```
+

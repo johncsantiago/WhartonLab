@@ -51,7 +51,7 @@ A4V.meta = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySe
 
   FC.data = TKT.EdgeR.FC[, c("GRxWT.FC", "GRxWT.MC")]
   FDR.data = TKT.EdgeR[, c("GRxWT.FC", "GRxWT.MC")]
-  mean.data = G85R.meancpm[, c('GRFC', 'WTFC', 'GRMC', 'WTMC')]
+  mean.data = G85R.meancpm[, c('GR.F', 'WT.F', 'GR.M', 'WT.M')]
   
   go.genes = row.names(FDR.data[FDR.data$GRxWT.FC < .05 &
                              FDR.data$GRxWT.MC < .05 ,])
@@ -74,7 +74,7 @@ data = data.frame(Symbol = GeneIDKey[go.genes, "Symbol"],
   
   ##data$Color[(data$FC1 - 1) > data$FC2] = 'royalblue'
   ##data$Color[(data$FC2 - 1) > data$FC1] = 'firebrick' 
-  data$Color[data$Symbol == "Arc1"] = 'gold'
+  #data$Color[data$Symbol == "Arc1"] = 'gold'
   size = data.frame(G85R = apply(mean.data[go.genes,c(1,3)], 1, mean),
                     WT = apply(mean.data[go.genes,c(2,4)], 1, mean))
   size = size + .001
@@ -206,7 +206,7 @@ title(xlab = "Genotype", line = 3.5, cex.lab=2)
 ```{r echo = F}
 
 gene = data.frame(cpm = as.numeric(A4V.cpm[FBgn,]), 
-                  condition = A4V.groups$Group, 
+                  condition = A4V.meta$Group, 
                   group = paste0(groups$Genotype, groups$Sex),
                   TKT = groups$TKT)
 
@@ -299,9 +299,9 @@ axis(1, at= 1:82, lwd.ticks = .5, labels = NA)
 axis(1, at= c(0, 10, 20, 30, 40, 50, 60, 70, 80, 90), 
      lwd.ticks = 1, cex.axis = 1,
      col.axis = 'lightgrey')
-axis(1, at= c(0, 10, 20, 30, 40, 50, 60, 70, 80, 90), 
-     lwd.ticks = 1, cex.axis = 1,
-     col.axis = 'black')
+#axis(1, at= c(0, 10, 20, 30, 40, 50, 60, 70, 80, 90), 
+#     lwd.ticks = 1, cex.axis = 1,
+#     col.axis = 'black')
 
 
 lines(x = fs$day,
@@ -386,28 +386,28 @@ points(x = ms$day,
 legend('topright',
        legend = c('Female Silent', 'Female A4V',
                   'Male Silent', 'Male A4V'),
-       pch = c(23,21,23,21,23,21),
-       pt.bg = c(hex(pcol[1], .5), hex(pcol[2], .5), hex(pcol[3], .5),
-                hex(pcol[4], .5), hex(pcol[5], .5), hex(pcol[6], .5)),
+       pch = c(21,23,21,23),
+       pt.bg = c(hex(pcol[1], .5), hex(pcol[2], .5), 
+                 hex(pcol[3], .5), hex(pcol[4], .5)),
        bty = 'n',
        y.intersp = 1,
        pt.cex = 2,
        xpd=TRUE)
 
 
-#abline(v = 3, lty = 2, lwd = 2, col = 'black')
-#abline(v = 9, lty = 2, lwd = 2, col = 'black')
-#abline(v = 40, lty = 2, lwd = 2, col = 'black')
+abline(v = 3, lty = 2, lwd = 2, col = 'black')
+abline(v = 9, lty = 2, lwd = 2, col = 'black')
+abline(v = 40, lty = 2, lwd = 2, col = 'black')
 
-#points(x = c(3,9,40),
-#       y = c(-11.75,-11.75,-11.75),
-#       pch = 21,
-#       cex = 4,
-#       bg = hex('gold', .25),
-#       col = 'grey25',
-#       xpd = T)
+points(x = c(3,9,40),
+       y = c(-11.75,-11.75,-11.75),
+       pch = 21,
+       cex = 4,
+       bg = hex('gold', .25),
+       col = 'grey25',
+       xpd = T)
 
-#axis(1, at= c(3, 9, 40), lwd.ticks = 2, labels = c(3,9,40))
+axis(1, at= c(3, 9, 40), lwd.ticks = 2, labels = c(3,9,40))
 
 ```
 

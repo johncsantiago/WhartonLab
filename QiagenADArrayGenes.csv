@@ -1,0 +1,314 @@
+﻿Category,SubCat,HumanSymbol,GeneCardOrtho,FBgn
+Apoptosis,Apoptosis,PRKCZ,aPKC,FBgn0261854
+Apoptosis,Apoptosis,NAE1,APP-BP1,FBgn0261112
+Apoptosis,Apoptosis,APLP1,Appl,FBgn0000108
+Apoptosis,Apoptosis,APP,Appl,FBgn0000108
+Apoptosis,Apoptosis,MPO,CG10211,FBgn0032685
+Apoptosis,Apoptosis,MPO,CG4009,FBgn0038469
+Apoptosis,Apoptosis,MPO,CG5873,FBgn0038511
+Apoptosis,Apoptosis,MPO,CG6879,FBgn0259233
+Apoptosis,Apoptosis,MPO,CG6969,FBgn0263986
+Apoptosis,Apoptosis,NAE1,CG7828,FBgn0261112
+Apoptosis,Apoptosis,CASP3,Dcp-1,FBgn0010501
+Apoptosis,Apoptosis,CASP3,decay,FBgn0028381
+Apoptosis,Apoptosis,CASP4,Dredd,FBgn0020381
+Apoptosis,Apoptosis,CASP3,Ice,FBgn0019972
+Apoptosis,Apoptosis,PRKCA,inaC,FBgn0004784
+Apoptosis,Apoptosis,ERN1,ire-1,FBgn0261984
+Apoptosis,Apoptosis,ERN1,Ire1,FBgn0261984
+Apoptosis,Apoptosis,CASP4,Nc,FBgn0026404
+Apoptosis,Apoptosis,EP300,nej,FBgn0261617
+Apoptosis,Apoptosis,CLU,none,
+Apoptosis,Apoptosis,IL1A,none,
+Apoptosis,Apoptosis,SNCA,none,
+Apoptosis,Apoptosis,PRKCA,Pkc53E,FBgn0003091
+Apoptosis,Apoptosis,PRKCE,Pkc98E,FBgn0003093
+Apoptosis,Apoptosis,PSEN1,Psn,FBgn0284421
+Apoptosis,Apoptosis,PSEN2,Psn,FBgn0284421
+Apoptosis,Apoptosis,MPO,Pxd,FBgn0004577
+Apoptosis,Apoptosis,MPO,pxt,FBgn0261987
+Apoptosis,Apoptosis,MAPT,tau,FBgn0266579
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Endocytosis,APLP1,Appl,FBgn0000108
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Endocytosis,APP,Appl,FBgn0000108
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Endocytosis,LRP6,arr,FBgn0000119
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Endocytosis,LRP8,CG4861,FBgn0066101
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Endocytosis,LRP8,LpR1,FBgn0066101
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Endocytosis,LRP8,LpR2,FBgn0051092
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Endocytosis,LRP1,LRP1,FBgn0053087
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Endocytosis,LRP1,yl,FBgn0004649
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,ACHE,Ace,FBgn0000024
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,Ace,FBgn0000024
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,ACHE,alpha-Est1,FBgn0015568
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,ACHE,alpha-Est10,FBgn0015569
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,alpha-Est10,FBgn0015569
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,ACHE,alpha-Est2,FBgn0015570
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,alpha-Est2,FBgn0015570
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,ACHE,alpha-Est3,FBgn0015571
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,alpha-Est3,FBgn0015571
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,alpha-Est3,FBgn0015571
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,ACHE,alpha-Est4,FBgn0015572
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,alpha-Est4,FBgn0015572
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,ACHE,alpha-Est5,FBgn0261393
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,alpha-Est5,FBgn0261393
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,ACHE,alpha-Est6,FBgn0015574
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,alpha-Est6,FBgn0015574
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,ACHE,alpha-Est7,FBgn0015575
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,alpha-Est7,FBgn0015575
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,ACHE,alpha-Est8,FBgn0015576
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,alpha-Est8,FBgn0015576
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,alpha-Est8,FBgn0015576
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,ACHE,alpha-Est9,FBgn0015577
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,alpha-Est9,FBgn0015577
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,ACHE,BcDNA:GH05741,FBgn0027584
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,BcDNA:GH05741,FBgn0027584
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,ACHE,CG10175,FBgn0289745
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,CG10175,FBgn0289745
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,ACHE,CG10339,FBgn0034972
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,UBQLN1,CG14224,FBgn0031057
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,UBQLN1,CG31528,FBgn0051528
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,ACHE,CG3841,FBgn0032131
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,CG3841,FBgn0032131
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,CG3841,FBgn0032131
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,ACHE,CG4382,FBgn0032132
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,CG4382,FBgn0032132
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,ACHE,CG5397,FBgn0031327
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,CG5397,FBgn0031327
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,ACHE,CG6018,FBgn0034736
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,CG6018,FBgn0034736
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,CG6018,FBgn0034736
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,ACHE,CG6414,FBgn0029690
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,CG6414,FBgn0029690
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,ACHE,CG7529,FBgn0037090
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,CG7529,FBgn0037090
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,ACHE,CG8424,FBgn0034076
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,CG8424,FBgn0034076
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,ACHE,clt,FBgn0000326
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,clt,FBgn0000326
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,ACHE,Est-6,FBgn0000592
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,Est-6,FBgn0000592
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,ACHE,Est-P,FBgn0000594
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,Est-P,FBgn0000594
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,A2M,Tep2,FBgn0041182
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,ACHE,Gli,FBgn0001987
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,Gli,FBgn0001987
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,ACHE,Jhe,FBgn0010052
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,BCHE,Jhe,FBgn0010052
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,APBB1,none,
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,APBB2,none,
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,APOE,none,
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Beta-Amyloid Metabolism Genes,UBQLN1,Ubqn,FBgn0031057
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Peptidases,PLAU (UPA),CG11836,FBgn0039272
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Peptidases,PLG,CG11836,FBgn0039272
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Peptidases,PLG,CG1299,FBgn0035501
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Peptidases,PLG,CG13744,FBgn0033363
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Peptidases,PLAU (UPA),CG6041,FBgn0029826
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Peptidases,IDE,Ide,FBgn0001247
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Peptidases,PLAT (TPA),none,
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Other Peptidases,PLG,Tequila,FBgn0023479
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,APH1A,aph-1,FBgn0031458
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,BACE1,Bace,FBgn0032049
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,BACE2,Bace,FBgn0032049
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,CTSB,CG10992,FBgn0030521
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,BACE1,CG17134,FBgn0032304
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,BACE2,CG17134,FBgn0032304
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,BACE1,CG17283,FBgn0038505
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,BACE2,CG17283,FBgn0038505
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,BACE1,CG31661,FBgn0051661
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,BACE2,CG31661,FBgn0051661
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,BACE1,CG31926,FBgn0051926
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,BACE2,CG31926,FBgn0051926
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,BACE1,CG31928,FBgn0051928
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,BACE2,CG31928,FBgn0051928
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,BACE1,CG33128,FBgn0053128
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,BACE2,CG33128,FBgn0053128
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,BACE1,CG5860,FBgn0038506
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,BACE2,CG5860,FBgn0038506
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,BACE1,CG5863,FBgn0038507
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,BACE2,CG5863,FBgn0038507
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,BACE1,CG6508,FBgn0032303
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,BACE2,CG6508,FBgn0032303
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,CTSB,CtsB1,FBgn0030521
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,ADAM9,Neu3,FBgn0265140
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,ADAM9,mmd,FBgn0259110
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,NCSTN,nct,FBgn0039234
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,BACE1,pcl,FBgn0003044
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,BACE2,pcl,FBgn0003044
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,PSEN1,Psn,FBgn0284421
+"Beta-Amyloid Generation, Oligomerization, Clearance and Degradation",Secratases,PSEN2,Psn,FBgn0284421
+Cell Cycle,Cell Cycle,NAE1,APP-BP1,FBgn0261112
+Cell Cycle,Cell Cycle,CDK1,cdc2,FBgn0004106
+Cell Cycle,Cell Cycle,CDK1,cdc2c,FBgn0004107
+Cell Cycle,Cell Cycle,CDK5,Cdk5,FBgn0013762
+Cell Cycle,Cell Cycle,CDK1,CG6800,FBgn0038902
+Cell Cycle,Cell Cycle,CDK5,CG6800,FBgn0038902
+Cell Cycle,Cell Cycle,CDKL1,CG7236,FBgn0031730
+Cell Cycle,Cell Cycle,NAE1,CG7828,FBgn0261112
+Cell Cycle,Cell Cycle,PRKCA,inaC,FBgn0004784
+Cell Cycle,Cell Cycle,ERN1,ire-1,FBgn0261984
+Cell Cycle,Cell Cycle,ERN1,Ire1,FBgn0261984
+Cell Cycle,Cell Cycle,EP300,nej,FBgn0261617
+Cell Cycle,Cell Cycle,APBB1,none,
+Cell Cycle,Cell Cycle,APBB2,none,
+Cell Cycle,Cell Cycle,IL1A,none,
+Cell Cycle,Cell Cycle,PRKCA,Pkc53E,FBgn0003091
+Cell Signaling Molecules,G-Protein Coupled Receptor Signaling,APLP2,Appl,FBgn0000108
+Cell Signaling Molecules,G-Protein Coupled Receptor Signaling,GNAO1,G-ialpha65A,FBgn0001104
+Cell Signaling Molecules,G-Protein Coupled Receptor Signaling,GNAZ,G-ialpha65A,FBgn0001104
+Cell Signaling Molecules,G-Protein Coupled Receptor Signaling,GNAO1,G-oalpha47A,FBgn0001122
+Cell Signaling Molecules,G-Protein Coupled Receptor Signaling,GNB1,G&bgr;13F,FBgn0001105
+Cell Signaling Molecules,G-Protein Coupled Receptor Signaling,GNB4,G&bgr;13F,FBgn0001105
+Cell Signaling Molecules,G-Protein Coupled Receptor Signaling,GNB5,G&bgr;5,FBgn0030011
+Cell Signaling Molecules,G-Protein Coupled Receptor Signaling,GNB1,G&bgr;76C,FBgn0004623
+Cell Signaling Molecules,G-Protein Coupled Receptor Signaling,GNB4,G&bgr;76C,FBgn0004623
+Cell Signaling Molecules,G-Protein Coupled Receptor Signaling,GNB1,Gbeta13F,FBgn0001105
+Cell Signaling Molecules,G-Protein Coupled Receptor Signaling,GNB4,Gbeta13F,FBgn0001105
+Cell Signaling Molecules,G-Protein Coupled Receptor Signaling,GNB5,Gbeta5,FBgn0030011
+Cell Signaling Molecules,G-Protein Coupled Receptor Signaling,GNG11,none,
+Cell Signaling Molecules,G-Protein Coupled Receptor Signaling,GNG3,none,
+Cell Signaling Molecules,G-Protein Coupled Receptor Signaling,GNG4,none,
+Cell Signaling Molecules,G-Protein Coupled Receptor Signaling,GNGT1,none,
+Cell Signaling Molecules,G-Protein Coupled Receptor Signaling,GNGT2,none,
+Cell Signaling Molecules,G-Protein Coupled Receptor Signaling,NTRK1,none,
+Cell Signaling Molecules,G-Protein Coupled Receptor Signaling,NTRK2,none,
+Cell Signaling Molecules,Intracellular Signaling,PRKCI,aPKC,FBgn0261854
+Cell Signaling Molecules,Intracellular Signaling,PRKCZ,aPKC,FBgn0261854
+Cell Signaling Molecules,Intracellular Signaling,PRKCA,inaC,FBgn0004784
+Cell Signaling Molecules,Intracellular Signaling,PRKCB,inaC,FBgn0004784
+Cell Signaling Molecules,Intracellular Signaling,PRKCG,inaC,FBgn0004784
+Cell Signaling Molecules,Intracellular Signaling,APBB2,none,
+Cell Signaling Molecules,Intracellular Signaling,PRKCI,Pk17E,FBgn0283473
+Cell Signaling Molecules,Intracellular Signaling,PRKCQ,Pk17E,FBgn0283473
+Cell Signaling Molecules,Intracellular Signaling,PRKCD,Pkc&dgr;,FBgn0287828
+Cell Signaling Molecules,Intracellular Signaling,PRKCA,Pkc53E,FBgn0003091
+Cell Signaling Molecules,Intracellular Signaling,PRKCB,Pkc53E,FBgn0003091
+Cell Signaling Molecules,Intracellular Signaling,PRKCG,Pkc53E,FBgn0003091
+Cell Signaling Molecules,Intracellular Signaling,PRKCE,Pkc98E,FBgn0003093
+Cell Signaling Molecules,Intracellular Signaling,PRKCD,Pkcdelta,FBgn0287828
+Cell Signaling Molecules,Intracellular Signaling,PRKCQ,Pkcdelta,FBgn0287828
+Cell Signaling Molecules,Intracellular Signaling,PSEN1,Psn,FBgn0284421
+Cell Signaling Molecules,Intracellular Signaling,PSEN2,Psn,FBgn0284421
+Cell Signaling Molecules,Intracellular Signaling,APBA3,X11L,FBgn0026313
+Cell Signaling Molecules,Intracellular Signaling,APBA3,X11Lbeta,FBgn0052677
+Cell Signaling Molecules,Notch Signaling,APH1A,aph-1,FBgn0031458
+Cell Signaling Molecules,Notch Signaling,ADAM10,Kul,FBgn0039688
+Cell Signaling Molecules,Notch Signaling,ADAM10,Kuz,FBgn0259984
+Cell Signaling Molecules,Notch Signaling,NCSTN,nct,FBgn0039234
+Cell Signaling Molecules,Notch Signaling,PSEN1,Psn,FBgn0284421
+Cell Signaling Molecules,Notch Signaling,PSEN2,Psn,FBgn0284421
+Cell Signaling Molecules,Other Cell Signaling Molecules,NAE1,APP-BP1,FBgn0261112
+Cell Signaling Molecules,Other Cell Signaling Molecules,INSR,CG10702,FBgn0032752
+Cell Signaling Molecules,Other Cell Signaling Molecules,PLAU (UPA),CG11836,FBgn0039272
+Cell Signaling Molecules,Other Cell Signaling Molecules,INSR,CG3837,FBgn0038279
+Cell Signaling Molecules,Other Cell Signaling Molecules,PLAU (UPA),CG6041,FBgn0029826
+Cell Signaling Molecules,Other Cell Signaling Molecules,NAE1,CG7828,FBgn0261112
+Cell Signaling Molecules,Other Cell Signaling Molecules,GNB2,G&bgr;13F,FBgn0001105
+Cell Signaling Molecules,Other Cell Signaling Molecules,GNB2,G&bgr;76C,FBgn0004623
+Cell Signaling Molecules,Other Cell Signaling Molecules,GNB2,Gbeta13F,FBgn0001105
+Cell Signaling Molecules,Other Cell Signaling Molecules,IDE,Ide,FBgn0001247
+Cell Signaling Molecules,Other Cell Signaling Molecules,INSR,InR,FBgn0283499
+Cell Signaling Molecules,Other Cell Signaling Molecules,GAP43,none,
+Cell Signaling Molecules,Other Cell Signaling Molecules,IL1A,none,
+Cell Signaling Molecules,WNT Signaling,LRP6,arr,FBgn0000119
+Cell Signaling Molecules,WNT Signaling,GSK3A,CG6800,FBgn0038902
+Cell Signaling Molecules,WNT Signaling,GSK3A,gskt,FBgn0046332
+Cell Signaling Molecules,WNT Signaling,GSK3B,gskt,FBgn0046332
+Cell Signaling Molecules,WNT Signaling,GSK3A,Pk34A,FBgn0028410
+Cell Signaling Molecules,WNT Signaling,GSK3B,Pk34A,FBgn0028410
+Cell Signaling Molecules,WNT Signaling,GSK3A,sgg,FBgn0003371
+Cell Signaling Molecules,WNT Signaling,GSK3B,sgg,FBgn0003371
+Cytoskeleton Regulators,Cytoskeleton Regulators,PRKCI,aPKC,FBgn0261854
+Cytoskeleton Regulators,Cytoskeleton Regulators,APOE,none,
+Cytoskeleton Regulators,Cytoskeleton Regulators,PKP4,p120ctn,FBgn0260799
+Cytoskeleton Regulators,Cytoskeleton Regulators,PRKCI,Pk17E,FBgn0283473
+Cytoskeleton Regulators,Cytoskeleton Regulators,MAP2,tau,FBgn0266579
+Cytoskeleton Regulators,Cytoskeleton Regulators,MAPT,tau,FBgn0266579
+Lipid Metabolism,Lipid Metabolism,LPL,CG1986,FBgn0030162
+Lipid Metabolism,Lipid Metabolism,LRP8,CG4861,FBgn0066101
+Lipid Metabolism,Lipid Metabolism,LPL,CG5966,FBgn0029831
+Lipid Metabolism,Lipid Metabolism,LPL,CG6271,FBgn0039476
+Lipid Metabolism,Lipid Metabolism,LPL,CG6277,FBgn0039475
+Lipid Metabolism,Lipid Metabolism,ABCA1,BG:DS00797.5,FBgn0028539
+Lipid Metabolism,Lipid Metabolism,LRP8,LpR1,FBgn0066101
+Lipid Metabolism,Lipid Metabolism,LRP8,LpR2,FBgn0051092
+Lipid Metabolism,Lipid Metabolism,LRP1,LRP1,FBgn0053087
+Lipid Metabolism,Lipid Metabolism,APOA1,none,
+Lipid Metabolism,Lipid Metabolism,APOE,none,
+Lipid Metabolism,Lipid Metabolism,CLU,none,
+Lipid Metabolism,Lipid Metabolism,INS,none,
+Lipid Metabolism,Lipid Metabolism,SNCB,none,
+Lipid Metabolism,Lipid Metabolism,HSD17B10,scu,FBgn0021765
+Lipid Metabolism,Lipid Metabolism,LRP1,yl,FBgn0004649
+Oxidative Stress,Oxidative Stress,MPO,CG10211,FBgn0032685
+Oxidative Stress,Oxidative Stress,UQCRC1,CG3731,FBgn0038271
+Oxidative Stress,Oxidative Stress,MPO,CG4009,FBgn0038469
+Oxidative Stress,Oxidative Stress,UQCRC2,CG4169,FBgn0250814
+Oxidative Stress,Oxidative Stress,MPO,CG5873,FBgn0038511
+Oxidative Stress,Oxidative Stress,MPO,CG6879,FBgn0259233
+Oxidative Stress,Oxidative Stress,MPO,CG6969,FBgn0263986
+Oxidative Stress,Oxidative Stress,MPO,Pxd,FBgn0004577
+Oxidative Stress,Oxidative Stress,MPO,pxt,FBgn0261987
+Oxidative Stress,Oxidative Stress,HSD17B10,scu,FBgn0021765
+Proteases and Protease Inhibitors,Proteases and Protease Inhibitors,CTSL,26-29kD-proteinase,FBgn0250848
+Proteases and Protease Inhibitors,Proteases and Protease Inhibitors,APLP2,Appl,FBgn0000108
+Proteases and Protease Inhibitors,Proteases and Protease Inhibitors,APP,Appl,FBgn0000108
+Proteases and Protease Inhibitors,Proteases and Protease Inhibitors,CAPN1,CalpA,FBgn0012051
+Proteases and Protease Inhibitors,Proteases and Protease Inhibitors,CAPN1,CalpB,FBgn0025866
+Proteases and Protease Inhibitors,Proteases and Protease Inhibitors,CAPN1,CalpC,FBgn0260450
+Proteases and Protease Inhibitors,Proteases and Protease Inhibitors,CTSD,cathD,FBgn0029093
+Proteases and Protease Inhibitors,Proteases and Protease Inhibitors,CTSD,CG10104,FBgn0033933
+Proteases and Protease Inhibitors,Proteases and Protease Inhibitors,CTSL,CG11459,FBgn0037396
+Proteases and Protease Inhibitors,Proteases and Protease Inhibitors,CTSD,CG13095,FBgn0032049
+Proteases and Protease Inhibitors,Proteases and Protease Inhibitors,CTSD,CG17134,FBgn0032304
+Proteases and Protease Inhibitors,Proteases and Protease Inhibitors,CTSD,CG17283,FBgn0038505
+Proteases and Protease Inhibitors,Proteases and Protease Inhibitors,UQCRC2,CG4169,FBgn0250814
+Proteases and Protease Inhibitors,Proteases and Protease Inhibitors,CTSL,CG4847,FBgn0034229
+Proteases and Protease Inhibitors,Proteases and Protease Inhibitors,CTSD,CG5860,FBgn0038506
+Proteases and Protease Inhibitors,Proteases and Protease Inhibitors,CTSD,CG5863,FBgn0038507
+Proteases and Protease Inhibitors,Proteases and Protease Inhibitors,CTSD,CG6508,FBgn0032303
+Proteases and Protease Inhibitors,Proteases and Protease Inhibitors,CTSL,Cp1,FBgn0013770
+Proteases and Protease Inhibitors,Proteases and Protease Inhibitors,ADAM10,Kul,FBgn0039688
+Proteases and Protease Inhibitors,Proteases and Protease Inhibitors,ADAM10,Kuz,FBgn0259984
+Proteases and Protease Inhibitors,Proteases and Protease Inhibitors,CTSC,none,
+Proteases and Protease Inhibitors,Proteases and Protease Inhibitors,CTSG,none,
+Proteases and Protease Inhibitors,Proteases and Protease Inhibitors,SERPINA3,none,
+Proteases and Protease Inhibitors,Proteases and Protease Inhibitors,CTSD,pcl,FBgn0003044
+Synaptic Formation,Synaptic Formation,ACHE,Ace,FBgn0000024
+Synaptic Formation,Synaptic Formation,ACHE,alpha-Est1,FBgn0015568
+Synaptic Formation,Synaptic Formation,ACHE,alpha-Est10,FBgn0015569
+Synaptic Formation,Synaptic Formation,ACHE,alpha-Est2,FBgn0015570
+Synaptic Formation,Synaptic Formation,ACHE,alpha-Est3,FBgn0015571
+Synaptic Formation,Synaptic Formation,ACHE,alpha-Est4,FBgn0015572
+Synaptic Formation,Synaptic Formation,ACHE,alpha-Est5,FBgn0261393
+Synaptic Formation,Synaptic Formation,ACHE,alpha-Est6,FBgn0015574
+Synaptic Formation,Synaptic Formation,ACHE,alpha-Est7,FBgn0015575
+Synaptic Formation,Synaptic Formation,ACHE,alpha-Est8,FBgn0015576
+Synaptic Formation,Synaptic Formation,ACHE,alpha-Est9,FBgn0015577
+Synaptic Formation,Synaptic Formation,ACHE,BcDNA:GH05741,FBgn0027584
+Synaptic Formation,Synaptic Formation,ACHE,CG10175,FBgn0289745
+Synaptic Formation,Synaptic Formation,ACHE,CG10339,FBgn0034972
+Synaptic Formation,Synaptic Formation,ACHE,CG3841,FBgn0032131
+Synaptic Formation,Synaptic Formation,ACHE,CG4382,FBgn0032132
+Synaptic Formation,Synaptic Formation,CHAT,CG5122,FBgn0032471
+Synaptic Formation,Synaptic Formation,CHAT,CG5265,FBgn0038486
+Synaptic Formation,Synaptic Formation,ACHE,CG5397,FBgn0031327
+Synaptic Formation,Synaptic Formation,ACHE,CG6018,FBgn0034736
+Synaptic Formation,Synaptic Formation,ACHE,CG6414,FBgn0029690
+Synaptic Formation,Synaptic Formation,ACHE,CG7529,FBgn0037090
+Synaptic Formation,Synaptic Formation,ACHE,CG8424,FBgn0034076
+Synaptic Formation,Synaptic Formation,CHAT,Cha,FBgn0000303
+Synaptic Formation,Synaptic Formation,ACHE,clt,FBgn0000326
+Synaptic Formation,Synaptic Formation,ACHE,Est-6,FBgn0000592
+Synaptic Formation,Synaptic Formation,ACHE,Est-P,FBgn0000594
+Synaptic Formation,Synaptic Formation,ACHE,Gli,FBgn0001987
+Synaptic Formation,Synaptic Formation,ACHE,Jhe,FBgn0010052
+Synaptic Formation,Synaptic Formation,APBB1,none,
+Synaptic Formation,Synaptic Formation,APBB2,none,
+Synaptic Formation,Synaptic Formation,APOE,none,
+Synaptic Formation,Synaptic Formation,BDNF,none,
+Synaptic Formation,Synaptic Formation,APBA1 (MINT1),X11L,FBgn0026313
+Synaptic Formation,Synaptic Formation,APBA1 (MINT1),X11Lbeta,FBgn0052677
+Transcriptional Regulation,Transcriptional Regulation,ERN1,ire-1,FBgn0261984
+Transcriptional Regulation,Transcriptional Regulation,ERN1,Ire1,FBgn0261984
+Transcriptional Regulation,Transcriptional Regulation,EP300,nej,FBgn0261617
+Transcriptional Regulation,Transcriptional Regulation,APBB1,none,
+Transcriptional Regulation,Transcriptional Regulation,APBB2,none,

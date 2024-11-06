@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r echo = F}
 
 ##Genotypes
-male.genotype = 'w/w;arc1/arc1;+/+'
+male.genotype = 'w/y;arc1/+;G85R/+'
 female.genotype = 'elav-Gal4/Y;+/+;TM6c/UAS-lacz'
 
 

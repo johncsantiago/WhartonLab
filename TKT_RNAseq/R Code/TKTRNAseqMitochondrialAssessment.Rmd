@@ -1,0 +1,6544 @@
+---
+title: "G85R and A4V OXPHOS Genes"
+author: "John Santiago"
+date: "2024-10-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rgl)
+knitr::knit_hooks$set(webgl = hook_webgl)
+```
+
+
+```{r echo = F, include = F}
+
+library(plotly)
+library(edgeR)
+library(heatmaply)
+library(org.Dm.eg.db)
+library(KEGGREST)
+library(RcisTarget)
+library(DT)
+source('/Users/johncsantiago/Documents/GitHub/WhartonLab/GOandKEGGPlottingFunctions.R')
+
+##load all files from github
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"
+cpmdata = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT_cpmdata.csv"),row.names = 1)
+TKT.cpm = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT_cpmdata.csv"),row.names = 1)
+groups  = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.metadata.csv"),row.names = 1)
+TKT.EdgeR = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FDRTable.csv"),row.names = 1)
+TKT.EdgeR.FC = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FCTable.csv"),row.names = 1)
+
+G85R.meancpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT_meancpmdata.csv", row.names = 1)
+
+groups = groups[colnames(cpmdata),]
+
+
+GeneIDKey = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GeneIDKey.csv", row.names = 1)
+
+##Clean Trait Data and calculate CPMs
+countdata=read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT.counttable.csv",row.names=1)
+
+
+##normalize data
+countdata=countdata[, row.names(groups)]
+x <- countdata
+gr <- factor(groups$Group)
+y <- DGEList(counts=x,group=gr)
+keep <- filterByExpr(y)
+y <- y[keep,,keep.lib.sizes=FALSE]
+z <- calcNormFactors(y, method = "TMM")
+design<-model.matrix(~0 + gr)
+colnames(design) = unique(gr)
+z = estimateDisp(z, design, robust = T)
+fit <- glmQLFit(z, design)
+
+compare = makeContrasts(TktDfGR.F-WT.F, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+GR.FDfxWT.FC=DEout
+sGR.FDfxWT.FC=DEout[DEout$FDR<.05,]
+
+TKT.EdgeR = cbind(TKT.EdgeR, GR.FDfxWT.FC[row.names(TKT.EdgeR), "FDR"])
+colnames(TKT.EdgeR)[17] = 'GR.FDfxWT.FC'
+
+TKT.EdgeR.FC = cbind(TKT.EdgeR.FC, GR.FDfxWT.FC[row.names(TKT.EdgeR), "logFC"])
+colnames(TKT.EdgeR.FC)[17] = 'GR.FDfxWT.FC'
+
+compare = makeContrasts(TktDfGR.M-WT.M, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+GR.MDfxWT.MC=DEout
+sGR.MDfxWT.MC=DEout[DEout$FDR<.05,]
+
+TKT.EdgeR = cbind(TKT.EdgeR, GR.MDfxWT.MC[row.names(TKT.EdgeR), "FDR"])
+colnames(TKT.EdgeR)[18] = 'GR.MDfxWT.MC'
+
+TKT.EdgeR.FC = cbind(TKT.EdgeR.FC, GR.MDfxWT.MC[row.names(TKT.EdgeR), "logFC"])
+colnames(TKT.EdgeR.FC)[18] = 'GR.MDfxWT.MC'
+
+
+
+
+compare = makeContrasts(TktOEGR.F-WT.F, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+GR.FOExWT.FC=DEout
+sGR.FOExWT.FC=DEout[DEout$FDR<.05,]
+
+TKT.EdgeR = cbind(TKT.EdgeR, GR.FOExWT.FC[row.names(TKT.EdgeR), "FDR"])
+colnames(TKT.EdgeR)[19] = 'GR.FOExWT.FC'
+
+TKT.EdgeR.FC = cbind(TKT.EdgeR.FC, GR.FOExWT.FC[row.names(TKT.EdgeR), "logFC"])
+colnames(TKT.EdgeR.FC)[19] = 'GR.FOExWT.FC'
+
+compare = makeContrasts(TktOEGR.M-WT.M, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+GR.MOExWT.MC=DEout
+sGR.MOExWT.MC=DEout[DEout$FDR<.05,]
+
+TKT.EdgeR = cbind(TKT.EdgeR, GR.MOExWT.MC[row.names(TKT.EdgeR), "FDR"])
+colnames(TKT.EdgeR)[20] = 'GR.MOExWT.MC'
+
+TKT.EdgeR.FC = cbind(TKT.EdgeR.FC, GR.MOExWT.MC[row.names(TKT.EdgeR), "logFC"])
+colnames(TKT.EdgeR.FC)[20] = 'GR.MOExWT.MC'
+
+genesingo = readRDS("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/genesingo.RData")
+GO.Names = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GO.names.csv", row.names = 1)
+
+A4V.cpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.cpmdata.csv", row.names = 1)
+A4V.meancpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.meancpmdata.csv", row.names = 1)
+A4V.FDR = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.FDRdata.csv", row.names = 1)
+A4V.FC = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.FCdata.csv", row.names = 1)
+A4V.meta = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.metadata.csv", row.names = 1)
+
+
+sample.names = list.files("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/Count_Tables/")
+
+meta = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.metadata.csv", row.names = 1)
+
+temp = read.csv(paste0("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/Count_Tables/", sample.names[1]), sep = '\t', row.names = 1)
+
+countdata = data.frame(temp = temp)
+colnames(countdata)[1] = substr(sample.names[1], 1, nchar(sample.names[1])-15)
+
+i=2
+while(i <= length(sample.names)){
+  temp = read.csv(paste0("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/Count_Tables/", sample.names[i]), sep = '\t', row.names = 1)
+  countdata = cbind(countdata, temp[row.names(countdata),1])
+  colnames(countdata)[i] = substr(sample.names[i], 1, nchar(sample.names[i])-15)
+  i=i+1
+}
+
+countdata = countdata[-(grep("ti",row.names(countdata))),]
+countdata = countdata[-(grep("trans",row.names(countdata))),]
+
+
+##normalize data
+x <- countdata
+gr <- factor(substr(colnames(countdata), 1, nchar(colnames(countdata))-1))
+gr2 = factor(paste0(substr(colnames(countdata), 1, 1), 
+                    substr(colnames(countdata),
+                           nchar(colnames(countdata))-2,
+                           nchar(colnames(countdata))-1)))
+y <- DGEList(counts=x,group=gr)
+keep <- filterByExpr(y)
+y <- y[keep,,keep.lib.sizes=FALSE]
+z <- normLibSizes(y)
+##normalized cpm
+#cpmdata=cpm(z)
+
+#z$samples$group = gr2
+
+##updated edger analysis pipeline
+design<-model.matrix(~0 + gr2)
+colnames(design) = unique(gr2)
+z = estimateDisp(z, design)
+fit <- glmQLFit(z, design)
+
+contr = makeContrasts(AFH - SFH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvSFH = DEdata
+sigAvSFH = DEdata[DEdata$FDR < 0.05, ]
+
+A4V.FDR = cbind(A4V.FDR, AvSFH[row.names(A4V.FDR), "FDR"])
+A4V.FC = cbind(A4V.FC, AvSFH[row.names(A4V.FC), "logFC"])
+
+
+contr = makeContrasts(AMH - SMH, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvSMH = DEdata
+sigAvSMH = DEdata[DEdata$FDR < 0.05, ]
+
+A4V.FDR = cbind(A4V.FDR, AvSMH[row.names(A4V.FDR), "FDR"])
+A4V.FC = cbind(A4V.FC, AvSMH[row.names(A4V.FC), "logFC"])
+
+colnames(A4V.FDR)[52:53] = c("AvSFH", "AvSMH")
+colnames(A4V.FC)[52:53] = c("AvSFH", "AvSMH")
+
+
+
+contr = makeContrasts(AFT - SFT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvSFT = DEdata
+sigAvSFT = DEdata[DEdata$FDR < 0.05, ]
+
+A4V.FDR = cbind(A4V.FDR, AvSFT[row.names(A4V.FDR), "FDR"])
+A4V.FC = cbind(A4V.FC, AvSFT[row.names(A4V.FC), "logFC"])
+
+
+contr = makeContrasts(AMT - SMT, levels=design)
+qlf = glmQLFTest(fit, contrast=contr)
+DEdata = topTags(qlf,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEdata = DEdata$table
+AvSMT = DEdata
+sigAvSMT = DEdata[DEdata$FDR < 0.05, ]
+
+A4V.FDR = cbind(A4V.FDR, AvSMT[row.names(A4V.FDR), "FDR"])
+A4V.FC = cbind(A4V.FC, AvSMT[row.names(A4V.FC), "logFC"])
+
+colnames(A4V.FDR)[54:55] = c("AvSFT", "AvSMT")
+colnames(A4V.FC)[54:55] = c("AvSFT", "AvSMT")
+
+A4V.meancpm$AFH = apply((A4V.cpm[,gr2=="AFH"]), 1, mean)
+A4V.meancpm$SFH = apply((A4V.cpm[,gr2=="SFH"]), 1, mean)
+A4V.meancpm$AMH = apply((A4V.cpm[,gr2=="AMH"]), 1, mean)
+A4V.meancpm$SMH = apply((A4V.cpm[,gr2=="SMH"]), 1, mean)
+
+A4V.meancpm$AFT = apply((A4V.cpm[,gr2=="AFT"]), 1, mean)
+A4V.meancpm$SFT = apply((A4V.cpm[,gr2=="SFT"]), 1, mean)
+A4V.meancpm$AMT = apply((A4V.cpm[,gr2=="AMT"]), 1, mean)
+A4V.meancpm$SMT = apply((A4V.cpm[,gr2=="SMT"]), 1, mean)
+
+A4V.meancpm$AFA = apply((A4V.cpm[,gr2=="AFA"]), 1, mean)
+A4V.meancpm$SFA = apply((A4V.cpm[,gr2=="SFA"]), 1, mean)
+A4V.meancpm$AMA = apply((A4V.cpm[,gr2=="AMA"]), 1, mean)
+A4V.meancpm$SMA = apply((A4V.cpm[,gr2=="SMA"]), 1, mean)
+
+
+```
+
+
+```{r echo = F}
+
+mt = c("FBgn0013680",
+       "FBgn0013674",
+       "FBgn0013675",
+       "FBgn0013673",
+       "FBgn0013672",
+       "FBgn0013676",
+       "FBgn0013681",
+       "FBgn0013684",
+       "FBgn0262952",
+       "FBgn0013683",
+       "FBgn0013685",
+       "FBgn0013678",
+       "FBgn0013679")
+
+oxphos.term = "GO:0006119"
+
+oxphos.genes = genesingo[oxphos.term]
+oxphos.genes = GeneIDKey[GeneIDKey$ensembl %in% oxphos.genes[[1]],]
+
+oxphos = row.names(oxphos.genes)
+
+hex = function(color, alpha){
+  rgbvals = col2rgb(color)
+  rgb2hex = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+  return(rgb2hex)
+}
+
+```
+
+
+
+```{r echo = F}
+
+GR.SpecificGenes.biplot = function(genes, x, y, mean.data, main.title){
+
+FC.data = TKT.EdgeR.FC[genes, c(x, y)]
+FDR.data = TKT.EdgeR[genes, c(x, y)]
+mean.data = mean.data[genes, ]
+  
+
+  
+  
+data = data.frame(Symbol = GeneIDKey[genes, "Symbol"],
+                  FBgn = genes,
+                  FDR1 = FDR.data[, x],
+                  FDR2 = FDR.data[, y],
+                  FC1 = FC.data[, x],
+                  FC2 = FC.data[, y],
+                  Color = 'grey',
+                  size = 1,
+                  Variable1.cpm = mean.data[,1],
+                  Control1.cpm = mean.data[,2],
+                  Variable2.cpm = mean.data[,3],
+                  Control2.cpm = mean.data[,4])
+  row.names(data) = data$FBgn
+
+  
+  #data[x.genes, 'Color'] = 'royalblue'
+  #data[y.genes, 'Color'] = 'firebrick' 
+  #data[xy.genes, 'Color'] = 'gold'
+  
+  data$size = log2(apply(mean.data, 1, max))
+  data$size[data$size<3] = 1
+  data = na.omit(data)
+  ##data = data[data$size > log2(min.expression),]
+  data$size = 2.5*data$size
+  
+  fig = plot_ly(data = data,
+                x = ~FC1,
+                y = ~FC2,
+                type = 'scatter',
+                mode = 'markers',
+                marker = list(color = ~Color,
+                              colors = ~Color,
+                              line = list(color = "black", width = 1.5),
+                              size = ~size),
+                hoverinfo = "text",
+                hovertext = paste("Symbol:", data$Symbol,
+                                  "\nFBgn:", data$FBgn,
+                                  "\n ", colnames(FDR.data)[1], "FDR: ", round(data$FDR1, 2),
+                                  "\n ", colnames(FDR.data)[2], "FDR: ", round(data$FDR2,2),
+                                  "\n ", colnames(FC.data)[1], "FC: ", round(data$FC1, 2),
+                                  "\n ", colnames(FC.data)[2], "FC: ", round(data$FC2,2),
+                                  "\n ", colnames(mean.data)[1], "mean CPM: ", signif(data$Variable1,2),
+                                  "\n ", colnames(mean.data)[2], "mean CPM: ", signif(data$Control1,2),
+                                  "\n ", colnames(mean.data)[3], "mean CPM: ", signif(data$Variable2,2),
+                                  "\n ", colnames(mean.data)[4], "mean CPM: ", signif(data$Control2,2)))
+
+  fig = fig %>% layout(title = main.title,
+                       shapes = list(
+                         type = "line",
+                         line = list(color = "black", dash = 'dash', width = 2),
+                         x0 = min(data$FC1, data$FC2) - .25,
+                         x1 = max(data$FC1, data$FC2) + .25,
+                         y0 = min(data$FC1, data$FC2) - .25,
+                         y1 = max(data$FC1, data$FC2) + .25),
+                       xaxis = list(title = paste(colnames(FC.data)[1], "FC")),
+                       yaxis = list(title = paste(colnames(FC.data)[2], "FC")),
+                       showlegend = F)
+
+  return(list(fig, data))
+}
+```
+
+
+
+
+
+```{r echo = F}
+
+AV.SpecificGenes.biplot = function(genes, x, y, mean.data, main.title){
+
+FC.data = A4V.FC[genes, c(x, y)]
+FDR.data = A4V.FDR[genes, c(x, y)]
+mean.data = mean.data[genes, ]
+  
+
+  
+  
+data = data.frame(Symbol = GeneIDKey[genes, "Symbol"],
+                  FBgn = genes,
+                  FDR1 = FDR.data[, x],
+                  FDR2 = FDR.data[, y],
+                  FC1 = FC.data[, x],
+                  FC2 = FC.data[, y],
+                  Color = 'grey',
+                  size = 1,
+                  Variable1.cpm = mean.data[,1],
+                  Control1.cpm = mean.data[,2],
+                  Variable2.cpm = mean.data[,3],
+                  Control2.cpm = mean.data[,4])
+  row.names(data) = data$FBgn
+
+  
+  #data[x.genes, 'Color'] = 'royalblue'
+  #data[y.genes, 'Color'] = 'firebrick' 
+  #data[xy.genes, 'Color'] = 'gold'
+  
+  data$size = log2(apply(mean.data, 1, max))
+  data$size[data$size<3] = 1
+  data = na.omit(data)
+  ##data = data[data$size > log2(min.expression),]
+  data$size = 2.5*data$size
+  
+  fig = plot_ly(data = data,
+                x = ~FC1,
+                y = ~FC2,
+                type = 'scatter',
+                mode = 'markers',
+                marker = list(color = ~Color,
+                              colors = ~Color,
+                              line = list(color = "black", width = 1.5),
+                              size = ~size),
+                hoverinfo = "text",
+                hovertext = paste("Symbol:", data$Symbol,
+                                  "\nFBgn:", data$FBgn,
+                                  "\n ", colnames(FDR.data)[1], "FDR: ", round(data$FDR1, 2),
+                                  "\n ", colnames(FDR.data)[2], "FDR: ", round(data$FDR2,2),
+                                  "\n ", colnames(FC.data)[1], "FC: ", round(data$FC1, 2),
+                                  "\n ", colnames(FC.data)[2], "FC: ", round(data$FC2,2),
+                                  "\n ", colnames(mean.data)[1], "mean CPM: ", signif(data$Variable1,2),
+                                  "\n ", colnames(mean.data)[2], "mean CPM: ", signif(data$Control1,2),
+                                  "\n ", colnames(mean.data)[3], "mean CPM: ", signif(data$Variable2,2),
+                                  "\n ", colnames(mean.data)[4], "mean CPM: ", signif(data$Control2,2)))
+
+  fig = fig %>% layout(title = main.title,
+                       shapes = list(
+                         type = "line",
+                         line = list(color = "black", dash = 'dash', width = 2),
+                         x0 = min(data$FC1, data$FC2) - .25,
+                         x1 = max(data$FC1, data$FC2) + .25,
+                         y0 = min(data$FC1, data$FC2) - .25,
+                         y1 = max(data$FC1, data$FC2) + .25),
+                       xaxis = list(title = paste(colnames(FC.data)[1], "FC")),
+                       yaxis = list(title = paste(colnames(FC.data)[2], "FC")),
+                       showlegend = F)
+
+  return(list(fig, data))
+}
+```
+
+
+## G85R
+
+```{r echo = F}
+
+GR.mt = na.omit(cpmdata[mt, c(groups[groups$Group == 'WT.F', 'SampleID'],
+                              groups[groups$Group == 'GR.F', 'SampleID'],
+                              groups[groups$Group == 'WT.M', 'SampleID'],
+                              groups[groups$Group == 'GR.M', 'SampleID'])])
+                             
+row.names(GR.mt) = GeneIDKey[row.names(GR.mt), "Symbol"]
+colnames(GR.mt) = groups[colnames(GR.mt), "Group"]
+GR.mt = t(GR.mt)
+
+mt.Group = rep(row.names(GR.mt), 12)
+mt.Geno = rep(row.names(GR.mt), 12)
+mt.Group[mt.Group ==  "WT.F"] = 1
+mt.Group[mt.Group ==  "GR.F"] = 2
+mt.Group[mt.Group ==  "WT.M"] = 3
+mt.Group[mt.Group ==  "GR.M"] = 4
+
+mt.Gene = as.character(t(matrix(rep(colnames(GR.mt), nrow(GR.mt)), ncol = nrow(GR.mt))))
+mt.cpm = as.numeric(GR.mt)
+
+GR.mt = data.frame(Group = paste(mt.Gene, mt.Group),
+                   cpm = mt.cpm,
+                   geno = mt.Group,
+                   gene = mt.Gene)
+
+box.at = setdiff(c(1:(12*5)), c(1:12)*5)
+
+boxplot(GR.mt$cpm~GR.mt$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 1",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(GR.mt$Group))],
+       y=GR.mt$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(GR.mt$geno))])
+
+axis(1, at= c(c(0:11)*5)+2.5, tick = F, line = -.5, labels = c(unique(GR.mt$gene)[order(unique(GR.mt$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "G85R F", "Silent M", "G85R M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+```
+
+</br>
+
+Fig1. mtDNA Genes cpm in G85R and Silent
+
+</br></br>
+
+```{r echo = F}
+
+x = "GRxWT.FC"
+y = "GRxWT.MC"
+
+mean.data = na.omit(G85R.meancpm[, c('GR.F', 'WT.F',
+                                       'GR.M', 'WT.M')])
+
+main.title = "Fig 2"
+
+
+##RG = Response Genes
+mtGRxWT.C.RG = GR.SpecificGenes.biplot(mt, x, y, mean.data, main.title)
+
+mtGRxWT.C.RG[[1]]
+
+```
+
+</br>
+
+Fig2 mtDNA Genes FC in G85R and Silent: log2(FC) for G85R/Silent in Female (xaxis) and Male (yaxis)
+
+</br></br>
+
+```{r echo = F}
+
+x = "GRxWT.FC"
+y = "GRxWT.MC"
+
+OXPHOS.FC.cutoff = abs(apply(na.omit(TKT.EdgeR.FC[oxphos,c(x,y)]), 1, max))
+OXPHOS.FC.cutoff = OXPHOS.FC.cutoff[OXPHOS.FC.cutoff > log2(1.5)]
+
+ofc = names(OXPHOS.FC.cutoff)
+
+GR.ofc = na.omit(cpmdata[ofc, c(groups[groups$Group == 'WT.F', 'SampleID'],
+                                groups[groups$Group == 'GR.F', 'SampleID'],
+                                groups[groups$Group == 'WT.M', 'SampleID'],
+                                groups[groups$Group == 'GR.M', 'SampleID'])])
+                             
+cpm.cutoff = apply(GR.ofc, 1, max)
+ofc = names(cpm.cutoff[cpm.cutoff > 10])
+
+GR.ofc = GR.ofc[ofc,]
+
+row.names(GR.ofc) = GeneIDKey[row.names(GR.ofc), "Symbol"]
+colnames(GR.ofc) = groups[colnames(GR.ofc), "Group"]
+GR.ofc = t(GR.ofc)
+
+ofc.Group = rep(row.names(GR.ofc), length(ofc))
+ofc.Geno = rep(row.names(GR.ofc), length(ofc))
+ofc.Group[ofc.Group ==  "WT.F"] = 1
+ofc.Group[ofc.Group ==  "GR.F"] = 2
+ofc.Group[ofc.Group ==  "WT.M"] = 3
+ofc.Group[ofc.Group ==  "GR.M"] = 4
+
+ofc.Gene = as.character(t(matrix(rep(colnames(GR.ofc), nrow(GR.ofc)), ncol = nrow(GR.ofc))))
+ofc.cpm = as.numeric(GR.ofc)
+
+GR.ofc = data.frame(Group = paste(ofc.Gene, ofc.Group),
+                   cpm = ofc.cpm,
+                   geno = ofc.Group,
+                   gene = ofc.Gene)
+
+box.at = setdiff(c(1:(length(ofc)*5)), c(1:length(ofc))*5)
+
+boxplot(GR.ofc$cpm~GR.ofc$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 3",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(GR.ofc$Group))],
+       y=GR.ofc$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(GR.ofc$geno))])
+
+axis(1, at= c(c(0:(length(ofc)-1))*5)+2.5, tick = F, line = -.5, labels = c(unique(GR.ofc$gene)[order(unique(GR.ofc$gene))]), cex.axis = .75, las = 2)
+
+legend("topright",
+       legend = c("Silent F", "G85R F", "Silent M", "G85R M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+
+```
+
+</br>
+
+Fig3. nucDNA Genes cpm in G85R and Silent: cpm data for nucDNA genes in G85R and Silent. FC of at least 50% in male or female and a mean cpm of at least 10 in 1 of the conditions.
+
+</br></br>
+
+```{r echo = F}
+
+x = "GRxWT.FC"
+y = "GRxWT.MC"
+
+mean.data = na.omit(G85R.meancpm[, c('GR.F', 'WT.F',
+                                       'GR.M', 'WT.M')])
+
+main.title = "Fig 4"
+
+
+##RG = Response Genes
+nucGRxWT.C.RG = GR.SpecificGenes.biplot(oxphos, x, y, mean.data, main.title)
+
+nucGRxWT.C.RG[[1]]
+
+```
+
+</br>
+
+Fig4 nucDNA Genes FC in G85R and Silent: log2(FC) for G85R/Silent in Female (xaxis) and Male (yaxis)
+
+</br></br>
+
+
+## A4V
+
+## mtDNA Genes in Head Samples
+
+```{r echo = F}
+
+AV.mt = na.omit(A4V.cpm[mt, c(row.names(A4V.meta)[A4V.meta$Group == 'S3FH'],
+                          row.names(A4V.meta)[A4V.meta$Group == 'A3FH'],
+                          row.names(A4V.meta)[A4V.meta$Group == 'S3MH'],
+                          row.names(A4V.meta)[A4V.meta$Group == 'A3MH'])])
+                             
+row.names(AV.mt) = GeneIDKey[row.names(AV.mt), "Symbol"]
+colnames(AV.mt) = A4V.meta[colnames(AV.mt), "Group"]
+AV.mt = t(AV.mt)
+
+mt.Group = rep(row.names(AV.mt), 12)
+mt.Geno = rep(row.names(AV.mt), 12)
+mt.Group[mt.Group ==  "S3FH"] = 1
+mt.Group[mt.Group ==  "A3FH"] = 2
+mt.Group[mt.Group ==  "S3MH"] = 3
+mt.Group[mt.Group ==  "A3MH"] = 4
+
+mt.Gene = as.character(t(matrix(rep(colnames(AV.mt), nrow(AV.mt)), ncol = nrow(AV.mt))))
+mt.cpm = as.numeric(AV.mt)
+
+AV.mt = data.frame(Group = paste(mt.Gene, mt.Group),
+                   cpm = mt.cpm,
+                   geno = mt.Group,
+                   gene = mt.Gene)
+
+box.at = setdiff(c(1:(12*5)), c(1:12)*5)
+
+boxplot(AV.mt$cpm~AV.mt$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 5",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.mt$Group))],
+       y=AV.mt$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(AV.mt$geno))])
+
+axis(1, at= c(c(0:11)*5)+2.5, tick = F, line = -.5, labels = c(unique(AV.mt$gene)[order(unique(AV.mt$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F", "Silent M", "A4V M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+```
+
+</br>
+
+Fig5. mtDNA Genes cpm in A4V and Silent 3-Day Heads
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS3FH"
+y = "AvS3MH"
+
+mean.data = na.omit(A4V.meancpm[, c('A3FH', 'S3FH',
+                                    'A3MH', 'S3MH')])
+
+main.title = "Fig 6"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.biplot(mt, x, y, mean.data, main.title)
+
+AVxWT.CH.RG[[1]]
+
+```
+
+</br>
+
+Fig6 mtDNA Genes FC in A4V and Silent 3-Day Heads: log2(FC) for A4V/Silent in Female (xaxis) and Male (yaxis) 3-Day Heads
+
+</br></br>
+
+```{r echo = F}
+
+AV.mt = na.omit(A4V.cpm[mt, c(row.names(A4V.meta)[A4V.meta$Group == 'S9FH'],
+                          row.names(A4V.meta)[A4V.meta$Group == 'A9FH'],
+                          row.names(A4V.meta)[A4V.meta$Group == 'S9MH'],
+                          row.names(A4V.meta)[A4V.meta$Group == 'A9MH'])])
+                             
+row.names(AV.mt) = GeneIDKey[row.names(AV.mt), "Symbol"]
+colnames(AV.mt) = A4V.meta[colnames(AV.mt), "Group"]
+AV.mt = t(AV.mt)
+
+mt.Group = rep(row.names(AV.mt), 12)
+mt.Geno = rep(row.names(AV.mt), 12)
+mt.Group[mt.Group ==  "S9FH"] = 1
+mt.Group[mt.Group ==  "A9FH"] = 2
+mt.Group[mt.Group ==  "S9MH"] = 3
+mt.Group[mt.Group ==  "A9MH"] = 4
+
+mt.Gene = as.character(t(matrix(rep(colnames(AV.mt), nrow(AV.mt)), ncol = nrow(AV.mt))))
+mt.cpm = as.numeric(AV.mt)
+
+AV.mt = data.frame(Group = paste(mt.Gene, mt.Group),
+                   cpm = mt.cpm,
+                   geno = mt.Group,
+                   gene = mt.Gene)
+
+box.at = setdiff(c(1:(12*5)), c(1:12)*5)
+
+boxplot(AV.mt$cpm~AV.mt$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 7",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.mt$Group))],
+       y=AV.mt$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(AV.mt$geno))])
+
+axis(1, at= c(c(0:11)*5)+2.5, tick = F, line = -.5, labels = c(unique(AV.mt$gene)[order(unique(AV.mt$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F", "Silent M", "A4V M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+```
+
+</br>
+
+Fig7. mtDNA Genes cpm in A4V and Silent 9-Day Heads
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS9FH"
+y = "AvS9MH"
+
+mean.data = na.omit(A4V.meancpm[, c('A9FH', 'S9FH',
+                                    'A9MH', 'S9MH')])
+
+main.title = "Fig 8"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.biplot(mt, x, y, mean.data, main.title)
+
+AVxWT.CH.RG[[1]]
+
+```
+
+</br>
+
+Fig8 mtDNA Genes FC in A4V and Silent 9-Day Heads: log2(FC) for A4V/Silent in Female (xaxis) and Male (yaxis) 9-Day Heads
+
+</br></br>
+
+```{r echo = F}
+
+AV.mt = na.omit(A4V.cpm[mt, c(row.names(A4V.meta)[A4V.meta$Group == 'S40FH'],
+                          row.names(A4V.meta)[A4V.meta$Group == 'A40FH'])])
+                             
+row.names(AV.mt) = GeneIDKey[row.names(AV.mt), "Symbol"]
+colnames(AV.mt) = A4V.meta[colnames(AV.mt), "Group"]
+AV.mt = t(AV.mt)
+
+mt.Group = rep(row.names(AV.mt), 12)
+mt.Geno = rep(row.names(AV.mt), 12)
+mt.Group[mt.Group ==  "S40FH"] = 1
+mt.Group[mt.Group ==  "A40FH"] = 2
+
+mt.Gene = as.character(t(matrix(rep(colnames(AV.mt), nrow(AV.mt)), ncol = nrow(AV.mt))))
+mt.cpm = as.numeric(AV.mt)
+
+AV.mt = data.frame(Group = paste(mt.Gene, mt.Group),
+                   cpm = mt.cpm,
+                   geno = mt.Group,
+                   gene = mt.Gene)
+
+box.at = setdiff(c(1:(12*3)), c(1:12)*3)
+
+boxplot(AV.mt$cpm~AV.mt$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 9",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.mt$Group))],
+       y=AV.mt$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen")[as.numeric(factor(AV.mt$geno))])
+
+axis(1, at= c(c(0:11)*3)+1.5, tick = F, line = -.5, labels = c(unique(AV.mt$gene)[order(unique(AV.mt$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen"),
+       bty = 'n',
+       y.intersp = 1)
+
+```
+
+</br>
+
+Fig9. mtDNA Genes cpm in A4V and Silent 40-Day Heads
+
+</br></br>
+
+```{r echo = F, fig.width = 15, fig.height = 8}
+
+Head = c(row.names(A4V.meta)[A4V.meta$Group == 'S3FH'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S9FH'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S40FH'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A3FH'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A9FH'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A40FH'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S3MH'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S9MH'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A3MH'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A9MH'])
+
+AV.mt = na.omit(A4V.cpm[mt, ])
+
+AV.mt = AV.mt[, Head]
+                             
+row.names(AV.mt) = GeneIDKey[row.names(AV.mt), "Symbol"]
+colnames(AV.mt) = A4V.meta[colnames(AV.mt), "Group"]
+AV.mt = t(AV.mt)
+
+mt.Group = rep(row.names(AV.mt), 12)
+mt.Group[mt.Group ==  "S3FH"] = 0
+mt.Group[mt.Group ==  "S9FH"] = 1
+mt.Group[mt.Group ==  "S40FH"] = 2
+mt.Group[mt.Group ==  "A3FH"] = 3
+mt.Group[mt.Group ==  "A9FH"] = 4
+mt.Group[mt.Group ==  "A40FH"] = 5
+mt.Group[mt.Group ==  "S3MH"] = 6
+mt.Group[mt.Group ==  "S9MH"] = 7
+mt.Group[mt.Group ==  "A3MH"] = 8
+mt.Group[mt.Group ==  "A9MH"] = 9
+
+mt.Geno = rep(row.names(AV.mt), 12)
+mt.Geno = paste0(substr(mt.Geno, 1,1), substr(mt.Geno, nchar(mt.Geno)-1, nchar(mt.Geno)))
+mt.Geno[mt.Geno == "SFH"] = 1
+mt.Geno[mt.Geno == "AFH"] = 2
+mt.Geno[mt.Geno == "SMH"] = 3
+mt.Geno[mt.Geno == "AMH"] = 4
+
+
+mt.Gene = as.character(t(matrix(rep(colnames(AV.mt), nrow(AV.mt)), ncol = nrow(AV.mt))))
+mt.cpm = as.numeric(AV.mt)
+
+AV.mt = data.frame(Group = paste(mt.Gene, mt.Group),
+                   cpm = mt.cpm,
+                   geno = mt.Geno,
+                   gene = mt.Gene)
+
+box.at = setdiff(c(1:(12*11)), c(1:12)*11)
+
+boxplot(AV.mt$cpm~AV.mt$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2))[c(1,1,1,2,2,2,3,3,4,4)],
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 10",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.mt$Group))],
+       y=AV.mt$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(AV.mt$geno))])
+
+axis(1, at= c(c(0:11)*11)+5, tick = F, line = -.5, labels = c(unique(AV.mt$gene)[order(unique(AV.mt$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F", "Silent M", "A4V M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+```
+
+</br>
+
+Fig9. mtDNA Genes cpm in A4V and Silent heads at all timepoints
+
+</br></br>
+
+
+
+
+
+
+
+
+
+## mtDNA Genes in Thorax Samples
+
+```{r echo = F}
+
+AV.mt = na.omit(A4V.cpm[mt, c(row.names(A4V.meta)[A4V.meta$Group == 'S3FT'],
+                              row.names(A4V.meta)[A4V.meta$Group == 'A3FT'],
+                              row.names(A4V.meta)[A4V.meta$Group == 'S3MT'],
+                              row.names(A4V.meta)[A4V.meta$Group == 'A3MT'])])
+                             
+row.names(AV.mt) = GeneIDKey[row.names(AV.mt), "Symbol"]
+colnames(AV.mt) = A4V.meta[colnames(AV.mt), "Group"]
+AV.mt = t(AV.mt)
+
+mt.Group = rep(row.names(AV.mt), 12)
+mt.Geno = rep(row.names(AV.mt), 12)
+mt.Group[mt.Group ==  "S3FT"] = 1
+mt.Group[mt.Group ==  "A3FT"] = 2
+mt.Group[mt.Group ==  "S3MT"] = 3
+mt.Group[mt.Group ==  "A3MT"] = 4
+
+mt.Gene = as.character(t(matrix(rep(colnames(AV.mt), nrow(AV.mt)), ncol = nrow(AV.mt))))
+mt.cpm = as.numeric(AV.mt)
+
+AV.mt = data.frame(Group = paste(mt.Gene, mt.Group),
+                   cpm = mt.cpm,
+                   geno = mt.Group,
+                   gene = mt.Gene)
+
+box.at = setdiff(c(1:(12*5)), c(1:12)*5)
+
+boxplot(AV.mt$cpm~AV.mt$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 10",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.mt$Group))],
+       y=AV.mt$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(AV.mt$geno))])
+
+axis(1, at= c(c(0:11)*5)+2.5, tick = F, line = -.5, labels = c(unique(AV.mt$gene)[order(unique(AV.mt$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F", "Silent M", "A4V M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+```
+
+</br>
+
+Fig10. mtDNA Genes cpm in A4V and Silent 3-Day Thorax
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS3FT"
+y = "AvS3MT"
+
+mean.data = na.omit(A4V.meancpm[, c('A3FT', 'S3FT',
+                                    'A3MT', 'S3MT')])
+
+main.title = "Fig 11"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.biplot(mt, x, y, mean.data, main.title)
+
+AVxWT.CH.RG[[1]]
+
+```
+
+</br>
+
+Fig11 mtDNA Genes FC in A4V and Silent 3-Day Thorax: log2(FC) for A4V/Silent in Female (xaxis) and Male (yaxis) 3-Day Thorax
+
+</br></br>
+
+```{r echo = F}
+
+AV.mt = na.omit(A4V.cpm[mt, c(row.names(A4V.meta)[A4V.meta$Group == 'S9FT'],
+                              row.names(A4V.meta)[A4V.meta$Group == 'A9FT'],
+                              row.names(A4V.meta)[A4V.meta$Group == 'S9MT'],
+                              row.names(A4V.meta)[A4V.meta$Group == 'A9MT'])])
+                             
+row.names(AV.mt) = GeneIDKey[row.names(AV.mt), "Symbol"]
+colnames(AV.mt) = A4V.meta[colnames(AV.mt), "Group"]
+AV.mt = t(AV.mt)
+
+mt.Group = rep(row.names(AV.mt), 12)
+mt.Geno = rep(row.names(AV.mt), 12)
+mt.Group[mt.Group ==  "S9FT"] = 1
+mt.Group[mt.Group ==  "A9FT"] = 2
+mt.Group[mt.Group ==  "S9MT"] = 3
+mt.Group[mt.Group ==  "A9MT"] = 4
+
+mt.Gene = as.character(t(matrix(rep(colnames(AV.mt), nrow(AV.mt)), ncol = nrow(AV.mt))))
+mt.cpm = as.numeric(AV.mt)
+
+AV.mt = data.frame(Group = paste(mt.Gene, mt.Group),
+                   cpm = mt.cpm,
+                   geno = mt.Group,
+                   gene = mt.Gene)
+
+box.at = setdiff(c(1:(12*5)), c(1:12)*5)
+
+boxplot(AV.mt$cpm~AV.mt$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 12",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.mt$Group))],
+       y=AV.mt$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(AV.mt$geno))])
+
+axis(1, at= c(c(0:11)*5)+2.5, tick = F, line = -.5, labels = c(unique(AV.mt$gene)[order(unique(AV.mt$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F", "Silent M", "A4V M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+```
+
+</br>
+
+Fig12. mtDNA Genes cpm in A4V and Silent 9-Day Thorax
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS9FT"
+y = "AvS9MT"
+
+mean.data = na.omit(A4V.meancpm[, c('A9FT', 'S9FT',
+                                    'A9MT', 'S9MT')])
+
+main.title = "Fig 13"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.biplot(mt, x, y, mean.data, main.title)
+
+AVxWT.CH.RG[[1]]
+
+```
+
+</br>
+
+Fig13 mtDNA Genes FC in A4V and Silent 9-Day Thorax: log2(FC) for A4V/Silent in Female (xaxis) and Male (yaxis) 9-Day Thorax
+
+</br></br>
+
+```{r echo = F}
+
+AV.mt = na.omit(A4V.cpm[mt, c(row.names(A4V.meta)[A4V.meta$Group == 'S40FT'],
+                          row.names(A4V.meta)[A4V.meta$Group == 'A40FT'])])
+                             
+row.names(AV.mt) = GeneIDKey[row.names(AV.mt), "Symbol"]
+colnames(AV.mt) = A4V.meta[colnames(AV.mt), "Group"]
+AV.mt = t(AV.mt)
+
+mt.Group = rep(row.names(AV.mt), 12)
+mt.Geno = rep(row.names(AV.mt), 12)
+mt.Group[mt.Group ==  "S40FT"] = 1
+mt.Group[mt.Group ==  "A40FT"] = 2
+
+mt.Gene = as.character(t(matrix(rep(colnames(AV.mt), nrow(AV.mt)), ncol = nrow(AV.mt))))
+mt.cpm = as.numeric(AV.mt)
+
+AV.mt = data.frame(Group = paste(mt.Gene, mt.Group),
+                   cpm = mt.cpm,
+                   geno = mt.Group,
+                   gene = mt.Gene)
+
+box.at = setdiff(c(1:(12*3)), c(1:12)*3)
+
+boxplot(AV.mt$cpm~AV.mt$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 14",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.mt$Group))],
+       y=AV.mt$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen")[as.numeric(factor(AV.mt$geno))])
+
+axis(1, at= c(c(0:11)*3)+1.5, tick = F, line = -.5, labels = c(unique(AV.mt$gene)[order(unique(AV.mt$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen"),
+       bty = 'n',
+       y.intersp = 1)
+
+```
+
+</br>
+
+Fig14. mtDNA Genes cpm in A4V and Silent 40-Day Thorax
+
+</br></br>
+
+```{r echo = F, fig.width = 15, fig.height = 8}
+
+Head = c(row.names(A4V.meta)[A4V.meta$Group == 'S3FT'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S9FT'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S40FT'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A3FT'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A9FT'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A40FT'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S3MT'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S9MT'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A3MT'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A9MT'])
+
+AV.mt = na.omit(A4V.cpm[mt, ])
+
+AV.mt = AV.mt[, Head]
+                             
+row.names(AV.mt) = GeneIDKey[row.names(AV.mt), "Symbol"]
+colnames(AV.mt) = A4V.meta[colnames(AV.mt), "Group"]
+AV.mt = t(AV.mt)
+
+mt.Group = rep(row.names(AV.mt), 12)
+mt.Group[mt.Group ==  "S3FT"] = 0
+mt.Group[mt.Group ==  "S9FT"] = 1
+mt.Group[mt.Group ==  "S40FT"] = 2
+mt.Group[mt.Group ==  "A3FT"] = 3
+mt.Group[mt.Group ==  "A9FT"] = 4
+mt.Group[mt.Group ==  "A40FT"] = 5
+mt.Group[mt.Group ==  "S3MT"] = 6
+mt.Group[mt.Group ==  "S9MT"] = 7
+mt.Group[mt.Group ==  "A3MT"] = 8
+mt.Group[mt.Group ==  "A9MT"] = 9
+
+mt.Geno = rep(row.names(AV.mt), 12)
+mt.Geno = paste0(substr(mt.Geno, 1,1), substr(mt.Geno, nchar(mt.Geno)-1, nchar(mt.Geno)))
+mt.Geno[mt.Geno == "SFT"] = 1
+mt.Geno[mt.Geno == "AFT"] = 2
+mt.Geno[mt.Geno == "SMT"] = 3
+mt.Geno[mt.Geno == "AMT"] = 4
+
+
+mt.Gene = as.character(t(matrix(rep(colnames(AV.mt), nrow(AV.mt)), ncol = nrow(AV.mt))))
+mt.cpm = as.numeric(AV.mt)
+
+AV.mt = data.frame(Group = paste(mt.Gene, mt.Group),
+                   cpm = mt.cpm,
+                   geno = mt.Geno,
+                   gene = mt.Gene)
+
+box.at = setdiff(c(1:(12*11)), c(1:12)*11)
+
+boxplot(AV.mt$cpm~AV.mt$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2))[c(1,1,1,2,2,2,3,3,4,4)],
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 15",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.mt$Group))],
+       y=AV.mt$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(AV.mt$geno))])
+
+axis(1, at= c(c(0:11)*11)+5, tick = F, line = -.5, labels = c(unique(AV.mt$gene)[order(unique(AV.mt$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F", "Silent M", "A4V M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+```
+
+</br>
+
+Fig15. mtDNA Genes cpm in A4V and Silent thorax at all timepoints
+
+</br></br>
+
+
+
+
+
+
+
+
+
+
+## mtDNA Genes in Abdomen Samples
+
+
+```{r echo = F}
+
+AV.mt = na.omit(A4V.cpm[mt, c(row.names(A4V.meta)[A4V.meta$Group == 'S3FA'],
+                              row.names(A4V.meta)[A4V.meta$Group == 'A3FA'],
+                              row.names(A4V.meta)[A4V.meta$Group == 'S3MA'],
+                              row.names(A4V.meta)[A4V.meta$Group == 'A3MA'])])
+                             
+row.names(AV.mt) = GeneIDKey[row.names(AV.mt), "Symbol"]
+colnames(AV.mt) = A4V.meta[colnames(AV.mt), "Group"]
+AV.mt = t(AV.mt)
+
+mt.Group = rep(row.names(AV.mt), 12)
+mt.Geno = rep(row.names(AV.mt), 12)
+mt.Group[mt.Group ==  "S3FA"] = 1
+mt.Group[mt.Group ==  "A3FA"] = 2
+mt.Group[mt.Group ==  "S3MA"] = 3
+mt.Group[mt.Group ==  "A3MA"] = 4
+
+mt.Gene = as.character(t(matrix(rep(colnames(AV.mt), nrow(AV.mt)), ncol = nrow(AV.mt))))
+mt.cpm = as.numeric(AV.mt)
+
+AV.mt = data.frame(Group = paste(mt.Gene, mt.Group),
+                   cpm = mt.cpm,
+                   geno = mt.Group,
+                   gene = mt.Gene)
+
+box.at = setdiff(c(1:(12*5)), c(1:12)*5)
+
+boxplot(AV.mt$cpm~AV.mt$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 16",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.mt$Group))],
+       y=AV.mt$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(AV.mt$geno))])
+
+axis(1, at= c(c(0:11)*5)+2.5, tick = F, line = -.5, labels = c(unique(AV.mt$gene)[order(unique(AV.mt$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F", "Silent M", "A4V M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+```
+
+</br>
+
+Fig16. mtDNA Genes cpm in A4V and Silent 3-Day Abdomen
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS3FA"
+y = "AvS3MA"
+
+mean.data = na.omit(A4V.meancpm[, c('A3FA', 'S3FA',
+                                    'A3MA', 'S3MA')])
+
+main.title = "Fig 17"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.biplot(mt, x, y, mean.data, main.title)
+
+AVxWT.CH.RG[[1]]
+
+```
+
+</br>
+
+Fig17 mtDNA Genes FC in A4V and Silent 3-Day Abdomen: log2(FC) for A4V/Silent in Female (xaxis) and Male (yaxis) 3-Day Abdomen
+
+</br></br>
+
+```{r echo = F}
+
+AV.mt = na.omit(A4V.cpm[mt, c(row.names(A4V.meta)[A4V.meta$Group == 'S9FA'],
+                              row.names(A4V.meta)[A4V.meta$Group == 'A9FA'],
+                              row.names(A4V.meta)[A4V.meta$Group == 'S9MA'],
+                              row.names(A4V.meta)[A4V.meta$Group == 'A9MA'])])
+                             
+row.names(AV.mt) = GeneIDKey[row.names(AV.mt), "Symbol"]
+colnames(AV.mt) = A4V.meta[colnames(AV.mt), "Group"]
+AV.mt = t(AV.mt)
+
+mt.Group = rep(row.names(AV.mt), 12)
+mt.Geno = rep(row.names(AV.mt), 12)
+mt.Group[mt.Group ==  "S9FA"] = 1
+mt.Group[mt.Group ==  "A9FA"] = 2
+mt.Group[mt.Group ==  "S9MA"] = 3
+mt.Group[mt.Group ==  "A9MA"] = 4
+
+mt.Gene = as.character(t(matrix(rep(colnames(AV.mt), nrow(AV.mt)), ncol = nrow(AV.mt))))
+mt.cpm = as.numeric(AV.mt)
+
+AV.mt = data.frame(Group = paste(mt.Gene, mt.Group),
+                   cpm = mt.cpm,
+                   geno = mt.Group,
+                   gene = mt.Gene)
+
+box.at = setdiff(c(1:(12*5)), c(1:12)*5)
+
+boxplot(AV.mt$cpm~AV.mt$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 18",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.mt$Group))],
+       y=AV.mt$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(AV.mt$geno))])
+
+axis(1, at= c(c(0:11)*5)+2.5, tick = F, line = -.5, labels = c(unique(AV.mt$gene)[order(unique(AV.mt$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F", "Silent M", "A4V M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+```
+
+</br>
+
+Fig18. mtDNA Genes cpm in A4V and Silent 9-Day Abdomen
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS9FA"
+y = "AvS9MA"
+
+mean.data = na.omit(A4V.meancpm[, c('A9FA', 'S9FA',
+                                    'A9MA', 'S9MA')])
+
+main.title = "Fig 19"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.biplot(mt, x, y, mean.data, main.title)
+
+AVxWT.CH.RG[[1]]
+
+```
+
+</br>
+
+Fig19. mtDNA Genes FC in A4V and Silent 9-Day Abdomen: log2(FC) for A4V/Silent in Female (xaxis) and Male (yaxis) 9-Day Abdomen
+
+</br></br>
+
+```{r echo = F}
+
+AV.mt = na.omit(A4V.cpm[mt, c(row.names(A4V.meta)[A4V.meta$Group == 'S40FA'],
+                          row.names(A4V.meta)[A4V.meta$Group == 'A40FA'])])
+                             
+row.names(AV.mt) = GeneIDKey[row.names(AV.mt), "Symbol"]
+colnames(AV.mt) = A4V.meta[colnames(AV.mt), "Group"]
+AV.mt = t(AV.mt)
+
+mt.Group = rep(row.names(AV.mt), 12)
+mt.Geno = rep(row.names(AV.mt), 12)
+mt.Group[mt.Group ==  "S40FA"] = 1
+mt.Group[mt.Group ==  "A40FA"] = 2
+
+mt.Gene = as.character(t(matrix(rep(colnames(AV.mt), nrow(AV.mt)), ncol = nrow(AV.mt))))
+mt.cpm = as.numeric(AV.mt)
+
+AV.mt = data.frame(Group = paste(mt.Gene, mt.Group),
+                   cpm = mt.cpm,
+                   geno = mt.Group,
+                   gene = mt.Gene)
+
+box.at = setdiff(c(1:(12*3)), c(1:12)*3)
+
+boxplot(AV.mt$cpm~AV.mt$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 20",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.mt$Group))],
+       y=AV.mt$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen")[as.numeric(factor(AV.mt$geno))])
+
+axis(1, at= c(c(0:11)*3)+1.5, tick = F, line = -.5, labels = c(unique(AV.mt$gene)[order(unique(AV.mt$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen"),
+       bty = 'n',
+       y.intersp = 1)
+
+```
+
+</br>
+
+Fig20. mtDNA Genes cpm in A4V and Silent 40-Day Abdomen
+
+</br></br>
+
+```{r echo = F, fig.width = 15, fig.height = 8}
+
+Head = c(row.names(A4V.meta)[A4V.meta$Group == 'S3FA'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S9FA'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S40FA'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A3FA'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A9FA'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A40FA'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S3MA'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S9MA'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A3MA'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A9MA'])
+
+AV.mt = na.omit(A4V.cpm[mt, ])
+
+AV.mt = AV.mt[, Head]
+                             
+row.names(AV.mt) = GeneIDKey[row.names(AV.mt), "Symbol"]
+colnames(AV.mt) = A4V.meta[colnames(AV.mt), "Group"]
+AV.mt = t(AV.mt)
+
+mt.Group = rep(row.names(AV.mt), 12)
+mt.Group[mt.Group ==  "S3FA"] = 0
+mt.Group[mt.Group ==  "S9FA"] = 1
+mt.Group[mt.Group ==  "S40FA"] = 2
+mt.Group[mt.Group ==  "A3FA"] = 3
+mt.Group[mt.Group ==  "A9FA"] = 4
+mt.Group[mt.Group ==  "A40FA"] = 5
+mt.Group[mt.Group ==  "S3MA"] = 6
+mt.Group[mt.Group ==  "S9MA"] = 7
+mt.Group[mt.Group ==  "A3MA"] = 8
+mt.Group[mt.Group ==  "A9MA"] = 9
+
+mt.Geno = rep(row.names(AV.mt), 12)
+mt.Geno = paste0(substr(mt.Geno, 1,1), substr(mt.Geno, nchar(mt.Geno)-1, nchar(mt.Geno)))
+mt.Geno[mt.Geno == "SFA"] = 1
+mt.Geno[mt.Geno == "AFA"] = 2
+mt.Geno[mt.Geno == "SMA"] = 3
+mt.Geno[mt.Geno == "AMA"] = 4
+
+
+mt.Gene = as.character(t(matrix(rep(colnames(AV.mt), nrow(AV.mt)), ncol = nrow(AV.mt))))
+mt.cpm = as.numeric(AV.mt)
+
+AV.mt = data.frame(Group = paste(mt.Gene, mt.Group),
+                   cpm = mt.cpm,
+                   geno = mt.Geno,
+                   gene = mt.Gene)
+
+box.at = setdiff(c(1:(12*11)), c(1:12)*11)
+
+boxplot(AV.mt$cpm~AV.mt$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2))[c(1,1,1,2,2,2,3,3,4,4)],
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 21",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.mt$Group))],
+       y=AV.mt$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(AV.mt$geno))])
+
+axis(1, at= c(c(0:11)*11)+5, tick = F, line = -.5, labels = c(unique(AV.mt$gene)[order(unique(AV.mt$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F", "Silent M", "A4V M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+```
+</br>
+
+Fig21. mtDNA Genes cpm in A4V and Silent Abdomen at all timepoints
+
+</br></br>
+
+
+
+## nucDNA Genes in Head Samples
+
+```{r echo = F}
+
+x = "AvS3FH"
+y = "AvS3MH"
+
+OXPHOS.FC.cutoff = abs(apply(na.omit(A4V.FC[oxphos,c(x,y)]), 1, max))
+OXPHOS.FC.cutoff = OXPHOS.FC.cutoff[OXPHOS.FC.cutoff > log2(1.5)]
+
+ofc = names(OXPHOS.FC.cutoff)
+
+AV.nuc = na.omit(A4V.cpm[ofc, c(row.names(A4V.meta)[A4V.meta$Group == 'S3FH'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A3FH'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'S3MH'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A3MH'])])
+
+cpm.cutoff = apply(AV.nuc, 1, max)
+ofc = names(cpm.cutoff[cpm.cutoff > 10 & cpm.cutoff < 1000])
+
+AV.nuc = AV.nuc[ofc,]
+
+                             
+row.names(AV.nuc) = GeneIDKey[row.names(AV.nuc), "Symbol"]
+colnames(AV.nuc) = A4V.meta[colnames(AV.nuc), "Group"]
+AV.nuc = t(AV.nuc)
+
+nuc.Group = rep(row.names(AV.nuc), length(ofc))
+nuc.Geno = rep(row.names(AV.nuc), length(ofc))
+nuc.Group[nuc.Group ==  "S3FH"] = 1
+nuc.Group[nuc.Group ==  "A3FH"] = 2
+nuc.Group[nuc.Group ==  "S3MH"] = 3
+nuc.Group[nuc.Group ==  "A3MH"] = 4
+
+nuc.Gene = as.character(t(matrix(rep(colnames(AV.nuc), nrow(AV.nuc)), ncol = nrow(AV.nuc))))
+
+nuc.cpm = as.numeric(AV.nuc)
+
+AV.nuc = data.frame(Group = paste(nuc.Gene, nuc.Group),
+                   cpm = nuc.cpm,
+                   geno = nuc.Group,
+                   gene = nuc.Gene)
+
+box.at = setdiff(c(1:(length(ofc)*5)), c(1:length(ofc))*5)
+
+
+boxplot(AV.nuc$cpm~AV.nuc$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 22a",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.nuc$Group))],
+       y=AV.nuc$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(AV.nuc$geno))])
+
+axis(1, at= c(c(0:(length(ofc)-1))*5)+2.5, tick = F, line = -.5, labels = c(unique(AV.nuc$gene)[order(unique(AV.nuc$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F", "Silent M", "A4V M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+
+```
+
+</br>
+
+Fig22a. nucDNA Genes cpm in A4V and Silent 3-Day Heads: cpm data for nucDNA genes in A4V and Silent. FC of at least 50% in male or female and a mean cpm of at least 10 in 1 of the conditions and less than 1000 in all of the conditions.
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS3FH"
+y = "AvS3MH"
+
+OXPHOS.FC.cutoff = abs(apply(na.omit(A4V.FC[oxphos,c(x,y)]), 1, max))
+OXPHOS.FC.cutoff = OXPHOS.FC.cutoff[OXPHOS.FC.cutoff > log2(1.5)]
+
+ofc = names(OXPHOS.FC.cutoff)
+
+AV.nuc = na.omit(A4V.cpm[ofc, c(row.names(A4V.meta)[A4V.meta$Group == 'S3FH'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A3FH'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'S3MH'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A3MH'])])
+
+cpm.cutoff = apply(AV.nuc, 1, max)
+ofc = names(cpm.cutoff[cpm.cutoff > 1000])
+
+AV.nuc = AV.nuc[ofc,]
+
+                             
+row.names(AV.nuc) = GeneIDKey[row.names(AV.nuc), "Symbol"]
+colnames(AV.nuc) = A4V.meta[colnames(AV.nuc), "Group"]
+AV.nuc = t(AV.nuc)
+
+nuc.Group = rep(row.names(AV.nuc), length(ofc))
+nuc.Geno = rep(row.names(AV.nuc), length(ofc))
+nuc.Group[nuc.Group ==  "S3FH"] = 1
+nuc.Group[nuc.Group ==  "A3FH"] = 2
+nuc.Group[nuc.Group ==  "S3MH"] = 3
+nuc.Group[nuc.Group ==  "A3MH"] = 4
+
+nuc.Gene = as.character(t(matrix(rep(colnames(AV.nuc), nrow(AV.nuc)), ncol = nrow(AV.nuc))))
+
+nuc.cpm = as.numeric(AV.nuc)
+
+AV.nuc = data.frame(Group = paste(nuc.Gene, nuc.Group),
+                   cpm = nuc.cpm,
+                   geno = nuc.Group,
+                   gene = nuc.Gene)
+
+box.at = setdiff(c(1:(length(ofc)*5)), c(1:length(ofc))*5)
+
+
+boxplot(AV.nuc$cpm~AV.nuc$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 22b",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.nuc$Group))],
+       y=AV.nuc$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(AV.nuc$geno))])
+
+axis(1, at= c(c(0:(length(ofc)-1))*5)+2.5, tick = F, line = -.5, labels = c(unique(AV.nuc$gene)[order(unique(AV.nuc$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F", "Silent M", "A4V M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+
+```
+
+</br>
+
+Fig22b. nucDNA Genes cpm in A4V and Silent 3-Day Heads: cpm data for nucDNA genes in A4V and Silent. FC of at least 50% in male or female and a mean cpm of at least 1000 in 1 of the conditions.
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS3FH"
+y = "AvS3MH"
+
+mean.data = na.omit(A4V.meancpm[, c('A3FH', 'S3FH',
+                                    'A3MH', 'S3MH')])
+
+main.title = "Fig 23"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.biplot(oxphos, x, y, mean.data, main.title)
+
+AVxWT.CH.RG[[1]]
+
+```
+
+</br>
+
+Fig23 nucDNA Genes FC in A4V and Silent 3-Day Heads: log2(FC) for A4V/Silent in Female (xaxis) and Male (yaxis)
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS9FH"
+y = "AvS9MH"
+
+OXPHOS.FC.cutoff = abs(apply(na.omit(A4V.FC[oxphos,c(x,y)]), 1, max))
+OXPHOS.FC.cutoff = OXPHOS.FC.cutoff[OXPHOS.FC.cutoff > log2(1.5)]
+
+ofc = names(OXPHOS.FC.cutoff)
+
+AV.nuc = na.omit(A4V.cpm[ofc, c(row.names(A4V.meta)[A4V.meta$Group == 'S9FH'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A9FH'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'S9MH'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A9MH'])])
+
+cpm.cutoff = apply(AV.nuc, 1, max)
+ofc = names(cpm.cutoff[cpm.cutoff > 10 & cpm.cutoff < 1000])
+
+AV.nuc = AV.nuc[ofc,]
+
+                             
+row.names(AV.nuc) = GeneIDKey[row.names(AV.nuc), "Symbol"]
+colnames(AV.nuc) = A4V.meta[colnames(AV.nuc), "Group"]
+AV.nuc = t(AV.nuc)
+
+nuc.Group = rep(row.names(AV.nuc), length(ofc))
+nuc.Geno = rep(row.names(AV.nuc), length(ofc))
+nuc.Group[nuc.Group ==  "S9FH"] = 1
+nuc.Group[nuc.Group ==  "A9FH"] = 2
+nuc.Group[nuc.Group ==  "S9MH"] = 3
+nuc.Group[nuc.Group ==  "A9MH"] = 4
+
+nuc.Gene = as.character(t(matrix(rep(colnames(AV.nuc), nrow(AV.nuc)), ncol = nrow(AV.nuc))))
+
+nuc.cpm = as.numeric(AV.nuc)
+
+AV.nuc = data.frame(Group = paste(nuc.Gene, nuc.Group),
+                   cpm = nuc.cpm,
+                   geno = nuc.Group,
+                   gene = nuc.Gene)
+
+box.at = setdiff(c(1:(length(ofc)*5)), c(1:length(ofc))*5)
+
+
+boxplot(AV.nuc$cpm~AV.nuc$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 24a",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.nuc$Group))],
+       y=AV.nuc$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(AV.nuc$geno))])
+
+axis(1, at= c(c(0:(length(ofc)-1))*5)+2.5, tick = F, line = -.5, labels = c(unique(AV.nuc$gene)[order(unique(AV.nuc$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F", "Silent M", "A4V M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+
+```
+
+</br>
+
+Fig24a. nucDNA Genes cpm in A4V and Silent 9-Day Heads: cpm data for nucDNA genes in A4V and Silent. FC of at least 50% in male or female and a mean cpm of at least 10 in 1 of the conditions and less than 1000 in all of the conditions.
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS9FH"
+y = "AvS9MH"
+
+OXPHOS.FC.cutoff = abs(apply(na.omit(A4V.FC[oxphos,c(x,y)]), 1, max))
+OXPHOS.FC.cutoff = OXPHOS.FC.cutoff[OXPHOS.FC.cutoff > log2(1.5)]
+
+ofc = names(OXPHOS.FC.cutoff)
+
+AV.nuc = na.omit(A4V.cpm[ofc, c(row.names(A4V.meta)[A4V.meta$Group == 'S9FH'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A9FH'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'S9MH'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A9MH'])])
+
+cpm.cutoff = apply(AV.nuc, 1, max)
+ofc = names(cpm.cutoff[cpm.cutoff > 1000])
+
+AV.nuc = AV.nuc[ofc,]
+
+                             
+row.names(AV.nuc) = GeneIDKey[row.names(AV.nuc), "Symbol"]
+colnames(AV.nuc) = A4V.meta[colnames(AV.nuc), "Group"]
+AV.nuc = t(AV.nuc)
+
+nuc.Group = rep(row.names(AV.nuc), length(ofc))
+nuc.Geno = rep(row.names(AV.nuc), length(ofc))
+nuc.Group[nuc.Group ==  "S9FH"] = 1
+nuc.Group[nuc.Group ==  "A9FH"] = 2
+nuc.Group[nuc.Group ==  "S9MH"] = 3
+nuc.Group[nuc.Group ==  "A9MH"] = 4
+
+nuc.Gene = as.character(t(matrix(rep(colnames(AV.nuc), nrow(AV.nuc)), ncol = nrow(AV.nuc))))
+
+nuc.cpm = as.numeric(AV.nuc)
+
+AV.nuc = data.frame(Group = paste(nuc.Gene, nuc.Group),
+                   cpm = nuc.cpm,
+                   geno = nuc.Group,
+                   gene = nuc.Gene)
+
+box.at = setdiff(c(1:(length(ofc)*5)), c(1:length(ofc))*5)
+
+
+boxplot(AV.nuc$cpm~AV.nuc$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 24b",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.nuc$Group))],
+       y=AV.nuc$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(AV.nuc$geno))])
+
+axis(1, at= c(c(0:(length(ofc)-1))*5)+2.5, tick = F, line = -.5, labels = c(unique(AV.nuc$gene)[order(unique(AV.nuc$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F", "Silent M", "A4V M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+
+```
+
+</br>
+
+Fig24b. nucDNA Genes cpm in A4V and Silent 9-Day Heads: cpm data for nucDNA genes in A4V and Silent. FC of at least 50% in male or female and a mean cpm of at least 1000 in 1 of the conditions.
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS9FH"
+y = "AvS9MH"
+
+mean.data = na.omit(A4V.meancpm[, c('A9FH', 'S9FH',
+                                    'A9MH', 'S9MH')])
+
+main.title = "Fig 25"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.biplot(oxphos, x, y, mean.data, main.title)
+
+AVxWT.CH.RG[[1]]
+
+```
+
+</br>
+
+Fig25 nucDNA Genes FC in A4V and Silent 9-Day Heads: log2(FC) for A4V/Silent in Female (xaxis) and Male (yaxis)
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS40FH"
+
+OXPHOS.FC.cutoff = abs(na.omit(setNames(A4V.FC[oxphos,c(x)], oxphos)))
+OXPHOS.FC.cutoff = OXPHOS.FC.cutoff[OXPHOS.FC.cutoff > log2(1.5)]
+
+ofc = names(OXPHOS.FC.cutoff)
+
+AV.nuc = na.omit(A4V.cpm[ofc, c(row.names(A4V.meta)[A4V.meta$Group == 'S40FH'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A40FH'])])
+
+cpm.cutoff = apply(AV.nuc, 1, max)
+ofc = names(cpm.cutoff[cpm.cutoff > 10 & cpm.cutoff < 1000])
+
+AV.nuc = AV.nuc[ofc,]
+
+                             
+row.names(AV.nuc) = GeneIDKey[row.names(AV.nuc), "Symbol"]
+colnames(AV.nuc) = A4V.meta[colnames(AV.nuc), "Group"]
+AV.nuc = t(AV.nuc)
+
+nuc.Group = rep(row.names(AV.nuc), length(ofc))
+nuc.Geno = rep(row.names(AV.nuc), length(ofc))
+nuc.Group[nuc.Group ==  "S40FH"] = 1
+nuc.Group[nuc.Group ==  "A40FH"] = 2
+
+nuc.Gene = as.character(t(matrix(rep(colnames(AV.nuc), nrow(AV.nuc)), ncol = nrow(AV.nuc))))
+
+nuc.cpm = as.numeric(AV.nuc)
+
+AV.nuc = data.frame(Group = paste(nuc.Gene, nuc.Group),
+                   cpm = nuc.cpm,
+                   geno = nuc.Group,
+                   gene = nuc.Gene)
+
+box.at = setdiff(c(1:(length(ofc)*3)), c(1:length(ofc))*3)
+
+
+boxplot(AV.nuc$cpm~AV.nuc$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 26a",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.nuc$Group))],
+       y=AV.nuc$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen")[as.numeric(factor(AV.nuc$geno))])
+
+axis(1, at= c(c(0:(length(ofc)-1))*3)+1.5, tick = F, line = -.5, labels = c(unique(AV.nuc$gene)[order(unique(AV.nuc$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen"),
+       bty = 'n',
+       y.intersp = 1)
+
+
+```
+
+</br>
+
+Fig26a. nucDNA Genes cpm in A4V and Silent 40-Day Heads: cpm data for nucDNA genes in A4V and Silent. FC of at least 50% in male or female and a mean cpm of at least 10 in 1 of the conditions and less than 1000 in all of the conditions.
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS40FH"
+
+OXPHOS.FC.cutoff = abs(na.omit(setNames(A4V.FC[oxphos,c(x)], oxphos)))
+OXPHOS.FC.cutoff = OXPHOS.FC.cutoff[OXPHOS.FC.cutoff > log2(1.5)]
+
+ofc = names(OXPHOS.FC.cutoff)
+
+AV.nuc = na.omit(A4V.cpm[ofc, c(row.names(A4V.meta)[A4V.meta$Group == 'S40FH'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A40FH'])])
+
+cpm.cutoff = apply(AV.nuc, 1, max)
+ofc = names(cpm.cutoff[cpm.cutoff > 1000])
+
+AV.nuc = AV.nuc[ofc,]
+
+                             
+row.names(AV.nuc) = GeneIDKey[row.names(AV.nuc), "Symbol"]
+colnames(AV.nuc) = A4V.meta[colnames(AV.nuc), "Group"]
+AV.nuc = t(AV.nuc)
+
+nuc.Group = rep(row.names(AV.nuc), length(ofc))
+nuc.Geno = rep(row.names(AV.nuc), length(ofc))
+nuc.Group[nuc.Group ==  "S3FH"] = 1
+nuc.Group[nuc.Group ==  "A3FH"] = 2
+
+nuc.Gene = as.character(t(matrix(rep(colnames(AV.nuc), nrow(AV.nuc)), ncol = nrow(AV.nuc))))
+
+nuc.cpm = as.numeric(AV.nuc)
+
+AV.nuc = data.frame(Group = paste(nuc.Gene, nuc.Group),
+                   cpm = nuc.cpm,
+                   geno = nuc.Group,
+                   gene = nuc.Gene)
+
+box.at = setdiff(c(1:(length(ofc)*3)), c(1:length(ofc))*3)
+
+
+boxplot(AV.nuc$cpm~AV.nuc$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 26b",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.nuc$Group))],
+       y=AV.nuc$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen")[as.numeric(factor(AV.nuc$geno))])
+
+axis(1, at= c(c(0:(length(ofc)-1))*3)+1.5, tick = F, line = -.5, labels = c(unique(AV.nuc$gene)[order(unique(AV.nuc$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen"),
+       bty = 'n',
+       y.intersp = 1)
+
+
+```
+
+</br>
+
+Fig26b. nucDNA Genes cpm in A4V and Silent 40-Day Heads: cpm data for nucDNA genes in A4V and Silent. FC of at least 50% in male or female and a mean cpm of at least 1000 in 1 of the conditions.
+
+</br></br>
+
+```{r echo = F, fig.width = 15, fig.height = 8}
+
+Head = c(row.names(A4V.meta)[A4V.meta$Group == 'S3FH'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S9FH'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S40FH'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A3FH'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A9FH'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A40FH'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S3MH'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S9MH'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A3MH'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A9MH'])
+
+x = c("AvS3FH", "AvS9FH", "AvS40FH",
+      "AvS3MH", "AvS9MH")
+
+OXPHOS.FC.cutoff = apply(abs(na.omit(A4V.FC[oxphos,c(x)])), 1, min)
+OXPHOS.FC.cutoff = OXPHOS.FC.cutoff[OXPHOS.FC.cutoff > log2(1.5)]
+
+ofc = names(OXPHOS.FC.cutoff)
+
+AV.nuc = A4V.cpm[ofc, Head]
+
+cpm.cutoff = apply(AV.nuc, 1, max)
+ofc = names(cpm.cutoff[cpm.cutoff > 10])
+
+AV.nuc = na.omit(AV.nuc[ofc, ])
+
+                             
+row.names(AV.nuc) = GeneIDKey[row.names(AV.nuc), "Symbol"]
+colnames(AV.nuc) = A4V.meta[colnames(AV.nuc), "Group"]
+AV.nuc = t(AV.nuc)
+
+nuc.Group = rep(row.names(AV.nuc), length(ofc))
+nuc.Group[nuc.Group ==  "S3FH"] = 0
+nuc.Group[nuc.Group ==  "S9FH"] = 1
+nuc.Group[nuc.Group ==  "S40FH"] = 2
+nuc.Group[nuc.Group ==  "A3FH"] = 3
+nuc.Group[nuc.Group ==  "A9FH"] = 4
+nuc.Group[nuc.Group ==  "A40FH"] = 5
+nuc.Group[nuc.Group ==  "S3MH"] = 6
+nuc.Group[nuc.Group ==  "S9MH"] = 7
+nuc.Group[nuc.Group ==  "A3MH"] = 8
+nuc.Group[nuc.Group ==  "A9MH"] = 9
+
+nuc.Geno = rep(row.names(AV.nuc), length(ofc))
+nuc.Geno = paste0(substr(nuc.Geno, 1,1), substr(nuc.Geno, nchar(nuc.Geno)-1, nchar(nuc.Geno)))
+nuc.Geno[nuc.Geno == "SFH"] = 1
+nuc.Geno[nuc.Geno == "AFH"] = 2
+nuc.Geno[nuc.Geno == "SMH"] = 3
+nuc.Geno[nuc.Geno == "AMH"] = 4
+
+
+nuc.Gene = as.character(t(matrix(rep(colnames(AV.nuc), nrow(AV.nuc)), ncol = nrow(AV.nuc))))
+nuc.cpm = as.numeric(AV.nuc)
+
+AV.nuc = data.frame(Group = paste(nuc.Gene, nuc.Group),
+                   cpm = nuc.cpm,
+                   geno = nuc.Geno,
+                   gene = nuc.Gene)
+
+box.at = setdiff(c(1:(11*length(ofc))), c(1:length(ofc))*11)
+
+boxplot(AV.nuc$cpm~AV.nuc$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2))[c(1,1,1,2,2,2,3,3,4,4)],
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 27",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.nuc$Group))],
+       y=AV.nuc$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(AV.nuc$geno))])
+
+axis(1, at= c((c(0:(length(ofc)-1))*11)+5), tick = F, line = -.5, labels = c(unique(AV.nuc$gene)[order(unique(AV.nuc$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F", "Silent M", "A4V M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+```
+</br>
+
+Fig27a. nucDNA Genes cpm in A4V and Silent Head at all timepoints: cpm data for nucDNA genes in A4V and Silent. FC of at least 50% in male or female for all comparisons and a mean cpm of at least 10 in 1 of the conditions.
+
+</br></br>
+
+
+
+
+
+## nucDNA Genes in Thorax Samples
+
+```{r echo = F}
+
+x = "AvS3FT"
+y = "AvS3MT"
+
+OXPHOS.FC.cutoff = abs(apply(na.omit(A4V.FC[oxphos,c(x,y)]), 1, max))
+OXPHOS.FC.cutoff = OXPHOS.FC.cutoff[OXPHOS.FC.cutoff > log2(1.5)]
+
+ofc = names(OXPHOS.FC.cutoff)
+
+AV.nuc = na.omit(A4V.cpm[ofc, c(row.names(A4V.meta)[A4V.meta$Group == 'S3FT'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A3FT'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'S3MT'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A3MT'])])
+
+cpm.cutoff = apply(AV.nuc, 1, max)
+ofc = names(cpm.cutoff[cpm.cutoff > 10 & cpm.cutoff < 1000])
+
+AV.nuc = AV.nuc[ofc,]
+
+                             
+row.names(AV.nuc) = GeneIDKey[row.names(AV.nuc), "Symbol"]
+colnames(AV.nuc) = A4V.meta[colnames(AV.nuc), "Group"]
+AV.nuc = t(AV.nuc)
+
+nuc.Group = rep(row.names(AV.nuc), length(ofc))
+nuc.Geno = rep(row.names(AV.nuc), length(ofc))
+nuc.Group[nuc.Group ==  "S3FT"] = 1
+nuc.Group[nuc.Group ==  "A3FT"] = 2
+nuc.Group[nuc.Group ==  "S3MT"] = 3
+nuc.Group[nuc.Group ==  "A3MT"] = 4
+
+nuc.Gene = as.character(t(matrix(rep(colnames(AV.nuc), nrow(AV.nuc)), ncol = nrow(AV.nuc))))
+
+nuc.cpm = as.numeric(AV.nuc)
+
+AV.nuc = data.frame(Group = paste(nuc.Gene, nuc.Group),
+                   cpm = nuc.cpm,
+                   geno = nuc.Group,
+                   gene = nuc.Gene)
+
+box.at = setdiff(c(1:(length(ofc)*5)), c(1:length(ofc))*5)
+
+
+boxplot(AV.nuc$cpm~AV.nuc$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 28a",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.nuc$Group))],
+       y=AV.nuc$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(AV.nuc$geno))])
+
+axis(1, at= c(c(0:(length(ofc)-1))*5)+2.5, tick = F, line = -.5, labels = c(unique(AV.nuc$gene)[order(unique(AV.nuc$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F", "Silent M", "A4V M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+
+```
+
+</br>
+
+Fig28a. nucDNA Genes cpm in A4V and Silent 3-Day Thorax: cpm data for nucDNA genes in A4V and Silent. FC of at least 50% in male or female and a mean cpm of at least 10 in 1 of the conditions and less than 1000 in all of the conditions.
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS3FT"
+y = "AvS3MT"
+
+OXPHOS.FC.cutoff = abs(apply(na.omit(A4V.FC[oxphos,c(x,y)]), 1, max))
+OXPHOS.FC.cutoff = OXPHOS.FC.cutoff[OXPHOS.FC.cutoff > log2(1.5)]
+
+ofc = names(OXPHOS.FC.cutoff)
+
+AV.nuc = na.omit(A4V.cpm[ofc, c(row.names(A4V.meta)[A4V.meta$Group == 'S3FT'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A3FT'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'S3MT'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A3MT'])])
+
+cpm.cutoff = apply(AV.nuc, 1, max)
+ofc = names(cpm.cutoff[cpm.cutoff > 1000])
+
+AV.nuc = AV.nuc[ofc,]
+
+                             
+row.names(AV.nuc) = GeneIDKey[row.names(AV.nuc), "Symbol"]
+colnames(AV.nuc) = A4V.meta[colnames(AV.nuc), "Group"]
+AV.nuc = t(AV.nuc)
+
+nuc.Group = rep(row.names(AV.nuc), length(ofc))
+nuc.Geno = rep(row.names(AV.nuc), length(ofc))
+nuc.Group[nuc.Group ==  "S3FT"] = 1
+nuc.Group[nuc.Group ==  "A3FT"] = 2
+nuc.Group[nuc.Group ==  "S3MT"] = 3
+nuc.Group[nuc.Group ==  "A3MT"] = 4
+
+nuc.Gene = as.character(t(matrix(rep(colnames(AV.nuc), nrow(AV.nuc)), ncol = nrow(AV.nuc))))
+
+nuc.cpm = as.numeric(AV.nuc)
+
+AV.nuc = data.frame(Group = paste(nuc.Gene, nuc.Group),
+                   cpm = nuc.cpm,
+                   geno = nuc.Group,
+                   gene = nuc.Gene)
+
+box.at = setdiff(c(1:(length(ofc)*5)), c(1:length(ofc))*5)
+
+
+boxplot(AV.nuc$cpm~AV.nuc$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 28b",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.nuc$Group))],
+       y=AV.nuc$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(AV.nuc$geno))])
+
+axis(1, at= c(c(0:(length(ofc)-1))*5)+2.5, tick = F, line = -.5, labels = c(unique(AV.nuc$gene)[order(unique(AV.nuc$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F", "Silent M", "A4V M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+
+```
+
+</br>
+
+Fig28b. nucDNA Genes cpm in A4V and Silent 3-Day Thorax: cpm data for nucDNA genes in A4V and Silent. FC of at least 50% in male or female and a mean cpm of at least 1000 in 1 of the conditions.
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS3FT"
+y = "AvS3MT"
+
+mean.data = na.omit(A4V.meancpm[, c('A3FT', 'S3FT',
+                                    'A3MT', 'S3MT')])
+
+main.title = "Fig 29"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.biplot(oxphos, x, y, mean.data, main.title)
+
+AVxWT.CH.RG[[1]]
+
+```
+
+</br>
+
+Fig29 nucDNA Genes FC in A4V and Silent 3-Day Thorax: log2(FC) for A4V/Silent in Female (xaxis) and Male (yaxis)
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS9FT"
+y = "AvS9MT"
+
+OXPHOS.FC.cutoff = abs(apply(na.omit(A4V.FC[oxphos,c(x,y)]), 1, max))
+OXPHOS.FC.cutoff = OXPHOS.FC.cutoff[OXPHOS.FC.cutoff > log2(1.5)]
+
+ofc = names(OXPHOS.FC.cutoff)
+
+AV.nuc = na.omit(A4V.cpm[ofc, c(row.names(A4V.meta)[A4V.meta$Group == 'S9FT'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A9FT'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'S9MT'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A9MT'])])
+
+cpm.cutoff = apply(AV.nuc, 1, max)
+ofc = names(cpm.cutoff[cpm.cutoff > 10 & cpm.cutoff < 1000])
+
+AV.nuc = AV.nuc[ofc,]
+
+                             
+row.names(AV.nuc) = GeneIDKey[row.names(AV.nuc), "Symbol"]
+colnames(AV.nuc) = A4V.meta[colnames(AV.nuc), "Group"]
+AV.nuc = t(AV.nuc)
+
+nuc.Group = rep(row.names(AV.nuc), length(ofc))
+nuc.Geno = rep(row.names(AV.nuc), length(ofc))
+nuc.Group[nuc.Group ==  "S9FT"] = 1
+nuc.Group[nuc.Group ==  "A9FT"] = 2
+nuc.Group[nuc.Group ==  "S9MT"] = 3
+nuc.Group[nuc.Group ==  "A9MT"] = 4
+
+nuc.Gene = as.character(t(matrix(rep(colnames(AV.nuc), nrow(AV.nuc)), ncol = nrow(AV.nuc))))
+
+nuc.cpm = as.numeric(AV.nuc)
+
+AV.nuc = data.frame(Group = paste(nuc.Gene, nuc.Group),
+                   cpm = nuc.cpm,
+                   geno = nuc.Group,
+                   gene = nuc.Gene)
+
+box.at = setdiff(c(1:(length(ofc)*5)), c(1:length(ofc))*5)
+
+
+boxplot(AV.nuc$cpm~AV.nuc$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 30a",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.nuc$Group))],
+       y=AV.nuc$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(AV.nuc$geno))])
+
+axis(1, at= c(c(0:(length(ofc)-1))*5)+2.5, tick = F, line = -.5, labels = c(unique(AV.nuc$gene)[order(unique(AV.nuc$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F", "Silent M", "A4V M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+
+```
+
+</br>
+
+Fig30a. nucDNA Genes cpm in A4V and Silent 9-Day Thorax: cpm data for nucDNA genes in A4V and Silent. FC of at least 50% in male or female and a mean cpm of at least 10 in 1 of the conditions and less than 1000 in all of the conditions.
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS9FT"
+y = "AvS9MT"
+
+OXPHOS.FC.cutoff = abs(apply(na.omit(A4V.FC[oxphos,c(x,y)]), 1, max))
+OXPHOS.FC.cutoff = OXPHOS.FC.cutoff[OXPHOS.FC.cutoff > log2(1.5)]
+
+ofc = names(OXPHOS.FC.cutoff)
+
+AV.nuc = na.omit(A4V.cpm[ofc, c(row.names(A4V.meta)[A4V.meta$Group == 'S9FT'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A9FT'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'S9MT'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A9MT'])])
+
+cpm.cutoff = apply(AV.nuc, 1, max)
+ofc = names(cpm.cutoff[cpm.cutoff > 1000])
+
+AV.nuc = AV.nuc[ofc,]
+
+                             
+row.names(AV.nuc) = GeneIDKey[row.names(AV.nuc), "Symbol"]
+colnames(AV.nuc) = A4V.meta[colnames(AV.nuc), "Group"]
+AV.nuc = t(AV.nuc)
+
+nuc.Group = rep(row.names(AV.nuc), length(ofc))
+nuc.Geno = rep(row.names(AV.nuc), length(ofc))
+nuc.Group[nuc.Group ==  "S9FT"] = 1
+nuc.Group[nuc.Group ==  "A9FT"] = 2
+nuc.Group[nuc.Group ==  "S9MT"] = 3
+nuc.Group[nuc.Group ==  "A9MT"] = 4
+
+nuc.Gene = as.character(t(matrix(rep(colnames(AV.nuc), nrow(AV.nuc)), ncol = nrow(AV.nuc))))
+
+nuc.cpm = as.numeric(AV.nuc)
+
+AV.nuc = data.frame(Group = paste(nuc.Gene, nuc.Group),
+                   cpm = nuc.cpm,
+                   geno = nuc.Group,
+                   gene = nuc.Gene)
+
+box.at = setdiff(c(1:(length(ofc)*5)), c(1:length(ofc))*5)
+
+
+boxplot(AV.nuc$cpm~AV.nuc$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 30b",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.nuc$Group))],
+       y=AV.nuc$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(AV.nuc$geno))])
+
+axis(1, at= c(c(0:(length(ofc)-1))*5)+2.5, tick = F, line = -.5, labels = c(unique(AV.nuc$gene)[order(unique(AV.nuc$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F", "Silent M", "A4V M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+
+```
+
+</br>
+
+Fig30b. nucDNA Genes cpm in A4V and Silent 9-Day Thorax: cpm data for nucDNA genes in A4V and Silent. FC of at least 50% in male or female and a mean cpm of at least 1000 in 1 of the conditions.
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS9FT"
+y = "AvS9MT"
+
+mean.data = na.omit(A4V.meancpm[, c('A9FT', 'S9FT',
+                                    'A9MT', 'S9MT')])
+
+main.title = "Fig 31"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.biplot(oxphos, x, y, mean.data, main.title)
+
+AVxWT.CH.RG[[1]]
+
+```
+
+</br>
+
+Fig31 nucDNA Genes FC in A4V and Silent 9-Day Thorax: log2(FC) for A4V/Silent in Female (xaxis) and Male (yaxis)
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS40FT"
+
+OXPHOS.FC.cutoff = abs(na.omit(setNames(A4V.FC[oxphos,c(x)], oxphos)))
+OXPHOS.FC.cutoff = OXPHOS.FC.cutoff[OXPHOS.FC.cutoff > log2(1.5)]
+
+ofc = names(OXPHOS.FC.cutoff)
+
+AV.nuc = na.omit(A4V.cpm[ofc, c(row.names(A4V.meta)[A4V.meta$Group == 'S40FT'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A40FT'])])
+
+cpm.cutoff = apply(AV.nuc, 1, max)
+ofc = names(cpm.cutoff[cpm.cutoff > 10 & cpm.cutoff < 1000])
+
+AV.nuc = AV.nuc[ofc,]
+
+                             
+row.names(AV.nuc) = GeneIDKey[row.names(AV.nuc), "Symbol"]
+colnames(AV.nuc) = A4V.meta[colnames(AV.nuc), "Group"]
+AV.nuc = t(AV.nuc)
+
+nuc.Group = rep(row.names(AV.nuc), length(ofc))
+nuc.Geno = rep(row.names(AV.nuc), length(ofc))
+nuc.Group[nuc.Group ==  "S40FT"] = 1
+nuc.Group[nuc.Group ==  "A40FT"] = 2
+
+nuc.Gene = as.character(t(matrix(rep(colnames(AV.nuc), nrow(AV.nuc)), ncol = nrow(AV.nuc))))
+
+nuc.cpm = as.numeric(AV.nuc)
+
+AV.nuc = data.frame(Group = paste(nuc.Gene, nuc.Group),
+                   cpm = nuc.cpm,
+                   geno = nuc.Group,
+                   gene = nuc.Gene)
+
+box.at = setdiff(c(1:(length(ofc)*3)), c(1:length(ofc))*3)
+
+
+boxplot(AV.nuc$cpm~AV.nuc$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 32a",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.nuc$Group))],
+       y=AV.nuc$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen")[as.numeric(factor(AV.nuc$geno))])
+
+axis(1, at= c(c(0:(length(ofc)-1))*3)+1.5, tick = F, line = -.5, labels = c(unique(AV.nuc$gene)[order(unique(AV.nuc$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen"),
+       bty = 'n',
+       y.intersp = 1)
+
+
+```
+
+</br>
+
+Fig32a. nucDNA Genes cpm in A4V and Silent 40-Day Thorax: cpm data for nucDNA genes in A4V and Silent. FC of at least 50% in male or female and a mean cpm of at least 10 in 1 of the conditions and less than 1000 in all of the conditions.
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS40FT"
+
+OXPHOS.FC.cutoff = abs(na.omit(setNames(A4V.FC[oxphos,c(x)], oxphos)))
+OXPHOS.FC.cutoff = OXPHOS.FC.cutoff[OXPHOS.FC.cutoff > log2(1.5)]
+
+ofc = names(OXPHOS.FC.cutoff)
+
+AV.nuc = na.omit(A4V.cpm[ofc, c(row.names(A4V.meta)[A4V.meta$Group == 'S40FT'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A40FT'])])
+
+cpm.cutoff = apply(AV.nuc, 1, max)
+ofc = names(cpm.cutoff[cpm.cutoff > 1000])
+
+AV.nuc = AV.nuc[ofc,]
+
+                             
+row.names(AV.nuc) = GeneIDKey[row.names(AV.nuc), "Symbol"]
+colnames(AV.nuc) = A4V.meta[colnames(AV.nuc), "Group"]
+AV.nuc = t(AV.nuc)
+
+nuc.Group = rep(row.names(AV.nuc), length(ofc))
+nuc.Geno = rep(row.names(AV.nuc), length(ofc))
+nuc.Group[nuc.Group ==  "S40FT"] = 1
+nuc.Group[nuc.Group ==  "A40FT"] = 2
+
+nuc.Gene = as.character(t(matrix(rep(colnames(AV.nuc), nrow(AV.nuc)), ncol = nrow(AV.nuc))))
+
+nuc.cpm = as.numeric(AV.nuc)
+
+AV.nuc = data.frame(Group = paste(nuc.Gene, nuc.Group),
+                   cpm = nuc.cpm,
+                   geno = nuc.Group,
+                   gene = nuc.Gene)
+
+box.at = setdiff(c(1:(length(ofc)*3)), c(1:length(ofc))*3)
+
+
+boxplot(AV.nuc$cpm~AV.nuc$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 32b",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.nuc$Group))],
+       y=AV.nuc$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen")[as.numeric(factor(AV.nuc$geno))])
+
+axis(1, at= c(c(0:(length(ofc)-1))*3)+1.5, tick = F, line = -.5, labels = c(unique(AV.nuc$gene)[order(unique(AV.nuc$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen"),
+       bty = 'n',
+       y.intersp = 1)
+
+
+```
+
+</br>
+
+Fig32b. nucDNA Genes cpm in A4V and Silent 40-Day Thorax: cpm data for nucDNA genes in A4V and Silent. FC of at least 50% in male or female and a mean cpm of at least 1000 in 1 of the conditions.
+
+</br></br>
+
+```{r echo = F, fig.width = 15, fig.height = 8}
+
+Head = c(row.names(A4V.meta)[A4V.meta$Group == 'S3FT'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S9FT'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S40FT'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A3FT'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A9FT'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A40FT'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S3MT'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S9MT'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A3MT'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A9MT'])
+
+x = c("AvS3FT", "AvS9FT", "AvS40FT",
+      "AvS3MT", "AvS9MT")
+
+OXPHOS.FC.cutoff = apply(abs(na.omit(A4V.FC[oxphos,c(x)])), 1, max)
+OXPHOS.FC.cutoff = OXPHOS.FC.cutoff[OXPHOS.FC.cutoff > log2(1.5)]
+
+ofc = names(OXPHOS.FC.cutoff)
+
+AV.nuc = A4V.cpm[ofc, Head]
+
+cpm.cutoff = apply(AV.nuc, 1, max)
+ofc = names(cpm.cutoff[cpm.cutoff > 10 & cpm.cutoff < 1000])
+
+AV.nuc = na.omit(AV.nuc[ofc, ])
+
+                             
+row.names(AV.nuc) = GeneIDKey[row.names(AV.nuc), "Symbol"]
+colnames(AV.nuc) = A4V.meta[colnames(AV.nuc), "Group"]
+AV.nuc = t(AV.nuc)
+
+nuc.Group = rep(row.names(AV.nuc), length(ofc))
+nuc.Group[nuc.Group ==  "S3FT"] = 0
+nuc.Group[nuc.Group ==  "S9FT"] = 1
+nuc.Group[nuc.Group ==  "S40FT"] = 2
+nuc.Group[nuc.Group ==  "A3FT"] = 3
+nuc.Group[nuc.Group ==  "A9FT"] = 4
+nuc.Group[nuc.Group ==  "A40FT"] = 5
+nuc.Group[nuc.Group ==  "S3MT"] = 6
+nuc.Group[nuc.Group ==  "S9MT"] = 7
+nuc.Group[nuc.Group ==  "A3MT"] = 8
+nuc.Group[nuc.Group ==  "A9MT"] = 9
+
+nuc.Geno = rep(row.names(AV.nuc), length(ofc))
+nuc.Geno = paste0(substr(nuc.Geno, 1,1), substr(nuc.Geno, nchar(nuc.Geno)-1, nchar(nuc.Geno)))
+nuc.Geno[nuc.Geno == "SFT"] = 1
+nuc.Geno[nuc.Geno == "AFT"] = 2
+nuc.Geno[nuc.Geno == "SMT"] = 3
+nuc.Geno[nuc.Geno == "AMT"] = 4
+
+
+nuc.Gene = as.character(t(matrix(rep(colnames(AV.nuc), nrow(AV.nuc)), ncol = nrow(AV.nuc))))
+nuc.cpm = as.numeric(AV.nuc)
+
+AV.nuc = data.frame(Group = paste(nuc.Gene, nuc.Group),
+                   cpm = nuc.cpm,
+                   geno = nuc.Geno,
+                   gene = nuc.Gene)
+
+box.at = setdiff(c(1:(11*length(ofc))), c(1:length(ofc))*11)
+
+boxplot(AV.nuc$cpm~AV.nuc$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2))[c(1,1,1,2,2,2,3,3,4,4)],
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 33a",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.nuc$Group))],
+       y=AV.nuc$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(AV.nuc$geno))])
+
+axis(1, at= c((c(0:(length(ofc)-1))*11)+5), tick = F, line = -.5, labels = c(unique(AV.nuc$gene)[order(unique(AV.nuc$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F", "Silent M", "A4V M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+```
+
+</br>
+
+Fig33a. nucDNA Genes cpm in A4V and Silent Thorax at all timepoints: cpm data for nucDNA genes in A4V and Silent. FC of at least 50% in male or female for at least 1 comparison and a mean cpm of at least 10 in 1 of the conditionss and less than 1000 in all of the conditions.
+
+</br></br>
+
+```{r echo = F, fig.width = 15, fig.height = 8}
+
+Head = c(row.names(A4V.meta)[A4V.meta$Group == 'S3FT'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S9FT'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S40FT'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A3FT'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A9FT'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A40FT'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S3MT'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S9MT'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A3MT'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A9MT'])
+
+x = c("AvS3FT", "AvS9FT", "AvS40FT",
+      "AvS3MT", "AvS9MT")
+
+OXPHOS.FC.cutoff = apply(abs(na.omit(A4V.FC[oxphos,c(x)])), 1, max)
+OXPHOS.FC.cutoff = OXPHOS.FC.cutoff[OXPHOS.FC.cutoff > log2(1.5)]
+
+ofc = names(OXPHOS.FC.cutoff)
+
+AV.nuc = A4V.cpm[ofc, Head]
+
+cpm.cutoff = apply(AV.nuc, 1, max)
+ofc = names(cpm.cutoff[cpm.cutoff > 1000])
+
+AV.nuc = na.omit(AV.nuc[ofc, ])
+
+                             
+row.names(AV.nuc) = GeneIDKey[row.names(AV.nuc), "Symbol"]
+colnames(AV.nuc) = A4V.meta[colnames(AV.nuc), "Group"]
+AV.nuc = t(AV.nuc)
+
+nuc.Group = rep(row.names(AV.nuc), length(ofc))
+nuc.Group[nuc.Group ==  "S3FT"] = 0
+nuc.Group[nuc.Group ==  "S9FT"] = 1
+nuc.Group[nuc.Group ==  "S40FT"] = 2
+nuc.Group[nuc.Group ==  "A3FT"] = 3
+nuc.Group[nuc.Group ==  "A9FT"] = 4
+nuc.Group[nuc.Group ==  "A40FT"] = 5
+nuc.Group[nuc.Group ==  "S3MT"] = 6
+nuc.Group[nuc.Group ==  "S9MT"] = 7
+nuc.Group[nuc.Group ==  "A3MT"] = 8
+nuc.Group[nuc.Group ==  "A9MT"] = 9
+
+nuc.Geno = rep(row.names(AV.nuc), length(ofc))
+nuc.Geno = paste0(substr(nuc.Geno, 1,1), substr(nuc.Geno, nchar(nuc.Geno)-1, nchar(nuc.Geno)))
+nuc.Geno[nuc.Geno == "SFT"] = 1
+nuc.Geno[nuc.Geno == "AFT"] = 2
+nuc.Geno[nuc.Geno == "SMT"] = 3
+nuc.Geno[nuc.Geno == "AMT"] = 4
+
+
+nuc.Gene = as.character(t(matrix(rep(colnames(AV.nuc), nrow(AV.nuc)), ncol = nrow(AV.nuc))))
+nuc.cpm = as.numeric(AV.nuc)
+
+AV.nuc = data.frame(Group = paste(nuc.Gene, nuc.Group),
+                   cpm = nuc.cpm,
+                   geno = nuc.Geno,
+                   gene = nuc.Gene)
+
+box.at = setdiff(c(1:(11*length(ofc))), c(1:length(ofc))*11)
+
+boxplot(AV.nuc$cpm~AV.nuc$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2))[c(1,1,1,2,2,2,3,3,4,4)],
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 33b",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.nuc$Group))],
+       y=AV.nuc$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(AV.nuc$geno))])
+
+axis(1, at= c((c(0:(length(ofc)-1))*11)+5), tick = F, line = -.5, labels = c(unique(AV.nuc$gene)[order(unique(AV.nuc$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F", "Silent M", "A4V M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+```
+
+</br>
+
+Fig33b. nucDNA Genes cpm in A4V and Silent Thorax at all timepoints: cpm data for nucDNA genes in A4V and Silent. FC of at least 50% in male or female for at least 1 comparison and a mean cpm of at least 1000 in 1 of the conditions.
+
+</br></br>
+
+
+
+
+## nucDNA Genes in Abdomen Samples
+
+```{r echo = F}
+
+x = "AvS3FA"
+y = "AvS3MA"
+
+OXPHOS.FC.cutoff = abs(apply(na.omit(A4V.FC[oxphos,c(x,y)]), 1, max))
+OXPHOS.FC.cutoff = OXPHOS.FC.cutoff[OXPHOS.FC.cutoff > log2(1.5)]
+
+ofc = names(OXPHOS.FC.cutoff)
+
+AV.nuc = na.omit(A4V.cpm[ofc, c(row.names(A4V.meta)[A4V.meta$Group == 'S3FA'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A3FA'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'S3MA'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A3MA'])])
+
+cpm.cutoff = apply(AV.nuc, 1, max)
+ofc = names(cpm.cutoff[cpm.cutoff > 10 & cpm.cutoff < 1000])
+
+AV.nuc = AV.nuc[ofc,]
+
+                             
+row.names(AV.nuc) = GeneIDKey[row.names(AV.nuc), "Symbol"]
+colnames(AV.nuc) = A4V.meta[colnames(AV.nuc), "Group"]
+AV.nuc = t(AV.nuc)
+
+nuc.Group = rep(row.names(AV.nuc), length(ofc))
+nuc.Geno = rep(row.names(AV.nuc), length(ofc))
+nuc.Group[nuc.Group ==  "S3FA"] = 1
+nuc.Group[nuc.Group ==  "A3FA"] = 2
+nuc.Group[nuc.Group ==  "S3MA"] = 3
+nuc.Group[nuc.Group ==  "A3MA"] = 4
+
+nuc.Gene = as.character(t(matrix(rep(colnames(AV.nuc), nrow(AV.nuc)), ncol = nrow(AV.nuc))))
+
+nuc.cpm = as.numeric(AV.nuc)
+
+AV.nuc = data.frame(Group = paste(nuc.Gene, nuc.Group),
+                   cpm = nuc.cpm,
+                   geno = nuc.Group,
+                   gene = nuc.Gene)
+
+box.at = setdiff(c(1:(length(ofc)*5)), c(1:length(ofc))*5)
+
+
+boxplot(AV.nuc$cpm~AV.nuc$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 34a",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.nuc$Group))],
+       y=AV.nuc$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(AV.nuc$geno))])
+
+axis(1, at= c(c(0:(length(ofc)-1))*5)+2.5, tick = F, line = -.5, labels = c(unique(AV.nuc$gene)[order(unique(AV.nuc$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F", "Silent M", "A4V M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+
+```
+
+</br>
+
+Fig34a. nucDNA Genes cpm in A4V and Silent 3-Day Abdomen: cpm data for nucDNA genes in A4V and Silent. FC of at least 50% in male or female and a mean cpm of at least 10 in 1 of the conditions and less than 1000 in all of the conditions.
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS3FA"
+y = "AvS3MA"
+
+OXPHOS.FC.cutoff = abs(apply(na.omit(A4V.FC[oxphos,c(x,y)]), 1, max))
+OXPHOS.FC.cutoff = OXPHOS.FC.cutoff[OXPHOS.FC.cutoff > log2(1.5)]
+
+ofc = names(OXPHOS.FC.cutoff)
+
+AV.nuc = na.omit(A4V.cpm[ofc, c(row.names(A4V.meta)[A4V.meta$Group == 'S3FA'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A3FA'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'S3MA'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A3MA'])])
+
+cpm.cutoff = apply(AV.nuc, 1, max)
+ofc = names(cpm.cutoff[cpm.cutoff > 1000])
+
+AV.nuc = AV.nuc[ofc,]
+
+                             
+row.names(AV.nuc) = GeneIDKey[row.names(AV.nuc), "Symbol"]
+colnames(AV.nuc) = A4V.meta[colnames(AV.nuc), "Group"]
+AV.nuc = t(AV.nuc)
+
+nuc.Group = rep(row.names(AV.nuc), length(ofc))
+nuc.Geno = rep(row.names(AV.nuc), length(ofc))
+nuc.Group[nuc.Group ==  "S3FA"] = 1
+nuc.Group[nuc.Group ==  "A3FA"] = 2
+nuc.Group[nuc.Group ==  "S3MA"] = 3
+nuc.Group[nuc.Group ==  "A3MT"] = 4
+
+nuc.Gene = as.character(t(matrix(rep(colnames(AV.nuc), nrow(AV.nuc)), ncol = nrow(AV.nuc))))
+
+nuc.cpm = as.numeric(AV.nuc)
+
+AV.nuc = data.frame(Group = paste(nuc.Gene, nuc.Group),
+                   cpm = nuc.cpm,
+                   geno = nuc.Group,
+                   gene = nuc.Gene)
+
+box.at = setdiff(c(1:(length(ofc)*5)), c(1:length(ofc))*5)
+
+
+boxplot(AV.nuc$cpm~AV.nuc$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 34b",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.nuc$Group))],
+       y=AV.nuc$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(AV.nuc$geno))])
+
+axis(1, at= c(c(0:(length(ofc)-1))*5)+2.5, tick = F, line = -.5, labels = c(unique(AV.nuc$gene)[order(unique(AV.nuc$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F", "Silent M", "A4V M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+
+```
+
+</br>
+
+Fig34b. nucDNA Genes cpm in A4V and Silent 3-Day Abdomen: cpm data for nucDNA genes in A4V and Silent. FC of at least 50% in male or female and a mean cpm of at least 1000 in 1 of the conditions.
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS3FA"
+y = "AvS3MA"
+
+mean.data = na.omit(A4V.meancpm[, c('A3FA', 'S3FA',
+                                    'A3MA', 'S3MA')])
+
+main.title = "Fig 35"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.biplot(oxphos, x, y, mean.data, main.title)
+
+AVxWT.CH.RG[[1]]
+
+```
+
+</br>
+
+Fig35 nucDNA Genes FC in A4V and Silent 3-Day Abdomen: log2(FC) for A4V/Silent in Female (xaxis) and Male (yaxis)
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS9FA"
+y = "AvS9MA"
+
+OXPHOS.FC.cutoff = abs(apply(na.omit(A4V.FC[oxphos,c(x,y)]), 1, max))
+OXPHOS.FC.cutoff = OXPHOS.FC.cutoff[OXPHOS.FC.cutoff > log2(1.5)]
+
+ofc = names(OXPHOS.FC.cutoff)
+
+AV.nuc = na.omit(A4V.cpm[ofc, c(row.names(A4V.meta)[A4V.meta$Group == 'S9FA'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A9FA'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'S9MA'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A9MA'])])
+
+cpm.cutoff = apply(AV.nuc, 1, max)
+ofc = names(cpm.cutoff[cpm.cutoff > 10 & cpm.cutoff < 1000])
+
+AV.nuc = AV.nuc[ofc,]
+
+                             
+row.names(AV.nuc) = GeneIDKey[row.names(AV.nuc), "Symbol"]
+colnames(AV.nuc) = A4V.meta[colnames(AV.nuc), "Group"]
+AV.nuc = t(AV.nuc)
+
+nuc.Group = rep(row.names(AV.nuc), length(ofc))
+nuc.Geno = rep(row.names(AV.nuc), length(ofc))
+nuc.Group[nuc.Group ==  "S9FA"] = 1
+nuc.Group[nuc.Group ==  "A9FA"] = 2
+nuc.Group[nuc.Group ==  "S9MA"] = 3
+nuc.Group[nuc.Group ==  "A9MA"] = 4
+
+nuc.Gene = as.character(t(matrix(rep(colnames(AV.nuc), nrow(AV.nuc)), ncol = nrow(AV.nuc))))
+
+nuc.cpm = as.numeric(AV.nuc)
+
+AV.nuc = data.frame(Group = paste(nuc.Gene, nuc.Group),
+                   cpm = nuc.cpm,
+                   geno = nuc.Group,
+                   gene = nuc.Gene)
+
+box.at = setdiff(c(1:(length(ofc)*5)), c(1:length(ofc))*5)
+
+
+boxplot(AV.nuc$cpm~AV.nuc$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 36a",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.nuc$Group))],
+       y=AV.nuc$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(AV.nuc$geno))])
+
+axis(1, at= c(c(0:(length(ofc)-1))*5)+2.5, tick = F, line = -.5, labels = c(unique(AV.nuc$gene)[order(unique(AV.nuc$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F", "Silent M", "A4V M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+
+```
+
+</br>
+
+Fig36a. nucDNA Genes cpm in A4V and Silent 9-Day Abdomen: cpm data for nucDNA genes in A4V and Silent. FC of at least 50% in male or female and a mean cpm of at least 10 in 1 of the conditions and less than 1000 in all of the conditions.
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS9FA"
+y = "AvS9MA"
+
+OXPHOS.FC.cutoff = abs(apply(na.omit(A4V.FC[oxphos,c(x,y)]), 1, max))
+OXPHOS.FC.cutoff = OXPHOS.FC.cutoff[OXPHOS.FC.cutoff > log2(1.5)]
+
+ofc = names(OXPHOS.FC.cutoff)
+
+AV.nuc = na.omit(A4V.cpm[ofc, c(row.names(A4V.meta)[A4V.meta$Group == 'S9FA'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A9FA'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'S9MA'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A9MA'])])
+
+cpm.cutoff = apply(AV.nuc, 1, max)
+ofc = names(cpm.cutoff[cpm.cutoff > 1000])
+
+AV.nuc = AV.nuc[ofc,]
+
+                             
+row.names(AV.nuc) = GeneIDKey[row.names(AV.nuc), "Symbol"]
+colnames(AV.nuc) = A4V.meta[colnames(AV.nuc), "Group"]
+AV.nuc = t(AV.nuc)
+
+nuc.Group = rep(row.names(AV.nuc), length(ofc))
+nuc.Geno = rep(row.names(AV.nuc), length(ofc))
+nuc.Group[nuc.Group ==  "S9FA"] = 1
+nuc.Group[nuc.Group ==  "A9FA"] = 2
+nuc.Group[nuc.Group ==  "S9MA"] = 3
+nuc.Group[nuc.Group ==  "A9MA"] = 4
+
+nuc.Gene = as.character(t(matrix(rep(colnames(AV.nuc), nrow(AV.nuc)), ncol = nrow(AV.nuc))))
+
+nuc.cpm = as.numeric(AV.nuc)
+
+AV.nuc = data.frame(Group = paste(nuc.Gene, nuc.Group),
+                   cpm = nuc.cpm,
+                   geno = nuc.Group,
+                   gene = nuc.Gene)
+
+box.at = setdiff(c(1:(length(ofc)*5)), c(1:length(ofc))*5)
+
+
+boxplot(AV.nuc$cpm~AV.nuc$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 36b",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.nuc$Group))],
+       y=AV.nuc$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(AV.nuc$geno))])
+
+axis(1, at= c(c(0:(length(ofc)-1))*5)+2.5, tick = F, line = -.5, labels = c(unique(AV.nuc$gene)[order(unique(AV.nuc$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F", "Silent M", "A4V M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+
+```
+
+</br>
+
+Fig36b. nucDNA Genes cpm in A4V and Silent 9-Day Abdomen: cpm data for nucDNA genes in A4V and Silent. FC of at least 50% in male or female and a mean cpm of at least 1000 in 1 of the conditions.
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS9FA"
+y = "AvS9MA"
+
+mean.data = na.omit(A4V.meancpm[, c('A9FA', 'S9FA',
+                                    'A9MA', 'S9MA')])
+
+main.title = "Fig 37"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.biplot(oxphos, x, y, mean.data, main.title)
+
+AVxWT.CH.RG[[1]]
+
+```
+
+</br>
+
+Fig37 nucDNA Genes FC in A4V and Silent 9-Day Abdomen: log2(FC) for A4V/Silent in Female (xaxis) and Male (yaxis)
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS40FA"
+
+OXPHOS.FC.cutoff = abs(na.omit(setNames(A4V.FC[oxphos,c(x)], oxphos)))
+OXPHOS.FC.cutoff = OXPHOS.FC.cutoff[OXPHOS.FC.cutoff > log2(1.5)]
+
+ofc = names(OXPHOS.FC.cutoff)
+
+AV.nuc = na.omit(A4V.cpm[ofc, c(row.names(A4V.meta)[A4V.meta$Group == 'S40FA'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A40FA'])])
+
+cpm.cutoff = apply(AV.nuc, 1, max)
+ofc = names(cpm.cutoff[cpm.cutoff > 10 & cpm.cutoff < 1000])
+
+AV.nuc = AV.nuc[ofc,]
+
+                             
+row.names(AV.nuc) = GeneIDKey[row.names(AV.nuc), "Symbol"]
+colnames(AV.nuc) = A4V.meta[colnames(AV.nuc), "Group"]
+AV.nuc = t(AV.nuc)
+
+nuc.Group = rep(row.names(AV.nuc), length(ofc))
+nuc.Geno = rep(row.names(AV.nuc), length(ofc))
+nuc.Group[nuc.Group ==  "S40FA"] = 1
+nuc.Group[nuc.Group ==  "A40FA"] = 2
+
+nuc.Gene = as.character(t(matrix(rep(colnames(AV.nuc), nrow(AV.nuc)), ncol = nrow(AV.nuc))))
+
+nuc.cpm = as.numeric(AV.nuc)
+
+AV.nuc = data.frame(Group = paste(nuc.Gene, nuc.Group),
+                   cpm = nuc.cpm,
+                   geno = nuc.Group,
+                   gene = nuc.Gene)
+
+box.at = setdiff(c(1:(length(ofc)*3)), c(1:length(ofc))*3)
+
+
+boxplot(AV.nuc$cpm~AV.nuc$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 38a",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.nuc$Group))],
+       y=AV.nuc$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen")[as.numeric(factor(AV.nuc$geno))])
+
+axis(1, at= c(c(0:(length(ofc)-1))*3)+1.5, tick = F, line = -.5, labels = c(unique(AV.nuc$gene)[order(unique(AV.nuc$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen"),
+       bty = 'n',
+       y.intersp = 1)
+
+
+```
+
+</br>
+
+Fig38a. nucDNA Genes cpm in A4V and Silent 40-Day Abdomen: cpm data for nucDNA genes in A4V and Silent. FC of at least 50% in male or female and a mean cpm of at least 10 in 1 of the conditions and less than 1000 in all of the conditions.
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS40FA"
+
+OXPHOS.FC.cutoff = abs(na.omit(setNames(A4V.FC[oxphos,c(x)], oxphos)))
+OXPHOS.FC.cutoff = OXPHOS.FC.cutoff[OXPHOS.FC.cutoff > log2(1.5)]
+
+ofc = names(OXPHOS.FC.cutoff)
+
+AV.nuc = na.omit(A4V.cpm[ofc, c(row.names(A4V.meta)[A4V.meta$Group == 'S40FA'],
+                                row.names(A4V.meta)[A4V.meta$Group == 'A40FA'])])
+
+cpm.cutoff = apply(AV.nuc, 1, max)
+ofc = names(cpm.cutoff[cpm.cutoff > 1000])
+
+AV.nuc = AV.nuc[ofc,]
+
+                             
+row.names(AV.nuc) = GeneIDKey[row.names(AV.nuc), "Symbol"]
+colnames(AV.nuc) = A4V.meta[colnames(AV.nuc), "Group"]
+AV.nuc = t(AV.nuc)
+
+nuc.Group = rep(row.names(AV.nuc), length(ofc))
+nuc.Geno = rep(row.names(AV.nuc), length(ofc))
+nuc.Group[nuc.Group ==  "S40FA"] = 1
+nuc.Group[nuc.Group ==  "A40FA"] = 2
+
+nuc.Gene = as.character(t(matrix(rep(colnames(AV.nuc), nrow(AV.nuc)), ncol = nrow(AV.nuc))))
+
+nuc.cpm = as.numeric(AV.nuc)
+
+AV.nuc = data.frame(Group = paste(nuc.Gene, nuc.Group),
+                   cpm = nuc.cpm,
+                   geno = nuc.Group,
+                   gene = nuc.Gene)
+
+box.at = setdiff(c(1:(length(ofc)*3)), c(1:length(ofc))*3)
+
+
+boxplot(AV.nuc$cpm~AV.nuc$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 38b",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.nuc$Group))],
+       y=AV.nuc$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen")[as.numeric(factor(AV.nuc$geno))])
+
+axis(1, at= c(c(0:(length(ofc)-1))*3)+1.5, tick = F, line = -.5, labels = c(unique(AV.nuc$gene)[order(unique(AV.nuc$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen"),
+       bty = 'n',
+       y.intersp = 1)
+
+
+```
+
+</br>
+
+Fig38b. nucDNA Genes cpm in A4V and Silent 40-Day Abdomen: cpm data for nucDNA genes in A4V and Silent. FC of at least 50% in male or female and a mean cpm of at least 1000 in 1 of the conditions.
+
+</br></br>
+
+```{r echo = F, fig.width = 15, fig.height = 8}
+
+Head = c(row.names(A4V.meta)[A4V.meta$Group == 'S3FA'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S9FA'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S40FA'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A3FA'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A9FA'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A40FA'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S3MA'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S9MA'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A3MA'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A9MA'])
+
+x = c("AvS3FA", "AvS9FA", "AvS40FA",
+      "AvS3MA", "AvS9MA")
+
+OXPHOS.FC.cutoff = apply(abs(na.omit(A4V.FC[oxphos,c(x)])), 1, max)
+OXPHOS.FC.cutoff = OXPHOS.FC.cutoff[OXPHOS.FC.cutoff > log2(1.5)]
+
+ofc = names(OXPHOS.FC.cutoff)
+
+AV.nuc = A4V.cpm[ofc, Head]
+
+cpm.cutoff = apply(AV.nuc, 1, max)
+ofc = names(cpm.cutoff[cpm.cutoff > 10 & cpm.cutoff < 1000])
+
+AV.nuc = na.omit(AV.nuc[ofc, ])
+
+                             
+row.names(AV.nuc) = GeneIDKey[row.names(AV.nuc), "Symbol"]
+colnames(AV.nuc) = A4V.meta[colnames(AV.nuc), "Group"]
+AV.nuc = t(AV.nuc)
+
+nuc.Group = rep(row.names(AV.nuc), length(ofc))
+nuc.Group[nuc.Group ==  "S3FA"] = 0
+nuc.Group[nuc.Group ==  "S9FA"] = 1
+nuc.Group[nuc.Group ==  "S40FA"] = 2
+nuc.Group[nuc.Group ==  "A3FA"] = 3
+nuc.Group[nuc.Group ==  "A9FA"] = 4
+nuc.Group[nuc.Group ==  "A40FA"] = 5
+nuc.Group[nuc.Group ==  "S3MA"] = 6
+nuc.Group[nuc.Group ==  "S9MA"] = 7
+nuc.Group[nuc.Group ==  "A3MA"] = 8
+nuc.Group[nuc.Group ==  "A9MA"] = 9
+
+nuc.Geno = rep(row.names(AV.nuc), length(ofc))
+nuc.Geno = paste0(substr(nuc.Geno, 1,1), substr(nuc.Geno, nchar(nuc.Geno)-1, nchar(nuc.Geno)))
+nuc.Geno[nuc.Geno == "SFA"] = 1
+nuc.Geno[nuc.Geno == "AFA"] = 2
+nuc.Geno[nuc.Geno == "SMA"] = 3
+nuc.Geno[nuc.Geno == "AMA"] = 4
+
+
+nuc.Gene = as.character(t(matrix(rep(colnames(AV.nuc), nrow(AV.nuc)), ncol = nrow(AV.nuc))))
+nuc.cpm = as.numeric(AV.nuc)
+
+AV.nuc = data.frame(Group = paste(nuc.Gene, nuc.Group),
+                   cpm = nuc.cpm,
+                   geno = nuc.Geno,
+                   gene = nuc.Gene)
+
+box.at = setdiff(c(1:(11*length(ofc))), c(1:length(ofc))*11)
+
+boxplot(AV.nuc$cpm~AV.nuc$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2))[c(1,1,1,2,2,2,3,3,4,4)],
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 39a",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.nuc$Group))],
+       y=AV.nuc$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(AV.nuc$geno))])
+
+axis(1, at= c((c(0:(length(ofc)-1))*11)+5), tick = F, line = -.5, labels = c(unique(AV.nuc$gene)[order(unique(AV.nuc$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F", "Silent M", "A4V M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+```
+
+</br>
+
+Fig39a. nucDNA Genes cpm in A4V and Silent Abdomen at all timepoints: cpm data for nucDNA genes in A4V and Silent. FC of at least 50% in male or female for at least 1 comparison and a mean cpm of at least 10 in 1 of the conditionss and less than 1000 in all of the conditions.
+
+</br></br>
+
+```{r echo = F, fig.width = 15, fig.height = 8}
+
+Head = c(row.names(A4V.meta)[A4V.meta$Group == 'S3FA'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S9FA'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S40FA'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A3FA'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A9FA'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A40FA'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S3MA'],
+         row.names(A4V.meta)[A4V.meta$Group == 'S9MA'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A3MA'],
+         row.names(A4V.meta)[A4V.meta$Group == 'A9MA'])
+
+x = c("AvS3FA", "AvS9FA", "AvS40FA",
+      "AvS3MA", "AvS9MA")
+
+OXPHOS.FC.cutoff = apply(abs(na.omit(A4V.FC[oxphos,c(x)])), 1, max)
+OXPHOS.FC.cutoff = OXPHOS.FC.cutoff[OXPHOS.FC.cutoff > log2(1.5)]
+
+ofc = names(OXPHOS.FC.cutoff)
+
+AV.nuc = A4V.cpm[ofc, Head]
+
+cpm.cutoff = apply(AV.nuc, 1, max)
+ofc = names(cpm.cutoff[cpm.cutoff > 1000])
+
+AV.nuc = na.omit(AV.nuc[ofc, ])
+
+                             
+row.names(AV.nuc) = GeneIDKey[row.names(AV.nuc), "Symbol"]
+colnames(AV.nuc) = A4V.meta[colnames(AV.nuc), "Group"]
+AV.nuc = t(AV.nuc)
+
+nuc.Group = rep(row.names(AV.nuc), length(ofc))
+nuc.Group[nuc.Group ==  "S3FA"] = 0
+nuc.Group[nuc.Group ==  "S9FA"] = 1
+nuc.Group[nuc.Group ==  "S40FA"] = 2
+nuc.Group[nuc.Group ==  "A3FA"] = 3
+nuc.Group[nuc.Group ==  "A9FA"] = 4
+nuc.Group[nuc.Group ==  "A40FA"] = 5
+nuc.Group[nuc.Group ==  "S3MA"] = 6
+nuc.Group[nuc.Group ==  "S9MA"] = 7
+nuc.Group[nuc.Group ==  "A3MA"] = 8
+nuc.Group[nuc.Group ==  "A9MA"] = 9
+
+nuc.Geno = rep(row.names(AV.nuc), length(ofc))
+nuc.Geno = paste0(substr(nuc.Geno, 1,1), substr(nuc.Geno, nchar(nuc.Geno)-1, nchar(nuc.Geno)))
+nuc.Geno[nuc.Geno == "SFA"] = 1
+nuc.Geno[nuc.Geno == "AFA"] = 2
+nuc.Geno[nuc.Geno == "SMA"] = 3
+nuc.Geno[nuc.Geno == "AMA"] = 4
+
+
+nuc.Gene = as.character(t(matrix(rep(colnames(AV.nuc), nrow(AV.nuc)), ncol = nrow(AV.nuc))))
+nuc.cpm = as.numeric(AV.nuc)
+
+AV.nuc = data.frame(Group = paste(nuc.Gene, nuc.Group),
+                   cpm = nuc.cpm,
+                   geno = nuc.Geno,
+                   gene = nuc.Gene)
+
+box.at = setdiff(c(1:(11*length(ofc))), c(1:length(ofc))*11)
+
+boxplot(AV.nuc$cpm~AV.nuc$Group,
+        las = 2,
+        col = c(hex("steelblue", .25), hex("darkgreen", .25), 
+                hex("firebrick", .25), hex("gold", .2))[c(1,1,1,2,2,2,3,3,4,4)],
+        at = box.at,
+        xaxt = "none",
+        xlab = "Gene",
+        ylab = "CPM",
+        main = "Fig 39b",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(AV.nuc$Group))],
+       y=AV.nuc$cpm,
+       cex=1,
+       pch=21,
+       bg=c("dodgerblue","darkgreen",'firebrick',"gold")[as.numeric(factor(AV.nuc$geno))])
+
+axis(1, at= c((c(0:(length(ofc)-1))*11)+5), tick = F, line = -.5, labels = c(unique(AV.nuc$gene)[order(unique(AV.nuc$gene))]), las = 2)
+
+legend("topright",
+       legend = c("Silent F", "A4V F", "Silent M", "A4V M"),
+       pch = 21,
+       pt.bg = c("dodgerblue","darkgreen",'firebrick',"gold"),
+       bty = 'n',
+       y.intersp = 1)
+
+```
+
+</br>
+
+Fig39b. nucDNA Genes cpm in A4V and Silent Abdomen at all timepoints: cpm data for nucDNA genes in A4V and Silent. FC of at least 50% in male or female for at least 1 comparison and a mean cpm of at least 1000 in 1 of the conditions.
+
+</br></br>
+
+
+## Specific OXPHOS Complex FC plots
+
+```{r echo = F}
+
+AllComplexTerms = GO.Names[grep("respiratory chain complex I", GO.Names$term),]
+
+CI = GeneIDKey[GeneIDKey$ensembl %in% genesingo[["GO:0045271"]], ]
+CI$Complex = "Complex I"
+CII = GeneIDKey[GeneIDKey$ensembl %in% genesingo[["GO:0045273"]], ]
+CII$Complex = "Complex II"
+CIII = GeneIDKey[GeneIDKey$ensembl %in% genesingo[["GO:0045275"]], ]
+CIII$Complex = "Complex III"
+CIV = GeneIDKey[GeneIDKey$ensembl %in% genesingo[["GO:0045277"]], ]
+CIV$Complex = "Complex IV"
+CV = GeneIDKey[GeneIDKey$ensembl %in% genesingo[["GO:0045259"]], ]
+CV$Complex = "Complex V"
+
+complex.genes = rbind(CI, rbind(CII, rbind(CIII, rbind(CIV, CV))))
+
+Other = GeneIDKey[GeneIDKey$FBgn %in% setdiff(oxphos, complex.genes$FBgn),]
+Other$Complex = "Other"
+complex.genes = rbind(complex.genes, Other)
+complex.genes=complex.genes[,c("FBgn", "Symbol", "CHR", "Complex")]
+
+```
+
+
+```{r echo = F}
+
+GR.ComplexGenes.biplot = function(x, y, mean.data, main.title){
+
+genes = complex.genes[, c("FBgn")]
+  
+FC.data = TKT.EdgeR.FC[genes, c(x, y)]
+FDR.data = TKT.EdgeR[genes, c(x, y)]
+mean.data = mean.data[genes, ]
+  
+
+  
+  
+data = data.frame(Symbol = GeneIDKey[genes, "Symbol"],
+                  FBgn = genes,
+                  FDR1 = FDR.data[, x],
+                  FDR2 = FDR.data[, y],
+                  FC1 = FC.data[, x],
+                  FC2 = FC.data[, y],
+                  Color = 'grey',
+                  Complex = factor(complex.genes[genes, 'Complex']),
+                  size = 1,
+                  Variable1.cpm = mean.data[,1],
+                  Control1.cpm = mean.data[,2],
+                  Variable2.cpm = mean.data[,3],
+                  Control2.cpm = mean.data[,4])
+  row.names(data) = data$FBgn
+
+  
+  data[row.names(CI), 'Color'] = 'royalblue'
+  data[row.names(CII), 'Color'] = 'firebrick' 
+  data[row.names(CIII), 'Color'] = 'gold'
+  data[row.names(CIV), 'Color'] = 'darkgreen' 
+  data[row.names(CV), 'Color'] = 'orchid'
+  
+  data$size = log2(apply(mean.data, 1, max))
+  data$size[data$size<3] = 1
+  data = na.omit(data)
+  ##data = data[data$size > log2(min.expression),]
+  data$size = 2.5*data$size
+  
+  fig = plot_ly(data = data,
+                x = ~FC1,
+                y = ~FC2,
+                type = 'scatter',
+                mode = 'markers',
+                name = ~Complex,
+                marker = list(color = ~Color,
+                              colors = ~Color,
+                              line = list(color = "black", width = 1.5),
+                              size = ~size),
+                hoverinfo = "text",
+                hovertext = paste("Symbol:", data$Symbol,
+                                  "\nFBgn:", data$FBgn,
+                                  "\n", data$Complex,
+                                  "\n ", colnames(FDR.data)[1], "FDR: ", round(data$FDR1, 2),
+                                  "\n ", colnames(FDR.data)[2], "FDR: ", round(data$FDR2,2),
+                                  "\n ", colnames(FC.data)[1], "FC: ", round(data$FC1, 2),
+                                  "\n ", colnames(FC.data)[2], "FC: ", round(data$FC2,2),
+                                  "\n ", colnames(mean.data)[1], "mean CPM: ", signif(data$Variable1,2),
+                                  "\n ", colnames(mean.data)[2], "mean CPM: ", signif(data$Control1,2),
+                                  "\n ", colnames(mean.data)[3], "mean CPM: ", signif(data$Variable2,2),
+                                  "\n ", colnames(mean.data)[4], "mean CPM: ", signif(data$Control2,2)))
+
+  fig = fig %>% layout(title = main.title,
+                       shapes = list(
+                         type = "line",
+                         line = list(color = "black", dash = 'dash', width = 2),
+                         x0 = min(data$FC1, data$FC2) - .25,
+                         x1 = max(data$FC1, data$FC2) + .25,
+                         y0 = min(data$FC1, data$FC2) - .25,
+                         y1 = max(data$FC1, data$FC2) + .25),
+                       xaxis = list(title = paste(colnames(FC.data)[1], "FC")),
+                       yaxis = list(title = paste(colnames(FC.data)[2], "FC")),
+                       showlegend = T)
+
+  return(list(fig, data))
+}
+```
+
+```{r echo = F}
+
+AV.ComplexGenes.biplot = function(x, y, mean.data, main.title){
+
+genes = complex.genes[, c("FBgn")]
+  
+FC.data = A4V.FC[genes, c(x, y)]
+FDR.data = A4V.FDR[genes, c(x, y)]
+mean.data = mean.data[genes, ]
+  
+
+  
+  
+data = data.frame(Symbol = GeneIDKey[genes, "Symbol"],
+                  FBgn = genes,
+                  FDR1 = FDR.data[, x],
+                  FDR2 = FDR.data[, y],
+                  FC1 = FC.data[, x],
+                  FC2 = FC.data[, y],
+                  Color = 'grey',
+                  Complex = factor(complex.genes[genes, 'Complex']),
+                  size = 1,
+                  Variable1.cpm = mean.data[,1],
+                  Control1.cpm = mean.data[,2],
+                  Variable2.cpm = mean.data[,3],
+                  Control2.cpm = mean.data[,4])
+  row.names(data) = data$FBgn
+
+  
+  data[row.names(CI), 'Color'] = 'royalblue'
+  data[row.names(CII), 'Color'] = 'firebrick' 
+  data[row.names(CIII), 'Color'] = 'gold'
+  data[row.names(CIV), 'Color'] = 'darkgreen' 
+  data[row.names(CV), 'Color'] = 'orchid'
+  
+  data$size = log2(apply(mean.data, 1, max))
+  data$size[data$size<3] = 1
+  data = na.omit(data)
+  ##data = data[data$size > log2(min.expression),]
+  data$size = 2.5*data$size
+  
+  fig = plot_ly(data = data,
+                x = ~FC1,
+                y = ~FC2,
+                type = 'scatter',
+                mode = 'markers',
+                name = ~Complex,
+                marker = list(color = ~Color,
+                              colors = ~Color,
+                              line = list(color = "black", width = 1.5),
+                              size = ~size),
+                hoverinfo = "text",
+                hovertext = paste("Symbol:", data$Symbol,
+                                  "\nFBgn:", data$FBgn,
+                                  "\n", data$Complex,
+                                  "\n ", colnames(FDR.data)[1], "FDR: ", round(data$FDR1, 2),
+                                  "\n ", colnames(FDR.data)[2], "FDR: ", round(data$FDR2,2),
+                                  "\n ", colnames(FC.data)[1], "FC: ", round(data$FC1, 2),
+                                  "\n ", colnames(FC.data)[2], "FC: ", round(data$FC2,2),
+                                  "\n ", colnames(mean.data)[1], "mean CPM: ", signif(data$Variable1,2),
+                                  "\n ", colnames(mean.data)[2], "mean CPM: ", signif(data$Control1,2),
+                                  "\n ", colnames(mean.data)[3], "mean CPM: ", signif(data$Variable2,2),
+                                  "\n ", colnames(mean.data)[4], "mean CPM: ", signif(data$Control2,2)))
+
+  fig = fig %>% layout(title = main.title,
+                       shapes = list(
+                         type = "line",
+                         line = list(color = "black", dash = 'dash', width = 2),
+                         x0 = min(data$FC1, data$FC2) - .25,
+                         x1 = max(data$FC1, data$FC2) + .25,
+                         y0 = min(data$FC1, data$FC2) - .25,
+                         y1 = max(data$FC1, data$FC2) + .25),
+                       xaxis = list(title = paste(colnames(FC.data)[1], "FC")),
+                       yaxis = list(title = paste(colnames(FC.data)[2], "FC")),
+                       showlegend = T)
+
+  return(list(fig, data))
+}
+```
+
+```{r echo = F}
+
+x = "GRxWT.FC"
+y = "GRxWT.MC"
+
+mean.data = (G85R.meancpm[, c('GR.F', 'WT.F',
+                              'GR.M', 'WT.M')])
+
+main.title = "Fig 40"
+
+
+##RG = Response Genes
+mtGRxWT.C.RG = GR.ComplexGenes.biplot(x, y, mean.data, main.title)
+
+mtGRxWT.C.RG[[1]]
+
+```
+
+</br>
+
+Fig40. OXPHOS Genes cpm in G85R relative to Silent: FC for all OXPHOS with female G85R/WT FC on the x-axis and male G85R/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS3FH"
+y = "AvS3MH"
+
+mean.data = (A4V.meancpm[, c('A3FH', 'S3FH',
+                             'A3MH', 'S3MH')])
+
+main.title = "Fig 41"
+
+
+##RG = Response Genes
+mtGRxWT.C.RG = AV.ComplexGenes.biplot(x, y, mean.data, main.title)
+
+mtGRxWT.C.RG[[1]]
+
+```
+
+</br>
+
+Fig41. OXPHOS Genes cpm in A4V relative to Silent 3-Day heads: FC for all OXPHOS with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS9FH"
+y = "AvS9MH"
+
+mean.data = (A4V.meancpm[, c('A9FH', 'S9FH',
+                             'A9MH', 'S9MH')])
+
+main.title = "Fig 42"
+
+
+##RG = Response Genes
+mtGRxWT.C.RG = AV.ComplexGenes.biplot(x, y, mean.data, main.title)
+
+mtGRxWT.C.RG[[1]]
+
+```
+
+</br>
+
+Fig42. OXPHOS Genes cpm in A4V relative to Silent 9-Day heads: FC for all OXPHOS with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
+
+</br></br>
+
+
+
+```{r echo = F}
+
+x = "AvS40FH"
+y = "AvS9MH"
+
+mean.data = (A4V.meancpm[, c('A40FH', 'S40FH',
+                             'A9MH', 'S9MH')])
+
+main.title = "Fig 43"
+
+
+##RG = Response Genes
+mtGRxWT.C.RG = AV.ComplexGenes.biplot(x, y, mean.data, main.title)
+
+mtGRxWT.C.RG[[1]]
+
+```
+
+</br>
+
+Fig43. OXPHOS Genes cpm in A4V relative to Silent 40-day female heads and 9-day male heads: FC for all OXPHOS with 40-day female A4V/WT FC on the x-axis and 9-day male A4V/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
+
+</br></br>
+
+
+
+
+```{r echo = F}
+
+x = "AvS3FT"
+y = "AvS3MT"
+
+mean.data = (A4V.meancpm[, c('A3FT', 'S3FT',
+                             'A3MT', 'S3MT')])
+
+main.title = "Fig 44"
+
+
+##RG = Response Genes
+mtGRxWT.C.RG = AV.ComplexGenes.biplot(x, y, mean.data, main.title)
+
+mtGRxWT.C.RG[[1]]
+
+```
+
+</br>
+
+Fig44. OXPHOS Genes cpm in A4V relative to Silent 3-Day thorax: FC for all OXPHOS with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS9FT"
+y = "AvS9MT"
+
+mean.data = (A4V.meancpm[, c('A9FT', 'S9FT',
+                             'A9MT', 'S9MT')])
+
+main.title = "Fig 45"
+
+
+##RG = Response Genes
+mtGRxWT.C.RG = AV.ComplexGenes.biplot(x, y, mean.data, main.title)
+
+mtGRxWT.C.RG[[1]]
+
+```
+
+</br>
+
+Fig45. OXPHOS Genes cpm in A4V relative to Silent 9-Day thorax: FC for all OXPHOS with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS40FT"
+y = "AvS9MT"
+
+mean.data = (A4V.meancpm[, c('A40FT', 'S40FT',
+                             'A9MT', 'S9MT')])
+
+main.title = "Fig 46"
+
+
+##RG = Response Genes
+mtGRxWT.C.RG = AV.ComplexGenes.biplot(x, y, mean.data, main.title)
+
+mtGRxWT.C.RG[[1]]
+
+```
+
+</br>
+
+Fig46. OXPHOS Genes cpm in A4V relative to Silent 40-day female heads and 9-day male thorax: FC for all OXPHOS with 40-day female A4V/WT FC on the x-axis and 9-day male A4V/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
+
+</br></br>
+
+
+
+
+```{r echo = F}
+
+x = "AvS3FA"
+y = "AvS3MA"
+
+mean.data = (A4V.meancpm[, c('A3FA', 'S3FA',
+                             'A3MA', 'S3MA')])
+
+main.title = "Fig 47"
+
+
+##RG = Response Genes
+mtGRxWT.C.RG = AV.ComplexGenes.biplot(x, y, mean.data, main.title)
+
+mtGRxWT.C.RG[[1]]
+
+```
+
+</br>
+
+Fig47. OXPHOS Genes cpm in A4V relative to Silent 3-Day abdomen: FC for all OXPHOS with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS9FA"
+y = "AvS9MA"
+
+mean.data = (A4V.meancpm[, c('A9FA', 'S9FA',
+                             'A9MA', 'S9MA')])
+
+main.title = "Fig 48"
+
+
+##RG = Response Genes
+mtGRxWT.C.RG = AV.ComplexGenes.biplot(x, y, mean.data, main.title)
+
+mtGRxWT.C.RG[[1]]
+
+```
+
+</br>
+
+Fig48. OXPHOS Genes cpm in A4V relative to Silent 9-Day abdomen: FC for all OXPHOS with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS40FA"
+y = "AvS9MA"
+
+mean.data = (A4V.meancpm[, c('A40FA', 'S40FA',
+                             'A9MA', 'S9MA')])
+
+main.title = "Fig 49"
+
+
+##RG = Response Genes
+mtGRxWT.C.RG = AV.ComplexGenes.biplot(x, y, mean.data, main.title)
+
+mtGRxWT.C.RG[[1]]
+
+```
+
+</br>
+
+Fig49. OXPHOS Genes cpm in A4V relative to Silent 40-day female heads and 9-day male abdomen: FC for all OXPHOS with 40-day female A4V/WT FC on the x-axis and 9-day male A4V/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
+
+</br></br>
+
+
+## Qiagen AD Array Genes
+
+Drosophila Orthologs of the listed Human Genes were collected using GeneCards
+
+```{r echo = F}
+
+Array.Genes = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/QiagenADArrayGenes.csv", header = T)
+
+Array.Genes = Array.Genes[Array.Genes$FBgn != "",]
+
+```
+
+
+```{r echo = F}
+
+GR.ArrayGenes.biplot = function(x, y, mean.data, main.title){
+
+genes = Array.Genes[, c("FBgn")]
+  
+FC.data = TKT.EdgeR.FC[genes, c(x, y)]
+FDR.data = TKT.EdgeR[genes, c(x, y)]
+mean.data = mean.data[genes, ]
+  
+
+  
+  
+data = data.frame(Symbol = GeneIDKey[genes, "Symbol"],
+                  FBgn = genes,
+                  FDR1 = FDR.data[, x],
+                  FDR2 = FDR.data[, y],
+                  FC1 = FC.data[, x],
+                  FC2 = FC.data[, y],
+                  Color = 'grey',
+                  Human = Array.Genes$HumanSymbol,
+                  size = 1,
+                  Variable1.cpm = mean.data[,1],
+                  Control1.cpm = mean.data[,2],
+                  Variable2.cpm = mean.data[,3],
+                  Control2.cpm = mean.data[,4])
+
+  data$size = log2(apply(mean.data, 1, max))
+  data$size[data$size<3] = 1
+  data = na.omit(data)
+  data$size = 2.5*data$size
+  
+  data = unique(data)
+  
+  fig = plot_ly(data = data,
+                x = ~FC1,
+                y = ~FC2,
+                type = 'scatter',
+                mode = 'markers',
+                #name = ~Complex,
+                marker = list(color = ~Color,
+                              colors = ~Color,
+                              line = list(color = "black", width = 1.5),
+                              size = ~size),
+                hoverinfo = "text",
+                hovertext = paste("Symbol:", data$Symbol,
+                                  "\nFBgn:", data$FBgn,
+                                  "\nHuman Ortholog: ", data$Human,
+                                  "\n ", colnames(FDR.data)[1], "FDR: ", round(data$FDR1, 2),
+                                  "\n ", colnames(FDR.data)[2], "FDR: ", round(data$FDR2,2),
+                                  "\n ", colnames(FC.data)[1], "FC: ", round(data$FC1, 2),
+                                  "\n ", colnames(FC.data)[2], "FC: ", round(data$FC2,2),
+                                  "\n ", colnames(mean.data)[1], "mean CPM: ", signif(data$Variable1,2),
+                                  "\n ", colnames(mean.data)[2], "mean CPM: ", signif(data$Control1,2),
+                                  "\n ", colnames(mean.data)[3], "mean CPM: ", signif(data$Variable2,2),
+                                  "\n ", colnames(mean.data)[4], "mean CPM: ", signif(data$Control2,2)))
+
+  fig = fig %>% layout(title = main.title,
+                       shapes = list(
+                         type = "line",
+                         line = list(color = "black", dash = 'dash', width = 2),
+                         x0 = min(data$FC1, data$FC2) - .25,
+                         x1 = max(data$FC1, data$FC2) + .25,
+                         y0 = min(data$FC1, data$FC2) - .25,
+                         y1 = max(data$FC1, data$FC2) + .25),
+                       xaxis = list(title = paste(colnames(FC.data)[1], "FC")),
+                       yaxis = list(title = paste(colnames(FC.data)[2], "FC")),
+                       showlegend = F)
+
+  return(list(fig, data))
+}
+```
+
+```{r echo = F}
+
+AV.ArrayGenes.biplot = function(x, y, mean.data, main.title){
+
+genes = Array.Genes[, c("FBgn")]
+  
+FC.data = A4V.FC[genes, c(x, y)]
+FDR.data = A4V.FDR[genes, c(x, y)]
+mean.data = mean.data[genes, ]
+
+data = data.frame(Symbol = GeneIDKey[genes, "Symbol"],
+                  FBgn = genes,
+                  FDR1 = FDR.data[, x],
+                  FDR2 = FDR.data[, y],
+                  FC1 = FC.data[, x],
+                  FC2 = FC.data[, y],
+                  Color = 'grey',
+                  Human = Array.Genes$HumanSymbol,
+                  size = 1,
+                  Variable1.cpm = mean.data[,1],
+                  Control1.cpm = mean.data[,2],
+                  Variable2.cpm = mean.data[,3],
+                  Control2.cpm = mean.data[,4])
+
+  data$size = log2(apply(mean.data, 1, max))
+  data$size[data$size<3] = 1
+  data = na.omit(data)
+  data$size = 2.5*data$size
+  
+  data = unique(data)
+  
+  fig = plot_ly(data = data,
+                x = ~FC1,
+                y = ~FC2,
+                type = 'scatter',
+                mode = 'markers',
+                #name = ~Complex,
+                marker = list(color = ~Color,
+                              colors = ~Color,
+                              line = list(color = "black", width = 1.5),
+                              size = ~size),
+                hoverinfo = "text",
+                hovertext = paste("Symbol:", data$Symbol,
+                                  "\nFBgn:", data$FBgn,
+                                  "\nHuman Ortholog: ", data$Human,
+                                  "\n ", colnames(FDR.data)[1], "FDR: ", round(data$FDR1, 2),
+                                  "\n ", colnames(FDR.data)[2], "FDR: ", round(data$FDR2,2),
+                                  "\n ", colnames(FC.data)[1], "FC: ", round(data$FC1, 2),
+                                  "\n ", colnames(FC.data)[2], "FC: ", round(data$FC2,2),
+                                  "\n ", colnames(mean.data)[1], "mean CPM: ", signif(data$Variable1,2),
+                                  "\n ", colnames(mean.data)[2], "mean CPM: ", signif(data$Control1,2),
+                                  "\n ", colnames(mean.data)[3], "mean CPM: ", signif(data$Variable2,2),
+                                  "\n ", colnames(mean.data)[4], "mean CPM: ", signif(data$Control2,2)))
+
+  fig = fig %>% layout(title = main.title,
+                       shapes = list(
+                         type = "line",
+                         line = list(color = "black", dash = 'dash', width = 2),
+                         x0 = min(data$FC1, data$FC2) - .25,
+                         x1 = max(data$FC1, data$FC2) + .25,
+                         y0 = min(data$FC1, data$FC2) - .25,
+                         y1 = max(data$FC1, data$FC2) + .25),
+                       xaxis = list(title = paste(colnames(FC.data)[1], "FC")),
+                       yaxis = list(title = paste(colnames(FC.data)[2], "FC")),
+                       showlegend = F)
+  
+  return(list(fig, data))
+}
+```
+
+```{r echo = F}
+
+x = "GRxWT.FC"
+y = "GRxWT.MC"
+
+mean.data = (G85R.meancpm[, c('GR.F', 'WT.F',
+                              'GR.M', 'WT.M')])
+
+main.title = "Fig 50"
+
+
+##RG = Response Genes
+mtGRxWT.C.RG = GR.ArrayGenes.biplot(x, y, mean.data, main.title)
+
+mtGRxWT.C.RG[[1]]
+
+```
+
+</br>
+
+Fig50. AD Array Genes cpm in G85R relative to Silent: FC for all AD Array Genes with female G85R/WT FC on the x-axis and male G85R/WT on the y-axis. 
+
+</br></br>
+
+```{r echo = F}
+
+x = "AvS3FH"
+y = "AvS3MH"
+
+mean.data = (A4V.meancpm[, c('A3FH', 'S3FH',
+                             'A3MH', 'S3MH')])
+
+main.title = "Fig 51"
+
+
+##RG = Response Genes
+mtGRxWT.C.RG = AV.ArrayGenes.biplot(x, y, mean.data, main.title)
+
+mtGRxWT.C.RG[[1]]
+
+```
+
+</br>
+
+Fig51. AD Array Genes cpm in A4V relative to Silent 3-Day heads: FC for all AD Array Genes with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. 
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS9FH"
+y = "AvS9MH"
+
+mean.data = (A4V.meancpm[, c('A9FH', 'S9FH',
+                             'A9MH', 'S9MH')])
+
+main.title = "Fig 52"
+
+
+##RG = Response Genes
+mtGRxWT.C.RG = AV.ArrayGenes.biplot(x, y, mean.data, main.title)
+
+mtGRxWT.C.RG[[1]]
+
+```
+
+</br>
+
+Fig52. AD Array Genes cpm in A4V relative to Silent 9-Day heads: FC for all AD Array Genes with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. 
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS40FH"
+y = "AvS9MH"
+
+mean.data = (A4V.meancpm[, c('A40FH', 'S40FH',
+                             'A9MH', 'S9MH')])
+
+main.title = "Fig 53"
+
+
+##RG = Response Genes
+mtGRxWT.C.RG = AV.ArrayGenes.biplot(x, y, mean.data, main.title)
+
+mtGRxWT.C.RG[[1]]
+
+```
+
+</br>
+
+Fig53. AD Array Genes cpm in A4V relative to Silent 40-day female heads and 9-day male heads: FC for all AD Array Genes with 40-day female A4V/WT FC on the x-axis and male 9-day A4V/WT on the y-axis. 
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS3FT"
+y = "AvS3MT"
+
+mean.data = (A4V.meancpm[, c('A3FT', 'S3FT',
+                             'A3MT', 'S3MT')])
+
+main.title = "Fig 54"
+
+
+##RG = Response Genes
+mtGRxWT.C.RG = AV.ArrayGenes.biplot(x, y, mean.data, main.title)
+
+mtGRxWT.C.RG[[1]]
+
+```
+
+</br>
+
+Fig54. AD Array Genes cpm in A4V relative to Silent 3-Day thorax: FC for all AD Array Genes with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. 
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS9FT"
+y = "AvS9MT"
+
+mean.data = (A4V.meancpm[, c('A9FT', 'S9FT',
+                             'A9MT', 'S9MT')])
+
+main.title = "Fig 55"
+
+
+##RG = Response Genes
+mtGRxWT.C.RG = AV.ArrayGenes.biplot(x, y, mean.data, main.title)
+
+mtGRxWT.C.RG[[1]]
+
+```
+
+</br>
+
+Fig55. AD Array Genes cpm in A4V relative to Silent 9-Day thorax: FC for all AD Array Genes with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. 
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS40FT"
+y = "AvS9MT"
+
+mean.data = (A4V.meancpm[, c('A40FT', 'S40FT',
+                             'A9MT', 'S9MT')])
+
+main.title = "Fig 56"
+
+
+##RG = Response Genes
+mtGRxWT.C.RG = AV.ArrayGenes.biplot(x, y, mean.data, main.title)
+
+mtGRxWT.C.RG[[1]]
+
+```
+
+</br>
+
+Fig56. AD Array Genes cpm in A4V relative to Silent 40-day female thorax and 9-day male thorax: FC for all AD Array Genes with 40-day female A4V/WT FC on the x-axis and male 9-day A4V/WT on the y-axis. 
+
+</br></br>
+
+
+
+
+```{r echo = F}
+
+x = "AvS3FA"
+y = "AvS3MA"
+
+mean.data = (A4V.meancpm[, c('A3FA', 'S3FA',
+                             'A3MA', 'S3MA')])
+
+main.title = "Fig 57"
+
+
+##RG = Response Genes
+mtGRxWT.C.RG = AV.ArrayGenes.biplot(x, y, mean.data, main.title)
+
+mtGRxWT.C.RG[[1]]
+
+```
+
+</br>
+
+Fig57. AD Array Genes cpm in A4V relative to Silent 3-Day abdomen: FC for all AD Array Genes with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. 
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS9FA"
+y = "AvS9MA"
+
+mean.data = (A4V.meancpm[, c('A9FA', 'S9FA',
+                             'A9MA', 'S9MA')])
+
+main.title = "Fig 58"
+
+
+##RG = Response Genes
+mtGRxWT.C.RG = AV.ArrayGenes.biplot(x, y, mean.data, main.title)
+
+mtGRxWT.C.RG[[1]]
+
+```
+
+</br>
+
+Fig58. AD Array Genes cpm in A4V relative to Silent 9-Day thorax: FC for all AD Array Genes with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. 
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS40FA"
+y = "AvS9MA"
+
+mean.data = (A4V.meancpm[, c('A40FA', 'S40FA',
+                             'A9MA', 'S9MA')])
+
+main.title = "Fig 59"
+
+
+##RG = Response Genes
+mtGRxWT.C.RG = AV.ArrayGenes.biplot(x, y, mean.data, main.title)
+
+mtGRxWT.C.RG[[1]]
+
+```
+
+</br>
+
+Fig59. AD Array Genes cpm in A4V relative to Silent 40-day female abdomen and 9-day male abdomen: FC for all AD Array Genes with 40-day female A4V/WT FC on the x-axis and male 9-day A4V/WT on the y-axis. 
+
+</br></br>
+
+
+## Specific OXPHOS subset plots
+
+```{r echo = F}
+
+
+x = "GRxWT.FC"
+y = "GRxWT.MC"
+
+OXPHOS.FC.cutoff = abs(apply(na.omit(TKT.EdgeR.FC[oxphos,c(x,y)]), 1, max))
+OXPHOS.FC.cutoff = OXPHOS.FC.cutoff[OXPHOS.FC.cutoff > log2(1.5)]
+
+ofc = names(OXPHOS.FC.cutoff)
+
+GR.ofc = na.omit(cpmdata[ofc, c(groups[groups$Group == 'WT.F', 'SampleID'],
+                                groups[groups$Group == 'GR.F', 'SampleID'],
+                                groups[groups$Group == 'WT.M', 'SampleID'],
+                                groups[groups$Group == 'GR.M', 'SampleID'])])
+                             
+cpm.cutoff = apply(GR.ofc, 1, max)
+ofc = names(cpm.cutoff[cpm.cutoff > 10])
+
+mean.data = na.omit(G85R.meancpm[ofc, c('GR.F', 'WT.F',
+                                       'GR.M', 'WT.M')])
+
+main.title = "Fig 60"
+
+
+##RG = Response Genes
+mtGRxWT.C.RG = GR.ComplexGenes.biplot(x, y, mean.data, main.title)
+
+mtGRxWT.C.RG[[1]]
+
+
+
+```
+
+Fig. 60 Genes in G85R that have a FC of at least 50% in male or female relative to silent and a mean cpm of at least 10 in 1 of the conditions. NOTES: CG9005 is a transcriptional regulator of key OXPHOS genes. CG14757 is a SDH assembly factor that als modulates copper ion homeostasis.
+
+</br></br>
+
+
+```{r echo = F}
+
+AV.SpecificGenes.mtvnuc.biplot = function(genes, x, y, mean.data, main.title, color){
+
+FC.data = A4V.FC[genes, c(x, y)]
+FDR.data = A4V.FDR[genes, c(x, y)]
+mean.data = mean.data[genes, ]
+  
+
+  
+  
+data = data.frame(Symbol = GeneIDKey[genes, "Symbol"],
+                  FBgn = genes,
+                  FDR1 = FDR.data[, x],
+                  FDR2 = FDR.data[, y],
+                  FC1 = FC.data[, x],
+                  FC2 = FC.data[, y],
+                  Color = 'grey',
+                  size = 1,
+                  Variable1.cpm = mean.data[,1],
+                  Control1.cpm = mean.data[,2],
+                  Variable2.cpm = mean.data[,3],
+                  Control2.cpm = mean.data[,4])
+  row.names(data) = data$FBgn
+
+  
+  data[intersect(genes, mt), 'Color'] = color
+  #data[y.genes, 'Color'] = 'firebrick' 
+  #data[xy.genes, 'Color'] = 'gold'
+  
+  data$size = log2(apply(mean.data, 1, max))
+  data$size[data$size<3] = 1
+  data = na.omit(data)
+  ##data = data[data$size > log2(min.expression),]
+  data$size = 2.5*data$size
+  
+  
+  fig = plot_ly(data = data,
+                x = ~FC1,
+                y = ~FC2,
+                type = 'scatter',
+                mode = 'markers',
+                marker = list(color = ~Color,
+                              colors = ~Color,
+                              line = list(color = "black", width = 1.5),
+                              size = ~size),
+                hoverinfo = "text",
+                hovertext = paste("Symbol:", data$Symbol,
+                                  "\nFBgn:", data$FBgn,
+                                  "\n ", colnames(FDR.data)[1], "FDR: ", round(data$FDR1, 2),
+                                  "\n ", colnames(FDR.data)[2], "FDR: ", round(data$FDR2,2),
+                                  "\n ", colnames(FC.data)[1], "FC: ", round(data$FC1, 2),
+                                  "\n ", colnames(FC.data)[2], "FC: ", round(data$FC2,2),
+                                  "\n ", colnames(mean.data)[1], "mean CPM: ", signif(data$Variable1,2),
+                                  "\n ", colnames(mean.data)[2], "mean CPM: ", signif(data$Control1,2),
+                                  "\n ", colnames(mean.data)[3], "mean CPM: ", signif(data$Variable2,2),
+                                  "\n ", colnames(mean.data)[4], "mean CPM: ", signif(data$Control2,2)))
+
+  fig = fig %>% layout(title = main.title,
+                       shapes = list(
+                         type = "line",
+                         line = list(color = "black", dash = 'dash', width = 2),
+                         x0 = min(data$FC1, data$FC2) - .25,
+                         x1 = max(data$FC1, data$FC2) + .25,
+                         y0 = min(data$FC1, data$FC2) - .25,
+                         y1 = max(data$FC1, data$FC2) + .25),
+                       xaxis = list(title = paste(colnames(FC.data)[1], "FC")),
+                       yaxis = list(title = paste(colnames(FC.data)[2], "FC")),
+                       showlegend = F)
+
+  return(list(fig, data))
+}
+```
+
+
+```{r echo = F}
+
+x = "AvS3FH"
+y = "AvS3MH"
+
+genes = row.names(CI)
+
+mean.data = na.omit(A4V.meancpm[row.names(CI), c('A3FH', 'S3FH',
+                                    'A3MH', 'S3MH')])
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+
+main.title = "Fig 61"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'gold')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 61 FC of Complex I genes in A4V male and female head samples at 3 day relative to silent. mtDNA encoded genes are in gold. Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+
+```{r echo = F}
+
+x = "AvS9FH"
+y = "AvS9MH"
+
+genes = row.names(CI)
+
+mean.data = na.omit(A4V.meancpm[row.names(CI), c('A9FH', 'S9FH',
+                                                 'A9MH', 'S9MH')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 62"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'gold')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 62 FC of Complex I genes in A4V male and female head samples at 9 day relative to silent. mtDNA encoded genes are in gold. Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS40FH"
+y = "AvS9MH"
+
+genes = row.names(CI)
+
+mean.data = na.omit(A4V.meancpm[row.names(CI), c('A40FH', 'S40FH',
+                                                 'A9MH', 'S9MH')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 63"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'gold')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 63 FC of Complex I genes in A4V male 9 day and female 40 day head samples relative to silent. mtDNA encoded genes are in gold. Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+
+```{r echo = F}
+
+x = "AvSFH"
+y = "AvSMH"
+
+genes = row.names(CI)
+
+mean.data = na.omit(A4V.meancpm[row.names(CI), c('AFH', 'SFH',
+                                                 'AMH', 'SMH')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 64"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'gold')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 64 FC of Complex I genes in A4V male and female head samples relative to silent. All time points were combined. mtDNA encoded genes are in gold. Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS3FT"
+y = "AvS3MT"
+
+genes = row.names(CI)
+
+mean.data = na.omit(A4V.meancpm[row.names(CI), c('A3FT', 'S3FT',
+                                    'A3MT', 'S3MT')])
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+
+main.title = "Fig 65"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'gold')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 65 FC of Complex I genes in A4V male and female thorax samples at 3 day relative to silent. mtDNA encoded genes are in gold. Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+
+```{r echo = F}
+
+x = "AvS9FT"
+y = "AvS9MT"
+
+genes = row.names(CI)
+
+mean.data = na.omit(A4V.meancpm[row.names(CI), c('A9FT', 'S9FT',
+                                                 'A9MT', 'S9MT')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 66"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'gold')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 66 FC of Complex I genes in A4V male and female thorax samples at 9 day relative to silent. mtDNA encoded genes are in gold. Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS40FT"
+y = "AvS9MT"
+
+genes = row.names(CI)
+
+mean.data = na.omit(A4V.meancpm[row.names(CI), c('A40FT', 'S40FT',
+                                                 'A9MT', 'S9MT')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 67"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'gold')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 67 FC of Complex I genes in A4V male 9 day and female 40 day head samples relative to silent. mtDNA encoded genes are in gold. Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+
+```{r echo = F}
+
+x = "AvSFT"
+y = "AvSMT"
+
+genes = row.names(CI)
+
+mean.data = na.omit(A4V.meancpm[row.names(CI), c('AFT', 'SFT',
+                                                 'AMT', 'SMT')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 68"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'gold')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 68 FC of Complex I genes in A4V male and female thorax samples relative to silent. All time points were combined. mtDNA encoded genes are in gold. Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+
+```{r echo = F}
+
+x = "AvS3FH"
+y = "AvS3MH"
+
+genes = row.names(CIII)
+
+mean.data = na.omit(A4V.meancpm[row.names(CIII), c('A3FH', 'S3FH',
+                                    'A3MH', 'S3MH')])
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+
+main.title = "Fig 69"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'grey')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 69 FC of Complex II genes in A4V male and female head samples at 3 day relative to silent. Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+
+```{r echo = F}
+
+x = "AvS9FH"
+y = "AvS9MH"
+
+genes = row.names(CII)
+
+mean.data = na.omit(A4V.meancpm[row.names(CII), c('A9FH', 'S9FH',
+                                                 'A9MH', 'S9MH')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 70"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'grey')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 70 FC of Complex II genes in A4V male and female head samples at 9 day relative to silent. Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS40FH"
+y = "AvS9MH"
+
+genes = row.names(CII)
+
+mean.data = na.omit(A4V.meancpm[row.names(CII), c('A40FH', 'S40FH',
+                                                 'A9MH', 'S9MH')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 71"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'grey')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 71 FC of Complex II genes in A4V male 9 day and female 40 day head samples relative to silent. Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+
+```{r echo = F}
+
+x = "AvSFH"
+y = "AvSMH"
+
+genes = row.names(CII)
+
+mean.data = na.omit(A4V.meancpm[row.names(CII), c('AFH', 'SFH',
+                                                 'AMH', 'SMH')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 72"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'grey')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 72 FC of Complex II genes in A4V male 9 day and female 40 day head samples relative to silent. Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS3FT"
+y = "AvS3MT"
+
+genes = row.names(CII)
+
+mean.data = na.omit(A4V.meancpm[row.names(CII), c('A3FT', 'S3FT',
+                                    'A3MT', 'S3MT')])
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+
+main.title = "Fig 73"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'grey')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 73 FC of Complex II genes in A4V male and female thorax samples at 3 day relative to silent. Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+
+```{r echo = F}
+
+x = "AvS9FT"
+y = "AvS9MT"
+
+genes = row.names(CII)
+
+mean.data = na.omit(A4V.meancpm[row.names(CII), c('A9FT', 'S9FT',
+                                                 'A9MT', 'S9MT')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 74"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'grey')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 74 FC of Complex II genes in A4V male and female thorax samples at 9 day relative to silent. Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS40FT"
+y = "AvS9MT"
+
+genes = row.names(CII)
+
+mean.data = na.omit(A4V.meancpm[row.names(CII), c('A40FT', 'S40FT',
+                                                 'A9MT', 'S9MT')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 75"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'grey')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 75 FC of Complex II genes in A4V male 9 day and female 40 day head samples relative to silent. Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+
+```{r echo = F}
+
+x = "AvSFT"
+y = "AvSMT"
+
+genes = row.names(CII)
+
+mean.data = na.omit(A4V.meancpm[row.names(CII), c('AFT', 'SFT',
+                                                 'AMT', 'SMT')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 76"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'grey')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 76 FC of Complex I genes in A4V male 9 day and female 40 day thorax samples relative to silent. Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS3FH"
+y = "AvS3MH"
+
+genes = row.names(CIII)
+
+mean.data = na.omit(A4V.meancpm[row.names(CIII), c('A3FH', 'S3FH',
+                                    'A3MH', 'S3MH')])
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+
+main.title = "Fig 77"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'darkgreen')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 77 FC of Complex III genes in A4V male and female head samples at 3 day relative to silent. mtDNA encoded genes are in green Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+
+```{r echo = F}
+
+x = "AvS9FH"
+y = "AvS9MH"
+
+genes = row.names(CIII)
+
+mean.data = na.omit(A4V.meancpm[row.names(CIII), c('A9FH', 'S9FH',
+                                                 'A9MH', 'S9MH')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 78"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'darkgreen')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 78 FC of Complex III genes in A4V male and female head samples at 9 day relative to silent. mtDNA encoded genes are in green Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS40FH"
+y = "AvS9MH"
+
+genes = row.names(CIII)
+
+mean.data = na.omit(A4V.meancpm[row.names(CIII), c('A40FH', 'S40FH',
+                                                 'A9MH', 'S9MH')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 79"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'darkgreen')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 79 FC of Complex III genes in A4V male 9 day and female 40 day head samples relative to silent. mtDNA encoded genes are in green Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+
+```{r echo = F}
+
+x = "AvSFH"
+y = "AvSMH"
+
+genes = row.names(CIII)
+
+mean.data = na.omit(A4V.meancpm[row.names(CIII), c('AFH', 'SFH',
+                                                 'AMH', 'SMH')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 80"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'darkgreen')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 80 FC of Complex III genes in A4V male 9 day and female 40 day head samples relative to silent. mtDNA encoded genes are in green Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS3FT"
+y = "AvS3MT"
+
+genes = row.names(CIII)
+
+mean.data = na.omit(A4V.meancpm[row.names(CIII), c('A3FT', 'S3FT',
+                                    'A3MT', 'S3MT')])
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+
+main.title = "Fig 81"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'darkgreen')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 81 FC of Complex IV genes in A4V male and female thorax samples at 3 day relative to silent. mtDNA encoded genes are in green Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+
+```{r echo = F}
+
+x = "AvS9FT"
+y = "AvS9MT"
+
+genes = row.names(CIII)
+
+mean.data = na.omit(A4V.meancpm[row.names(CIII), c('A9FT', 'S9FT',
+                                                 'A9MT', 'S9MT')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 82"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'darkgreen')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 82 FC of Complex IV genes in A4V male and female thorax samples at 9 day relative to silent. mtDNA encoded genes are in green. Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS40FT"
+y = "AvS9MT"
+
+genes = row.names(CIII)
+
+mean.data = na.omit(A4V.meancpm[row.names(CIII), c('A40FT', 'S40FT',
+                                                 'A9MT', 'S9MT')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 83"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'darkgreen')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 83 FC of Complex IV genes in A4V male 9 day and female 40 day head samples relative to silent. mtDNA encoded genes are in green. Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+
+```{r echo = F}
+
+x = "AvSFT"
+y = "AvSMT"
+
+genes = row.names(CIII)
+
+mean.data = na.omit(A4V.meancpm[row.names(CIII), c('AFT', 'SFT',
+                                                 'AMT', 'SMT')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 84"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'darkgreen')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 84 FC of Complex I genes in A4V male 9 day and female 40 day thorax samples relative to silent. mtDNA encoded genes are in green. Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+
+
+```{r echo = F}
+
+x = "AvS3FH"
+y = "AvS3MH"
+
+genes = row.names(CIV)
+
+mean.data = na.omit(A4V.meancpm[row.names(CIV), c('A3FH', 'S3FH',
+                                    'A3MH', 'S3MH')])
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+
+main.title = "Fig 85"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'steelblue')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 85 FC of Complex IV genes in A4V male and female head samples at 3 day relative to silent. mtDNA encoded genes are in blue Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+
+```{r echo = F}
+
+x = "AvS9FH"
+y = "AvS9MH"
+
+genes = row.names(CIV)
+
+mean.data = na.omit(A4V.meancpm[row.names(CIV), c('A9FH', 'S9FH',
+                                                 'A9MH', 'S9MH')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 86"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'steelblue')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 86 FC of Complex IV genes in A4V male and female head samples at 9 day relative to silent. mtDNA encoded genes are in blue Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS40FH"
+y = "AvS9MH"
+
+genes = row.names(CIV)
+
+mean.data = na.omit(A4V.meancpm[row.names(CIV), c('A40FH', 'S40FH',
+                                                 'A9MH', 'S9MH')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 87"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'steelblue')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 87 FC of Complex IV genes in A4V male 9 day and female 40 day head samples relative to silent. mtDNA encoded genes are in blue Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+
+```{r echo = F}
+
+x = "AvSFH"
+y = "AvSMH"
+
+genes = row.names(CIV)
+
+mean.data = na.omit(A4V.meancpm[row.names(CIV), c('AFH', 'SFH',
+                                                 'AMH', 'SMH')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 88"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'steelblue')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 88 FC of Complex IV genes in A4V male 9 day and female 40 day head samples relative to silent. mtDNA encoded genes are in blue Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS3FT"
+y = "AvS3MT"
+
+genes = row.names(CIV)
+
+mean.data = na.omit(A4V.meancpm[row.names(CIV), c('A3FT', 'S3FT',
+                                    'A3MT', 'S3MT')])
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+
+main.title = "Fig 89"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'steelblue')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 89 FC of Complex IV genes in A4V male and female thorax samples at 3 day relative to silent. mtDNA encoded genes are in blue. Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+
+```{r echo = F}
+
+x = "AvS9FT"
+y = "AvS9MT"
+
+genes = row.names(CIV)
+
+mean.data = na.omit(A4V.meancpm[row.names(CIV), c('A9FT', 'S9FT',
+                                                 'A9MT', 'S9MT')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 90"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'steelblue')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 90 FC of Complex IV genes in A4V male and female thorax samples at 9 day relative to silent. mtDNA encoded genes are in blue. Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS40FT"
+y = "AvS9MT"
+
+genes = row.names(CIV)
+
+mean.data = na.omit(A4V.meancpm[row.names(CIV), c('A40FT', 'S40FT',
+                                                 'A9MT', 'S9MT')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 91"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'steelblue')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 91 FC of Complex IV genes in A4V male 9 day and female 40 day head samples relative to silent. mtDNA encoded genes are in blue. Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+
+```{r echo = F}
+
+x = "AvSFT"
+y = "AvSMT"
+
+genes = row.names(CIV)
+
+mean.data = na.omit(A4V.meancpm[row.names(CIV), c('AFT', 'SFT',
+                                                 'AMT', 'SMT')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 92"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'steelblue')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 92 FC of Complex I genes in A4V male 9 day and female 40 day thorax samples relative to silent. mtDNA encoded genes are in blue. Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+
+
+```{r echo = F}
+
+x = "AvS3FH"
+y = "AvS3MH"
+
+genes = row.names(CV)
+
+mean.data = na.omit(A4V.meancpm[row.names(CV), c('A3FH', 'S3FH',
+                                    'A3MH', 'S3MH')])
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+
+main.title = "Fig 93"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'brown')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 93 FC of Complex V genes in A4V male and female head samples at 3 day relative to silent. mtDNA encoded genes are in red Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+
+```{r echo = F}
+
+x = "AvS9FH"
+y = "AvS9MH"
+
+genes = row.names(CV)
+
+mean.data = na.omit(A4V.meancpm[row.names(CV), c('A9FH', 'S9FH',
+                                                 'A9MH', 'S9MH')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 94"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'brown')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 94 FC of Complex V genes in A4V male and female head samples at 9 day relative to silent. mtDNA encoded genes are in red Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS40FH"
+y = "AvS9MH"
+
+genes = row.names(CV)
+
+mean.data = na.omit(A4V.meancpm[row.names(CV), c('A40FH', 'S40FH',
+                                                 'A9MH', 'S9MH')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 95"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'brown')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 95 FC of Complex V genes in A4V male 9 day and female 40 day head samples relative to silent. mtDNA encoded genes are in red Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+
+```{r echo = F}
+
+x = "AvSFH"
+y = "AvSMH"
+
+genes = row.names(CV)
+
+mean.data = na.omit(A4V.meancpm[row.names(CV), c('AFH', 'SFH',
+                                                 'AMH', 'SMH')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 96"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'brown')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 96 FC of Complex V genes in A4V male 9 day and female 40 day head samples relative to silent. mtDNA encoded genes are in red Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS3FT"
+y = "AvS3MT"
+
+genes = row.names(CV)
+
+mean.data = na.omit(A4V.meancpm[row.names(CV), c('A3FT', 'S3FT',
+                                    'A3MT', 'S3MT')])
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+
+main.title = "Fig 97"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'brown')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 97 FC of Complex IV genes in A4V male and female thorax samples at 3 day relative to silent. mtDNA encoded genes are in red. Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+
+```{r echo = F}
+
+x = "AvS9FT"
+y = "AvS9MT"
+
+genes = row.names(CV)
+
+mean.data = na.omit(A4V.meancpm[row.names(CV), c('A9FT', 'S9FT',
+                                                 'A9MT', 'S9MT')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 98"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'brown')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 98 FC of Complex IV genes in A4V male and female thorax samples at 9 day relative to silent. mtDNA encoded genes are in red. Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+```{r echo = F}
+
+x = "AvS40FT"
+y = "AvS9MT"
+
+genes = row.names(CV)
+
+mean.data = na.omit(A4V.meancpm[row.names(CV), c('A40FT', 'S40FT',
+                                                 'A9MT', 'S9MT')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 99"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'brown')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 99 FC of Complex IV genes in A4V male 9 day and female 40 day head samples relative to silent. mtDNA encoded genes are in red. Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+
+```{r echo = F}
+
+x = "AvSFT"
+y = "AvSMT"
+
+genes = row.names(CV)
+
+mean.data = na.omit(A4V.meancpm[row.names(CV), c('AFT', 'SFT',
+                                                 'AMT', 'SMT')])
+
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+main.title = "Fig 100"
+
+
+##RG = Response Genes
+AVxWT.CH.RG = AV.SpecificGenes.mtvnuc.biplot(genes, x, y, mean.data, main.title, 'brown')
+
+AVxWT.CH.RG[[1]]
+
+```
+
+
+Fig. 100 FC of Complex I genes in A4V male 9 day and female 40 day thorax samples relative to silent. mtDNA encoded genes are in red. Genes with mean cpm under 10 for all conditions excluded.
+
+</br></br>
+
+
+
+
+
+```{r echo = F, include = F}
+
+
+
+x = "AvS3FT"
+y = "AvS3MT"
+
+genes = row.names(CI)
+
+mean.data = na.omit(A4V.meancpm[row.names(CI), c('A3FT', 'S3FT',
+                                    'A3MT', 'S3MT')])
+temp.cpmcutoff = apply(mean.data, 1, max)
+temp.cpmcutoff = temp.cpmcutoff[temp.cpmcutoff >10]
+genes = intersect(genes, names(temp.cpmcutoff))
+
+
+main.title = "Fig 65"
+
+
+
+
+```
+
+
+```{r echo = F, iclude = F}
+
+complex.genes[row.names(complex.genes) %in% mt, "CHR"] = "mt"
+
+complex.cpm = na.omit(TKT.cpm[row.names(complex.genes),
+                              c("GR.F1", "GR.F2", "GR.M1", "GR.M2", "GR.M3",
+                                "WT.F1", "WT.F2", "WT.M1", "WT.M2", "WT.M3")])
+row.names(complex.cpm) = GeneIDKey[row.names(complex.cpm), "Symbol"]
+complex.cpm = complex.cpm[apply(complex.cpm, 1, max)>10,]
+
+complex.data = complex.genes
+row.names(complex.data) = complex.data$Symbol
+complex.data = complex.data[row.names(complex.cpm),]
+complex.data = cbind(complex.data[row.names(complex.cpm),], complex.cpm)
+
+pca <- prcomp((complex.cpm), scale.=TRUE) 
+pc1=scale(pca$x[,1])
+pc2=scale(pca$x[,2])
+eigs <- pca$sdev^2
+ve=signif(((eigs / sum(eigs))*100)[1:3],4)
+
+pca.data=data.frame(PC1=pc1[row.names(pc1),1],
+                    PC2=pc2[row.names(pc1),1],
+                    Percent1=ve[1],
+                    Percent2=ve[2],
+                    CHR = complex.data[row.names(pc1), "CHR"],
+                    Complex = complex.data[row.names(pc1), "Complex"],
+                    Group = paste0(complex.data[row.names(pc1), "CHR"],": ",
+                                   complex.data[row.names(pc1), "Complex"]))
+
+pca.data$CHR[pca.data$CHR != "mt"] = "nuc"
+pca.data$Group = paste0(pca.data$CHR,": ", pca.data$Complex)
+
+    #pca.data$Group = factor(pca.data$Group, levels = unique(pca.data$Group))
+    #pca.data$Score = 20*(1+pca.data$Score/mean(pca.data$Score))
+    
+  fig  = plot_ly(data = pca.data, 
+                 x = ~PC1, 
+                 y = ~PC2,
+                 name = ~Group,
+                 type = 'scatter',
+                 mode = 'markers',
+                 showlegend = T,
+                 color = ~Complex,
+                 symbol = ~CHR,
+                 marker = list(size = 10,
+                               line = list(color = "black", width = 1.5))) %>%
+    layout(xaxis = list(title = paste0("PC1", "(", ve[1], "%)")),
+           yaxis = list(title = paste0("PC2", "(", ve[2], "%)")),
+           title = "Enriched GO term similarity")
+
+  fig
+```
+
+
+```{r echo = F, warning = F, include = F}
+
+complex.genes[row.names(complex.genes) %in% mt, "CHR"] = "mt"
+
+complex.cpm = na.omit(A4V.cpm[row.names(complex.genes),
+                              row.names(A4V.meta[A4V.meta$Section == "Head",])])# &
+                                                 #A4V.meta$Age == "3",])])
+row.names(complex.cpm) = GeneIDKey[row.names(complex.cpm), "Symbol"]
+complex.cpm = complex.cpm[apply(complex.cpm, 1, max)>10,]
+complex.cpm = t(scale(t(complex.cpm)))
+
+complex.data = complex.genes
+row.names(complex.data) = complex.data$Symbol
+complex.data = complex.data[row.names(complex.cpm),]
+complex.data = cbind(complex.data[row.names(complex.cpm),], complex.cpm)
+
+pca <- prcomp((complex.cpm), scale.=TRUE) 
+pc1=scale(pca$x[,1])
+pc2=scale(pca$x[,2])
+eigs <- pca$sdev^2
+ve=signif(((eigs / sum(eigs))*100)[1:3],4)
+
+pca.data=data.frame(PC1=pc1[row.names(pc1),1],
+                    PC2=pc2[row.names(pc1),1],
+                    Percent1=ve[1],
+                    Percent2=ve[2],
+                    CHR = complex.data[row.names(pc1), "CHR"],
+                    Complex = complex.data[row.names(pc1), "Complex"],
+                    Group = paste0(complex.data[row.names(pc1), "CHR"],": ",
+                                   complex.data[row.names(pc1), "Complex"]),
+                    Color = "royalblue",
+                    Symbol = row.names(pc1),
+                    FBgn = complex.data[row.names(pc1), "FBgn"])
+
+pca.data$CHR[pca.data$CHR != "mt"] = "nuc"
+pca.data$Group = paste0(pca.data$CHR,": ", pca.data$Complex)
+pca.data$Color[pca.data$CHR == 'mt'] = 'firebrick'
+
+
+    #pca.data$Group = factor(pca.data$Group, levels = unique(pca.data$Group))
+    #pca.data$Score = 20*(1+pca.data$Score/mean(pca.data$Score))
+    
+  fig  = plot_ly(data = pca.data, 
+                 x = ~PC1, 
+                 y = ~PC2,
+                 name = ~Group,
+                 type = 'scatter',
+                 mode = 'markers',
+                 showlegend = T,
+                 color = ~CHR,
+                 symbol = ~CHR,
+                 marker = list(size = 10,
+                               color = ~Color[order(pca.data$Color)],
+                               line = list(color = "black", width = 1.5)),
+                 hoverinfo = "text",
+                 hovertext = paste("Symbol: ", row.names(pca.data),
+                                   "\nFBgn: ", pca.data$FBgn, 
+                                   "\nComplex: ", pca.data$Complex)) %>%
+    layout(xaxis = list(title = paste0("PC1", "(", ve[1], "%)")),
+           yaxis = list(title = paste0("PC2", "(", ve[2], "%)")),
+           title = "A4V/Silent 3 Hour Head OXPHOS Genes")
+
+  fig
+```
+
+
+```{r echo = F, warning = F, include = F}
+
+complex.genes[row.names(complex.genes) %in% mt, "CHR"] = "mt"
+
+complex.cpm = na.omit(A4V.cpm[row.names(complex.genes)[complex.genes$Complex == "Complex I" 
+                                                       | complex.genes$Complex == "Complex II" 
+                                                       | complex.genes$Complex == "Complex III"
+                                                       | complex.genes$Complex == "Complex IV"
+                                                       | complex.genes$Complex == "Complex V"],])
+                              #row.names(A4V.meta[A4V.meta$Section == "Thorax" &
+                              #                   (A4V.meta$Age == "3"),])])
+
+row.names(complex.cpm) = GeneIDKey[row.names(complex.cpm), "Symbol"]
+complex.cpm = complex.cpm[apply(complex.cpm, 1, max)>10,]
+complex.cpm.all = t(scale(t(complex.cpm)))
+
+complex.cpm = complex.cpm.all[,row.names(A4V.meta[A4V.meta$Section == "Thorax" &
+                                                  (A4V.meta$Age == "9"),])]
+complex.data = complex.genes
+row.names(complex.data) = complex.data$Symbol
+complex.data = complex.data[row.names(complex.cpm),]
+complex.data = cbind(complex.data[row.names(complex.cpm),], complex.cpm)
+
+pca <- prcomp((complex.cpm), scale.=TRUE) 
+pc1=scale(pca$x[,1])
+pc2=scale(pca$x[,2])
+eigs <- pca$sdev^2
+ve=signif(((eigs / sum(eigs))*100)[1:3],4)
+
+pca.data=data.frame(PC1=pc1[row.names(pc1),1],
+                    PC2=pc2[row.names(pc1),1],
+                    Percent1=ve[1],
+                    Percent2=ve[2],
+                    CHR = complex.data[row.names(pc1), "CHR"],
+                    Complex = complex.data[row.names(pc1), "Complex"],
+                    Group = paste0(complex.data[row.names(pc1), "CHR"],": ",
+                                   complex.data[row.names(pc1), "Complex"]),
+                    Color = "royalblue",
+                    Symbol = row.names(pc1),
+                    FBgn = complex.data[row.names(pc1), "FBgn"])
+
+pca.data$CHR[pca.data$CHR != "mt"] = "nuc"
+pca.data$Group = paste0(pca.data$CHR,": ", pca.data$Complex)
+pca.data$Color[pca.data$CHR == 'mt'] = 'firebrick'
+
+
+    #pca.data$Group = factor(pca.data$Group, levels = unique(pca.data$Group))
+    #pca.data$Score = 20*(1+pca.data$Score/mean(pca.data$Score))
+    
+  fig  = plot_ly(data = pca.data, 
+                 x = ~PC1, 
+                 y = ~PC2,
+                 name = ~Group,
+                 type = 'scatter',
+                 mode = 'markers',
+                 showlegend = T,
+                 color = ~CHR,
+                 symbol = ~CHR,
+                 marker = list(size = 10,
+                               color = ~Color[order(pca.data$Color)],
+                               line = list(color = "black", width = 1.5)),
+                 hoverinfo = "text",
+                 hovertext = paste("Symbol: ", row.names(pca.data),
+                                   "\nFBgn: ", pca.data$FBgn, 
+                                   "\nComplex: ", pca.data$Complex)) %>%
+    layout(xaxis = list(title = paste0("PC1", "(", ve[1], "%)")),
+           yaxis = list(title = paste0("PC2", "(", ve[2], "%)")),
+           title = "A4V/Silent 3 Hour Head OXPHOS Genes")
+
+  fig
+```
+
+
+```{r echo = F, include = F}
+
+library(gplots)
+
+complex.cpm = na.omit(A4V.meancpm[row.names(complex.genes),])
+#                                  row.names(A4V.meta[A4V.meta$Section == "Thorax" &
+#                                                  (A4V.meta$Age == "9"),])])
+
+hmcolors=colorpanel(50,"steelblue3", "ivory",'red3')
+
+#complex.cpm = na.omit(A4V.cpm[mt,
+#                              row.names(A4V.meta[A4V.meta$Section == "Thorax",])])
+
+row.names(complex.cpm) = GeneIDKey[row.names(complex.cpm), "Symbol"]
+complex.cpm = complex.cpm[apply(complex.cpm, 1, max)>10,]
+
+mt.sym = GeneIDKey[mt, "Symbol"]
+
+complex.hmgenes = complex.cpm
+complex.hmgenes = complex.hmgenes[c(setdiff(row.names(complex.hmgenes), mt.sym),
+                                    intersect(row.names(complex.hmgenes), mt.sym)),]
+
+
+complex.hmgenes = complex.hmgenes[c(intersect(row.names(complex.hmgenes), mt.sym)),]
+
+T.complex.hmgenes = complex.hmgenes[,substr(colnames(complex.hmgenes), 
+                                            nchar(colnames(complex.hmgenes)), 
+                                            nchar(colnames(complex.hmgenes))) == "T"]
+
+
+
+T.complex.hmgenes = T.complex.hmgenes[, c("S3FT", "S9FT", "S40FT",
+                                          "A3FT", "A9FT", "A40FT",
+                                          "S3MT", "S9MT",
+                                          "A3MT", "A9MT")]
+
+heatmap.2(as.matrix(T.complex.hmgenes),
+          Colv = F,
+          Rowv = T,
+          dendrogram = "none",
+          col = hmcolors,
+          trace = "none",
+          scale = 'row',
+          cexRow = 1)
+
+
+
+```
+
+
+```{r echo = F}
+
+complex.cpm = na.omit(A4V.meancpm[row.names(complex.genes),])
+
+complex.cpm = complex.cpm[apply(complex.cpm, 1, max)>10,]
+
+
+complex.FC = A4V.FC[row.names(complex.cpm),]
+
+complex.FC = complex.FC[c(setdiff(row.names(complex.FC), mt),
+                          intersect(row.names(complex.FC), mt)),]
+
+complex.FC = complex.FC[c(intersect(row.names(complex.FC), mt)),]
+
+complex.FC = complex.FC[, c("AvS3FH", "AvS9FH", "AvS40FH",
+                            "AvS3FT", "AvS9FT", "AvS40FT",
+                            "AvS3FA", "AvS9FA", "AvS40FA",
+                            "AvS3MH", "AvS9MH",
+                            "AvS3MT", "AvS9MT",
+                            "AvS3MA", "AvS9MA")]
+
+complex.FC = complex.FC[, c("AvS3FH", "AvS9FH", "AvS40FH",
+                            "AvS3MH", "AvS9MH",
+                            "AvS3FT", "AvS9FT", "AvS40FT",
+                            "AvS3MT", "AvS9MT")]
+
+row.names(complex.FC) = GeneIDKey[row.names(complex.FC), "Symbol"]
+
+
+
+heatmap.2(as.matrix(complex.FC),
+          Colv = F,
+          Rowv = T,
+          dendrogram = "none",
+          col = hmcolors,
+          trace = "none",
+          ##scale = 'row',
+          cexRow = 1)
+
+
+
+```
+
+
+```{r echo = F}
+
+complex.cpm = na.omit(A4V.meancpm[row.names(complex.genes),])
+
+complex.cpm = complex.cpm[apply(complex.cpm, 1, max)>10,]
+
+
+complex.FC = A4V.FC[row.names(complex.cpm),]
+
+complex.FC = complex.FC[c(setdiff(row.names(complex.FC), mt),
+                          intersect(row.names(complex.FC), mt)),]
+
+complex.FC = complex.FC[c(setdiff(row.names(complex.FC), mt)),]
+
+complex.FC = complex.FC[, c("AvS3FH", "AvS9FH", "AvS40FH",
+                            "AvS3FT", "AvS9FT", "AvS40FT",
+                            "AvS3FA", "AvS9FA", "AvS40FA",
+                            "AvS3MH", "AvS9MH",
+                            "AvS3MT", "AvS9MT",
+                            "AvS3MA", "AvS9MA")]
+
+complex.FC = complex.FC[, c("AvS3FH", "AvS9FH", "AvS40FH",
+                            "AvS3MH", "AvS9MH",
+                            "AvS3FT", "AvS9FT", "AvS40FT",
+                            "AvS3MT", "AvS9MT")]
+
+row.names(complex.FC) = GeneIDKey[row.names(complex.FC), "Symbol"]
+
+complex.FC[complex.FC < -4] = -4
+
+heatmap.2(as.matrix(complex.FC),
+          Colv = F,
+          Rowv = T,
+          dendrogram = "none",
+          col = hmcolors,
+          trace = "none",
+          ##scale = 'row',
+          cexRow = .25)
+
+
+
+```
+
+
+```{r echo = F, include = F}
+
+
+
+complex.cpm = na.omit(A4V.meancpm[row.names(complex.genes),])
+
+complex.cpm = complex.cpm[apply(complex.cpm, 1, max)>10,]
+
+
+complex.FC = A4V.FC[row.names(complex.cpm),]
+
+complex.FC = complex.FC[c(setdiff(row.names(complex.FC), mt),
+                          intersect(row.names(complex.FC), mt)),]
+
+complex.FC = complex.FC[c(setdiff(row.names(complex.FC), mt),
+                          intersect(row.names(complex.FC), mt)),]
+
+complex.FC = complex.FC[, c("AvS3FH", "AvS9FH", "AvS40FH",
+                            "AvS3FT", "AvS9FT", "AvS40FT",
+                            "AvS3FA", "AvS9FA", "AvS40FA",
+                            "AvS3MH", "AvS9MH",
+                            "AvS3MT", "AvS9MT",
+                            "AvS3MA", "AvS9MA")]
+
+complex.FC = complex.FC[, c("AvS3FT", "AvS9FT", "AvS40FT",
+                            "AvS3MT", "AvS9MT")]
+
+
+pca <- prcomp((complex.FC), scale.=TRUE) 
+pc1=scale(pca$x[,1])
+
+pc2=scale(pca$x[,2])
+eigs <- pca$sdev^2
+ve=signif(((eigs / sum(eigs))*100)[1:3],4)
+
+pca.data=data.frame(PC1=pc1[row.names(pc1),1],
+                    PC2=pc2[row.names(pc1),1],
+                    Percent1=ve[1],
+                    Percent2=ve[2],
+                    CHR = complex.genes[row.names(pc1), "CHR"],
+                    Complex = complex.genes[row.names(pc1), "Complex"],
+                    Group = paste0(complex.genes[row.names(pc1), "CHR"],": ",
+                                   complex.genes[row.names(pc1), "Complex"]),
+                    Color = "royalblue",
+                    Symbol = complex.genes[row.names(pc1), "Symbol"],
+                    FBgn = row.names(pc1))
+
+pca.data$CHR[pca.data$CHR != "mt"] = "nuc"
+pca.data$Group = paste0(pca.data$CHR,":", pca.data$Complex)
+pca.data$Color[pca.data$CHR == 'mt'] = 'firebrick'
+
+
+    #pca.data$Group = factor(pca.data$Group, levels = unique(pca.data$Group))
+    #pca.data$Score = 20*(1+pca.data$Score/mean(pca.data$Score))
+    
+  fig  = plot_ly(data = pca.data, 
+                 x = ~PC1, 
+                 y = ~PC2,
+                 name = ~Group,
+                 type = 'scatter',
+                 mode = 'markers',
+                 showlegend = T,
+                 color = ~CHR,
+                 symbol = ~CHR,
+                 marker = list(size = 10,
+                               color = ~Color[order(pca.data$Color)],
+                               line = list(color = "black", width = 1.5)),
+                 hoverinfo = "text",
+                 hovertext = paste("Symbol: ", row.names(pca.data),
+                                   "\nFBgn: ", pca.data$FBgn, 
+                                   "\nComplex: ", pca.data$Complex)) %>%
+    layout(xaxis = list(title = paste0("PC1", "(", ve[1], "%)")),
+           yaxis = list(title = paste0("PC2", "(", ve[2], "%)")),
+           title = "A4V/Silent 3 Hour Head OXPHOS Genes")
+
+  fig
+
+```
+
+
+```{r echo = F, include = F}
+
+
+
+complex.cpm = na.omit(A4V.meancpm[row.names(complex.genes),
+                                  grep("T", colnames(A4V.meancpm))])
+
+complex.cpm = complex.cpm[apply(complex.cpm, 1, max)>10,]
+
+complex.cpm = complex.cpm[c(setdiff(row.names(complex.cpm), mt),
+                            intersect(row.names(complex.cpm), mt)),]
+
+
+complex.cpm = complex.cpm[c(intersect(row.names(complex.cpm), mt)),]
+
+complex.FC = complex.cpm[, c("S3FT", "S9FT", "S40FT",
+                             "A3FT", "A9FT", "A40FT",
+                             "S3MT", "S9MT",
+                             "A3MT", "A9MT")]
+
+pca <- prcomp(t(complex.FC), scale.=TRUE) 
+pc1=scale(pca$x[,1])
+pc2=scale(pca$x[,2])
+eigs <- pca$sdev^2
+ve=signif(((eigs / sum(eigs))*100)[1:3],4)
+
+pca.data=data.frame(PC1=pc1[row.names(pc1),1],
+                    PC2=pc2[row.names(pc1),1],
+                    Percent1=ve[1],
+                    Percent2=ve[2],
+                    Group = paste0(substr(row.names(pc1), 1,1),
+                                  substr(row.names(pc1), nchar(row.names(pc1)), nchar(row.names(pc1)))),
+                    Color = "royalblue")
+
+pca.data$Color[grep("A", pca.data$Group)] = "firebrick"
+
+    
+  fig  = plot_ly(data = pca.data, 
+                 x = ~PC1, 
+                 y = ~PC2,
+                 name = ~Group,
+                 type = 'scatter',
+                 mode = 'markers',
+                 showlegend = T,
+                 color = ~Color,
+                 marker = list(size = 10,
+                               color = ~Color[order(pca.data$Color)],
+                               line = list(color = "black", width = 1.5)),
+                 hoverinfo = "text",
+                 hovertext = row.names(pca.data)) %>%
+    layout(xaxis = list(title = paste0("PC1", "(", ve[1], "%)")),
+           yaxis = list(title = paste0("PC2", "(", ve[2], "%)")),
+           title = "")
+
+  fig
+
+```
+
+
+```{r echo = F, include = F}
+
+complex.cpm = na.omit(A4V.meancpm[row.names(complex.genes),])
+complex.cpm = complex.cpm[apply(complex.cpm, 1, max)>10,]
+complex.cpm = complex.cpm[intersect(row.names(complex.cpm), mt),]
+
+complex.cpm = complex.cpm[,substr(colnames(complex.cpm),
+                                  nchar(colnames(complex.cpm)),
+                                  nchar(colnames(complex.cpm))) == "T"]
+
+
+complex.cpm = complex.cpm[, nchar(colnames(complex.cpm)) > 3]
+
+scaled.cpm = t(scale(t(complex.cpm)))
+
+SF = scaled.cpm[,c("S3FT", "S9FT", "S40FT")]
+SM = scaled.cpm[,c("S3MT", "S9MT")]
+AF = scaled.cpm[,c("A3FT", "A9FT", "A40FT")]
+AM = scaled.cpm[,c("A3MT", "A9MT")]
+
+plot(x = NA,
+      y = NA,
+     type = 'n',
+     ylim = c(-2, 3),
+     xlim = c(1,6),
+     ylab = '',
+     xlab = '',
+     xaxt = 'n',
+     main = "")
+i=1
+while(i<= nrow(SF)){
+lines(x = c(1:3),
+      y = SF[i,],
+      col = 'grey')
+  
+lines(x = c(1:3),
+      y = AF[i,],
+      col = 'grey')  
+  
+  i=i+1
+  
+}
+
+```
+
+
+```{r echo = F, include = F}
+
+complex.cpm = na.omit(A4V.meancpm[row.names(complex.genes),])
+complex.cpm = complex.cpm[apply(complex.cpm, 1, max)>10,]
+complex.cpm = complex.cpm[intersect(row.names(complex.cpm), mt),]
+
+complex.cpm = complex.cpm[,substr(colnames(complex.cpm),
+                                  nchar(colnames(complex.cpm)),
+                                  nchar(colnames(complex.cpm))) == "T"]
+
+
+complex.cpm = complex.cpm[, nchar(colnames(complex.cpm)) > 3]
+
+scaled.cpm = t(scale(t(complex.cpm)))
+
+SF = scaled.cpm[,c("S3FT", "S9FT", "S40FT")]
+SM = scaled.cpm[,c("S3MT", "S9MT")]
+AF = scaled.cpm[,c("A3FT", "A9FT", "A40FT")]
+AM = scaled.cpm[,c("A3MT", "A9MT")]
+
+plot(x = NA,
+      y = NA,
+     type = 'n',
+     ylim = c(-2, 3),
+     xlim = c(1,6),
+     ylab = '',
+     xlab = '',
+     xaxt = 'n',
+     main = "")
+i=1
+while(i<= nrow(SF)){
+lines(x = c(1:3),
+      y = SF[i,],
+      col = 'grey')
+  
+lines(x = c(1:3),
+      y = AF[i,],
+      col = 'grey')  
+  
+  i=i+1
+  
+}
+
+```
+
+
+```{r echo = F, include = F}
+
+complex.cpm = na.omit(A4V.meancpm[row.names(complex.genes),])
+#                                  row.names(A4V.meta[A4V.meta$Section == "Thorax" &
+#                                                  (A4V.meta$Age == "9"),])])
+
+hmcolors=colorpanel(50,"steelblue3", "ivory",'red3')
+
+#complex.cpm = na.omit(A4V.cpm[mt,
+#                              row.names(A4V.meta[A4V.meta$Section == "Thorax",])])
+
+row.names(complex.cpm) = GeneIDKey[row.names(complex.cpm), "Symbol"]
+complex.cpm = complex.cpm[apply(complex.cpm, 1, max)>10,]
+
+mt.sym = GeneIDKey[mt, "Symbol"]
+
+complex.hmgenes = complex.cpm
+complex.hmgenes = complex.hmgenes[c(setdiff(row.names(complex.hmgenes), mt.sym),
+                                    intersect(row.names(complex.hmgenes), mt.sym)),]
+
+
+complex.hmgenes = complex.hmgenes[c(intersect(row.names(complex.hmgenes), mt.sym)),]
+
+T.complex.hmgenes = complex.hmgenes[,substr(colnames(complex.hmgenes), 
+                                            nchar(colnames(complex.hmgenes)), 
+                                            nchar(colnames(complex.hmgenes))) == "H"]
+
+
+
+T.complex.hmgenes = T.complex.hmgenes[, c("S3FH", "S9FH", "S40FH",
+                                          "A3FH", "A9FH", "A40FH",
+                                          "S3MH", "S9MH",
+                                          "A3MH", "A9MH")]
+
+heatmap.2(as.matrix(T.complex.hmgenes),
+          Colv = F,
+          Rowv = T,
+          dendrogram = "none",
+          col = hmcolors,
+          trace = "none",
+          scale = 'row',
+          cexRow = .5)
+
+
+
+```
+
+```{r echo = F, warning = F, include = F}
+
+complex.cpm = na.omit(A4V.meancpm[row.names(complex.genes),])
+complex.cpm = complex.cpm[apply(complex.cpm, 1, max)>10,]
+complex.cpm = complex.cpm[intersect(row.names(complex.cpm), mt),]
+
+complex.cpm = complex.cpm[,substr(colnames(complex.cpm),
+                                  nchar(colnames(complex.cpm)),
+                                  nchar(colnames(complex.cpm))) == "T"]
+
+complex.cpm =complex.cpm[, nchar(colnames(complex.cpm)) > 3]
+
+pca <- prcomp(t(complex.cpm), scale.=TRUE) 
+pc1=scale(pca$x[,1])
+pc2=scale(pca$x[,2])
+eigs <- pca$sdev^2
+ve=signif(((eigs / sum(eigs))*100)[1:3],4)
+
+pca.data=data.frame(PC1=pc1[row.names(pc1),1],
+                    PC2=pc2[row.names(pc1),1],
+                    Percent1=ve[1],
+                    Percent2=ve[2],
+                    Group = paste0(substr(row.names(pc1),1,1),
+                                   substr(row.names(pc1),
+                                          (nchar(row.names(pc1))-1),
+                                          (nchar(row.names(pc1))-1))),
+                    Age = substr(row.names(pc1), 2, (nchar(row.names(pc1))-2)),
+                    Color = "lightgrey",
+                    Symbol = 20)
+
+pca.data$Color[pca.data$Group == "AF"] = 'firebrick'
+pca.data$Color[pca.data$Group == "AM"] = 'steelblue'
+pca.data$Color[pca.data$Group == "SF"] = 'ivory'
+
+pca.data$Symbol = pca.data$Symbol + as.numeric(factor(pca.data$Group))
+    
+  fig  = plot_ly(data = pca.data, 
+                 x = ~PC1, 
+                 y = ~PC2,
+                 name = ~Group,
+                 type = 'scatter',
+                 mode = 'markers',
+                 showlegend = T,
+                 color = ~Group,
+                 symbol = ~Symbol,
+                 marker = list(size = 10,
+                               color = ~Color[order(pca.data$Color)],
+                               line = list(color = "black", width = 1.5)),
+                 hoverinfo = "text",
+                 hovertext = paste("Group: ", pca.data$Group,
+                                   "\nAge: ", pca.data$Age)) %>%
+    layout(xaxis = list(title = paste0("PC1", "(", ve[1], "%)")),
+           yaxis = list(title = paste0("PC2", "(", ve[2], "%)")),
+           title = "A4V/Silent 3 Hour Head OXPHOS Genes")
+
+  fig
+```
+
+
+```{r, test-rgl, webgl=TRUE,echo=F, fig.height=10, fig.width=10, include = F}
+#open3d()
+#view3d( theta = -45, phi = 30)
+
+#plot.colors = c("pink","dodgerblue","yellow","green", "grey", "purple1","red","blue","yellow3","darkgreen","black", "purple4")[as.numeric(pca.data$Group)]
+
+#plot3d(x, y, z, col = plot.colors,type='s',size=3,
+#       xlab = paste0("PC1 (",pca.data$Percent1[1],"%)"),
+#       ylab = paste0("PC2 (",pca.data$Percent2[1],"%)"),
+#       zlab = paste0("PC3 (",pca.data$Percent3[1],"%)"))
+
+#plot3d(x=c(-1.2,1.5),y=c(0,0),z=c(0,0),type="l",add=T, lty=2,lwd=2,col="black")
+#plot3d(x=c(0,0),y=c(-1.85,2.3),z=c(0,0),type="l",add=T, lty=2,lwd=2,col="black")
+#plot3d(x=c(0,0),y=c(0,0),z=c(-2.55,2.55),type="l",add=T, lty=2,lwd=2,col="black")
+#legend3d("right",legend = unique(pca.data$Groups), pch=19, col = unique(plot.colors),magnify=2,bty="n",inset=.1)
+#grid3d(c("x+","y","z"))
+```

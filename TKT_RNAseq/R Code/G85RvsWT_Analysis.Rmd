@@ -249,12 +249,27 @@ bg2 = row.names(TKT.EdgeR)[TKT.EdgeR[, "GRxWT.MC"]<= 1]
 sigs = intersect(sigs1, sigs2)
 bg = unique(c(bg1, bg2))
 
+
+sigs = row.names(A4V.FDR)[A4V.FDR[, "AvS40FT"] <= .05]
+bg = row.names(A4V.FDR)[A4V.FDR[, "AvS40FT"] <= 1]
+
+sigs = row.names(TKT.EdgeR)[TKT.EdgeR[,"GRxWT.MC"] <= .05]
+bg = row.names(TKT.EdgeR)[TKT.EdgeR[, "GRxWT.MC"]<= 1]
+
 sigsKEY = GeneIDKey[sigs,]
-sigs = sigsKEY$Symbol
+sigs = unique(na.omit(sigsKEY$Symbol))
 bgKEY = GeneIDKey[bg,]
-bg = bgKEY$Symbol
+bg = unique(na.omit(bgKEY$Symbol))
 
 sig.cats = Enrichment(sigs, bg)
+
+##GFsigs = sig.cats$GO[sig.cats$GO$adjp < 0.05, c(4,5,6,8)]
+##GMsigs = sig.cats$GO[sig.cats$GO$adjp < 0.05, c(4,5,6,8)]
+#AF3Tsigs = sig.cats$GO[sig.cats$GO$adjp < 0.05, c(4,5,6,8)]
+#AF9Tsigs = sig.cats$GO[sig.cats$GO$adjp < 0.05, c(4,5,6,8)]
+#AF40Tsigs = sig.cats$GO[sig.cats$GO$adjp < 0.05, c(4,5,6,8)]
+#AM3Tsigs = sig.cats$GO[sig.cats$GO$adjp < 0.05, c(4,5,6,8)]
+#AM9Tsigs = sig.cats$GO[sig.cats$GO$adjp < 0.05, c(4,5,6,8)]
 
 ```
 
