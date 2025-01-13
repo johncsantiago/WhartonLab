@@ -1,0 +1,549 @@
+---
+title: "FlashTalkFigures"
+author: "John Santiago"
+date: "2024-12-09"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo = F}
+
+Df = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/FlashTalkModifierData.csv")
+
+exel = Df[grep('xel', Df$Deficiency),]
+deficiency = Df[grep('xel', Df$Deficiency, invert = T),]
+
+
+```
+
+```{r echo = F}
+
+Chr2L = Df[Df$Chr == "2L", ]
+
+exel2L = Chr2L[grep("xel", Chr2L$Deficiency),
+             c("Start", "End", "MLE")]
+
+
+Def2L = Chr2L[grep("xel", Chr2L$Deficiency, invert = T),
+             c("Start", "End", "MLE")]
+
+exel2L = data.frame(x1 = exel2L$Start,
+                    x2 = exel2L$End,
+                    y1 = 0,
+                    y2 = exel2L$MLE)
+
+Def2L = data.frame(x1 = Def2L$Start,
+                   x2 = Def2L$End,
+                   y1 = 0,
+                   y2 = Def2L$MLE)
+
+par(mar=c(5.1, 4.1, 4.1, 8.1))
+
+plot(x = 0, 
+     y = 0,
+     type = "n",
+     xlim = c(0, 23000000),
+     #ylim = c(-2.5, 4.5),
+     ylim = c(-4, 6),
+     ylab = "Median Lifespan Extension",
+     xlab = "Position ",
+     main = "Chromosome 2L")
+
+abline(h = 0, col = 'grey')
+
+i = 1
+
+while(i <= nrow(Def2L)){
+  rect(xleft = Def2L[i,1],
+       ybottom = Def2L[i,3],
+       xright = Def2L[i,2],
+       ytop = Def2L[i, 4],
+       col = 'lightsteelblue')
+  i = i + 1
+}
+
+i = 1
+
+while(i <= nrow(exel2L)){
+  rect(xleft = exel2L[i,1],
+       ybottom = exel2L[i,3],
+       xright = exel2L[i,2],
+       ytop = exel2L[i, 4],
+       col = 'brown')
+  i = i + 1
+}
+
+#abline(h = 0)
+
+legend('topright',
+       inset=c(-0.285,0),
+       legend = c('Deficiency', 'Exelixis'), 
+       fill = c('lightsteelblue',"brown"),
+       cex = 1,
+       bty = 'n',
+       pt.cex = .5,
+       xpd=TRUE)
+
+```
+
+
+```{r echo = F}
+
+Chr2R = Df[Df$Chr == "2R", ]
+
+Lethal = Chr2R[Chr2R$MLE == "Lethal",
+             c("Start", "End", "MLE")]
+
+Chr2R = Chr2R[Chr2R$MLE != "Lethal", ]
+
+exel2R = Chr2R[grep("xel", Chr2R$Deficiency),
+             c("Start", "End", "MLE")]
+
+
+Def2R = Chr2R[grep("xel", Chr2R$Deficiency, invert = T),
+             c("Start", "End", "MLE")]
+
+exel2R = data.frame(x1 = exel2R$Start,
+                    x2 = exel2R$End,
+                    y1 = 0,
+                    y2 = exel2R$MLE)
+
+Def2R = data.frame(x1 = Def2R$Start,
+                   x2 = Def2R$End,
+                   y1 = 0,
+                   y2 = Def2R$MLE)
+
+
+par(mar=c(5.1, 4.1, 4.1, 8.1))
+
+plot(x = 0, 
+     y = 0,
+     type = "n",
+     xlim = c(0, 25000000),
+     #ylim = c(-4, 3.5),
+     ylim = c(-4, 6),
+     ylab = "Median Lifespan Extension",
+     xlab = "Position ",
+     main = "Chromosome 2R")
+
+abline(h = 0, col = 'grey')
+
+i = 1
+
+while(i <= nrow(Def2R)){
+  rect(xleft = Def2R[i,1],
+       ybottom = Def2R[i,3],
+       xright = Def2R[i,2],
+       ytop = Def2R[i, 4],
+       col = 'lightsteelblue')
+  i = i + 1
+}
+
+i = 1
+while(i <= nrow(Lethal)){
+  abline(v = Lethal[i, "Start"], lty = 2)
+  abline(v = Lethal[i, "End"], lty = 2)
+  rect(xleft = Lethal[i,"Start"],
+       ybottom = -10,
+       xright = Lethal[i,"End"],
+       ytop = 10,
+       col = 'black',
+       density = 50,
+       border = NA)
+  i = i + 1
+}
+
+i = 1
+
+while(i <= nrow(exel2R)){
+  rect(xleft = exel2R[i,1],
+       ybottom = exel2R[i,3],
+       xright = exel2R[i,2],
+       ytop = exel2R[i, 4],
+       col = 'brown')
+  i = i + 1
+}
+
+#abline(h = 0)
+
+if(nrow(Lethal) > 0){
+  legend('topright',
+       inset=c(-0.285,0),
+       legend = c('Deficiency', 'Exelixis', 'Lethal'), 
+       fill = c('lightsteelblue',"brown", 'black'),
+       density = c(10000, 10000, 50),
+       cex = 1,
+       bty = 'n',
+       pt.cex = .5,
+       xpd=TRUE)
+}
+
+if(nrow(Lethal) == 0){
+  legend('topright',
+       inset=c(-0.285,0),
+       legend = c('Deficiency', 'Exelixis'), 
+       fill = c('lightsteelblue',"brown"),
+       density = c(10000, 10000),
+       cex = 1,
+       bty = 'n',
+       pt.cex = .5,
+       xpd=TRUE)
+}
+
+```
+
+
+
+
+
+```{r echo = F}
+
+Chr3L = Df[Df$Chr == "3L", ]
+
+exel3L = Chr3L[grep("xel", Chr3L$Deficiency),
+             c("Start", "End", "MLE")]
+
+
+Def3L = Chr3L[grep("xel", Chr3L$Deficiency, invert = T),
+             c("Start", "End", "MLE")]
+
+exel3L = data.frame(x1 = exel3L$Start,
+                    x2 = exel3L$End,
+                    y1 = 0,
+                    y2 = exel3L$MLE)
+
+Def3L = data.frame(x1 = Def3L$Start,
+                   x2 = Def3L$End,
+                   y1 = 0,
+                   y2 = Def3L$MLE)
+
+par(mar=c(5.1, 4.1, 4.1, 8.1))
+
+plot(x = 0, 
+     y = 0,
+     type = "n",
+     xlim = c(0, 25000000),
+     #ylim = c(-2.5, 4.5),
+     ylim = c(-4, 6),
+     ylab = "Median Lifespan Extension",
+     xlab = "Position ",
+     main = "Chromosome 3L")
+
+abline(h = 0, col = 'grey')
+
+i = 1
+
+while(i <= nrow(Def3L)){
+  rect(xleft = Def3L[i,1],
+       ybottom = Def3L[i,3],
+       xright = Def3L[i,2],
+       ytop = Def3L[i, 4],
+       col = 'lightsteelblue')
+  i = i + 1
+}
+
+i = 1
+
+while(i <= nrow(exel3L)){
+  rect(xleft = exel3L[i,1],
+       ybottom = exel3L[i,3],
+       xright = exel3L[i,2],
+       ytop = exel3L[i, 4],
+       col = 'brown')
+  i = i + 1
+}
+
+#abline(h = 0)
+
+legend('topright',
+       inset=c(-0.285,0),
+       legend = c('Deficiency', 'Exelixis'), 
+       fill = c('lightsteelblue',"brown"),
+       cex = 1,
+       bty = 'n',
+       pt.cex = .5,
+       xpd=TRUE)
+
+```
+
+
+```{r echo = F}
+
+Chr3R = Df[Df$Chr == "3R", ]
+
+Chr3R$MLE[Chr3R$MLE == "N/A"] = "Lethal"
+
+Lethal = Chr3R[Chr3R$MLE == "Lethal",
+             c("Start", "End", "MLE")]
+
+
+Chr3R = Chr3R[Chr3R$MLE != "Lethal", ]
+
+exel3R = Chr3R[grep("xel", Chr3R$Deficiency),
+             c("Start", "End", "MLE")]
+
+
+Def3R = Chr3R[grep("xel", Chr3R$Deficiency, invert = T),
+             c("Start", "End", "MLE")]
+
+exel3R = data.frame(x1 = exel3R$Start,
+                    x2 = exel3R$End,
+                    y1 = 0,
+                    y2 = exel3R$MLE)
+
+Def3R = data.frame(x1 = Def3R$Start,
+                   x2 = Def3R$End,
+                   y1 = 0,
+                   y2 = Def3R$MLE)
+
+
+par(mar=c(5.1, 4.1, 4.1, 8.1))
+
+plot(x = 0, 
+     y = 0,
+     type = "n",
+     xlim = c(0, 32000000),
+     #ylim = c(-4, 3.5),
+     ylim = c(-4, 6),
+     ylab = "Median Lifespan Extension",
+     xlab = "Position ",
+     main = "Chromosome 3R")
+
+abline(h = 0, col = 'grey')
+
+i = 1
+
+while(i <= nrow(Def3R)){
+  rect(xleft = Def3R[i,1],
+       ybottom = Def3R[i,3],
+       xright = Def3R[i,2],
+       ytop = Def3R[i, 4],
+       col = 'lightsteelblue')
+  i = i + 1
+}
+
+i = 1
+while(i <= nrow(Lethal)){
+  abline(v = Lethal[i, "Start"], lty = 2)
+  abline(v = Lethal[i, "End"], lty = 2)
+  rect(xleft = Lethal[i,"Start"],
+       ybottom = -10,
+       xright = Lethal[i,"End"],
+       ytop = 10,
+       col = 'black',
+       density = 50,
+       border = NA)
+  i = i + 1
+}
+
+i = 1
+
+while(i <= nrow(exel3R)){
+  rect(xleft = exel3R[i,1],
+       ybottom = exel3R[i,3],
+       xright = exel3R[i,2],
+       ytop = exel3R[i, 4],
+       col = 'brown')
+  i = i + 1
+}
+
+#abline(h = 0)
+
+if(nrow(Lethal) > 0){
+  legend('topright',
+       inset=c(-0.285,0),
+       legend = c('Deficiency', 'Exelixis', 'Lethal'), 
+       fill = c('lightsteelblue',"brown", 'black'),
+       density = c(10000, 10000, 50),
+       cex = 1,
+       bty = 'n',
+       pt.cex = .5,
+       xpd=TRUE)
+}
+
+if(nrow(Lethal) == 0){
+  legend('topright',
+       inset=c(-0.285,0),
+       legend = c('Deficiency', 'Exelixis'), 
+       fill = c('lightsteelblue',"brown"),
+       density = c(10000, 10000),
+       cex = 1,
+       bty = 'n',
+       pt.cex = .5,
+       xpd=TRUE)
+}
+
+
+
+
+
+
+```
+
+
+
+
+
+```{r echo = F}
+
+ChrX = Df[Df$Chr == "X", ]
+
+ChrX$MLE[ChrX$MLE == "N/A"] = "Lethal"
+
+Lethal = ChrX[ChrX$MLE == "Lethal",
+             c("Start", "End", "MLE")]
+
+
+ChrX = ChrX[ChrX$MLE != "Lethal", ]
+
+exelX = ChrX[grep("xel", ChrX$Deficiency),
+             c("Start", "End", "MLE")]
+
+
+DefX = ChrX[grep("xel", ChrX$Deficiency, invert = T),
+             c("Start", "End", "MLE")]
+
+exelX = data.frame(x1 = exelX$Start,
+                    x2 = exelX$End,
+                    y1 = 0,
+                    y2 = exelX$MLE)
+
+DefX = data.frame(x1 = DefX$Start,
+                   x2 = DefX$End,
+                   y1 = 0,
+                   y2 = DefX$MLE)
+
+
+par(mar=c(5.1, 4.1, 4.1, 8.1))
+
+plot(x = 0, 
+     y = 0,
+     type = "n",
+     xlim = c(0, 23000000),
+     #ylim = c(-4, 3.5),
+     ylim = c(-4, 6),
+     ylab = "Median Lifespan Extension",
+     xlab = "Position ",
+     main = "Chromosome X")
+
+abline(h = 0, col = 'grey')
+
+i = 1
+
+while(i <= nrow(DefX)){
+  rect(xleft = DefX[i,1],
+       ybottom = DefX[i,3],
+       xright = DefX[i,2],
+       ytop = DefX[i, 4],
+       col = 'lightsteelblue')
+  i = i + 1
+}
+
+i = 1
+while(i <= nrow(Lethal)){
+  abline(v = Lethal[i, "Start"], lty = 2)
+  abline(v = Lethal[i, "End"], lty = 2)
+  rect(xleft = Lethal[i,"Start"],
+       ybottom = -10,
+       xright = Lethal[i,"End"],
+       ytop = 10,
+       col = 'black',
+       density = 50,
+       border = NA)
+  i = i + 1
+}
+
+i = 1
+
+while(i <= nrow(exelX)){
+  rect(xleft = exelX[i,1],
+       ybottom = exelX[i,3],
+       xright = exelX[i,2],
+       ytop = exelX[i, 4],
+       col = 'brown')
+  i = i + 1
+}
+
+#abline(h = 0)
+
+if(nrow(Lethal) > 0){
+  legend('topright',
+       inset=c(-0.285,0),
+       legend = c('Deficiency', 'Exelixis', 'Lethal'), 
+       fill = c('lightsteelblue',"brown", 'black'),
+       density = c(10000, 10000, 50),
+       cex = 1,
+       bty = 'n',
+       pt.cex = .5,
+       xpd=TRUE)
+}
+
+if(nrow(Lethal) == 0){
+  legend('topright',
+       inset=c(-0.285,0),
+       legend = c('Deficiency', 'Exelixis'), 
+       fill = c('lightsteelblue',"brown"),
+       density = c(10000, 10000),
+       cex = 1,
+       bty = 'n',
+       pt.cex = .5,
+       xpd=TRUE)
+}
+
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

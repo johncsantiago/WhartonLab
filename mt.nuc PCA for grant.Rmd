@@ -1,0 +1,49 @@
+---
+title: "mt:nuc PCA for grant"
+author: "John Santiago"
+date: "2024-11-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r echo = F, warning = F, include = F}
+
+if(intersect(row.names(installed.packages()), "factoextra") != 'factoextra'){
+  # Install
+  if(!require(devtools)) install.packages("devtools")
+  devtools::install_github("kassambara/survminer")
+}
+
+library(devtools)
+library(factoextra)
+
+##CPM and other gene info for a subset of OXPHOS genes that met the cpm cutoff
+complex.data = read.csv("https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/mt.nuc.OXPHOS_PCAdata.csv", row.names = 1)
+
+##just the cpm data
+complex.cpm = complex.data[,5:34]
+##scaled the cpm data
+complex.cpm = t(scale(t(complex.cpm)))
+##pca of the scaled cpm data
+pca <- prcomp((complex.cpm), scale.=TRUE) 
+
+##other information for each gene besides cpm
+gene.info = complex.data[,1:4]
+##change non-mt chromosomes to 'nuc' for coloring
+gene.info$CHR[gene.info$CHR != "mt"] = 'nuc'
+
+
+```
+
+```{r echo = F}
+
+fviz_pca_ind(pca, 
+             col.ind = gene.info$CHR,
+             addEllipses = T, 
+             label = "none" )
+
+```

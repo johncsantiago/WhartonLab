@@ -1,0 +1,1941 @@
+---
+title: 'TKT RNAseq: PNP analysis'
+author: "John Santiago"
+date: "2024-11-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include = F}
+
+library(visNetwork)
+library(org.Dm.eg.db)
+library(KEGGREST)
+keggpath = as.list(org.Dm.egPATH2EG)
+nodeID = as.list(org.Dm.egENZYME)
+nodeID['40528'] = '3.5.4.3'
+nodeID['41318'] = '2.7.4.10'
+nodeID['42273'] = '2.7.1.145'
+nodeID['33924'] = '3.1.3.89'
+nodeID[['31309']] = c("3.1.4.17", '3.1.4.53')
+nodeID['37741'] = '3.1.4.53'
+
+source('/Users/johncsantiago/Documents/GitHub/WhartonLab/GOandKEGGPlottingFunctions.R')
+mean.cpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT_meancpmdata.csv", row.names = 1)
+cpmdata = G85R.cpm
+groups = G85R.meta
+
+purine.path = data.frame(enzyme = c('1.17.1.4', '1.17.3.2'),
+                         from = c('xanthine', 'xanthine'),
+                         to = c(rep('uric acid',2)))
+
+xanthine = data.frame(enzyme = c('1.17.1.4', '1.17.3.2', '2.4.2.1', '3.5.4.3'),
+                      from = c('hypoxanthine', 'hypoxanthine', 'xanthosine', 'guanine'),
+                      to = c(rep('xanthine',4)))
+purine.path = rbind(purine.path, xanthine)
+
+hypoxanthine = data.frame(enzyme = c('2.4.2.1', '2.4.2.1'),
+                          from = c('deoxyinosine', 'inosine'),
+                          to = c(rep('hypoxanthine', 2)))
+purine.path = rbind(purine.path, hypoxanthine)
+
+xanthosine = data.frame(enzyme = c('3.1.3.5'),
+                        from = c('XMP'),
+                        to = 'xanthosine')
+purine.path = rbind(purine.path, xanthosine)
+
+XMP = data.frame(enzyme = c('1.1.1.205'),
+                 from = c('IMP'),
+                 to = 'XMP')
+purine.path = rbind(purine.path, XMP)
+
+IMP = data.frame(enzyme = c('3.6.1.6', '3.5.4.6'),
+                 from = c('IDP', 'AMP'),
+                 to = c(rep('IMP', 2)))
+purine.path = rbind(purine.path, IMP)
+
+adenylosuccinate = data.frame(enzyme = c('6.3.4.4'),
+                              from = c('IMP'),
+                              to = 'adenylosuccinate')
+purine.path = rbind(purine.path, adenylosuccinate)
+
+inosine = data.frame(enzyme = c('2.4.2.1', '3.5.4.4', '3.1.3.5'),
+                     from = c('hypoxanthine', 'adenosine', 'IMP'),
+                     to = c(rep('inosine', 3)))
+purine.path = rbind(purine.path, inosine)
+
+deoxyinosine = data.frame(enzyme = c('2.4.2.1', '3.5.4.4'),
+                          from = c('hypoxanthine', 'deoxyadenosine'),
+                          to = c(rep('deoxyinosine', 2)))
+purine.path = rbind(purine.path, deoxyinosine)
+
+adenosine = data.frame(enzyme = c('2.4.2.1', '3.1.3.5', '2.7.1.20'),
+                       from = c('adenine', 'AMP', 'AMP'),
+                       to = c(rep('adenosine', 3)))
+purine.path = rbind(purine.path, adenosine)
+
+AMP = data.frame(enzyme = c('4.3.2.2', '2.7.1.20', '2.4.2.7', '2.7.4.3', '2.7.4.10', '3.1.4.17', '3.1.4.53'),
+                 from = c('adenylosuccinate', 'adenosine', 'adenine', 'ADP', 'ADP', 'cAMP', 'cAMP'),
+                 to = c(rep('AMP', 7)))
+purine.path = rbind(purine.path, AMP)
+
+adenine = data.frame(enzyme = c('2.4.2.1', '2.4.2.7', '2.4.2.1'),
+                     from = c('adenosine', 'AMP', 'deoxyadenosine'),
+                     to = c(rep('adenine', 3)))
+purine.path = rbind(purine.path, adenine)
+
+ATP = data.frame(enzyme = c('2.7.4.6'),
+                 from = c('ADP'),
+                 to = c(rep('ATP', 1)))
+purine.path = rbind(purine.path, ATP)
+
+dATP = data.frame(enzyme = c('2.7.4.6'),
+                  from = c('dADP'),
+                  to = c(rep('dATP', 1)))
+purine.path = rbind(purine.path, dATP)
+
+ADP = data.frame(enzyme = c('2.7.4.3', '2.7.4.10', '2.7.4.6', '3.6.1.15'),
+                 from = c('AMP', 'AMP', 'ATP', 'ATP'),
+                 to = c(rep('ADP', 4)))
+purine.path = rbind(purine.path, ADP)
+
+dADP = data.frame(enzyme = c('2.7.4.3', '1.17.4.1', '2.7.4.6'),
+                  from = c('dAMP', 'ADP', 'dATP'),
+                  to = c(rep('dADP', 3)))
+purine.path = rbind(purine.path, dADP)
+
+dAMP = data.frame(enzyme = c('2.7.1.145', '2.7.4.3'),
+                  from = c('deoxyadenosine', 'dADP'),
+                  to = c(rep('dAMP', 2)))
+purine.path = rbind(purine.path, dAMP)
+
+deoxyadenosine = data.frame(enzyme = c('2.4.2.1', '3.1.3.5', '3.1.3.89'),
+                            from = c('adenine', 'dAMP', 'dAMP'),
+                            to = c(rep('deoxyadenosine', 3)))
+purine.path = rbind(purine.path, deoxyadenosine)
+
+dGTP = data.frame(enzyme = c('2.7.4.6'),
+                  from = c('dGDP'),
+                  to = c('dGTP'))
+purine.path = rbind(purine.path, dGTP)
+
+guanine = data.frame(enzyme = c('2.4.2.1', '2.4.2.1'),
+                     from = c('guanosine', 'deoxyguanosine'),
+                     to = c(rep('guanine', 2)))
+purine.path = rbind(purine.path, guanine)
+
+dGDP = data.frame(enzyme = c('2.7.4.6', '1.17.4.1', '2.7.4.8'),
+                  from = c('dGTP', 'GDP', 'dGMP'),
+                  to = c(rep('dGDP', 3)))
+purine.path = rbind(purine.path, dGDP)
+
+guanosine = data.frame(enzyme = c('2.4.2.1', '3.1.3.5'),
+                       from = c('guanine', 'GMP'),
+                       to = c(rep('guanosine', 2)))
+purine.path = rbind(purine.path, guanosine)
+
+GTP = data.frame(enzyme = c('2.7.4.6'),
+                 from = c('GDP'),
+                 to = c(rep('GTP', 1)))
+purine.path = rbind(purine.path, GTP)
+
+GDP = data.frame(enzyme = c('2.7.4.6', '2.7.4.8'),
+                 from = c('GTP', 'GMP'),
+                 to = c(rep('GDP', 2)))
+purine.path = rbind(purine.path, GDP)
+
+GMP = data.frame(enzyme = c('6.3.5.2','3.6.1.6', '2.7.4.8'),
+                 from = c('XMP', 'GDP', 'GDP'),
+                 to = c(rep('GMP', 3)))
+purine.path = rbind(purine.path, GMP)
+
+dGMP = data.frame(enzyme = c('2.7.4.8', '2.7.1.145'),
+                  from = c('dGDP', 'deoxyguanosine'),
+                  to = c(rep('dGMP', 2)))
+purine.path = rbind(purine.path, dGMP)
+
+cAMP = data.frame(enzyme = '4.6.1.1',
+                  from = 'ATP',
+                  to = 'cAMP')
+purine.path = rbind(purine.path, cAMP)
+
+FGAM = data.frame(c(),
+               c())
+
+
+purine.path$arrows = 'to'
+temp = purine.path
+temp[,5] = paste0(purine.path[,1], purine.path[,2], purine.path[,3])
+temp[,6] = paste0(purine.path[,1], purine.path[,3], purine.path[,2])
+temp$keep = TRUE
+
+i=1
+while(i<=nrow(temp)){
+  if(length(intersect(temp[i,6], temp[temp$keep==TRUE,5]))==1){
+        temp$keep[i] = FALSE
+        temp[temp[,5] == temp[i,6], 'arrows'] = 'to;from'
+  }
+  i=i+1
+}
+
+
+
+purine.path = temp[temp$keep, 1:4]
+purine.path$FBgn = ''
+
+temp.purine.path = purine.path
+
+i=1
+while(i<=nrow(purine.path)){  
+  enzymeID = purine.path$enzyme[i]
+  temp = names(nodeID[grep(enzymeID, nodeID)])
+  temp = setNames(unlist(nodeID[temp], use.names = F), rep(names(nodeID[temp]), lengths(nodeID[temp])))
+  temp = names(temp[temp == enzymeID])
+  temp = row.names(GeneIDKey[GeneIDKey$ensembl %in% temp, ])
+  temp2 = purine.path[rep(i, length(temp)),]
+  temp2$FBgn = temp
+  temp.purine.path = rbind(temp.purine.path,temp2)
+  i = i +1
+}
+
+purine.path = temp.purine.path[(nrow(purine.path)+1):nrow(temp.purine.path),]
+purine.path = purine.path[!duplicated(purine.path[,2:5]),]
+
+
+TerminalPoints = data.frame(enzyme = "Excretion",
+                            from = 'uric acid',
+                            to = 'Excretion')
+ 
+
+DNA.A = data.frame(enzyme = c('DNA.A'),
+                 from = c('dATP'),
+                 to = c('DNA.A'))
+TerminalPoints = rbind(TerminalPoints, DNA.A)
+
+DNA.G = data.frame(enzyme = c('DNA.G'),
+                 from = c('dGTP'),
+                 to = c('DNA.G'))
+TerminalPoints = rbind(TerminalPoints, DNA.G)
+
+RNA.A = data.frame(enzyme = c('RNA.A'),
+                 from = c('ATP'),
+                 to = c('RNA.A'))
+TerminalPoints = rbind(TerminalPoints, RNA.A)
+
+RNA.G = data.frame(enzyme = c('RNA.G'),
+                 from = c('GTP'),
+                 to = c('RNA.G'))
+TerminalPoints = rbind(TerminalPoints, RNA.G)
+
+Riboflavin.Metabolism = data.frame(enzyme = c('Riboflavin.Metabolism'),
+                 from = c('GTP'),
+                 to = c('Riboflavin.Metabolism'))
+TerminalPoints = rbind(TerminalPoints, Riboflavin.Metabolism)
+
+Folate.Biosynthesis = data.frame(enzyme = c('Folate.Biosynthesis'),
+                 from = c('GTP'),
+                 to = c('Folate.Biosynthesis'))
+TerminalPoints = rbind(TerminalPoints, Folate.Biosynthesis)
+
+PPP = data.frame(enzyme = c('Pentose Phosphate'),
+                 from = c('Pentose Phosphate'),
+                 to = c('IMP'))
+TerminalPoints = rbind(TerminalPoints, PPP)
+
+
+
+TerminalPoints = data.frame(enzyme = TerminalPoints$enzyme,
+                            from = TerminalPoints$from,
+                            to = TerminalPoints$to,
+                            arrows = 'to',
+                            FBgn = NA,
+                            color = 'black',
+                            width = 1,
+                            symbol = NA,
+                            fdr = NA,
+                            GR = NA,
+                            WT = NA,
+                            title = '')
+
+
+
+temp = keggGet("dme:CG16758" )[[1]]
+
+temp = keggGet(names(temp$ORTHOLOGY))[[1]]
+
+temp = names(temp$REACTION)
+
+equation = as.character()
+reaction = as.character()
+
+i=1
+while(i<= length(temp)){
+  equation[i] = keggGet(temp[i])[[1]]["EQUATION"][[1]]
+  reaction[i] = keggGet(temp[i])[[1]]["DEFINITION"][[1]]
+  i=i+1
+}
+
+equation.length = lengths(strsplit(equation, " "))
+
+interactions = matrix("",
+                      nrow = length(equation),
+                      ncol = max(equation.length))
+
+i=1
+while(i<= length(equation)){
+  interactions[i, 1:equation.length[i]] = strsplit(equation[i], " ")[[1]]
+  i=i+1
+}
+
+unique.metabs = unique(as.character(interactions))
+unique.metabs = unique.metabs[grep("C", unique.metabs)]
+
+
+i = 1
+while(i <= length(unique.metabs)){
+  if(length(metab.id[grep(unique.metabs[i], names(metab.id))])>0){
+    interactions[interactions == unique.metabs[i]] = metab.id[grep(unique.metabs[i], names(metab.id))]
+    }
+  i=i+1
+}
+
+interactions = interactions[c(1:5, 7:9), c(1,4,5)]
+
+
+```
+
+```{r echo = F}
+
+plot(x = G85R.FC$GRxWT.FC,
+     y= -log2(G85R.FDR$GRxWT.FC),
+     pch = 21,
+     bg = 'lightgrey',
+     cex = 1.5,
+     ylab = "-log2(FDR)",
+     xlab = "log2(Fold Change)",
+     main = "G85R Females/Silent Females")
+
+points(x = G85R.FC[GeneIDKey[GeneIDKey$Symbol == "CG16758", "FBgn"], 'GRxWT.FC'],
+       y= -log2(G85R.FDR[GeneIDKey[GeneIDKey$Symbol == "CG16758", "FBgn"], 'GRxWT.FC']),
+       pch = 21,
+       bg = 'deeppink',
+       cex = 1.5)
+
+```
+
+
+
+```{r echo = F}
+
+plot(x = G85R.FC$GRxWT.MC,
+     y= -log2(G85R.FDR$GRxWT.MC),
+     pch = 21,
+     bg = 'lightgrey',
+     cex = 1.5,
+     ylab = "-log2(FDR)",
+     xlab = "log2(Fold Change)",
+     main = "G85R Males/Silent Males")
+
+points(x = G85R.FC[GeneIDKey[GeneIDKey$Symbol == "CG16758", "FBgn"], 'GRxWT.MC'],
+       y= -log2(G85R.FDR[GeneIDKey[GeneIDKey$Symbol == "CG16758", "FBgn"], 'GRxWT.MC']),
+       pch = 21,
+       bg = 'cyan',
+       cex = 1.5)
+
+```
+
+
+
+
+```{r echo = F}
+
+plot(x = log2(G85R.metabFC$GRxWT.C),
+     y= -log2(G85R.metabFDR$GRxWT.C),
+     pch = 21,
+     bg = 'lightgrey',
+     cex = 1.5,
+     ylab = "-log2(FDR)",
+     xlab = "log2(Fold Change)",
+     main = "G85R/Silent Metabolites")
+
+points(x = log2(G85R.metabFC['uric acid', 'GRxWT.C']),
+       y= -log2(G85R.metabFDR['uric acid', 'GRxWT.C']),
+       pch = 21,
+       bg = 'gold',
+       cex = 1.5)
+
+points(x = log2(G85R.metabFC['uric acid', 'GRxWT.C']),
+       y= -log2(G85R.metabFDR['xanthine', 'GRxWT.C']),
+       pch = 21,
+       bg = 'orange',
+       cex = 1.5)
+
+
+```
+
+
+```{r echo = F}
+
+FBgn = 'FBgn0035348'
+name = 'PNP (CG16758)'
+
+
+
+
+gene = data.frame(cpm = as.numeric(cpmdata[FBgn,]), condition = groups$Group, group = paste0(groups$Genotype, groups$Sex))
+
+gene$group = factor(gene$group, levels = c(unique(gene$group)))
+gene$condition = factor(gene$condition, levels = c('WT.F', "TktDfWT.F", "TktOEWT.F",
+                                                   'GR.F', "TktDfGR.F", "TktOEGR.F",
+                                                   'WT.M', "TktDfWT.M", "TktOEWT.M",
+                                                   'GR.M', "TktDfGR.M", "TktOEGR.M"))
+
+par(mar = c(5,7,5,2))
+plot(x = NA,
+      y = NA,
+     type = 'n',
+     ylim = c(min(gene$cpm), max(gene$cpm)),
+     xlim = c(.5, 12.5),
+     xaxt = "n",
+     ylab="",
+     yaxt = "n",
+     xlab = NA)
+
+rect(0, 0-(1.5*max(gene$cpm)), 13, 1.5*max(gene$cpm), col = 'gray95')
+
+boxplot(gene$cpm~gene$condition, 
+        xlab="",
+        las = 2, 
+        cex.axis = .8,
+        xaxt = 'none',
+        yaxt = 'none',
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        add = T,
+        col = c(rep("honeydew", 3),
+                rep("thistle1", 3),
+                rep("lightcyan", 3),
+                rep("lightyellow", 3)))
+
+box(lwd = 2)
+
+points(x=as.numeric(factor(gene$condition)),
+       y=gene$cpm,
+       cex=1,
+       pch=21,
+       bg=c('firebrick',"gold","darkgreen","dodgerblue")[as.numeric(factor(gene$group))])
+
+axis(side = 1,
+     at = 1:12,
+     labels = rep(c("Control", "Df", "OE"), 4),
+     line = 0,
+     cex.axis = .75,
+     lwd.ticks = 2)
+
+axis(side = 2,
+     line = 0,
+     cex.axis = 1,
+     lwd.ticks = 2,
+     las = 2)
+
+axis(side = 2,
+     at = .5*(max(gene$cpm) + min(gene$cpm)),
+     label = "Counts per million reads",
+     tick = F,
+     padj = -3,
+     cex.axis = 1.25)
+
+axis(side = 1,
+     at = c(2, 5, 8, 11),
+     labels = c("Silent", "G85R","Silent", "G85R"),
+     tick = F,
+     padj = 2,
+     cex.axis = 1)
+axis(side = 3,
+     at = c(3.5, 9.5),
+     labels = c("Female", "Male"),
+     tick = F,
+     padj = .5,
+     cex.axis = 1.5)
+
+axis(side = 3,
+     at = 6.5,
+     labels = name,
+     tick = F,
+     padj = -1.5,
+     cex.axis = 2)
+
+axis(side = 3,
+     at = c(3.5,9.5),
+     tick = T,
+     outer = T,
+     labels = F,
+     line = -2.25,
+     lwd.ticks = 0)
+
+xline1 = min(gene$cpm) - (max(gene$cpm)-min(gene$cpm))*.04
+xline2 = min(gene$cpm) - (max(gene$cpm)-min(gene$cpm))*.19
+lines(x=c(3.5,3.5), y = c(xline1, xline2), lty = 1, lwd = 2, xpd = T)
+lines(x=c(6.5,6.5), y = c(xline1, xline2), lty = 1, lwd = 2, xpd = T)
+lines(x=c(9.5,9.5), y = c(xline1, xline2), lty = 1, lwd = 2, xpd = T)
+abline(v = 6.5, lty = 2, lwd = 2)
+
+
+```
+
+
+```{r echo = F}
+
+name = 'uric acid'
+
+
+gene = data.frame(level = as.numeric(G85R.metabnorm[name,]),
+                  group = c(substr(colnames(G85R.metabnorm), 1, nchar(colnames(G85R.metabnorm))-1)))
+
+gene$group = substr(colnames(G85R.metabnorm), 1, nchar(colnames(G85R.metabnorm))-1)
+
+gene$group = factor(gene$group, levels = c("WT", "TktDfWT", "TktOEWT",
+                                           "GR", "TktDfGR", "TktOEGR"))
+
+par(mar = c(5,7,5,2))
+plot(x = NA,
+      y = NA,
+     type = 'n',
+     ylim = c(min(gene$level), max(gene$level)),
+     xlim = c(.5, 6.5),
+     xaxt = "n",
+     ylab="",
+     yaxt = "n",
+     xlab = NA)
+
+rect(0, 0-(1.5*max(gene$level)), 13, 1.5*max(gene$level), col = 'gray95')
+
+boxplot(gene$level~gene$group, 
+        xlab="",
+        las = 2, 
+        cex.axis = .8,
+        xaxt = 'none',
+        yaxt = 'none',
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        add = T,
+        col = c(rep("lightcyan", 3),
+                rep("thistle1", 3)))
+
+box(lwd = 2)
+
+points(x=as.numeric(factor(gene$group)),
+       y=gene$level,
+       cex=1,
+       pch=21,
+       bg=c(rep("dodgerblue", 3), rep('firebrick', 3))[as.numeric(factor(gene$group))])
+
+axis(side = 1,
+     at = 1:6,
+     labels = rep(c("Control", "Df", "OE"), 2),
+     line = 0,
+     cex.axis = .75,
+     lwd.ticks = 2)
+
+axis(side = 2,
+     line = 0,
+     cex.axis = 1,
+     lwd.ticks = 2,
+     las = 2)
+
+axis(side = 2,
+     at = .5*(max(gene$level) + min(gene$level)),
+     label = "Normalized Metabolite Level",
+     tick = F,
+     padj = -4,
+     cex.axis = 1.25)
+
+axis(side = 1,
+     at = c(2, 5),
+     labels = c("Silent", "G85R"),
+     tick = F,
+     padj = 2,
+     cex.axis = 1)
+
+axis(side = 3,
+     at = 3.5,
+     labels = name,
+     tick = F,
+     padj = -1.5,
+     cex.axis = 2)
+
+
+xline1 = min(gene$level) - (max(gene$level)-min(gene$level))*.04
+xline2 = min(gene$level) - (max(gene$level)-min(gene$level))*.19
+lines(x=c(3.5,3.5), y = c(xline1, xline2), lty = 1, lwd = 2, xpd = T)
+
+
+
+```
+
+
+```{r echo = F}
+
+name = 'uric acid'
+name = 'NAD+'
+name = 'NADP+'
+name = 'nicotinamide riboside+'
+name = 'NMN'
+
+gene = data.frame(level = as.numeric(G85R.metabnorm[name,]),
+                  group = c(substr(colnames(G85R.metabnorm), 1, nchar(colnames(G85R.metabnorm))-1)))
+
+if(name == "NADP+"){
+  gene = data.frame(level = as.numeric(G85R.metabnorm[name,]),
+                    group = c(colnames(G85R.metabnorm)))
+  gene = gene[gene$group != "WT1",]
+  gene$group = substr(gene$group, 1, nchar(gene$group)-1)
+}
+
+#gene$group = substr(colnames(G85R.metabnorm), 1, nchar(colnames(G85R.metabnorm))-1)
+
+gene$group = factor(gene$group, levels = c("WT", "TktDfWT", "TktOEWT",
+                                           "GR", "TktDfGR", "TktOEGR"))
+
+par(mar = c(5,7,5,2))
+plot(x = NA,
+      y = NA,
+     type = 'n',
+     ylim = c(min(gene$level), max(gene$level)),
+     xlim = c(.5, 6.5),
+     xaxt = "n",
+     ylab="",
+     yaxt = "n",
+     xlab = NA)
+
+rect(0, 0-(1.5*max(gene$level)), 13, 1.5*max(gene$level), col = 'gray95')
+
+boxplot(gene$level~gene$group, 
+        xlab="",
+        las = 2, 
+        cex.axis = .8,
+        xaxt = 'none',
+        yaxt = 'none',
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        add = T,
+        col = c(rep("lightcyan", 3),
+                rep("thistle1", 3)))
+
+box(lwd = 2)
+
+points(x=as.numeric(factor(gene$group)),
+       y=gene$level,
+       cex=1,
+       pch=21,
+       bg=c(rep("dodgerblue", 3), rep('firebrick', 3))[as.numeric(factor(gene$group))])
+
+axis(side = 1,
+     at = 1:6,
+     labels = rep(c("Control", "Df", "OE"), 2),
+     line = 0,
+     cex.axis = .75,
+     lwd.ticks = 2)
+
+axis(side = 2,
+     line = 0,
+     cex.axis = 1,
+     lwd.ticks = 2,
+     las = 2)
+
+axis(side = 2,
+     at = .5*(max(gene$level) + min(gene$level)),
+     label = "Normalized Metabolite Level",
+     tick = F,
+     padj = -4,
+     cex.axis = 1.25)
+
+axis(side = 1,
+     at = c(2, 5),
+     labels = c("Silent", "G85R"),
+     tick = F,
+     padj = 2,
+     cex.axis = 1)
+
+axis(side = 3,
+     at = 3.5,
+     labels = name,
+     tick = F,
+     padj = -1.5,
+     cex.axis = 2)
+
+
+xline1 = min(gene$level) - (max(gene$level)-min(gene$level))*.04
+xline2 = min(gene$level) - (max(gene$level)-min(gene$level))*.19
+lines(x=c(3.5,3.5), y = c(xline1, xline2), lty = 1, lwd = 2, xpd = T)
+
+
+
+```
+
+```{r echo = F}
+
+name = 'uric acid'
+
+name = 'NADP+'
+name = 'nicotinamide riboside+'
+name = 'NMN'
+name = 'NAD+'
+
+gene = data.frame(level = as.numeric(G85R.metabnorm[name,]),
+                  group = c(substr(colnames(G85R.metabnorm), 1, nchar(colnames(G85R.metabnorm))-1)))
+
+if(name == "NADP+"){
+  gene = data.frame(level = as.numeric(G85R.metabnorm[name,]),
+                    group = c(colnames(G85R.metabnorm)))
+  gene = gene[gene$group != "WT1",]
+  gene$group = substr(gene$group, 1, nchar(gene$group)-1)
+}
+
+#gene$group = substr(colnames(G85R.metabnorm), 1, nchar(colnames(G85R.metabnorm))-1)
+
+gene$group = factor(gene$group, levels = c("WT", "TktDfWT", "TktOEWT",
+                                           "GR", "TktDfGR", "TktOEGR"))
+
+par(mar = c(5,7,5,2))
+plot(x = NA,
+      y = NA,
+     type = 'n',
+     ylim = c(min(gene$level), max(gene$level)),
+     xlim = c(.5, 6.5),
+     xaxt = "n",
+     ylab="",
+     yaxt = "n",
+     xlab = NA)
+
+rect(0, 0-(1.5*max(gene$level)), 13, 1.5*max(gene$level), col = 'gray95')
+
+boxplot(gene$level~gene$group, 
+        xlab="",
+        las = 2, 
+        cex.axis = .8,
+        xaxt = 'none',
+        yaxt = 'none',
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        add = T,
+        col = c(rep("lightcyan", 3),
+                rep("thistle1", 3)))
+
+box(lwd = 2)
+
+points(x=as.numeric(factor(gene$group)),
+       y=gene$level,
+       cex=1,
+       pch=21,
+       bg=c(rep("dodgerblue", 3), rep('firebrick', 3))[as.numeric(factor(gene$group))])
+
+axis(side = 1,
+     at = 1:6,
+     labels = rep(c("Control", "Df", "OE"), 2),
+     line = 0,
+     cex.axis = .75,
+     lwd.ticks = 2)
+
+axis(side = 2,
+     line = 0,
+     cex.axis = 1,
+     lwd.ticks = 2,
+     las = 2)
+
+axis(side = 2,
+     at = .5*(max(gene$level) + min(gene$level)),
+     label = "Normalized Metabolite Level",
+     tick = F,
+     padj = -4,
+     cex.axis = 1.25)
+
+axis(side = 1,
+     at = c(2, 5),
+     labels = c("Silent", "G85R"),
+     tick = F,
+     padj = 2,
+     cex.axis = 1)
+
+axis(side = 3,
+     at = 3.5,
+     labels = name,
+     tick = F,
+     padj = -1.5,
+     cex.axis = 2)
+
+
+xline1 = min(gene$level) - (max(gene$level)-min(gene$level))*.04
+xline2 = min(gene$level) - (max(gene$level)-min(gene$level))*.19
+lines(x=c(3.5,3.5), y = c(xline1, xline2), lty = 1, lwd = 2, xpd = T)
+
+
+
+```
+
+```{r echo = F}
+
+name = 'uric acid'
+
+name = 'NADP+'
+name = 'nicotinamide riboside+'
+name = 'NMN'
+name = 'NADH'
+
+gene = data.frame(level = as.numeric(G85R.metabnorm[name,]),
+                  group = c(substr(colnames(G85R.metabnorm), 1, nchar(colnames(G85R.metabnorm))-1)))
+
+if(name == "NADP+"){
+  gene = data.frame(level = as.numeric(G85R.metabnorm[name,]),
+                    group = c(colnames(G85R.metabnorm)))
+  gene = gene[gene$group != "WT1",]
+  gene$group = substr(gene$group, 1, nchar(gene$group)-1)
+}
+
+#gene$group = substr(colnames(G85R.metabnorm), 1, nchar(colnames(G85R.metabnorm))-1)
+
+gene$group = factor(gene$group, levels = c("WT", "TktDfWT", "TktOEWT",
+                                           "GR", "TktDfGR", "TktOEGR"))
+
+par(mar = c(5,7,5,2))
+plot(x = NA,
+      y = NA,
+     type = 'n',
+     ylim = c(min(gene$level), max(gene$level)),
+     xlim = c(.5, 6.5),
+     xaxt = "n",
+     ylab="",
+     yaxt = "n",
+     xlab = NA)
+
+rect(0, 0-(1.5*max(gene$level)), 13, 1.5*max(gene$level), col = 'gray95')
+
+boxplot(gene$level~gene$group, 
+        xlab="",
+        las = 2, 
+        cex.axis = .8,
+        xaxt = 'none',
+        yaxt = 'none',
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        add = T,
+        col = c(rep("lightcyan", 3),
+                rep("thistle1", 3)))
+
+box(lwd = 2)
+
+points(x=as.numeric(factor(gene$group)),
+       y=gene$level,
+       cex=1,
+       pch=21,
+       bg=c(rep("dodgerblue", 3), rep('firebrick', 3))[as.numeric(factor(gene$group))])
+
+axis(side = 1,
+     at = 1:6,
+     labels = rep(c("Control", "Df", "OE"), 2),
+     line = 0,
+     cex.axis = .75,
+     lwd.ticks = 2)
+
+axis(side = 2,
+     line = 0,
+     cex.axis = 1,
+     lwd.ticks = 2,
+     las = 2)
+
+axis(side = 2,
+     at = .5*(max(gene$level) + min(gene$level)),
+     label = "Normalized Metabolite Level",
+     tick = F,
+     padj = -4,
+     cex.axis = 1.25)
+
+axis(side = 1,
+     at = c(2, 5),
+     labels = c("Silent", "G85R"),
+     tick = F,
+     padj = 2,
+     cex.axis = 1)
+
+axis(side = 3,
+     at = 3.5,
+     labels = name,
+     tick = F,
+     padj = -1.5,
+     cex.axis = 2)
+
+
+xline1 = min(gene$level) - (max(gene$level)-min(gene$level))*.04
+xline2 = min(gene$level) - (max(gene$level)-min(gene$level))*.19
+lines(x=c(3.5,3.5), y = c(xline1, xline2), lty = 1, lwd = 2, xpd = T)
+
+
+
+```
+
+```{r echo = F}
+
+name = 'uric acid'
+
+name = 'NADP+'
+name = 'nicotinamide riboside+'
+name = 'NMN'
+name = 'NADH'
+name = 'NADP+'
+
+gene = data.frame(level = as.numeric(G85R.metabnorm[name,]),
+                  group = c(substr(colnames(G85R.metabnorm), 1, nchar(colnames(G85R.metabnorm))-1)))
+
+if(name == "NADP+"){
+  gene = data.frame(level = as.numeric(G85R.metabnorm[name,]),
+                    group = c(colnames(G85R.metabnorm)))
+  gene = gene[gene$group != "WT1",]
+  gene$group = substr(gene$group, 1, nchar(gene$group)-1)
+}
+
+#gene$group = substr(colnames(G85R.metabnorm), 1, nchar(colnames(G85R.metabnorm))-1)
+
+gene$group = factor(gene$group, levels = c("WT", "TktDfWT", "TktOEWT",
+                                           "GR", "TktDfGR", "TktOEGR"))
+
+par(mar = c(5,7,5,2))
+plot(x = NA,
+      y = NA,
+     type = 'n',
+     ylim = c(min(gene$level), max(gene$level)),
+     xlim = c(.5, 6.5),
+     xaxt = "n",
+     ylab="",
+     yaxt = "n",
+     xlab = NA)
+
+rect(0, 0-(1.5*max(gene$level)), 13, 1.5*max(gene$level), col = 'gray95')
+
+boxplot(gene$level~gene$group, 
+        xlab="",
+        las = 2, 
+        cex.axis = .8,
+        xaxt = 'none',
+        yaxt = 'none',
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        add = T,
+        col = c(rep("lightcyan", 3),
+                rep("thistle1", 3)))
+
+box(lwd = 2)
+
+points(x=as.numeric(factor(gene$group)),
+       y=gene$level,
+       cex=1,
+       pch=21,
+       bg=c(rep("dodgerblue", 3), rep('firebrick', 3))[as.numeric(factor(gene$group))])
+
+axis(side = 1,
+     at = 1:6,
+     labels = rep(c("Control", "Df", "OE"), 2),
+     line = 0,
+     cex.axis = .75,
+     lwd.ticks = 2)
+
+axis(side = 2,
+     line = 0,
+     cex.axis = 1,
+     lwd.ticks = 2,
+     las = 2)
+
+axis(side = 2,
+     at = .5*(max(gene$level) + min(gene$level)),
+     label = "Normalized Metabolite Level",
+     tick = F,
+     padj = -4,
+     cex.axis = 1.25)
+
+axis(side = 1,
+     at = c(2, 5),
+     labels = c("Silent", "G85R"),
+     tick = F,
+     padj = 2,
+     cex.axis = 1)
+
+axis(side = 3,
+     at = 3.5,
+     labels = name,
+     tick = F,
+     padj = -1.5,
+     cex.axis = 2)
+
+
+xline1 = min(gene$level) - (max(gene$level)-min(gene$level))*.04
+xline2 = min(gene$level) - (max(gene$level)-min(gene$level))*.19
+lines(x=c(3.5,3.5), y = c(xline1, xline2), lty = 1, lwd = 2, xpd = T)
+
+
+
+```
+
+
+```{r echo = F}
+
+name = 'uric acid'
+
+name = 'NADP+'
+name = 'nicotinamide riboside+'
+name = 'NMN'
+name = 'NAD+'
+name = 'NADPH'
+gene = data.frame(level = as.numeric(G85R.metabnorm[name,]),
+                  group = c(substr(colnames(G85R.metabnorm), 1, nchar(colnames(G85R.metabnorm))-1)))
+
+if(name == "NADP+"){
+  gene = data.frame(level = as.numeric(G85R.metabnorm[name,]),
+                    group = c(colnames(G85R.metabnorm)))
+  gene = gene[gene$group != "WT1",]
+  gene$group = substr(gene$group, 1, nchar(gene$group)-1)
+}
+
+if(name == "NADPH"){
+  gene = na.omit(gene)
+}
+
+#gene$group = substr(colnames(G85R.metabnorm), 1, nchar(colnames(G85R.metabnorm))-1)
+
+gene$group = factor(gene$group, levels = c("WT", "TktDfWT", "TktOEWT",
+                                           "GR", "TktDfGR", "TktOEGR"))
+
+par(mar = c(5,7,5,2))
+plot(x = NA,
+      y = NA,
+     type = 'n',
+     ylim = c(min(gene$level), max(gene$level)),
+     xlim = c(.5, 6.5),
+     xaxt = "n",
+     ylab="",
+     yaxt = "n",
+     xlab = NA)
+
+rect(0, 0-(1.5*max(gene$level)), 13, 1.5*max(gene$level), col = 'gray95')
+
+boxplot(gene$level~gene$group, 
+        xlab="",
+        las = 2, 
+        cex.axis = .8,
+        xaxt = 'none',
+        yaxt = 'none',
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        add = T,
+        col = c(rep("lightcyan", 3),
+                rep("thistle1", 3)))
+
+box(lwd = 2)
+
+points(x=as.numeric(factor(gene$group)),
+       y=gene$level,
+       cex=1,
+       pch=21,
+       bg=c(rep("dodgerblue", 3), rep('firebrick', 3))[as.numeric(factor(gene$group))])
+
+axis(side = 1,
+     at = 1:6,
+     labels = rep(c("Control", "Df", "OE"), 2),
+     line = 0,
+     cex.axis = .75,
+     lwd.ticks = 2)
+
+axis(side = 2,
+     line = 0,
+     cex.axis = 1,
+     lwd.ticks = 2,
+     las = 2)
+
+axis(side = 2,
+     at = .5*(max(gene$level) + min(gene$level)),
+     label = "Normalized Metabolite Level",
+     tick = F,
+     padj = -4,
+     cex.axis = 1.25)
+
+axis(side = 1,
+     at = c(2, 5),
+     labels = c("Silent", "G85R"),
+     tick = F,
+     padj = 2,
+     cex.axis = 1)
+
+axis(side = 3,
+     at = 3.5,
+     labels = name,
+     tick = F,
+     padj = -1.5,
+     cex.axis = 2)
+
+
+xline1 = min(gene$level) - (max(gene$level)-min(gene$level))*.04
+xline2 = min(gene$level) - (max(gene$level)-min(gene$level))*.19
+lines(x=c(3.5,3.5), y = c(xline1, xline2), lty = 1, lwd = 2, xpd = T)
+
+
+
+```
+
+```{r include = F}
+
+
+rawdata = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/MetabolomicsForMetaboanalyst.txt", sep = "\t", row.names = 1)
+
+KEGG.Key = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/RawMetabolomicData.csv", row.names = 1)
+KEGG.Key = setNames(KEGG.Key[-c(1:2), 2], row.names(KEGG.Key)[-c(1:2)])
+
+genotypes = setNames(c("WT", "GR", "TktOEWT", "TktOEGR", "TktDfWT", "TktDfGR"), c("C", "E", "A", "F", "B", "D"))
+
+metadata = data.frame(Sample = colnames(rawdata), 
+                      Group = as.character(rawdata[1,]), 
+                      TIC = as.numeric(rawdata[2,]), 
+                      Genotypes = genotypes[as.character(rawdata[1,])])
+
+row.names(metadata) = metadata$Sample
+
+norm.func = function(data){
+  nd = (as.numeric(data)/metadata$TIC)*1000
+  return(nd)
+}
+
+norm.data = t(apply(rawdata[3:nrow(rawdata),], 1, norm.func))
+colnames(norm.data) = colnames(rawdata)
+
+group.mean=function(data){
+  gm = mean(na.omit(data))
+}
+
+mean.data = matrix(0, nrow=nrow(norm.data), ncol = length(genotypes))
+row.names(mean.data) = row.names(norm.data)
+colnames(mean.data) = unique(metadata$Group)
+
+i=1
+while(i<=ncol(mean.data)){
+  mean.data[,i] = apply(norm.data[,metadata[metadata$Group == colnames(mean.data)[i], "Sample"]], 1, group.mean)
+  i = i+1
+}
+
+mean.cpm
+
+compare.conditions = function(condition1, condition2){
+  columns1 = metadata[metadata$Group == condition1, "Sample"]
+  columns2 = metadata[metadata$Group == condition2, "Sample"]
+  p=setNames(rep(NA, nrow(norm.data)), row.names(norm.data))
+  i=1
+  while(i<=length(p)){
+    if(length(na.omit(norm.data[i,columns1]))>2 & 
+       length(na.omit(norm.data[i,columns2]))>2){
+      temp = t.test(na.omit(norm.data[i,columns1]),
+                    na.omit(norm.data[i,columns2]), paired = F, var.equal = T)
+      p[i] = temp[[3]]
+      }
+    i=i+1
+    }
+
+  fdr = p.adjust(p, "BH", length(p))
+
+  fc = mean.data[,condition1]/mean.data[,condition2]
+
+  comparison.table = data.frame(p = p, 
+                                FDR = fdr, 
+                                FC = fc, 
+                                KEGG = KEGG.Key[row.names(mean.data)])
+  
+  comparison.table = comparison.table[order(comparison.table$FDR),]
+}
+
+GRxWT.C = compare.conditions("E", "C")
+GRxWT.Df = compare.conditions("D", "B")
+GRxWT.OE = compare.conditions("F", "A")
+
+GR.CxDf = compare.conditions("D", "E")
+WT.CxDf = compare.conditions("B", "C")
+
+GR.CxOE = compare.conditions("F", "E")
+WT.CxOE = compare.conditions("A", "C")
+
+TKT.EdgeR.FC = G85R.FC
+TKT.EdgeR = G85R.FDR
+
+network.fun = function(comparison.T, comparison.M, cond1, cond2, pnp){
+temp = colorRampPalette(c('royalblue',"dodgerblue",'red', "firebrick"))(401)
+
+
+
+visedges = purine.path
+visedges$color = round(TKT.EdgeR.FC[purine.path$FBgn, comparison.T],2)
+##visedges$width = .5 + abs(visedges$color)
+visedges$color[visedges$color < (-2)] = -2
+visedges$color[visedges$color > (2)] = 2
+visedges$color = (visedges$color * 100) +201
+visedges$color = temp[visedges$color]
+visedges$symbol = GeneIDKey[visedges$FBgn, 'Symbol']
+visedges$fdr = signif(TKT.EdgeR[visedges$FBgn, comparison.T], 2)
+visedges$GR = round(mean.cpm[visedges$FBgn, cond1],1)
+visedges$WT = round(mean.cpm[visedges$FBgn, cond2],1)
+visedges$width = .01 + (1*abs(log10(visedges$WT)))
+
+visedges$title = paste0(visedges$symbol,
+                        "<br>FDR: ", visedges$fdr, 
+                        "<br>",cond1," CPM: ", visedges$GR, 
+                        "<br>",cond2," CPM: ", visedges$WT)
+visedges = na.omit(visedges)
+visedges = rbind(visedges, TerminalPoints)
+
+node.names = unique(c(visedges$from, visedges$to))
+node.data = data.frame(id = node.names,
+                       color = 'dimgrey',
+                       size = 10,
+                       FC = NA,
+                       pval = NA,
+                       row.names = node.names)
+
+
+row.names(comparison.M)[row.names(comparison.M) == "cAMP(2',3') / cAMP(3',5')"] = 'cAMP'
+
+node.colors = na.omit(comparison.M[intersect(row.names(comparison.M), node.names),])
+node.pval = setNames(signif((node.colors$p),2), row.names(node.colors))
+node.data[names(node.pval), 'pval'] = node.pval
+node.colors = setNames(round(log2(node.colors$FC),2), row.names(node.colors))
+node.data[names(node.colors), "FC"] = node.colors
+node.data[names(node.colors),'size'] = node.colors
+#node.data[names(node.colors),'size'] = 
+#  (node.data[names(node.colors),'size'] + .5 + abs(min(node.colors)))*7.5
+node.data[names(node.colors),'size'] = 
+  (node.data[names(node.colors),'size'] + 4.5)*7.5
+
+node.colors[node.colors < (-2)] = -2
+node.colors[node.colors>2] = 2
+
+
+node.colors = (node.colors*100)+201
+
+
+
+node.colors = setNames(temp[node.colors], names(node.colors)) 
+node.data[names(node.colors), 'color'] = node.colors
+
+node.data$title = paste0(node.data$id,
+                         "<br>FC: ", node.data$FC,
+                         "<br>pval: ", node.data$pval)
+
+node.data[unique(TerminalPoints$enzyme), 'color'] = 'black'
+
+node.data$group = 'metabolite'
+node.data[node.data$color == 'black', 'group'] = "Outside Path"
+node.data[node.data$color == 'dimgrey', 'group'] = "no data"
+
+node.data$x = 1
+node.data$y = 1
+node.data["Excretion", 'x'] = -200
+node.data["Excretion", 'y'] = 500
+
+node.data["Pentose Phosphate" , 'x'] = 50
+node.data["Pentose Phosphate" , 'y'] = -400
+
+node.data["RNA.A", 'x'] = 850
+node.data["RNA.A", 'y'] = -250
+
+node.data["RNA.G", 'x'] = -1000
+node.data["RNA.G", 'y'] = -250
+
+node.data["Folate.Biosynthesis", 'x'] = -1000
+node.data["Folate.Biosynthesis", 'y'] = -350
+
+node.data["Riboflavin.Metabolism", 'x'] = -1000
+node.data["Riboflavin.Metabolism", 'y'] = -150
+
+node.data["DNA.A", 'x'] = 850
+node.data["DNA.A", 'y'] = 250
+
+node.data["DNA.G", 'x'] = -1000
+node.data["DNA.G", 'y'] = 250
+
+# passing custom nodes and/or edges
+lnodes <- data.frame(label = c("Increased", "Decreased", "No Data"), 
+shape = 'dot', color = c("firebrick", "royalblue",'dimgrey'),
+ title = "") 
+
+
+nodes = node.data
+
+##nodes$color[nodes$color != "black"] = 'dimgrey'
+
+
+colored.nodes = unique(c(interactions[,1], interactions[,3]))
+colored.nodes = c(setdiff(row.names(nodes), c(colored.nodes, row.names(nodes)[nodes$color == "black"])))
+
+#nodes[row.names(nodes) %in% colored.nodes, 'color'] = "gold"
+
+
+visedges = visedges[,c('from', 'to', 'arrows', 'color', 'width', 'title')]
+row.names(visedges) = c(1:nrow(visedges))
+
+colored.edges = row.names(visedges[grep("CG16758", visedges$title),])
+colored.edges = setdiff(row.names(visedges), colored.edges)
+
+if(pnp == T){
+  nodes[row.names(nodes) %in% colored.nodes, 'color'] = "lightgrey"
+  visedges[row.names(visedges) %in% colored.edges, "color"] = 'lightgrey'
+}
+
+
+
+
+visNetwork(nodes,visedges,
+                  main = paste0(cond1, " vs ", cond2))%>%
+  visNodes(physics = T)%>%
+  visLayout(hierarchical=F, improvedLayout=T)%>%
+  ##visPhysics(solver="forceAtlas2Based", forceAtlas2Based = list(gravitationalConstant=-50),enabled=T, minVelocity = .5)%>%
+  visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE)%>%
+  visEdges(arrows = visedges$arrows)%>%
+  visGroups(groupname = "Outside Path", shape = 'box', physics=F, size = 25, font=list(color="white"))%>%
+    visLegend(addNodes = lnodes, useGroups = FALSE, width = .115)
+
+}
+
+```
+
+
+```{r echo = F}
+
+comparison.T = "GRxWT.FC"
+cond1 = 'GR.F'
+cond2 = "WT.F"
+comparison.M = GRxWT.C
+pnp = F
+
+network.fun(comparison.T, comparison.M, cond1, cond2, pnp)
+
+```
+
+
+```{r echo = F}
+
+comparison.T = "GRxWT.FDf"
+cond1 = 'TktDfGR.F'
+cond2 = "TktDfWT.F"
+comparison.M = GRxWT.Df
+pnp = F
+
+network.fun(comparison.T, comparison.M, cond1, cond2, pnp)
+
+```
+
+
+
+
+```{r echo = F}
+
+comparison.T = "GRxWT.FOE"
+cond1 = 'TktOEGR.F'
+cond2 = "TktOEWT.F"
+comparison.M = GRxWT.OE
+pnp = F
+
+network.fun(comparison.T, comparison.M, cond1, cond2, pnp)
+
+```
+
+
+
+
+
+
+```{r echo = F}
+
+comparison.T = "GRxWT.FC"
+cond1 = 'GR.F'
+cond2 = "WT.F"
+comparison.M = GRxWT.C
+pnp = T
+
+network.fun(comparison.T, comparison.M, cond1, cond2, pnp)
+
+```
+
+
+```{r echo = F}
+
+comparison.T = "GRxWT.FDf"
+cond1 = 'TktDfGR.F'
+cond2 = "TktDfWT.F"
+comparison.M = GRxWT.Df
+pnp = T
+
+network.fun(comparison.T, comparison.M, cond1, cond2, pnp)
+
+```
+
+
+
+
+```{r echo = F}
+
+comparison.T = "GRxWT.FOE"
+cond1 = 'TktOEGR.F'
+cond2 = "TktOEWT.F"
+comparison.M = GRxWT.OE
+pnp = T
+
+network.fun(comparison.T, comparison.M, cond1, cond2, pnp)
+
+```
+
+
+
+```{r include = F}
+
+
+NAD.nodes = data.frame(ID = character(),
+                       x = numeric(),
+                       y = numeric(),
+                       names = character())
+
+NAD.nodes[1,] = c('C03150', 0,  0,    "nicotinamide riboside+")
+NAD.nodes[2,] = c('C00153', 0,  5,    "nicotinamide")
+NAD.nodes[3,] = c('C00253', 0,  7.5,  "nicotinic acid")
+NAD.nodes[4,] = c('C00455', 5,  2.5,  "NMN")
+NAD.nodes[5,] = c('C01185', 5,  7.5,  "NAMN")
+NAD.nodes[6,] = c('C00006', 10, -2.5, "NADP+")
+NAD.nodes[7,] = c('C00003', 10, 2.5,  "NAD+")
+NAD.nodes[8,] = c('C00857', 10, 7.5,  "NAAD")
+NAD.nodes[9,] = c('C00005', 15, -2.5, "NADPH")
+NAD.nodes[10,] = c('C00004', 15, 2.5,  "NADH")
+
+
+NAD.nodes[11,] = c('C00806', 20, 10,  "tryptophan")
+NAD.nodes[12,] = c('C02794', 5, 10,  "3-hydroxykynurenine")
+NAD.nodes[13,] = c('C01718', 10, 10,  "kynurenine")
+NAD.nodes[14,] = c('C01717', 5, 12.5,  "kynurenic acid")
+NAD.nodes[15,] = c('C02700', 15, 10,  "N-Formylkynurenine")
+
+
+temp = unlist(strsplit(keggGet("C00806")[[1]]["REACTION"][[1]], split = " "))
+
+#NR <=> NMN: "3.1.3.5", "2.7.1.22"
+#NR <=> NAM: "2.4.2.1", "3.2.2.3"
+#NMN <=> NAM: "3.2.2.14" "2.4.2.12"
+#NA <=> NAMN: "2.4.2.55" "6.3.4.21" "2.4.2.21"
+#NAMN <=> NAAD: "3.6.1.9"  "3.6.1.22" "2.7.7.1"  "2.7.7.18" 
+#NAMN <=> NMN: "3.5.1.42"
+
+
+#temp = unlist(strsplit(keggGet("C00003")[[1]]["REACTION"][[1]], split = " "))
+#i = 1
+
+#NADH = character()
+#NADP = character()
+#NMN = character()
+#NAAD = character()
+
+#while(i <= length(temp)){
+#  temp.eq = keggGet(temp[i])[[1]][c("EQUATION")][[1]]
+#  temp.enz = keggGet(temp[i])[[1]][c("ENZYME")][[1]]
+#  if(length(grep("C00004", temp.eq)) == 1){
+#    NADH = unique(c(NADH, temp.enz))
+#  }
+#  if(length(grep("C00006", temp.eq)) == 1){
+#    NADP = unique(c(NADP, temp.enz))
+#  }
+#  if(length(grep("C00857", temp.eq)) == 1){
+#    NAAD = unique(c(NAAD, temp.enz))
+#  }
+#  if(length(grep("C00455", temp.eq)) == 1){
+#    NMN = unique(c(NMN, temp.enz))
+#  }
+#  i = i +1
+#}
+
+
+#NAD+ <=> NMN: NMN
+#NAD+ <=> NADP: NADP
+#NAD+ <=> NAAD: NAAD
+#NAD+ <=> NADH: NADH
+
+
+
+#temp = unlist(strsplit(keggGet("C00006")[[1]]["REACTION"][[1]], split = " "))
+#i = 1
+
+#NADPH = character()
+
+
+#while(i <= length(temp)){
+#  temp.eq = keggGet(temp[i])[[1]][c("EQUATION")][[1]]
+#  temp.enz = keggGet(temp[i])[[1]][c("ENZYME")][[1]]
+#  if(length(grep("C00005", temp.eq)) == 1){
+#    NADPH = c(NADPH, temp.enz)
+#  }
+#  i = i +1
+#  temp.eq
+#  NADPH
+#}
+
+#NADPH = unique(NADPH)
+
+
+
+#enzymes = list(NR2NAM  = c("2.4.2.1", "3.2.2.3"),
+#               NR2NMN  = c("3.1.3.5", "2.7.1.22"),
+#               NAM2NMN = c("3.2.2.14", "2.4.2.12"),
+#               NMN2NAD = NMN,
+#               NAD2NADP = NADP,
+#               NAD2NADH = NADH,
+#               NA2NAMN = c("2.4.2.55", "6.3.4.21", "2.4.2.21"),
+#               NAMN2NAAD = c("3.6.1.9", "3.6.1.22", "2.7.7.1", "2.7.7.18" ),
+#               NAMN2NMN = c("3.5.1.42"),
+#               NAAD2NAD = NAAD,
+#               NADP2NADPH = NADPH)
+
+  
+#NR2NAM = unique(c(names(nodeID[grep("\\b2.4.2.1\\b", nodeID)]),
+#                  names(nodeID[grep("\\b3.2.2.3\\b", nodeID)])))
+  
+#NR2NMN = unique(c(names(nodeID[grep("\\b3.1.3.5\\b", nodeID)]),
+#                  names(nodeID[grep("\\b2.7.1.22\\b", nodeID)])))
+  
+#NAM2NMN = unique(c(names(nodeID[grep("\\b3.2.2.14\\b", nodeID)]),
+#                   names(nodeID[grep("\\b2.4.2.12\\b", nodeID)])))
+
+#NA2NAMN = unique(c(names(nodeID[grep("\\b2.4.2.55\\b", nodeID)]),
+#                   names(nodeID[grep("\\b6.3.4.21\\b", nodeID)]),
+#                   names(nodeID[grep("\\b2.4.2.21\\b", nodeID)])))
+
+#NAMN2NAAD = unique(c(names(nodeID[grep("\\b3.6.1.9\\b", nodeID)]),
+#                     names(nodeID[grep("\\b3.6.1.22\\b", nodeID)]),
+#                     names(nodeID[grep("\\b2.7.7.1\\b", nodeID)]),
+#                     names(nodeID[grep("\\b2.7.7.18\\b", nodeID)])))
+
+#NAMN2NMN = unique(c(names(nodeID[grep("\\b3.5.1.42\\b", nodeID)])))
+
+#NAAD2NAD = unique(c(names(nodeID[grep("\\b6.3.1.5\\b", nodeID)]),
+#                    names(nodeID[grep("\\b6.3.5.1\\b", nodeID)])))
+
+
+
+#NMN2NAD = character()
+#i=1
+#while(i <= length(NMN)){
+#  NMN2NAD = unique(c(NMN2NAD, names(nodeID[grep(paste0("\\b",NMN[i],"\\b"), nodeID)])))
+#  i=i+1
+#}
+
+#NAD2NADP = character()
+#i=1
+#while(i <= length(NADP)){
+#  NAD2NADP = unique(c(NAD2NADP, names(nodeID[grep(paste0("\\b",NADP[i],"\\b"), #nodeID)])))
+#  i=i+1
+#}
+
+#NAD2NADH = character()
+#i=1
+#while(i <= length(NADH)){
+#  NAD2NADH = unique(c(NAD2NADH, names(nodeID[grep(paste0("\\b",NADH[i],"\\b"), nodeID)])))
+#  i=i+1
+#}
+
+#NADP2NADPH = character()
+#i=1
+#while(i <= length(NADPH)){
+#  NADP2NADPH = unique(c(NADP2NADPH, names(nodeID[grep(paste0("\\b",NADPH[i],"\\b"), #nodeID)])))
+#  i=i+1
+#}
+
+#NAD.edges = matrix(rep("", (11*length(NAD2NADH))), ncol = 11)
+
+#colnames(NAD.edges) = c("NR2NAM", "NR2NMN", "NAM2NMN", "NMN2NAD", "NAD2NADP", "NAD2NADH",
+#                        "NA2NAMN", "NAMN2NAAD", "NAMN2NMN", "NAAD2NAD", "NADP2NADPH")
+
+#NAD.edges[1:length(NR2NAM),    "NR2NAM"]     = NR2NAM
+#NAD.edges[1:length(NR2NMN),    "NR2NMN"]     = NR2NMN
+#NAD.edges[1:length(NAM2NMN),   "NAM2NMN"]    = NAM2NMN
+#NAD.edges[1:length(NMN2NAD),   "NMN2NAD"]    = NMN2NAD
+#NAD.edges[1:length(NAD2NADP),  "NAD2NADP"]   = NAD2NADP
+#NAD.edges[1:length(NAD2NADH),  "NAD2NADH"]   = NAD2NADH
+#NAD.edges[1:length(NA2NAMN),   "NA2NAMN"]    = NA2NAMN
+#NAD.edges[1:length(NAMN2NAAD), "NAMN2NAAD"]  = NAMN2NAAD
+#NAD.edges[1:length(NAMN2NMN),  "NAMN2NMN"]   = NAMN2NMN
+#NAD.edges[1:length(NAAD2NAD),  "NAAD2NAD"]   = NAAD2NAD
+#NAD.edges[1:length(NADP2NADPH),"NADP2NADPH"] = NADP2NADPH
+
+#write.csv(NAD.edges, "/Users/johncsantiago/Documents/GitHub/WhartonLab/NAD.edges.csv")
+
+```
+
+```{r echo = F}
+
+NAD.edges = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/NAD.edges.csv", row.names = 1)
+
+NAD.nodes = data.frame(ID = character(),
+                       x = numeric(),
+                       y = numeric(),
+                       names = character())
+
+NAD.nodes[1,] = c('C03150', 0,  0,    "nicotinamide riboside+")
+NAD.nodes[2,] = c('C00153', 0,  5,    "nicotinamide")
+NAD.nodes[3,] = c('C00253', 0,  7.5,  "nicotinic acid")
+NAD.nodes[4,] = c('C00455', 5,  2.5,  "NMN")
+NAD.nodes[5,] = c('C01185', 5,  7.5,  "NAMN")
+NAD.nodes[6,] = c('C00006', 10, -2.5, "NADP+")
+NAD.nodes[7,] = c('C00003', 10, 2.5,  "NAD+")
+NAD.nodes[8,] = c('C00857', 10, 7.5,  "NAAD")
+NAD.nodes[9,] = c('C00005', 15, -2.5, "NADPH")
+NAD.nodes[10,] = c('C00004', 15, 2.5,  "NADH")
+
+NAD.nodes[11,] = c('C00806', 20, 10,  "tryptophan")
+NAD.nodes[12,] = c('C02794', 5, 10,  "3-hydroxykynurenine")
+NAD.nodes[13,] = c('C01718', 10, 10,  "kynurenine")
+NAD.nodes[14,] = c('C01717', 10, 12.5,  "kynurenic acid")
+NAD.nodes[15,] = c('C02700', 15, 10,  "N-Formylkynurenine")
+
+row.names(NAD.nodes) = NAD.nodes$names
+
+NAD.genes = data.frame( FBgn = character(),
+                        Symbol = character(),
+                        FC = numeric(),
+                        FDR = numeric())
+
+edges = data.frame(from = character(),
+                   to = character(),
+                   arrows = character(),
+                   FBgn = character(),
+                   Symbol = character())
+                   
+
+
+#color = character(),
+#                   FDR = numeric(),
+#                   GR = numeric(),
+#                   WT = numeric(),
+#                   FC = numeric())
+
+temp = GeneIDKey[GeneIDKey$ensembl %in% na.omit(NAD.edges$NR2NAM), c("FBgn", "Symbol")]
+temp$from = "nicotinamide riboside+"
+temp$to = "nicotinamide"
+temp$arrows = "to"
+temp = temp[,colnames(edges)]
+edges = rbind(edges, temp)
+
+temp = GeneIDKey[GeneIDKey$ensembl %in% na.omit(NAD.edges$NR2NMN), c("FBgn", "Symbol")]
+temp$from = "nicotinamide riboside+"
+temp$to = "NMN"
+temp$arrows = "to"
+temp = temp[,colnames(edges)]
+edges = rbind(edges, temp)
+
+temp = data.frame(FBgn = "",
+                  Symbol = "")
+temp$from = "nicotinamide"
+temp$to = "NMN"
+temp$arrows = "to"
+temp = temp[,colnames(edges)]
+edges = rbind(edges, temp)
+
+temp = GeneIDKey[GeneIDKey$ensembl %in% na.omit(NAD.edges$NMN2NAD), c("FBgn", "Symbol")]
+temp$from = "NMN"
+temp$to = "NAD+"
+temp$arrows = "to"
+temp = temp[,colnames(edges)]
+edges = rbind(edges, temp)
+
+temp = GeneIDKey[GeneIDKey$ensembl %in% na.omit(NAD.edges$NAD2NADP), c("FBgn", "Symbol")]
+temp$from = "NAD+"
+temp$to = "NADP+"
+temp$arrows = "to"
+temp = temp[,colnames(edges)]
+edges = rbind(edges, temp)
+
+temp = data.frame(FBgn = "",
+                  Symbol = "")
+temp$from = "NAD+"
+temp$to = "NADH"
+temp$arrows = "to;from"
+temp = temp[,colnames(edges)]
+edges = rbind(edges, temp)
+
+temp = data.frame(FBgn = "",
+                  Symbol = "")
+temp$from = "NADP+"
+temp$to = "NADPH"
+temp$arrows = "to;from"
+temp = temp[,colnames(edges)]
+edges = rbind(edges, temp)
+
+temp = data.frame(FBgn = "",
+                  Symbol = "")
+temp$from = "nicotinic acid"
+temp$to = "NAMN"
+temp$arrows = "to"
+temp = temp[,colnames(edges)]
+edges = rbind(edges, temp)
+
+temp = GeneIDKey[GeneIDKey$ensembl %in% na.omit(NAD.edges$NAMN2NAAD), c("FBgn", "Symbol")]
+temp$from = "NAMN"
+temp$to = "NAAD"
+temp$arrows = "to"
+temp = temp[,colnames(edges)]
+edges = rbind(edges, temp)
+
+temp = GeneIDKey[GeneIDKey$ensembl %in% na.omit(NAD.edges$NAAD2NAD), c("FBgn", "Symbol")]
+temp$from = "NAAD"
+temp$to = "NAD+"
+temp$arrows = "to"
+temp = temp[,colnames(edges)]
+edges = rbind(edges, temp)
+
+FBgn0003965 = data.frame(from = "tryptophan",
+                         to = "N-Formylkynurenine",
+                         arrows = "to",
+                         FBgn = "FBgn0003965",
+                         Symbol = "v")
+
+FBgn0031821 = data.frame(from = "N-Formylkynurenine",
+                         to = "kynurenine",
+                         arrows = "to",
+                         FBgn = "FBgn0031821",
+                         Symbol = "KFase")
+
+FBgn0000337 = data.frame(from = "kynurenine",
+                         to = "3-hydroxykynurenine",
+                         arrows = "to",
+                         FBgn = "FBgn0000337",
+                         Symbol = "cn")
+
+FBgn0037955 = data.frame(from = "kynurenine",
+                         to = "kynurenic acid",
+                         arrows = "to",
+                         FBgn = "FBgn0037955",
+                         Symbol = "Kyat")
+
+HKY2NAMN = data.frame(from = "3-hydroxykynurenine",
+                         to = "NAMN",
+                         arrows = "to",
+                         FBgn = "",
+                         Symbol = "")
+
+edges = rbind(edges, 
+              rbind(FBgn0003965, 
+                    rbind(FBgn0031821, 
+                          rbind(FBgn0000337, 
+                                rbind(FBgn0037955, HKY2NAMN)))))
+
+NAD.path = edges
+
+```
+
+
+```{r echo = F}
+NAD.network.fun = function(comparison.T, comparison.M, cond1, cond2){
+temp = colorRampPalette(c('royalblue',"dodgerblue",'red', "firebrick"))(401)
+
+visedges = NAD.path
+visedges$color = round(TKT.EdgeR.FC[NAD.path$FBgn, comparison.T],2)
+##visedges$width = .5 + abs(visedges$color)
+visedges$color[visedges$color < (-2)] = -2
+visedges$color[visedges$color > (2)] = 2
+visedges$color = (visedges$color * 100) +201
+visedges$color = temp[visedges$color]
+visedges$color[is.na(visedges$color)] = "black"
+
+#visedges$symbol = GeneIDKey[visedges$FBgn, 'Symbol']
+visedges$fdr = signif(TKT.EdgeR[visedges$FBgn, comparison.T], 2)
+visedges$GR = round(mean.cpm[visedges$FBgn, cond1],1)
+visedges$WT = round(mean.cpm[visedges$FBgn, cond2],1)
+temp.width = data.frame(GR = visedges$GR,
+                        WT = visedges$WT)
+temp.width$max = apply(temp.width, 1, max)/50
+temp.width$max[is.na(temp.width$max)] = .1
+visedges$width = temp.width$max
+visedges$width[visedges$width <= 1] = 1
+
+visedges$title = paste0(visedges$Symbol,
+                        "<br>FDR: ", visedges$fdr, 
+                        "<br>",cond1," CPM: ", visedges$GR, 
+                        "<br>",cond2," CPM: ", visedges$WT)
+#visedges = na.omit(visedges)
+
+node.names = unique(c(visedges$from, visedges$to))
+node.data = data.frame(id = node.names,
+                       color = 'dimgrey',
+                       size = 10.5,
+                       FC = NA,
+                       pval = NA,
+                       row.names = node.names)
+
+
+#row.names(comparison.M)[row.names(comparison.M) == "cAMP(2',3') / cAMP(3',5')"] = 'cAMP'
+
+node.colors = na.omit(comparison.M[intersect(row.names(comparison.M), node.names),])
+node.pval = setNames(signif((node.colors$p),2), row.names(node.colors))
+node.data[names(node.pval), 'pval'] = node.pval
+node.colors = setNames(round(log2(node.colors$FC),2), row.names(node.colors))
+node.data[names(node.colors), "FC"] = node.colors
+node.data[names(node.colors),'size'] = node.colors
+#node.data[names(node.colors),'size'] = 
+#  (node.data[names(node.colors),'size'] + .5 + abs(min(node.colors)))*7.5
+node.data[names(node.colors),'size'] = 
+  (node.data[names(node.colors),'size'] + 3)*3.5
+
+node.colors[node.colors < (-2)] = -2
+node.colors[node.colors>2] = 2
+
+
+node.colors = (node.colors*100)+201
+
+
+
+node.colors = setNames(temp[node.colors], names(node.colors)) 
+node.data[names(node.colors), 'color'] = node.colors
+
+node.data$title = paste0(node.data$id,
+                         "<br>FC: ", node.data$FC,
+                         "<br>pval: ", node.data$pval)
+
+
+node.data$group = 'metabolite'
+#node.data[node.data$color == 'black', 'group'] = "Outside Path"
+#node.data[node.data$color == 'dimgrey', 'group'] = "no data"
+
+row.names(NAD.nodes) = NAD.nodes$names
+
+
+
+
+# passing custom nodes and/or edges
+lnodes <- data.frame(label = c("Increased", "Decreased", "No Data"), 
+shape = 'dot', color = c("firebrick", "royalblue",'dimgrey'),
+ title = "") 
+
+
+nodes = node.data
+
+##nodes$color[nodes$color != "black"] = 'dimgrey'
+
+
+colored.nodes = unique(c(interactions[,1], interactions[,3]))
+colored.nodes = c(setdiff(row.names(nodes), c(colored.nodes, row.names(nodes)[nodes$color == "black"])))
+
+#nodes[row.names(nodes) %in% colored.nodes, 'color'] = "gold"
+
+
+visedges = visedges[,c('from', 'to', 'arrows', 'color', 'width', 'title')]
+row.names(visedges) = c(1:nrow(visedges))
+
+colored.edges = row.names(visedges[grep("CG16758", visedges$title),])
+colored.edges = setdiff(row.names(visedges), colored.edges)
+
+
+nodes$x = as.numeric(NAD.nodes[nodes$id, "x"])*50
+nodes$y = as.numeric(NAD.nodes[nodes$id, "y"])*50
+
+
+visNetwork(nodes,visedges,
+                  main = paste0(cond1, " vs ", cond2))%>%
+  visNodes(physics = F)%>%
+  #visLayout(hierarchical=F, improvedLayout=T)%>%
+  visPhysics(solver="forceAtlas2Based", forceAtlas2Based = list(gravitationalConstant=-50),enabled=T, minVelocity = .5)%>%
+  visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE)%>%
+  visEdges(arrows = visedges$arrows, physics = T)%>%
+  #visGroups(groupname = "Outside Path", shape = 'box', physics=F, size = 25, font=list(color="white"))%>%
+    visLegend(addNodes = lnodes, useGroups = FALSE, width = .115)
+
+}
+
+```
+
+
+```{r echo = F}
+
+comparison.T = "GRxWT.FC"
+cond1 = 'GR.F'
+cond2 = "WT.F"
+comparison.M = GRxWT.C
+
+NAD.network.fun(comparison.T, comparison.M, cond1, cond2)
+
+```
+
+
+
+```{r echo = F}
+
+comparison.T = "GRxWT.MC"
+cond1 = 'GR.M'
+cond2 = "WT.M"
+comparison.M = GRxWT.C
+
+NAD.network.fun(comparison.T, comparison.M, cond1, cond2)
+
+```
+
+
+```{r echo = F}
+
+comparison.T = "GRxWT.FDf"
+cond1 = 'TktDfGR.F'
+cond2 = "TktDfWT.F"
+comparison.M = GRxWT.Df
+
+NAD.network.fun(comparison.T, comparison.M, cond1, cond2)
+
+```
+
+
+```{r echo = F}
+
+comparison.T = "GRxWT.MDf"
+cond1 = 'TktDfGR.M'
+cond2 = "TktDfWT.M"
+comparison.M = GRxWT.Df
+
+NAD.network.fun(comparison.T, comparison.M, cond1, cond2)
+
+```
+
+
+```{r echo = F}
+
+comparison.T = "GRxWT.FOE"
+cond1 = 'TktOEGR.F'
+cond2 = "TktOEWT.F"
+comparison.M = GRxWT.OE
+
+
+NAD.network.fun(comparison.T, comparison.M, cond1, cond2)
+
+```
+
+
+
+```{r echo = F}
+
+comparison.T = "GRxWT.MOE"
+cond1 = 'TktOEGR.M'
+cond2 = "TktOEWT.M"
+comparison.M = GRxWT.OE
+
+
+NAD.network.fun(comparison.T, comparison.M, cond1, cond2)
+
+```

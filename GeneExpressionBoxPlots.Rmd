@@ -1,5 +1,5 @@
 ---
-title: "rac1 gene expression"
+title: "Specifgic Gene or Metabolite Levels"
 author: "John Santiago"
 date: "2024-05-24"
 output: html_document
@@ -13,21 +13,30 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ```{r include = F, echo = F}
+##Load Libraries and Data
 
 library(plotly)
 library(edgeR)
-library(heatmaply)
-library(org.Dm.eg.db)
-library(KEGGREST)
+
+GeneIDKey = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GeneIDKey.csv", row.names = 1)
 
 ##load all files from github
 git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"
-cpmdata = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT_cpmdata.csv"),row.names = 1)
-groups  = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.metadata.csv"),row.names = 1)
-TKT.EdgeR = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FDRTable.csv"),row.names = 1)
-TKT.EdgeR.FC = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FCTable.csv"),row.names = 1)
 
-groups = groups[colnames(cpmdata),]
+TKT.cpm = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT_cpmdata.csv"),row.names = 1)
+
+TKT.groups  = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.metadata.csv"),row.names = 1)
+TKT.FDR = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FDRTable.csv"),row.names = 1)
+TKT.FC = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FCTable.csv"),row.names = 1)
+
+TKT.groups = TKT.groups[colnames(TKT.cpm),]
+
+A4V.cpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.cpmdata.csv",row.names = 1)
+
+A4V.FDR = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.FDRdata.csv")
+
+
+
 
 gbbOE = read.csv("/Users/johncsantiago/Documents/GitHub/Datasets/gbbOE_CountTable.csv", row.names = 1)
 gbbOE.groups = read.csv("/Users/johncsantiago/Documents/GitHub/Datasets/gbbOE_Metadata.csv", row.names = 1)
@@ -110,289 +119,6 @@ y <- y[keep,,keep.lib.sizes=FALSE]
 z <- calcNormFactors(y, method = "TMM")
 ##normalized cpm
 gbbKO.cpmdata=cpm(z)
-
-GeneIDKey = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GeneIDKey.csv", row.names = 1)
-
-A4V.cpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.cpmdata.csv",row.names = 1)
-
-A4V.FDR = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.FDRdata.csv")
-
-nodeID = as.list(org.Dm.egENZYME)
-
-```
-
-
-
-```{r echo = F}
-
-##subsetting genes for patterns
-
-
-
-```
-
-
-```{r echo = F}
-
-##relish FBgn0014018
-##attacin FBgn0041579
-##cecropin FBgn0000276
-##diptericin FBgn0004240
-##drosocin FBgn0010388
-##defensin FBgn0010385
-##drosomycin FBgn0283461
-##metchnikowin FBgn0014865
-##sod1 FBgn0003462
-##sod2 FBgn0010213
-##catalase FBgn0000261
-##gstd1 FBgn0001149
-## arc1 FBgn0033926
-##rac1
-##cgs = c('CG10592','CG10827','CG1462','CG16771','CG1809','CG3264','CG3290','CG3292','CG5150','CG5361','CG5656','CG8105','CG8147')
-##mle 'FBgn0002774'
-##gstD FBgn0001149
-##Tudor-SN FBgn0035121
-##atf4 FBgn0000370
-##thor FBgn0261560
-##sdhbl FBgn0030975
-##ND-51L FBgn0034251
-##kayak (AP-1) FBgn0001297
-## Jra (AP-1) FBgn0001291
-#sad FBgn0003312
-
-##Specific enzyme
-enzyme.ens = nodeID[grep('3.1.3.5',nodeID)]
-enzyme.genes = GeneIDKey[GeneIDKey$ensembl %in% names(enzyme.ens)[c(1,3:5,7)],]
-
-```
-
-> GeneIDKey[intersect(s1,intersect(s2,intersect(s3,s4))),'Symbol']
- [1] "Cyp4p1"  "CG13962" "Cpr51A"  "CG11438" "Sgs5bis" "sad"    
- [7] "Lip2"    "CG4757"  "CG14229" "CG15406" "CG3270"  "CG9877" 
-[13] "CG13905" "Zip71B"  "CG17027" "nom"     "CG16727" "CG9702" 
-[19] "CG43740"
-> GeneIDKey[intersect(s1,intersect(s2,intersect(s3,s4))),'FBgn']
- [1] "FBgn0015037" "FBgn0032824" "FBgn0033942" "FBgn0037164"
- [5] "FBgn0038523" "FBgn0003312" "FBgn0024740" "FBgn0027584"
- [9] "FBgn0031059" "FBgn0031517" "FBgn0033093" "FBgn0034819"
-[13] "FBgn0035176" "FBgn0036461" "FBgn0036553" "FBgn0037617"
-[17] "FBgn0038719" "FBgn0039787" "FBgn0263997"
-
-```{r echo = F}
-
-
-
-FBgn = 'FBgn0032513'
-name = 'STARD7'
-FBgn = 'FBgn0028932'
-name = 'CG16890'
-
-
-
-
-gene = data.frame(cpm = as.numeric(cpmdata[FBgn,]), condition = groups$Group, group = paste0(groups$Genotype, groups$Sex))
-
-gene$group = factor(gene$group, levels = c(unique(gene$group)))
-gene$condition = factor(gene$condition, levels = c('WT.F', "TktDfWT.F", "TktOEWT.F",
-                                                   'GR.F', "TktDfGR.F", "TktOEGR.F",
-                                                   'WT.M', "TktDfWT.M", "TktOEWT.M",
-                                                   'GR.M', "TktDfGR.M", "TktOEGR.M"))
-
-par(mar = c(5,7,5,2))
-plot(x = NA,
-      y = NA,
-     type = 'n',
-     ylim = c(min(gene$cpm), max(gene$cpm)),
-     xlim = c(.5, 12.5),
-     xaxt = "n",
-     ylab="",
-     yaxt = "n",
-     xlab = NA)
-
-rect(0, 0-(1.5*max(gene$cpm)), 13, 1.5*max(gene$cpm), col = 'gray95')
-
-boxplot(gene$cpm~gene$condition, 
-        xlab="",
-        las = 2, 
-        cex.axis = .8,
-        xaxt = 'none',
-        yaxt = 'none',
-        boxwex = .75,
-        boxlwd = 2,
-        lwd = 2,
-        cex.ticks = 2,
-        add = T,
-        col = c(rep("honeydew", 3),
-                rep("thistle1", 3),
-                rep("lightcyan", 3),
-                rep("lightyellow", 3)))
-
-box(lwd = 2)
-
-points(x=as.numeric(factor(gene$condition)),
-       y=gene$cpm,
-       cex=1,
-       pch=21,
-       bg=c('firebrick',"gold","darkgreen","dodgerblue")[as.numeric(factor(gene$group))])
-
-axis(side = 1,
-     at = 1:12,
-     labels = rep(c("Control", "Df", "OE"), 4),
-     line = 0,
-     cex.axis = .75,
-     lwd.ticks = 2)
-
-axis(side = 2,
-     line = 0,
-     cex.axis = 1,
-     lwd.ticks = 2,
-     las = 2)
-
-axis(side = 2,
-     at = .5*(max(gene$cpm) + min(gene$cpm)),
-     label = "Counts per million reads",
-     tick = F,
-     padj = -3,
-     cex.axis = 1.25)
-
-axis(side = 1,
-     at = c(2, 5, 8, 11),
-     labels = c("Silent", "G85R","Silent", "G85R"),
-     tick = F,
-     padj = 2,
-     cex.axis = 1)
-axis(side = 3,
-     at = c(3.5, 9.5),
-     labels = c("Female", "Male"),
-     tick = F,
-     padj = .5,
-     cex.axis = 1.5)
-
-axis(side = 3,
-     at = 6.5,
-     labels = name,
-     tick = F,
-     padj = -1.5,
-     cex.axis = 2)
-
-axis(side = 3,
-     at = c(3.5,9.5),
-     tick = T,
-     outer = T,
-     labels = F,
-     line = -2.25,
-     lwd.ticks = 0)
-
-xline1 = min(gene$cpm) - (max(gene$cpm)-min(gene$cpm))*.04
-xline2 = min(gene$cpm) - (max(gene$cpm)-min(gene$cpm))*.19
-lines(x=c(3.5,3.5), y = c(xline1, xline2), lty = 1, lwd = 2, xpd = T)
-lines(x=c(6.5,6.5), y = c(xline1, xline2), lty = 1, lwd = 2, xpd = T)
-lines(x=c(9.5,9.5), y = c(xline1, xline2), lty = 1, lwd = 2, xpd = T)
-abline(v = 6.5, lty = 2, lwd = 2)
-
-
-```
-
-
-```{r echo = F}
-
-gene = data.frame(cpm = as.numeric(cpmdata[FBgn,]), 
-                  condition = groups$Group, 
-                  group = paste0(groups$Genotype, groups$Sex),
-                  TKT = groups$TKT)
-
-gene = gene[gene$TKT != 'OE',]
-
-gene$group = factor(gene$group, levels = c(unique(gene$group)))
-gene$condition = factor(gene$condition, levels = c('GR.F', "TktDfGR.F",
-                                                 'WT.F', "TktDfWT.F",
-                                                 'GR.M', "TktDfGR.M",
-                                                 'WT.M', "TktDfWT.M"))
-
-boxplot(gene$cpm~gene$condition, xlab="",     
-        main= name,ylab="Counts per Million Reads", las = 2, cex.axis = .8)
-points(x=as.numeric(factor(gene$condition)),y=gene$cpm,cex=1,pch=21,bg=c('firebrick',"gold","darkgreen","dodgerblue")[as.numeric(factor(gene$group))])
-
-```
-
-
-```{r echo = F}
-
-A4V.groups = as.vector(colnames(A4V.cpm))
-
-A4V.groups = substr(A4V.groups,1, nchar(A4V.groups)-1)
-
-par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
-gene = data.frame(cpm = as.numeric(A4V.cpm[FBgn,]), 
-                  condition = A4V.groups, 
-                  group = paste0(substr(A4V.groups, 1,1), substr(A4V.groups, nchar(as.vector(A4V.groups))-1,nchar(as.vector(A4V.groups))-1)))
-
-gene$condition = factor(gene$condition, levels = c("A3FH", "A9FH", "A40FH",
-                                                   "S3FH", "S9FH", "S40FH",
-                                                   "A3FT", "A9FT", "A40FT",
-                                                   "S3FT", "S9FT", "S40FT",
-                                                   "A3FA", "A9FA", "A40FA",
-                                                   "S3FA", "S9FA", "S40FA",
-                                                   "A3MH", "A9MH",
-                                                   "S3MH", "S9MH",
-                                                   "A3MT", "A9MT",
-                                                   "S3MT", "S9MT",
-                                                   "A3MA", "A9MA",
-                                                   "S3MA", "S9MA"))
-gene$group = factor(gene$group, levels = c(unique(gene$group)))
-
-boxplot(gene$cpm~gene$condition, xlab="",     
-        main= name,ylab="Counts per Million Reads", las = 2, cex.axis = .8)
-points(x=as.numeric(factor(gene$condition)),y=gene$cpm,cex=1,pch=21,bg=c('firebrick',"gold","darkgreen","dodgerblue")[as.numeric(factor(gene$group))])
-legend('topright',
-       inset=c(-0.275,0),
-       legend = c('A4V F', 'Silent F', 'A4V M', 'Silent F'), 
-       fill = c('firebrick',"darkgreen", "gold","dodgerblue"),
-       cex = .65,
-       bty = 'n',
-       pt.cex = .5)
-
-
-```
-
-```{r}
-
-gene = data.frame(cpm = as.numeric(gbbOE.cpmdata[FBgn,]), condition = gbbOE.groups$group, group = gbbOE.groups$genotype)
-
-gene$group = factor(gene$group, levels = c(unique(gene$group)))
-gene$condition = factor(gene$condition, levels = c('LoxP_ML3', "LoxP_LL3",
-                                                 'G85R_ML3', "G85R_LL3",
-                                                 'G85R_gbb_ML3', "G85R_gbb_LL3"))
-
-boxplot(gene$cpm~gene$condition, xlab="",     
-        main= name,ylab="Counts per Million Reads", las = 2, cex.axis = .8)
-points(x=as.numeric(factor(gene$condition)),y=gene$cpm,cex=1,pch=21,bg=c('firebrick',"dodgerblue","gold")[as.numeric(factor(gene$group))])
-
-```
-
-
-```{r}
-
-## WT = W1118
-## KO = GBB1/GBB2 (both null alleles)
-## Aaron and Catherine legend for RNAseq
-## Whole larvae
-
-gene = data.frame(cpm = as.numeric(gbbKO.cpmdata[FBgn,]), condition = gbbKO.groups$Genotype)
-
-gene$condition = factor(gene$condition, levels = c('WT', "KO"))
-
-boxplot(gene$cpm~gene$condition, xlab="",     
-        main= name,ylab="Counts per Million Reads", las = 2, cex.axis = .8)
-points(x=as.numeric(factor(gene$condition)),y=gene$cpm,cex=1,pch=21,bg=c('firebrick',"dodgerblue","gold")[as.numeric(factor(gene$condition))])
-
-```
-
-
-
-
-```{r echo = F}
-
 
 rawdata = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/MetabolomicsForMetaboanalyst.txt", sep = "\t", row.names = 1)
 KEGG.Key = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/RawMetabolomicData.csv", row.names = 1)
@@ -521,14 +247,190 @@ colnames(norm.data) = as.character(genotypes[substr(colnames(norm.data),1,1)])
 
 ```
 
+
 ```{r echo = F}
+##Function to plot all G85R groups
+
+plot.G85R = function(ID){
+ID.row = GeneIDKey[grep(ID, GeneIDKey$FBgn),]
 
 
+if(nrow(ID.row) == 1){
+FBgn = ID.row$FBgn
+name = ID.row$Symbol
 
-metab = 'D-sedoheptulose-7-phosphate'
-name = 'D-sedoheptulose-7-phosphate'
+
+gene = data.frame(cpm = as.numeric(TKT.cpm[FBgn,]), condition = TKT.groups$Group, group = paste0(TKT.groups$Genotype, TKT.groups$Sex))
+
+gene$group = factor(gene$group, levels = c(unique(gene$group)))
+gene$condition = factor(gene$condition, levels = c('WT.F', "TktDfWT.F", "TktOEWT.F",
+                                                   'GR.F', "TktDfGR.F", "TktOEGR.F",
+                                                   'WT.M', "TktDfWT.M", "TktOEWT.M",
+                                                   'GR.M', "TktDfGR.M", "TktOEGR.M"))
+
+par(mar = c(5,7,5,2))
+plot(x = NA,
+      y = NA,
+     type = 'n',
+     ylim = c(min(gene$cpm), max(gene$cpm)),
+     xlim = c(.5, 12.5),
+     xaxt = "n",
+     ylab="",
+     yaxt = "n",
+     xlab = NA)
+
+rect(0, 0-(1.5*max(gene$cpm)), 13, 1.5*max(gene$cpm), col = 'gray95')
+
+boxplot(gene$cpm~gene$condition, 
+        xlab="",
+        las = 2, 
+        cex.axis = .8,
+        xaxt = 'none',
+        yaxt = 'none',
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        add = T,
+        col = c(rep("honeydew", 3),
+                rep("thistle1", 3),
+                rep("lightcyan", 3),
+                rep("lightyellow", 3)))
+
+box(lwd = 2)
+
+points(x=as.numeric(factor(gene$condition)),
+       y=gene$cpm,
+       cex=1,
+       pch=21,
+       bg=c('firebrick',"gold","darkgreen","dodgerblue")[as.numeric(factor(gene$group))])
+
+axis(side = 1,
+     at = 1:12,
+     labels = rep(c("Control", "Df", "OE"), 4),
+     line = 0,
+     cex.axis = .75,
+     lwd.ticks = 2)
+
+axis(side = 2,
+     line = 0,
+     cex.axis = 1,
+     lwd.ticks = 2,
+     las = 2)
+
+axis(side = 2,
+     at = .5*(max(gene$cpm) + min(gene$cpm)),
+     label = "Counts per million reads",
+     tick = F,
+     padj = -3,
+     cex.axis = 1.25)
+
+axis(side = 1,
+     at = c(2, 5, 8, 11),
+     labels = c("Silent", "G85R","Silent", "G85R"),
+     tick = F,
+     padj = 2,
+     cex.axis = 1)
+axis(side = 3,
+     at = c(3.5, 9.5),
+     labels = c("Female", "Male"),
+     tick = F,
+     padj = .5,
+     cex.axis = 1.5)
+
+axis(side = 3,
+     at = 6.5,
+     labels = name,
+     tick = F,
+     padj = -1.5,
+     cex.axis = 2)
+
+axis(side = 3,
+     at = c(3.5,9.5),
+     tick = T,
+     outer = T,
+     labels = F,
+     line = -2.25,
+     lwd.ticks = 0)
+
+xline1 = min(gene$cpm) - (max(gene$cpm)-min(gene$cpm))*.04
+xline2 = min(gene$cpm) - (max(gene$cpm)-min(gene$cpm))*.19
+lines(x=c(3.5,3.5), y = c(xline1, xline2), lty = 1, lwd = 2, xpd = T)
+lines(x=c(6.5,6.5), y = c(xline1, xline2), lty = 1, lwd = 2, xpd = T)
+lines(x=c(9.5,9.5), y = c(xline1, xline2), lty = 1, lwd = 2, xpd = T)
+abline(v = 6.5, lty = 2, lwd = 2)
+}
+
+if(nrow(ID.row) != 1){
+  ID.row
+}
+}
+
+```
+
+```{r echo = F}
+##Function to plot a specific gene expression levels in all A4V groups
+
+  
+plot.A4V = function(ID){
+ID.row = GeneIDKey[grep(ID, GeneIDKey$FBgn),]
+
+if(nrow(ID.row) == 1){
+  FBgn = ID.row$FBgn
+  name = ID.row$Symbol
+  A4V.groups = as.vector(colnames(A4V.cpm))
+
+  A4V.groups = substr(A4V.groups,1, nchar(A4V.groups)-1)
+
+  par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
+  gene = data.frame(cpm = as.numeric(A4V.cpm[FBgn,]),
+                    condition = A4V.groups,
+                    group = paste0(substr(A4V.groups, 1,1), substr(A4V.groups, start = nchar(as.vector(A4V.groups))-1,nchar(as.vector(A4V.groups))-1)))
+
+  gene$condition = factor(gene$condition, levels = c("A3FH", "A9FH", "A40FH",
+                                                   "S3FH", "S9FH", "S40FH",
+                                                   "A3FT", "A9FT", "A40FT",
+                                                   "S3FT", "S9FT", "S40FT",
+                                                   "A3FA", "A9FA", "A40FA",
+                                                   "S3FA", "S9FA", "S40FA",
+                                                   "A3MH", "A9MH",
+                                                   "S3MH", "S9MH",
+                                                   "A3MT", "A9MT",
+                                                   "S3MT", "S9MT",
+                                                   "A3MA", "A9MA",
+                                                   "S3MA", "S9MA"))
+  gene$group = factor(gene$group, levels = c(unique(gene$group)))
+
+  boxplot(gene$cpm~gene$condition, xlab="",     
+        main= name,ylab="Counts per Million Reads", las = 2, cex.axis = .8)
+  points(x=as.numeric(factor(gene$condition)),y=gene$cpm,cex=1,pch=21,bg=c('firebrick',"gold","darkgreen","dodgerblue")[as.numeric(factor(gene$group))])
+  legend('topright',
+       inset=c(-0.275,0),
+       legend = c('A4V F', 'Silent F', 'A4V M', 'Silent F'), 
+       fill = c('firebrick',"darkgreen", "gold","dodgerblue"),
+       cex = .65,
+       bty = 'n',
+       pt.cex = .5)
+}
+
+if(nrow(ID.row) != 1){
+  ID.row
+}
+}
+
+```
+
+```{r echo = F}
+##Plot levels of a specific metabolite
+
+plot.metab = function(metabID){
+
+ID.row = row.names(norm.data)[grep(ID, row.names(norm.data))]
 
 
+if(length(ID.row) == 1){
+metab = ID.row
+name = ID.row
 
 metab = data.frame(data = as.numeric(norm.data[metab,]), 
                    group = colnames(norm.data), 
@@ -545,7 +447,7 @@ par(mar = c(5,7,5,2))
 plot(x = NA,
       y = NA,
      type = 'n',
-     ylim = c(min(metab$data), max(metab$data)),
+     ylim = c(min(na.omit(metab$data)), max(na.omit(metab$data))),
      xlim = c(.5, 6.5),
      xaxt = "n",
      ylab="",
@@ -589,13 +491,6 @@ axis(side = 2,
      lwd.ticks = 2,
      las = 2)
 
-axis(side = 2,
-     at = .5*(max(gene$cpm) + min(gene$cpm)),
-     label = "Counts per million reads",
-     tick = F,
-     padj = -3,
-     cex.axis = 1.25)
-
 axis(side = 1,
      at = c(2, 5, 8, 11),
      labels = c("Silent", "G85R","Silent", "G85R"),
@@ -610,13 +505,141 @@ axis(side = 3,
      padj = -.5,
      cex.axis = 2)
 
+}
 
-xline1 = min(gene$cpm) - (max(gene$cpm)-min(gene$cpm))*.04
-xline2 = min(gene$cpm) - (max(gene$cpm)-min(gene$cpm))*.19
-lines(x=c(3.5,3.5), y = c(xline1, xline2), lty = 1, lwd = 2, xpd = T)
-lines(x=c(6.5,6.5), y = c(xline1, xline2), lty = 1, lwd = 2, xpd = T)
-lines(x=c(9.5,9.5), y = c(xline1, xline2), lty = 1, lwd = 2, xpd = T)
+if(length(ID.row) != 1){
+  ID.row
+}
 
-
+}
 
 ```
+
+
+```{r echo = F}
+
+ID = "0000018"
+plot.G85R(ID)
+
+```
+
+
+```{r echo = F}
+##Tailared code to plot a specific gene expression levels in all A4V groups
+
+ID = "0000018"
+  
+plot.A4V(ID)
+```
+
+
+```{r echo = F}
+
+metabID = 'NADP'
+
+plot.metab(metabID)
+
+```
+
+```{r echo = F}
+##Tailared code to plot a subset of groups in the TKT dataset
+
+##ID = "0000018"
+  
+ID.row = GeneIDKey[grep(ID, GeneIDKey$FBgn),]
+
+if(nrow(ID.row) == 1){
+FBgn = ID.row$FBgn
+name = ID.row$Symbol
+
+gene = data.frame(cpm = as.numeric(TKT.cpm[FBgn,]), 
+                  condition = TKT.groups$Group, 
+                  group = paste0(TKT.groups$Genotype, TKT.groups$Sex),
+                  TKT = TKT.groups$TKT)
+
+gene = gene[gene$TKT != 'OE',]
+
+gene$group = factor(gene$group, levels = c(unique(gene$group)))
+gene$condition = factor(gene$condition, levels = c('GR.F', "TktDfGR.F",
+                                                 'WT.F', "TktDfWT.F",
+                                                 'GR.M', "TktDfGR.M",
+                                                 'WT.M', "TktDfWT.M"))
+
+boxplot(gene$cpm~gene$condition, xlab="",     
+        main= name,ylab="Counts per Million Reads", las = 2, cex.axis = .8)
+points(x=as.numeric(factor(gene$condition)),y=gene$cpm,cex=1,pch=21,bg=c('firebrick',"gold","darkgreen","dodgerblue")[as.numeric(factor(gene$group))])
+
+}
+
+if(nrow(ID.row) != 1){
+  ID.row
+}
+
+```
+
+
+
+```{r echo = F}
+##Plot expression levels for a specific gene in the gbbOE dataset
+
+##ID = "0000018"
+  
+ID.row = GeneIDKey[grep(ID, GeneIDKey$FBgn),]
+
+if(nrow(ID.row) == 1){
+FBgn = ID.row$FBgn
+name = ID.row$Symbol
+
+gene = data.frame(cpm = as.numeric(gbbOE.cpmdata[FBgn,]), condition = gbbOE.groups$group, group = gbbOE.groups$genotype)
+
+gene$group = factor(gene$group, levels = c(unique(gene$group)))
+gene$condition = factor(gene$condition, levels = c('LoxP_ML3', "LoxP_LL3",
+                                                 'G85R_ML3', "G85R_LL3",
+                                                 'G85R_gbb_ML3', "G85R_gbb_LL3"))
+
+boxplot(gene$cpm~gene$condition, xlab="",     
+        main= name,ylab="Counts per Million Reads", las = 2, cex.axis = .8)
+points(x=as.numeric(factor(gene$condition)),y=gene$cpm,cex=1,pch=21,bg=c('firebrick',"dodgerblue","gold")[as.numeric(factor(gene$group))])
+
+}
+
+if(nrow(ID.row) != 1){
+  ID.row
+}
+```
+
+
+```{r echo = F}
+##Plot expression levels for a specific gene in the gbb-null dataset
+
+
+## WT = W1118
+## KO = GBB1/GBB2 (both null alleles)
+## Aaron and Catherine legend for RNAseq
+## Whole larvae
+
+##ID = "0000018"
+  
+ID.row = GeneIDKey[grep(ID, GeneIDKey$FBgn),]
+
+if(nrow(ID.row) == 1){
+FBgn = ID.row$FBgn
+name = ID.row$Symbol
+
+gene = data.frame(cpm = as.numeric(gbbKO.cpmdata[FBgn,]), condition = gbbKO.groups$Genotype)
+
+gene$condition = factor(gene$condition, levels = c('WT', "KO"))
+
+boxplot(gene$cpm~gene$condition, xlab="",     
+        main= name,ylab="Counts per Million Reads", las = 2, cex.axis = .8)
+points(x=as.numeric(factor(gene$condition)),y=gene$cpm,cex=1,pch=21,bg=c('firebrick',"dodgerblue","gold")[as.numeric(factor(gene$condition))])
+
+}
+
+if(nrow(ID.row) != 1){
+  ID.row
+}
+```
+
+
+

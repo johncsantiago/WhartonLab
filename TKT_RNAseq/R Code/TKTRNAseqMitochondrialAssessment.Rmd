@@ -228,6 +228,19 @@ A4V.meancpm$SFA = apply((A4V.cpm[,gr2=="SFA"]), 1, mean)
 A4V.meancpm$AMA = apply((A4V.cpm[,gr2=="AMA"]), 1, mean)
 A4V.meancpm$SMA = apply((A4V.cpm[,gr2=="SMA"]), 1, mean)
 
+KEGG.Names = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/KEGG.names.csv", row.names = 1)
+G85R.metab.comparekey = setNames(c("GR.CxDf", "GR.CxOE", "WT.CxDf", "WT.CxOE",
+                                   "GRxWT.C", "GRxWT.Df", "GRxWT.OE",
+                                   "GR.CxDf", "GR.CxOE", "WT.CxDf", "WT.CxOE",
+                                   "GRxWT.C", "GRxWT.Df", "GRxWT.OE"), names(G85R.comparekey)[1:14])
+
+G85R.metabnorm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/NormalizedMetabolomicData.csv", row.names = 1)
+G85R.metabmean = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/MeanNormalizedMetabolomicData.csv", row.names = 1)
+metab.id = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/MetaboliteMultiKEGGIDKey.csv", row.names = 1)
+metab.id = setNames(metab.id$metab, metab.id$KEGG)
+G85R.metabFC = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/MetaboliteFCs.csv", row.names = 1)
+G85R.metabFDR = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/MetaboliteFDRs.csv", row.names = 1)
+G85R.metabp = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/Metabolitepvals.csv", row.names = 1)
 
 ```
 
@@ -3846,7 +3859,7 @@ mtGRxWT.C.RG[[1]]
 
 </br>
 
-Fig40. OXPHOS Genes cpm in G85R relative to Silent: FC for all OXPHOS with female G85R/WT FC on the x-axis and male G85R/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
+Fig40. OXPHOS Genes FC in G85R relative to Silent: FC for all OXPHOS with female G85R/WT FC on the x-axis and male G85R/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
 
 </br></br>
 
@@ -3871,7 +3884,7 @@ mtGRxWT.C.RG[[1]]
 
 </br>
 
-Fig41. OXPHOS Genes cpm in A4V relative to Silent 3-Day heads: FC for all OXPHOS with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
+Fig41. OXPHOS Genes FC in A4V relative to Silent 3-Day heads: FC for all OXPHOS with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
 
 </br></br>
 
@@ -3896,7 +3909,7 @@ mtGRxWT.C.RG[[1]]
 
 </br>
 
-Fig42. OXPHOS Genes cpm in A4V relative to Silent 9-Day heads: FC for all OXPHOS with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
+Fig42. OXPHOS Genes FC in A4V relative to Silent 9-Day heads: FC for all OXPHOS with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
 
 </br></br>
 
@@ -3922,7 +3935,7 @@ mtGRxWT.C.RG[[1]]
 
 </br>
 
-Fig43. OXPHOS Genes cpm in A4V relative to Silent 40-day female heads and 9-day male heads: FC for all OXPHOS with 40-day female A4V/WT FC on the x-axis and 9-day male A4V/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
+Fig43. OXPHOS Genes FC in A4V relative to Silent 40-day female heads and 9-day male heads: FC for all OXPHOS with 40-day female A4V/WT FC on the x-axis and 9-day male A4V/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
 
 </br></br>
 
@@ -3949,7 +3962,7 @@ mtGRxWT.C.RG[[1]]
 
 </br>
 
-Fig44. OXPHOS Genes cpm in A4V relative to Silent 3-Day thorax: FC for all OXPHOS with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
+Fig44. OXPHOS Genes FC in A4V relative to Silent 3-Day thorax: FC for all OXPHOS with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
 
 </br></br>
 
@@ -3974,7 +3987,7 @@ mtGRxWT.C.RG[[1]]
 
 </br>
 
-Fig45. OXPHOS Genes cpm in A4V relative to Silent 9-Day thorax: FC for all OXPHOS with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
+Fig45. OXPHOS Genes FC in A4V relative to Silent 9-Day thorax: FC for all OXPHOS with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
 
 </br></br>
 
@@ -3999,7 +4012,7 @@ mtGRxWT.C.RG[[1]]
 
 </br>
 
-Fig46. OXPHOS Genes cpm in A4V relative to Silent 40-day female heads and 9-day male thorax: FC for all OXPHOS with 40-day female A4V/WT FC on the x-axis and 9-day male A4V/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
+Fig46. OXPHOS Genes FC in A4V relative to Silent 40-day female thorax and 9-day male thorax: FC for all OXPHOS with 40-day female A4V/WT FC on the x-axis and 9-day male A4V/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
 
 </br></br>
 
@@ -4026,7 +4039,7 @@ mtGRxWT.C.RG[[1]]
 
 </br>
 
-Fig47. OXPHOS Genes cpm in A4V relative to Silent 3-Day abdomen: FC for all OXPHOS with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
+Fig47. OXPHOS Genes FC in A4V relative to Silent 3-Day abdomen: FC for all OXPHOS with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
 
 </br></br>
 
@@ -4051,7 +4064,7 @@ mtGRxWT.C.RG[[1]]
 
 </br>
 
-Fig48. OXPHOS Genes cpm in A4V relative to Silent 9-Day abdomen: FC for all OXPHOS with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
+Fig48. OXPHOS Genes FC in A4V relative to Silent 9-Day abdomen: FC for all OXPHOS with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
 
 </br></br>
 
@@ -4076,7 +4089,7 @@ mtGRxWT.C.RG[[1]]
 
 </br>
 
-Fig49. OXPHOS Genes cpm in A4V relative to Silent 40-day female heads and 9-day male abdomen: FC for all OXPHOS with 40-day female A4V/WT FC on the x-axis and 9-day male A4V/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
+Fig49. OXPHOS Genes FC in A4V relative to Silent 40-day female abdomen and 9-day male abdomen: FC for all OXPHOS with 40-day female A4V/WT FC on the x-axis and 9-day male A4V/WT on the y-axis. Colors indicate if they were in the GO term for that complex. the "Other" category are genes that were in the OXPHOS GO category but not found in any of the individual complex terms.
 
 </br></br>
 
@@ -4257,7 +4270,7 @@ mtGRxWT.C.RG[[1]]
 
 </br>
 
-Fig50. AD Array Genes cpm in G85R relative to Silent: FC for all AD Array Genes with female G85R/WT FC on the x-axis and male G85R/WT on the y-axis. 
+Fig50. AD Array Genes FC in G85R relative to Silent: FC for all AD Array Genes with female G85R/WT FC on the x-axis and male G85R/WT on the y-axis. 
 
 </br></br>
 
@@ -4281,7 +4294,7 @@ mtGRxWT.C.RG[[1]]
 
 </br>
 
-Fig51. AD Array Genes cpm in A4V relative to Silent 3-Day heads: FC for all AD Array Genes with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. 
+Fig51. AD Array Genes FC in A4V relative to Silent 3-Day heads: FC for all AD Array Genes with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. 
 
 </br></br>
 
@@ -4306,7 +4319,7 @@ mtGRxWT.C.RG[[1]]
 
 </br>
 
-Fig52. AD Array Genes cpm in A4V relative to Silent 9-Day heads: FC for all AD Array Genes with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. 
+Fig52. AD Array Genes FC in A4V relative to Silent 9-Day heads: FC for all AD Array Genes with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. 
 
 </br></br>
 
@@ -4331,7 +4344,7 @@ mtGRxWT.C.RG[[1]]
 
 </br>
 
-Fig53. AD Array Genes cpm in A4V relative to Silent 40-day female heads and 9-day male heads: FC for all AD Array Genes with 40-day female A4V/WT FC on the x-axis and male 9-day A4V/WT on the y-axis. 
+Fig53. AD Array Genes FC in A4V relative to Silent 40-day female heads and 9-day male heads: FC for all AD Array Genes with 40-day female A4V/WT FC on the x-axis and male 9-day A4V/WT on the y-axis. 
 
 </br></br>
 
@@ -4356,7 +4369,7 @@ mtGRxWT.C.RG[[1]]
 
 </br>
 
-Fig54. AD Array Genes cpm in A4V relative to Silent 3-Day thorax: FC for all AD Array Genes with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. 
+Fig54. AD Array Genes FC in A4V relative to Silent 3-Day thorax: FC for all AD Array Genes with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. 
 
 </br></br>
 
@@ -4381,7 +4394,7 @@ mtGRxWT.C.RG[[1]]
 
 </br>
 
-Fig55. AD Array Genes cpm in A4V relative to Silent 9-Day thorax: FC for all AD Array Genes with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. 
+Fig55. AD Array Genes FC in A4V relative to Silent 9-Day thorax: FC for all AD Array Genes with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. 
 
 </br></br>
 
@@ -4406,7 +4419,7 @@ mtGRxWT.C.RG[[1]]
 
 </br>
 
-Fig56. AD Array Genes cpm in A4V relative to Silent 40-day female thorax and 9-day male thorax: FC for all AD Array Genes with 40-day female A4V/WT FC on the x-axis and male 9-day A4V/WT on the y-axis. 
+Fig56. AD Array Genes FC in A4V relative to Silent 40-day female thorax and 9-day male thorax: FC for all AD Array Genes with 40-day female A4V/WT FC on the x-axis and male 9-day A4V/WT on the y-axis. 
 
 </br></br>
 
@@ -4433,7 +4446,7 @@ mtGRxWT.C.RG[[1]]
 
 </br>
 
-Fig57. AD Array Genes cpm in A4V relative to Silent 3-Day abdomen: FC for all AD Array Genes with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. 
+Fig57. AD Array Genes FC in A4V relative to Silent 3-Day abdomen: FC for all AD Array Genes with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. 
 
 </br></br>
 
@@ -4458,7 +4471,7 @@ mtGRxWT.C.RG[[1]]
 
 </br>
 
-Fig58. AD Array Genes cpm in A4V relative to Silent 9-Day thorax: FC for all AD Array Genes with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. 
+Fig58. AD Array Genes FC in A4V relative to Silent 9-Day abdomen: FC for all AD Array Genes with female A4V/WT FC on the x-axis and male A4V/WT on the y-axis. 
 
 </br></br>
 
@@ -4483,7 +4496,7 @@ mtGRxWT.C.RG[[1]]
 
 </br>
 
-Fig59. AD Array Genes cpm in A4V relative to Silent 40-day female abdomen and 9-day male abdomen: FC for all AD Array Genes with 40-day female A4V/WT FC on the x-axis and male 9-day A4V/WT on the y-axis. 
+Fig59. AD Array Genes FC in A4V relative to Silent 40-day female abdomen and 9-day male abdomen: FC for all AD Array Genes with 40-day female A4V/WT FC on the x-axis and male 9-day A4V/WT on the y-axis. 
 
 </br></br>
 
@@ -4812,7 +4825,7 @@ AVxWT.CH.RG[[1]]
 ```
 
 
-Fig. 67 FC of Complex I genes in A4V male 9 day and female 40 day head samples relative to silent. mtDNA encoded genes are in gold. Genes with mean cpm under 10 for all conditions excluded.
+Fig. 67 FC of Complex I genes in A4V male 9 day and female 40 day thorax samples relative to silent. mtDNA encoded genes are in gold. Genes with mean cpm under 10 for all conditions excluded.
 
 </br></br>
 
@@ -4966,7 +4979,7 @@ AVxWT.CH.RG[[1]]
 ```
 
 
-Fig. 72 FC of Complex II genes in A4V male 9 day and female 40 day head samples relative to silent. Genes with mean cpm under 10 for all conditions excluded.
+Fig. 72 FC of Complex II genes in A4V male and female head samples relative to silent. All time points were combined. Genes with mean cpm under 10 for all conditions excluded.
 
 </br></br>
 
@@ -5057,7 +5070,7 @@ AVxWT.CH.RG[[1]]
 ```
 
 
-Fig. 75 FC of Complex II genes in A4V male 9 day and female 40 day head samples relative to silent. Genes with mean cpm under 10 for all conditions excluded.
+Fig. 75 FC of Complex II genes in A4V male 9 day and female 40 day thorax samples relative to silent. Genes with mean cpm under 10 for all conditions excluded.
 
 </br></br>
 
@@ -5088,7 +5101,7 @@ AVxWT.CH.RG[[1]]
 ```
 
 
-Fig. 76 FC of Complex I genes in A4V male 9 day and female 40 day thorax samples relative to silent. Genes with mean cpm under 10 for all conditions excluded.
+Fig. 76 FC of Complex I genes in A4V male and female thorax samples relative to silent. All time points were combined. Genes with mean cpm under 10 for all conditions excluded.
 
 </br></br>
 
@@ -5210,7 +5223,7 @@ AVxWT.CH.RG[[1]]
 ```
 
 
-Fig. 80 FC of Complex III genes in A4V male 9 day and female 40 day head samples relative to silent. mtDNA encoded genes are in green Genes with mean cpm under 10 for all conditions excluded.
+Fig. 80 FC of Complex III genes in A4V male and female head samples relative to silent. All time points were combined. mtDNA encoded genes are in green Genes with mean cpm under 10 for all conditions excluded.
 
 </br></br>
 
@@ -5301,7 +5314,7 @@ AVxWT.CH.RG[[1]]
 ```
 
 
-Fig. 83 FC of Complex IV genes in A4V male 9 day and female 40 day head samples relative to silent. mtDNA encoded genes are in green. Genes with mean cpm under 10 for all conditions excluded.
+Fig. 83 FC of Complex IV genes in A4V male 9 day and female 40 day thorax samples relative to silent. mtDNA encoded genes are in green. Genes with mean cpm under 10 for all conditions excluded.
 
 </br></br>
 
@@ -5332,7 +5345,7 @@ AVxWT.CH.RG[[1]]
 ```
 
 
-Fig. 84 FC of Complex I genes in A4V male 9 day and female 40 day thorax samples relative to silent. mtDNA encoded genes are in green. Genes with mean cpm under 10 for all conditions excluded.
+Fig. 84 FC of Complex I genes in A4V male and female thorax samples relative to silent. All time points were combined. mtDNA encoded genes are in green. Genes with mean cpm under 10 for all conditions excluded.
 
 </br></br>
 
@@ -5456,7 +5469,7 @@ AVxWT.CH.RG[[1]]
 ```
 
 
-Fig. 88 FC of Complex IV genes in A4V male 9 day and female 40 day head samples relative to silent. mtDNA encoded genes are in blue Genes with mean cpm under 10 for all conditions excluded.
+Fig. 88 FC of Complex IV genes in A4V male and female head samples relative to silent. All time points were combined. mtDNA encoded genes are in blue Genes with mean cpm under 10 for all conditions excluded.
 
 </br></br>
 
@@ -5547,7 +5560,7 @@ AVxWT.CH.RG[[1]]
 ```
 
 
-Fig. 91 FC of Complex IV genes in A4V male 9 day and female 40 day head samples relative to silent. mtDNA encoded genes are in blue. Genes with mean cpm under 10 for all conditions excluded.
+Fig. 91 FC of Complex IV genes in A4V male 9 day and female 40 day thorax samples relative to silent. mtDNA encoded genes are in blue. Genes with mean cpm under 10 for all conditions excluded.
 
 </br></br>
 
@@ -5578,7 +5591,7 @@ AVxWT.CH.RG[[1]]
 ```
 
 
-Fig. 92 FC of Complex I genes in A4V male 9 day and female 40 day thorax samples relative to silent. mtDNA encoded genes are in blue. Genes with mean cpm under 10 for all conditions excluded.
+Fig. 92 FC of Complex I genes in A4V male and female thorax samples relative to silent. All time points were combined. mtDNA encoded genes are in blue. Genes with mean cpm under 10 for all conditions excluded.
 
 </br></br>
 
@@ -5702,7 +5715,7 @@ AVxWT.CH.RG[[1]]
 ```
 
 
-Fig. 96 FC of Complex V genes in A4V male 9 day and female 40 day head samples relative to silent. mtDNA encoded genes are in red Genes with mean cpm under 10 for all conditions excluded.
+Fig. 96 FC of Complex V genes in A4V male and female head samples relative to silent. All time points were combined. mtDNA encoded genes are in red Genes with mean cpm under 10 for all conditions excluded.
 
 </br></br>
 
@@ -5793,7 +5806,7 @@ AVxWT.CH.RG[[1]]
 ```
 
 
-Fig. 99 FC of Complex IV genes in A4V male 9 day and female 40 day head samples relative to silent. mtDNA encoded genes are in red. Genes with mean cpm under 10 for all conditions excluded.
+Fig. 99 FC of Complex IV genes in A4V male 9 day and female 40 day thorax samples relative to silent. mtDNA encoded genes are in red. Genes with mean cpm under 10 for all conditions excluded.
 
 </br></br>
 
@@ -5824,7 +5837,7 @@ AVxWT.CH.RG[[1]]
 ```
 
 
-Fig. 100 FC of Complex I genes in A4V male 9 day and female 40 day thorax samples relative to silent. mtDNA encoded genes are in red. Genes with mean cpm under 10 for all conditions excluded.
+Fig. 100 FC of Complex I genes in A4V male and female thorax samples relative to silent. All time points were combined. mtDNA encoded genes are in red. Genes with mean cpm under 10 for all conditions excluded.
 
 </br></br>
 
@@ -5977,7 +5990,7 @@ pca.data$Color[pca.data$CHR == 'mt'] = 'firebrick'
 ```
 
 
-```{r echo = F, warning = F, include = F}
+```{r echo = F, warning = F}
 
 complex.genes[row.names(complex.genes) %in% mt, "CHR"] = "mt"
 
@@ -5985,16 +5998,18 @@ complex.cpm = na.omit(A4V.cpm[row.names(complex.genes)[complex.genes$Complex == 
                                                        | complex.genes$Complex == "Complex II" 
                                                        | complex.genes$Complex == "Complex III"
                                                        | complex.genes$Complex == "Complex IV"
-                                                       | complex.genes$Complex == "Complex V"],])
-                              #row.names(A4V.meta[A4V.meta$Section == "Thorax" &
-                              #                   (A4V.meta$Age == "3"),])])
+                                                       | complex.genes$Complex == "Complex V"],
+                              row.names(A4V.meta[A4V.meta$Section == "Head",])])
 
 row.names(complex.cpm) = GeneIDKey[row.names(complex.cpm), "Symbol"]
+
+
+
 complex.cpm = complex.cpm[apply(complex.cpm, 1, max)>10,]
 complex.cpm.all = t(scale(t(complex.cpm)))
 
-complex.cpm = complex.cpm.all[,row.names(A4V.meta[A4V.meta$Section == "Thorax" &
-                                                  (A4V.meta$Age == "9"),])]
+complex.cpm = complex.cpm.all##[,row.names(A4V.meta[A4V.meta$Section == "Thorax" &
+                             ##                    (A4V.meta$Age == "9"),])]
 complex.data = complex.genes
 row.names(complex.data) = complex.data$Symbol
 complex.data = complex.data[row.names(complex.cpm),]
@@ -6047,6 +6062,21 @@ pca.data$Color[pca.data$CHR == 'mt'] = 'firebrick'
            title = "A4V/Silent 3 Hour Head OXPHOS Genes")
 
   fig
+```
+
+```{r}
+library(devtools)
+library(factoextra)
+
+```
+
+```{r}
+
+fviz_pca_ind(pca, 
+             col.ind = pca.data$CHR,
+             addEllipses = T, 
+             label = "none" )
+
 ```
 
 
@@ -6146,9 +6176,15 @@ heatmap.2(as.matrix(complex.FC),
 
 ```{r echo = F}
 
-complex.cpm = na.omit(A4V.meancpm[row.names(complex.genes),])
+complex.cpm = na.omit(A4V.meancpm[row.names(complex.genes),
+                                  nchar(colnames(A4V.meancpm)) > 3])
 
-complex.cpm = complex.cpm[apply(complex.cpm, 1, max)>10,]
+Hcomplex.cpm = complex.cpm[, grep("H", colnames(complex.cpm))]
+
+Tcomplex.cpm = complex.cpm[, grep("T", colnames(complex.cpm))]
+
+complex.cpm = complex.cpm[apply(Hcomplex.cpm, 1, max)>10 &
+                          apply(Tcomplex.cpm, 1, max)>10,]
 
 
 complex.FC = A4V.FC[row.names(complex.cpm),]
@@ -6181,7 +6217,7 @@ heatmap.2(as.matrix(complex.FC),
           col = hmcolors,
           trace = "none",
           ##scale = 'row',
-          cexRow = .25)
+          cexRow = .5)
 
 
 
@@ -6524,6 +6560,352 @@ pca.data$Symbol = pca.data$Symbol + as.numeric(factor(pca.data$Group))
   fig
 ```
 
+
+```{r}
+
+KEGG.Names = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/KEGG.names.csv", row.names = 1)
+G85R.metab.comparekey = setNames(c("GR.CxDf", "GR.CxOE", "WT.CxDf", "WT.CxOE",
+                                   "GRxWT.C", "GRxWT.Df", "GRxWT.OE",
+                                   "GR.CxDf", "GR.CxOE", "WT.CxDf", "WT.CxOE",
+                                   "GRxWT.C", "GRxWT.Df", "GRxWT.OE"), names(G85R.comparekey)[1:14])
+
+G85R.metabnorm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/NormalizedMetabolomicData.csv", row.names = 1)
+G85R.metabmean = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/MeanNormalizedMetabolomicData.csv", row.names = 1)
+metab.id = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/MetaboliteMultiKEGGIDKey.csv", row.names = 1)
+metab.id = setNames(metab.id$metab, metab.id$KEGG)
+G85R.metabFC = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/MetaboliteFCs.csv", row.names = 1)
+G85R.metabFDR = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/MetaboliteFDRs.csv", row.names = 1)
+G85R.metabp = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/Metabolitepvals.csv", row.names = 1)
+
+NAD = keggGet('dme00760')[[1]]
+#NAD = keggGet('dme00010')[[1]]
+#NAD = keggGet('dme00230')[[1]]
+NAD = NAD$COMPOUND
+
+temp.metabs = setNames(c(rep(0, length(metab.id))), c(names(metab.id)))
+i=1
+while(i<=length(NAD)){
+  if(length(grep(names(NAD)[i], names(temp.metabs))) >0){
+    temp.metabs[grep(names(NAD)[i], names(temp.metabs))] = 1
+  }
+  i=i+1
+}
+
+NAD.IDs = temp.metabs[temp.metabs == 1]
+NAD.IDs = metab.id[names(NAD.IDs)]
+
+NAD.levels = as.matrix(G85R.metabnorm[NAD.IDs, substr(colnames(G85R.metabnorm), 1,2) == "GR" |
+                                               substr(colnames(G85R.metabnorm), 1,2) == "WT" |
+                                               substr(colnames(G85R.metabnorm), 1,6) == "TktDfG"])
+NAD.levels = NAD.levels[names(na.omit(NAD.levels[,1])),]
+NAD.levels = NAD.levels[,c("WT1", "WT2", "WT3", "WT4",
+                           "GR1", "GR2", "GR3", "GR4")]#,
+                           #"TktDfGR1","TktDfGR2","TktDfGR3","TktDfGR4")]
+
+
+heatmap.2((NAD.levels),
+          Colv = F,
+          Rowv = T,
+          dendrogram = "none",
+          col = hmcolors,
+          trace = "none",
+          scale = 'row',
+          cexRow = .75)
+
+
+#boxplot with WT, G85R, G85R-def
+##NAD+, NR, NMW c("nicotinamide riboside+", "NMN", "NAD+")
+##Guanine, Uric Acid, Xanthine, Deoxyinosine c('guanine', 'uric acid', 'xanthine', 'deoxyinosine')
+
+
+```
+
+
+```{r}
+
+NAD.bp = as.data.frame(t(NAD.levels[c("nicotinamide riboside+", "NMN", "NAD+"),]))
+NAD.bp$Group = substr(row.names(NAD.bp), 1, 2)
+
+NAD.bp = data.frame(Geno = rep(NAD.bp[, "Group"],3),
+                    Metab = c(rep("nicotinamide riboside+", 8),#12),
+                              rep("NMN", 8),#12),
+                              rep("NAD+", 8)),#12)),
+                    Level = c(NAD.bp[,"nicotinamide riboside+"],
+                              NAD.bp[,"NMN"],
+                              NAD.bp[,"NAD+"]))
+NAD.bp$Group = factor(paste(NAD.bp$Geno, NAD.bp$Metab),
+                      levels = c("WT nicotinamide riboside+", "GR nicotinamide riboside+",# "Tk nicotinamide riboside+", 
+                                 "WT NMN", "GR NMN",# "Tk NMN", 
+                                 "WT NAD+", "GR NAD+"))#, "Tk NAD+" ))
+
+NAD.bp$Geno = factor(NAD.bp$Geno, levels = c("WT", "GR"))#, "Tk"))
+NAD.bp$Level = log10(NAD.bp$Level)
+box.at = c(1:2, 4:5, 7:8)
+
+boxplot(NAD.bp$Level~NAD.bp$Group,
+        las = 2,
+        col = c(hex("firebrick", .25), hex("steelblue", .25)),#, hex("darkgreen", .25)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Metabolite",
+        ylab = "Peak Intensity (log10)",
+        main = "NAD Biosynthesis",
+        boxlwd = 1.5,
+        lwd = 1.5,
+        ylim = c(9.5, 10.75))
+
+points(x=box.at[as.numeric(factor(NAD.bp$Group))],
+       y=NAD.bp$Level,
+       cex=1,
+       pch=21,
+       #bg=c('firebrick',"dodgerblue","darkgreen")[as.numeric(factor(NAD.bp$Geno))])
+       bg=c('firebrick',"dodgerblue")[as.numeric(factor(NAD.bp$Geno))])
+
+axis(1, at= c(1.5,4.5,7.5),
+     tick = F, 
+     line = -.5, 
+     labels = c(unique(NAD.bp$Metab)), 
+     las = 1)
+
+legend(x = 7.5,
+       y = 10.85,
+       #legend = c("Silent", "G85R", "G85R TKT-Df"),
+       legend = c("Silent", "G85R"),
+       pch = 21,
+       #pt.bg = c('firebrick',"dodgerblue","darkgreen"),
+       pt.bg = c('firebrick',"dodgerblue"),
+       bty = 'n',
+       y.intersp = 0.5)
+
+
+```
+
+
+```{r}
+
+
+NAD = keggGet('dme00760')[[1]]
+#NAD = keggGet('dme00010')[[1]]
+NAD = keggGet('dme00230')[[1]]
+NAD = NAD$COMPOUND
+
+temp.metabs = setNames(c(rep(0, length(metab.id))), c(names(metab.id)))
+i=1
+while(i<=length(NAD)){
+  if(length(grep(names(NAD)[i], names(temp.metabs))) >0){
+    temp.metabs[grep(names(NAD)[i], names(temp.metabs))] = 1
+  }
+  i=i+1
+}
+
+NAD.IDs = temp.metabs[temp.metabs == 1]
+NAD.IDs = metab.id[names(NAD.IDs)]
+
+NAD.levels = as.matrix(G85R.metabnorm[NAD.IDs, substr(colnames(G85R.metabnorm), 1,2) == "GR" |
+                                               substr(colnames(G85R.metabnorm), 1,2) == "WT" |
+                                               substr(colnames(G85R.metabnorm), 1,6) == "TktDfG"])
+NAD.levels = NAD.levels[names(na.omit(NAD.levels[,1])),]
+NAD.levels = NAD.levels[,c("WT1", "WT2", "WT3", "WT4",
+                           "GR1", "GR2", "GR3", "GR4")]#,
+                           #"TktDfGR1","TktDfGR2","TktDfGR3","TktDfGR4")]
+
+
+heatmap.2((NAD.levels),
+          Colv = F,
+          Rowv = T,
+          dendrogram = "none",
+          col = hmcolors,
+          trace = "none",
+          scale = 'row',
+          cexRow = .75)
+
+```
+
+
+
+```{r}
+
+NAD.bp = as.data.frame(t(NAD.levels[c('guanine', 'uric acid', 'xanthine', 'deoxyinosine'),]))
+NAD.bp$Group = substr(row.names(NAD.bp), 1, 2)
+
+NAD.bp = data.frame(Geno = rep(NAD.bp[, "Group"],4),
+                    Metab = c(rep("guanine",8),#12),
+                              rep("deoxyinosine",8),#12),
+                              rep("xanthine",8),#12),
+                              rep("uric acid",8)),#12)),
+                    Level = c(NAD.bp[,"guanine"],
+                              NAD.bp[,"deoxyinosine"],
+                              NAD.bp[,"xanthine"],
+                              NAD.bp[,"uric acid"]))
+NAD.bp$Group = factor(paste(NAD.bp$Geno, NAD.bp$Metab),
+                      levels = c("WT guanine", "GR guanine", #"Tk guanine", 
+                                 "WT deoxyinosine", "GR deoxyinosine", #"Tk deoxyinosine", 
+                                 "WT xanthine", "GR xanthine", #"Tk xanthine", 
+                                 "WT uric acid", "GR uric acid"))#, "Tk uric acid" ))
+
+NAD.bp$Geno = factor(NAD.bp$Geno, levels = c("WT", "GR"))#, "Tk"))
+
+NAD.bp$Level = log10(NAD.bp$Level)
+box.at = c(1:2, 4:5, 7:8, 10:11)
+
+boxplot(NAD.bp$Level~NAD.bp$Group,
+        las = 2,
+        #col = c(hex("firebrick", .25), hex("steelblue", .25), hex("darkgreen", .25)),
+        col = c(hex("firebrick", .25), hex("steelblue", .25)),
+        at = box.at,
+        xaxt = "none",
+        xlab = "Metabolite",
+        ylab = "Peak Intensity (log10)",
+        main = "Purine Metabolism",
+        boxlwd = 1.5,
+        lwd = 1.5)
+
+points(x=box.at[as.numeric(factor(NAD.bp$Group))],
+       y=NAD.bp$Level,
+       cex=1,
+       pch=21,
+       #bg=c('firebrick',"dodgerblue","darkgreen")[as.numeric(factor(NAD.bp$Geno))])
+       bg=c('firebrick',"dodgerblue")[as.numeric(factor(NAD.bp$Geno))])
+
+axis(1, at= c(1.5,4.5,7.5, 10.5),
+     tick = F, 
+     line = -.5, 
+     labels = c(unique(NAD.bp$Metab)), 
+     las = 1)
+
+legend(x = 0,
+       y = 13,
+       #legend = c("Silent", "G85R", "G85R TKT-Df"),
+       legend = c("Silent", "G85R"),
+       pch = 21,
+       #pt.bg = c('firebrick',"dodgerblue","darkgreen"),
+       pt.bg = c('firebrick',"dodgerblue"),
+       bty = 'n',
+       y.intersp = 0.5)
+
+
+```
+
+```{r}
+
+all.perox = row.names(GO.Names[grep("eroxisome", GO.Names$term),])
+
+perox.genes = as.vector(unlist(genesingo[all.perox]))
+perox.genes = GeneIDKey[GeneIDKey$ensembl %in% unique(perox.genes), "FBgn"]
+
+perox.cpm = TKT.cpm[perox.genes,]
+
+perox.cpm = as.matrix(na.omit(perox.cpm[apply(perox.cpm, 1, max)>20,]))
+
+perox.cpm = perox.cpm[, c("WT.F1", "WT.F2",
+                          "GR.F1", "GR.F2",
+                          "WT.M1", "WT.M2", "WT.M3",
+                          "GR.M1", "GR.M2", "GR.M3")]
+
+perox.fc = TKT.EdgeR.FC[row.names(perox.cpm), c("GRxWT.FC", "GRxWT.MC",
+                                                  "GRxWT.FDf", "GRxWT.MDf")]
+
+perox.fc = as.matrix(na.omit(perox.fc))
+
+perox.hm = perox.fc
+
+row.names(perox.hm) = GeneIDKey[row.names(perox.hm), "Symbol"]
+
+heatmap.2((perox.hm),
+          Colv = F,
+          Rowv = T,
+          dendrogram = "none",
+          col = hmcolors,
+          trace = "none",
+          scale = 'none',
+          cexRow = .5)
+
+```
+
+
+
+```{r}
+
+all.purine = (GO.Names[grep("urine", GO.Names$term),])
+all.purine = all.purine[grep("metab", all.purine$term),]
+all.purine = row.names(all.purine)
+
+purine.genes = as.vector(unlist(genesingo[all.purine]))
+purine.genes = GeneIDKey[GeneIDKey$ensembl %in% unique(purine.genes), "FBgn"]
+
+purine.cpm = TKT.cpm[purine.genes,]
+
+purine.cpm = as.matrix(na.omit(purine.cpm[apply(purine.cpm, 1, max)>20,]))
+
+purine.cpm = purine.cpm[, c("WT.F1", "WT.F2",
+                          "GR.F1", "GR.F2",
+                          "WT.M1", "WT.M2", "WT.M3",
+                          "GR.M1", "GR.M2", "GR.M3")]
+
+purine.fc = TKT.EdgeR.FC[row.names(purine.cpm), c("GRxWT.FC", "GRxWT.MC",
+                                                  "GRxWT.FDf", "GRxWT.MDf")]
+
+purine.fc = as.matrix(na.omit(purine.fc))
+
+purine.hm = purine.fc
+
+row.names(purine.hm) = GeneIDKey[row.names(purine.hm), "Symbol"]
+
+heatmap.2((purine.hm),
+          Colv = F,
+          Rowv = T,
+          dendrogram = "none",
+          col = hmcolors,
+          trace = "none",
+          scale = 'none',
+          cexRow = .25,
+          cexCol = .75)
+
+```
+
+
+
+```{r echo = F}
+#pentose-phosphate shunt
+GOterm = "GO:0006098"
+
+hmcolors2=colorpanel(25,"steelblue3", "ivory",'red3')
+
+all.purine = (GO.Names[grep("pentose", GO.Names$term),])
+all.purine = row.names(all.purine)
+
+purine.genes = as.vector(unlist(genesingo[all.purine]))
+purine.genes = GeneIDKey[GeneIDKey$ensembl %in% unique(purine.genes), "FBgn"]
+
+purine.cpm = TKT.cpm[purine.genes,]
+
+purine.cpm = as.matrix(na.omit(purine.cpm[apply(purine.cpm, 1, max)>20,]))
+
+purine.cpm = purine.cpm[, c("WT.F1", "WT.F2",
+                          "GR.F1", "GR.F2",
+                          "WT.M1", "WT.M2", "WT.M3",
+                          "GR.M1", "GR.M2", "GR.M3")]
+
+purine.fc = TKT.EdgeR.FC[row.names(purine.cpm), c("GRxWT.FC", "GRxWT.MC",
+                                                  "GRxWT.FDf", "GRxWT.MDf")]
+
+purine.fc = as.matrix(na.omit(purine.fc))
+
+purine.hm = purine.fc
+
+row.names(purine.hm) = GeneIDKey[row.names(purine.hm), "Symbol"]
+
+heatmap.2((purine.hm),
+          Colv = F,
+          Rowv = T,
+          dendrogram = "none",
+          col = hmcolors2,
+          trace = "none",
+          scale = 'none',
+          cexRow = 1,
+          cexCol = .75)
+
+```
 
 ```{r, test-rgl, webgl=TRUE,echo=F, fig.height=10, fig.width=10, include = F}
 #open3d()
