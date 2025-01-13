@@ -1,0 +1,7 @@
+﻿ID,Group,Genotype
+C,WT,Cha-Gal4/+; silent/silent 
+E,G85R,Cha-Gal4/+; G85Rcr/G85Rcr 
+A,TktOEWT,Cha-Gal4/+; UAS-Tkt-silent/silent  
+F,TktOEGR,Cha-Gal4/+; UAS-Tkt-G85Rcr/G85Rcr  
+B,TktDfWT,Cha-Gal4/+; Df-8143(tkt) silent/silent  
+D,TktDfGR,Cha-Gal4/+; Df-8143(tkt) G85Rcr/G85Rcr 
