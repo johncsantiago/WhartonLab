@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r include = F, echo = F}
 ##Load Libraries and Data
 
-library(plotly)
+##library(plotly)
 library(edgeR)
 
 ##load all files from github
@@ -24,16 +24,10 @@ TKT.cpm = read.csv(paste0(git.dir,"TKT_cpmdata.csv"), row.names = 1)
 
 TKT.groups  = read.csv(paste0(git.dir, "TKT.metadata.csv"), row.names = 1)
 
-TKT.FDR = read.csv(paste0(git.dir, "TKT.EdgeR.FDRTable.csv"), row.names = 1)
-
-TKT.FC = read.csv(paste0(git.dir, "TKT.EdgeR.FCTable.csv"), row.names = 1)
-
 TKT.groups = TKT.groups[colnames(TKT.cpm),]
 
+
 A4V.cpm = read.csv(paste0(git.dir, "A4V.cpmdata.csv"), row.names = 1)
-
-A4V.FDR = read.csv(paste0(git.dir, "A4V.FDRdata.csv"), row.names = 1)
-
 
 
 
@@ -44,83 +38,6 @@ gbbOE.groups = read.csv(paste0(git.dir, "gbbOE_Metadata.csv"), row.names = 1)
 gbbOE = gbbOE[,row.names(gbbOE.groups)]
 gbbOE.groups$group = paste0(gbbOE.groups$genotype, "_",gbbOE.groups$stage)
 
-##normalize data
-countdata=gbbOE
-x <- countdata
-gr <- factor(gbbOE.groups$group, levels=c(unique(gbbOE.groups$group)))
-y <- DGEList(counts=x,group=gr)
-keep <- filterByExpr(y)
-y <- y[keep,,keep.lib.sizes=FALSE]
-z <- calcNormFactors(y, method = "TMM")
-##normalized cpm
-gbbOE.cpmdata=cpm(z)
-
-gbbOEmean = gbbOE.cpmdata[,1:6]
-colnames(gbbOEmean) = unique(gr)
-i=1
-while(i<=6){
-  temp= gbbOE.cpmdata[,row.names(gbbOE.groups[gbbOE.groups$group == colnames(gbbOEmean)[i],])]
-  gbbOEmean[,i] = apply(temp, 1, mean)
-  i=i+1
-}
-
-
-design<-model.matrix(~0 + gr)
-colnames(design) = unique(gr)
-z = estimateDisp(z, design, robust = T)
-
-fit <- glmQLFit(z, design)
-plotQLDisp(fit)
-
-compare = makeContrasts(G85R_LL3-LoxP_LL3, levels=design)
-lrt = glmQLFTest(fit,contrast=as.vector(compare))
-G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
-DEout=G_X_E$table
-GRxWT.LL3=DEout
-sGRxWT.LL3=DEout[DEout$FDR<.05,]
-
-compare = makeContrasts(G85R_ML3-LoxP_ML3, levels=design)
-lrt = glmQLFTest(fit,contrast=as.vector(compare))
-G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
-DEout=G_X_E$table
-GRxWT.ML3=DEout
-sGRxWT.ML3=DEout[DEout$FDR<.05,]
-
-compare = makeContrasts(G85R_LL3-G85R_ML3, levels=design)
-lrt = glmQLFTest(fit,contrast=as.vector(compare))
-G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
-DEout=G_X_E$table
-GR.LL3xML3=DEout
-sGR.LL3xML3=DEout[DEout$FDR<.05,]
-
-compare = makeContrasts(LoxP_LL3-LoxP_ML3, levels=design)
-lrt = glmQLFTest(fit,contrast=as.vector(compare))
-G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
-DEout=G_X_E$table
-WT.LL3xML3=DEout
-sWT.LL3xML3=DEout[DEout$FDR<.05,]
-
-compare = makeContrasts(G85R_gbb_LL3-G85R_gbb_ML3, levels=design)
-lrt = glmQLFTest(fit,contrast=as.vector(compare))
-G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
-DEout=G_X_E$table
-G85R_gbb.LL3xML3=DEout
-sG85R_gbb.LL3xML3=DEout[DEout$FDR<.05,]
-
-gbbKO = read.csv(paste0(git.dir, "gbbKO_CountTable.csv"), row.names = 1)
-
-gbbKO.groups = read.csv(paste0(git.dir, "gbbKO_Metadata.csv"), row.names = 1)
-
-##normalize data
-countdata=gbbKO
-x <- countdata
-gr <- factor(gbbKO.groups$Genotype, levels=c(unique(gbbKO.groups$Genotype)))
-y <- DGEList(counts=x,group=gr)
-keep <- filterByExpr(y)
-y <- y[keep,,keep.lib.sizes=FALSE]
-z <- calcNormFactors(y, method = "TMM")
-##normalized cpm
-gbbKO.cpmdata=cpm(z)
 
 rawdata = read.csv(paste0(git.dir, "MetabolomicsForMetaboanalyst.txt"), sep = "\t", row.names = 1)
 
@@ -248,7 +165,7 @@ colnames(mean.metab) = as.character(genotypes[colnames(mean.metab)])
 
 colnames(norm.data) = as.character(genotypes[substr(colnames(norm.data),1,1)])
 
-SCdata = read.csv(paste0(git.dir, "Nguyen%20Serpe%202024%20scRNA-seq%20VNC.csv"), row.names = 1)
+SCdata = read.csv(paste0(git.dir, "Nguyen%20Serpe%202024%20scRNA-seq%20VNC.csv"))
 
 ```
 
@@ -259,7 +176,7 @@ plot.G85R = function(ID){
 ID.row = GeneIDKey[c(grep(ID, GeneIDKey$FBgn),
                      grep(ID, GeneIDKey$Symbol)),]
 
-if(nrow(ID.row) < 500){
+if(nrow(ID.row) < 50 & nrow(ID.row) > 0){
 if(nrow(ID.row) == 1){
 FBgn = ID.row$FBgn
 name = ID.row$Symbol
@@ -377,7 +294,7 @@ plot.A4V = function(ID){
 ID.row = GeneIDKey[c(grep(ID, GeneIDKey$FBgn),
                      grep(ID, GeneIDKey$Symbol)),]
 
-if(nrow(ID.row) < 500){
+if(nrow(ID.row) < 50 & nrow(ID.row) > 0){
 if(nrow(ID.row) == 1){
   FBgn = ID.row$FBgn
   name = ID.row$Symbol
@@ -425,12 +342,13 @@ if(nrow(ID.row) != 1){
 ##Plot levels of a specific metabolite
 plot.metab = function(metabID){
 
-ID.row = row.names(norm.data)[grep(ID, row.names(norm.data))]
+ID.row = grep(metabID, row.names(norm.data))
 
-if(nrow(ID.row) < 500){
+
+if(length(ID.row) < 50 & length(ID.row) > 0){
 if(length(ID.row) == 1){
-metab = ID.row
-name = ID.row
+metab = row.names(norm.data)[ID.row]
+name = row.names(norm.data)[ID.row]
 
 metab = data.frame(data = as.numeric(norm.data[metab,]), 
                    group = colnames(norm.data), 
@@ -454,7 +372,7 @@ plot(x = NA,
      yaxt = "n",
      xlab = NA)
 
-rect(0, 0-(1.5*max(gene$cpm)), 13, 1.5*max(gene$cpm), col = 'gray95')
+rect(0, 0-(1.5*max(na.omit(metab$data))), 13, 1.5*max(na.omit(metab$data)), col = 'gray95')
 
 boxplot(metab$data~metab$group, 
         xlab="",
@@ -518,7 +436,7 @@ if(length(ID.row) != 1){
 plot.SC = function(gene.name){
 ID.row = SCdata[grep(gene.name, SCdata$Gene.name),]
 
-if(nrow(ID.row) < 500){
+if(nrow(ID.row) < 50 & nrow(ID.row) > 0){
 if(nrow(ID.row) == 1){
   
   gene.name = ID.row$Gene.name
@@ -632,7 +550,7 @@ plot.G85R(ID)
 ## Plot gene expression from A4V RNAseq experiment
 ## ID needs to be the full or partial gene symbol or FBgn (case sensitive)
 
-ID = "0000018"
+ID = "Arc1"
   
 plot.A4V(ID)
 ```
@@ -643,7 +561,7 @@ plot.A4V(ID)
 ## Plot metabolite levels from the G85R TKT metabolomics experiment
 ## metabID needs to be the full or partial metabolite name as listed in the table (case sensitive)
 
-metabID = 'NADP'
+metabID = 'NADH'
 
 plot.metab(metabID)
 
@@ -668,7 +586,7 @@ plot.SC(gene.name)
   
 ID.row = GeneIDKey[grep(ID, GeneIDKey$FBgn),]
 
-if(nrow(ID.row) < 500){
+if(nrow(ID.row) < 500 & nrow(ID.row) > 0){
 if(nrow(ID.row) == 1){
 FBgn = ID.row$FBgn
 name = ID.row$Symbol
@@ -706,7 +624,7 @@ if(nrow(ID.row) != 1){
   
 ID.row = GeneIDKey[grep(ID, GeneIDKey$FBgn),]
 
-if(nrow(ID.row) < 500){
+if(nrow(ID.row) < 500 & nrow(ID.row) > 0){
 
 if(nrow(ID.row) == 1){
 FBgn = ID.row$FBgn
@@ -745,7 +663,7 @@ if(nrow(ID.row) != 1){
   
 ID.row = GeneIDKey[grep(ID, GeneIDKey$FBgn),]
 
-if(nrow(ID.row) < 500){
+if(nrow(ID.row) < 500 & nrow(ID.row) > 0){
 if(nrow(ID.row) == 1){
 FBgn = ID.row$FBgn
 name = ID.row$Symbol
