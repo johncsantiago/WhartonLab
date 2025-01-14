@@ -65,7 +65,7 @@ plot.SC(gene.name)
 ```{r echo = F}
 ##Plot expression levels for a specific gene in the gbbOE dataset
 
-##ID = "0000018"
+ID = "Arc"
 
 plot.gbbOE(ID)
 
@@ -80,7 +80,7 @@ plot.gbbOE(ID)
 ## Aaron and Catherine legend for RNAseq
 ## Whole larvae
 
-##ID = "0000018"
+ID = "Arc1"
   
 plot.gbbKO(ID)
 
