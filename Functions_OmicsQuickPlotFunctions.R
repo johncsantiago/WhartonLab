@@ -27,6 +27,9 @@ gbbOE.groups = read.csv(paste0(git.dir, "gbbOE_Metadata.csv"), row.names = 1)
 gbbOE = gbbOE[,row.names(gbbOE.groups)]
 gbbOE.groups$group = paste0(gbbOE.groups$genotype, "_",gbbOE.groups$stage)
 
+gbbKO.cpm = read.csv(paste0(git.dir, "gbbKO.cpmdata.csv"), row.names = 1)
+gbbKO.groups = read.csv(paste0(git.dir, "gbbKO_Metadata.csv"), row.names = 1)
+
 
 Metab.data = read.csv(paste0(git.dir, "RawMetabolomicData.csv"), row.names = 1)
 Metab.Meta = read.csv(paste0(git.dir, "MetabolomicMetadata.csv"), row.names = 1)
