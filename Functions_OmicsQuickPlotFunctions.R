@@ -2,7 +2,6 @@
 ##Load Libraries and Data
 
 ##library(plotly)
-library(edgeR)
 
 ##load all files from github
 git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/GeneralDataFiles/"
