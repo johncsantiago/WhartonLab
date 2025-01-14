@@ -50,7 +50,6 @@ SCdata = read.csv(paste0(git.dir, "Nguyen%20Serpe%202024%20scRNA-seq%20VNC.csv")
 plot.G85R = function(ID){
   ID.row = GeneIDKey[c(grep(ID, GeneIDKey$FBgn),
                        grep(ID, GeneIDKey$Symbol)),]
-  ID.row = na.omit(ID.row)
   
   if(nrow(ID.row) < 50 & nrow(ID.row) > 0){
     if(nrow(ID.row) == 1
@@ -187,7 +186,6 @@ plot.G85R = function(ID){
 plot.A4V = function(ID){
   ID.row = GeneIDKey[c(grep(ID, GeneIDKey$FBgn),
                        grep(ID, GeneIDKey$Symbol)),]
-  ID.row = na.omit(ID.row)
   
   if(nrow(ID.row) < 50 & nrow(ID.row) > 0){
     if(nrow(ID.row) == 1
@@ -463,12 +461,25 @@ plot.SC = function(gene.name){
 plot.gbbOE = function(ID){
   
   ID.row = GeneIDKey[grep(ID, GeneIDKey$FBgn),]
+  ID.row = GeneIDKey[c(grep(ID, GeneIDKey$FBgn),
+                       grep(ID, GeneIDKey$Symbol)),]
   
-  if(nrow(ID.row) < 500 & nrow(ID.row) > 0){
-    
-    if(nrow(ID.row) == 1){
-      FBgn = ID.row$FBgn
-      name = ID.row$Symbol
+  if(nrow(ID.row) < 50 & nrow(ID.row) > 0){
+    if(nrow(ID.row) == 1
+       | length(intersect(GeneIDKey$FBgn, ID)) == 1
+       | length(intersect(GeneIDKey$Symbol, ID)) == 1){
+      if(nrow(ID.row) == 1){
+        FBgn = ID.row$FBgn
+        name = ID.row$Symbol
+      }
+      if(length(intersect(GeneIDKey$FBgn, ID)) == 1){
+        FBgn = ID.row$FBgn[ID.row$FBgn == ID]
+        name = ID.row$Symbol[ID.row$FBgn == ID]
+      }
+      if(length(intersect(GeneIDKey$Symbol, ID)) == 1){
+        FBgn = ID.row$FBgn[ID.row$Symbol == ID]
+        name = ID.row$Symbol[ID.row$Symbol == ID]
+      }
       
       gene = data.frame(cpm = as.numeric(gbbOE.cpmdata[FBgn,]), condition = gbbOE.groups$group, group = gbbOE.groups$genotype)
       
@@ -476,11 +487,11 @@ plot.gbbOE = function(ID){
       gene$condition = factor(gene$condition, levels = c('LoxP_ML3', "LoxP_LL3",
                                                          'G85R_ML3', "G85R_LL3",
                                                          'G85R_gbb_ML3', "G85R_gbb_LL3"))
-      
+      if(nrow(na.omit(gene)) > 0){
       boxplot(gene$cpm~gene$condition, xlab="",     
               main= name,ylab="Counts per Million Reads", las = 2, cex.axis = .8)
       points(x=as.numeric(factor(gene$condition)),y=gene$cpm,cex=1,pch=21,bg=c('firebrick',"dodgerblue","gold")[as.numeric(factor(gene$group))])
-      
+      }
     }
     
     if(nrow(ID.row) != 1){
@@ -491,21 +502,35 @@ plot.gbbOE = function(ID){
 
 ##Function to plot a specific gene expression levels in the gbbKO transcriptomic data set
 plot.gbbKO = function(ID){
-  ID.row = GeneIDKey[grep(ID, GeneIDKey$FBgn),]
+  ID.row = GeneIDKey[c(grep(ID, GeneIDKey$FBgn),
+                       grep(ID, GeneIDKey$Symbol)),]
   
-  if(nrow(ID.row) < 500 & nrow(ID.row) > 0){
-    if(nrow(ID.row) == 1){
-      FBgn = ID.row$FBgn
-      name = ID.row$Symbol
+  if(nrow(ID.row) < 50 & nrow(ID.row) > 0){
+    if(nrow(ID.row) == 1
+       | length(intersect(GeneIDKey$FBgn, ID)) == 1
+       | length(intersect(GeneIDKey$Symbol, ID)) == 1){
+      if(nrow(ID.row) == 1){
+        FBgn = ID.row$FBgn
+        name = ID.row$Symbol
+      }
+      if(length(intersect(GeneIDKey$FBgn, ID)) == 1){
+        FBgn = ID.row$FBgn[ID.row$FBgn == ID]
+        name = ID.row$Symbol[ID.row$FBgn == ID]
+      }
+      if(length(intersect(GeneIDKey$Symbol, ID)) == 1){
+        FBgn = ID.row$FBgn[ID.row$Symbol == ID]
+        name = ID.row$Symbol[ID.row$Symbol == ID]
+      }
       
       gene = data.frame(cpm = as.numeric(gbbKO.cpmdata[FBgn,]), condition = gbbKO.groups$Genotype)
       
       gene$condition = factor(gene$condition, levels = c('WT', "KO"))
       
+      if(nrow(na.omit(gene)) > 0){
       boxplot(gene$cpm~gene$condition, xlab="",     
               main= name,ylab="Counts per Million Reads", las = 2, cex.axis = .8)
       points(x=as.numeric(factor(gene$condition)),y=gene$cpm,cex=1,pch=21,bg=c('firebrick',"dodgerblue","gold")[as.numeric(factor(gene$condition))])
-      
+      }
     }
     
     if(nrow(ID.row) != 1){
