@@ -223,11 +223,11 @@ plot.A4V = function(ID){
                                                            "A3FT", "A9FT", "A40FT",
                                                            "A3FA", "A9FA", "A40FA",
                                                            "S3MH", "S9MH",
-                                                           "A3MT", "A9MT",
-                                                           "A3MA", "A9MA",
-                                                           "A3MH", "A9MH",
                                                            "S3MT", "S9MT",
-                                                           "S3MA", "S9MA"))
+                                                           "S3MA", "S9MA",
+                                                           "A3MH", "A9MH",
+                                                           "A3MT", "A9MT",
+                                                           "A3MA", "A9MA"))
         gene$group = factor(gene$group, levels = c("SF", "AF", "SM", "AM"))
         
         boxplot(gene$cpm~gene$condition, xlab="",     
@@ -235,8 +235,8 @@ plot.A4V = function(ID){
         points(x=as.numeric(factor(gene$condition)),y=gene$cpm,cex=1,pch=21,bg=c('firebrick',"gold","darkgreen","dodgerblue")[as.numeric(factor(gene$group))])
         legend('topright',
                inset=c(-0.275,0),
-               legend = c('A4V F', 'Silent F', 'A4V M', 'Silent M'), 
-               fill = c('firebrick',"darkgreen", "gold","dodgerblue"),
+               legend = c('Silent F', 'A4V F', 'Silent M' 'A4V M', 'Silent M'), 
+               fill = c('firebrick', "gold", "darkgreen", "dodgerblue"),
                cex = .65,
                bty = 'n',
                pt.cex = .5)
