@@ -235,7 +235,7 @@ plot.A4V = function(ID){
         points(x=as.numeric(factor(gene$condition)),y=gene$cpm,cex=1,pch=21,bg=c('firebrick',"gold","darkgreen","dodgerblue")[as.numeric(factor(gene$group))])
         legend('topright',
                inset=c(-0.275,0),
-               legend = c('Silent F', 'A4V F', 'Silent M' 'A4V M', 'Silent M'), 
+               legend = c('Silent F', 'A4V F', 'Silent M', 'A4V M', 'Silent M'), 
                fill = c('firebrick', "gold", "darkgreen", "dodgerblue"),
                cex = .65,
                bty = 'n',
