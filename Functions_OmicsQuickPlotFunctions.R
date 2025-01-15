@@ -74,7 +74,7 @@ plot.G85R = function(ID){
       
       gene = data.frame(cpm = as.numeric(TKT.cpm[FBgn,]), condition = TKT.groups$Group, group = paste0(TKT.groups$Genotype, TKT.groups$Sex))
       
-      gene$group = factor(gene$group, levels = c(unique(gene$group)))
+      gene$group = factor(gene$group, levels = c("WT.f", "GR.F", "WT.M", "GR.M"))
       gene$condition = factor(gene$condition, levels = c('WT.F', "TktDfWT.F", "TktOEWT.F",
                                                          'GR.F', "TktDfGR.F", "TktOEGR.F",
                                                          'WT.M', "TktDfWT.M", "TktOEWT.M",
@@ -210,7 +210,7 @@ plot.A4V = function(ID){
       A4V.groups = substr(A4V.groups,1, nchar(A4V.groups)-1)
       
       
-      if(nrow(na.omit(A4V.cpm[FBgn,]))){
+      if(nrow(na.omit(A4V.cpm[FBgn,])) > 0){
         par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
         gene = data.frame(cpm = as.numeric(A4V.cpm[FBgn,]),
                           condition = A4V.groups,
