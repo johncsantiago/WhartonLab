@@ -3,6 +3,8 @@
 
 ##library(plotly)
 
+library(gplots)
+
 ##load all files from github
 git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/GeneralDataFiles/"
 
@@ -46,7 +48,22 @@ colnames(norm.data) = colnames(Metab.data)[3:ncol(Metab.data)]
 colnames(norm.data) = Metab.Meta[colnames(norm.data), "Genotypes"]
 
 
-SCdata = read.csv(paste0(git.dir, "Nguyen%20Serpe%202024%20scRNA-seq%20VNC.csv"))
+
+
+##manually currated
+serpe = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Nguyen Serpe 2024 scRNA-seq VNC.csv", row.names = 1)
+
+serpe.glia = read.csv(paste0(git.dir, "Nguyen%20Serpe%202024%20scRNA-seq%20VNC.csv"), row.names = 1)
+
+serpe.mn = read.csv(paste0(git.dir, "Serpe%202024%20MNClusters.csv"), row.names = 1)
+
+serpe.inter = read.csv(paste0(git.dir, "Serpe%202024%20InterneuronClusters.csv"), row.names = 1)
+
+serpe.annotated.names = as.character(read.csv(paste0(git.dir, "Nguyen%20Serpe%202024%20scRNA-seq%20VNC.csv"), row.names = 1, header = F)[1,])
+
+serpe.glia.names = as.character(read.csv(paste0(git.dir, "Serpe%202024%20GliaSubtypes.csv"), row.names = 1, header = F)[1,])
+
+
 
 ##Function to plot all G85R groups
 plot.G85R = function(ID){
@@ -182,7 +199,6 @@ plot.G85R = function(ID){
     ID.row
   }
 }
-
 
 ##Function to plot a specific gene expression levels in all A4V groups
 plot.A4V = function(ID){
@@ -539,5 +555,154 @@ plot.gbbKO = function(ID){
       ID.row
     }
   }
+}
+
+##Function to plot a specific gene expression levels in all cell types for the SC data
+plot.serpe.allclusters = function(gene.name){
+  
+  ID.row = serpe[grep(gene.name, row.names(serpe)),]
+  
+  if(nrow(ID.row) < 50 & nrow(ID.row) > 0){
+    if(nrow(ID.row) == 1 | length(intersect(gene.name, row.names(serpe))) == 1){
+      
+      
+      serpe.annotated.gene = data.frame(level = as.numeric(serpe[gene.name,]),
+                                        cluster = serpe.annotated.names,
+                                        color = "darkgreen")
+      
+      
+      serpe.mn.gene = data.frame(level = as.numeric(serpe.mn[gene.name,]),
+                                 cluster = colnames(serpe.mn),
+                                 color = "brown")
+      
+      
+      serpe.inter.gene = data.frame(level = as.numeric(serpe.inter[gene.name,]),
+                                    cluster = colnames(serpe.inter),
+                                    color = "gold")
+      
+      
+      serpe.glia.gene = data.frame(level = as.numeric(serpe.glia[gene.name,]),
+                                   cluster = serpe.glia.names,
+                                   color = "steelblue")
+      
+      serpe.all = rbind(serpe.annotated.gene,
+                        rbind(serpe.mn.gene,
+                              rbind(serpe.inter.gene,
+                                    serpe.glia.gene)))
+      
+      serpe.all$color[serpe.all$level < 1.5] = "darkgrey"
+      
+      xmax = max(serpe.all$level)
+      if(xmax < 10){
+        xmax = 10
+      }
+      
+      par(mar = c(4, 13, 4, 8), xpd=TRUE)
+      
+      plot(x = NA,
+           y = NA,
+           type = 'n',
+           ylim = c(4.5, 120),
+           xlim = c(0, xmax),
+           xaxt = "n",
+           ylab="",
+           yaxt = "n",
+           xlab = "Mean Expression Levels",
+           bty = "n",
+           main = gene.name)
+      
+      barplot(height = serpe.all$level, 
+              horiz = T, 
+              #las = 2,
+              xlim = c(0, xmax),
+              names.arg = NA,
+              border = T,
+              col = serpe.all$color,
+              add = T)
+      
+      mtext(side = 2,
+            las = 2,
+            at = .7+(1.2*(0:104)),
+            text = serpe.all$cluster,
+            col = serpe.all$color,
+            line = 0)
+      
+      legend(x = xmax,
+             y = 125,
+             pch = 21,
+             legend = c("Glia", "Interneurons", "Motor Neurons", "Manually Curated"),
+             pt.bg = c("steelblue", "gold", "brown", "darkgreen"),
+             bty = "n",
+             xpd = T,
+             pt.cex = 1.5,
+             y.intersp = 1)
+      
+      rect(0 - (xmax/40), 0, 0 - (xmax/100), 18*1.2, col = 'darkgreen')
+      rect(0 - (xmax/40), 18*1.2, 0 - (xmax/100), 46*1.2, col = 'brown')
+      rect(0 - (xmax/40), 46*1.2, 0 - (xmax/100), 95*1.2, col = 'gold')
+      rect(0 - (xmax/40), 95*1.2, 0 - (xmax/100), 105*1.2, col = 'steelblue')
+      
+    }
+
+  }
+}
+
+##Function to plot expression levels for a specified set of genes in all cell types for the SC data
+serpe.heatmap = function(heat.genes){
+  heat.data = na.omit(cbind(serpe[heat.genes,],
+                            cbind(serpe.mn[heat.genes,],
+                                  cbind(serpe.inter[heat.genes,], serpe.glia[heat.genes,]))))
+  
+  heat.data = apply(heat.data, MARGIN = 2, as.numeric)
+  #heat.data = log2(heat.data)
+  row.names(heat.data) = heat.genes
+  
+  #heat.data[heat.data == 0] = NA
+  
+  Cluster.id = c(serpe.annotated.names,
+                 colnames(serpe.mn),
+                 colnames(serpe.inter),
+                 serpe.glia.names)
+  
+  Cluster.labelcolor = c(rep("darkgreen", length(serpe.annotated.names)),
+                         rep("brown", ncol(serpe.mn)),
+                         rep("orange", ncol(serpe.inter)),
+                         rep("steelblue", length(serpe.glia.names)))
+  
+  
+  heat.colors = colorRampPalette(c("grey95", "steelblue", "gold", "red3"))
+  
+  numcols = 100
+  
+  max.break = log2(max(heat.data))
+  
+  if(max.break > 7){
+    max.break = 7
+  }
+  
+  color.breaks = 2^(c(0:(numcols))*(max.break/(numcols + 1)))
+  
+  heatmap.2(heat.data,
+            Colv = NA,
+            #Rowv = NA,
+            labCol = Cluster.id,
+            scale = 'none',
+            ColSideColors = Cluster.labelcolor,
+            trace = "none",
+            col = heat.colors(numcols),
+            dendrogram = "none",
+            na.color = "white",
+            key.title = "Mean Expression",
+            colCol = Cluster.labelcolor,
+            margins = c(10, 5), 
+            colsep = c(18, 46, 95),
+            sepcolor = "black",
+            breaks = color.breaks)
+  legend("left",
+         title = "Cell Types",
+         legend = c("Manually Currated", "Motor Neurons", "Interneurons", "Glia"),
+         fill = c("darkgreen", "brown", "orange", "steelblue"),
+         xpd = T)
+  
 }
 
