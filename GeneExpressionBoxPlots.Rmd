@@ -122,6 +122,8 @@ z <- calcNormFactors(y, method = "TMM")
 ##normalized cpm
 gbbKO.cpmdata=cpm(z)
 
+##write.csv(gbbKO.cpmdata, "/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/gbbKO.cpmdata.csv")
+
 rawdata = read.csv(paste0(git.dir, "MetabolomicsForMetaboanalyst.txt"), sep = "\t", row.names = 1)
 
 KEGG.Key = read.csv(paste0(git.dir, "RawMetabolomicData.csv"), row.names = 1)

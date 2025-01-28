@@ -1,0 +1,275 @@
+---
+title: "GO and KEGG Term Enrichment"
+author: "John Santiago"
+date: "2024-05-08"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo = F, message = F}
+
+source('/Users/johncsantiago/Documents/GitHub/WhartonLab/GOandKEGGPlottingFunctions.R')
+
+```
+
+
+```{r echo = F, message = F}
+
+# Conditions
+#Geno is WT or GR
+#TKT is either "C", "OE", or "Df"
+#Sex is "F" or "M"
+
+Geno1 = "GR"
+TKT1 = "C"
+Sex1 = "F"
+
+Geno2 = "WT"
+TKT2 = "C"
+Sex2 = "F"
+
+temp.FC = colnames(G85R.FC)
+temp1 = temp.FC[grep(Geno1, temp.FC)]
+
+if(Sex1 != Sex2){
+  temp1 = temp1[intersect(grep(Sex1, temp1), grep(Sex2, temp1))]
+  temp1 = temp1[grep(Geno1)]
+}
+
+if(Sex1 == Sex2){
+  if(Geno1 == Geno2){
+  temp1 = temp1[grep(setdiff(c("WT", "GR"), c(Geno1, Geno2)), temp1, invert = T)]
+  }
+  
+  if(Geno1 != Geno2){
+  temp1 = temp1[intersect(grep(Geno1, temp1), grep(Geno2, temp1))]
+  }
+  
+  temp1 = temp1[intersect(grep(TKT1, temp1), grep(TKT2, temp1))]
+  
+  temp1 = temp1[grep(Sex1, temp1)]
+}
+
+
+
+FC = G85R.FC[temp1]
+FDR = G85R.FC[temp1]
+
+
+
+
+
+Variable.Condition = "GRFC" 
+Control.Condition = "WTFC"
+secondary.Variable.Condition = "GRMC"
+secondary.Control.Condition = "WTMC"
+
+
+
+comparison = paste0(Variable.Condition, 'v', Control.Condition)
+secondary.comparison = paste0(secondary.Variable.Condition, 'v', secondary.Control.Condition)
+
+if(length(intersect(comparison, names(A4V.comparekey))) == 1){
+  FC = A4V.FC[,c(A4V.comparekey[comparison], A4V.comparekey[secondary.comparison])]
+  FDR = A4V.FDR[,c(A4V.comparekey[comparison], A4V.comparekey[secondary.comparison])]
+  mean.data = A4V.meancpm[,c(Variable.Condition, Control.Condition, 
+                             secondary.Variable.Condition, secondary.Control.Condition)]
+  metab.data = 'none'
+}
+
+if(length(intersect(comparison, names(G85R.comparekey))) == 1){
+  FC = G85R.FC[,c(G85R.comparekey[comparison], G85R.comparekey[secondary.comparison])]
+  FDR = G85R.FDR[,c(G85R.comparekey[comparison], G85R.comparekey[secondary.comparison])]
+  mean.data = G85R.meancpm[,c(Variable.Condition, Control.Condition, 
+                              secondary.Variable.Condition, secondary.Control.Condition)]
+  metab.data = G85R.metab.comparekey[c(comparison, secondary.comparison)]
+  if(G85R.metab.comparekey[c(comparison)] == G85R.metab.comparekey[c(secondary.comparison)]){
+    metab.data = G85R.metab.comparekey[c(comparison)]
+  }
+}
+
+subset = F
+
+if(subset == T){
+  geneset = biomarkers
+  FC[setdiff(row.names(FC),geneset),] = 1 
+  FDR[setdiff(row.names(FDR),geneset),] = 1 
+}
+
+```
+
+
+```{r echo = F}
+
+##Uses data from primary comparison
+##point size is relative to mean expression in variable condition
+volcano(FC, FDR, mean.data)
+
+```
+
+
+```{r echo = F}
+
+##Uses data from primary comparison
+##point size is relative to mean expression in variable condition
+compare.genes(FC, FDR, mean.data)
+
+```
+
+
+```{r echo = F}
+#library(heatmaply)
+#hmdata = mean.data[geneset,]
+#row.names(hmdata) = GeneIDKey[geneset, 'Symbol']
+#hmdata = na.omit(hmdata)
+
+#heatmaply(hmdata,
+#          scale = 'row',
+#          Colv = F)
+
+```
+
+
+```{r echo = F}
+
+##Uses data from primary comparison
+##point size is relative to mean expression in variable condition
+DEG.venn(FDR, FC)
+
+```
+
+```{r echo = F, include = F}
+
+####Uses sigDEGs from primary comparison
+cat.data = Enrichment(FDR)
+
+```
+
+
+```{r echo = F}
+
+
+##which ranks of categories to use
+##a vector of numbers specifying which ranks to use
+##eg. c(1, 5:6) will use the first, fifth and sixth most sig. cats.
+##can also just type 'sigs.only' 
+usecats=c(1:20)
+#usecats = 'sigs.only'  
+
+KEGG20(cat.data, FC, FDR, usecats)
+
+```
+
+
+```{r echo = F, include = T}
+
+##can be the exact name or 5 digit code in quotes
+specific.kegg = "00980"
+
+plotkegg.genes(specific.kegg, FC, FDR, mean.data)
+
+```
+
+
+```{r echo = F, message=F, fig.width=7}
+
+##5 digits from KEGG ID
+PathwayID = "00010"
+
+#options include 'primary' or 'both'
+use = 'both'
+
+KEGG.diagram(PathwayID, FC, use, metab.data)
+
+```
+
+
+```{r echo = F, include = T, warnings = F}
+
+##can be the exact name or 5 digit code in quotes
+specific.kegg = "00010"
+
+comparekegg.genes(specific.kegg, FC, FDR, mean.data)
+
+```
+
+
+```{r echo = F}
+
+## BP, CC, or MF
+GO.ontology = 'BP'
+
+##can select which categories ot include or say 'sigs.only'
+usecats=c(1:20)
+#usecats = 'sigs.only'
+
+GO20(cat.data, GO.ontology, FC, FDR, usecats)
+
+```
+
+
+```{r echo = F}
+
+##the 7 digits of a GOterm id or the exact term name
+specific.go = '0005811'
+
+plotgo.genes(specific.go, FC, FDR, mean.data)
+
+```
+
+
+```{r echo = F, warning = F}
+
+##the 7 digits of a GOterm id or the exact term name
+specific.go = '0005811'
+
+comparego.genes(specific.go, FC, FDR, mean.data)
+
+```
+
+
+```{r echo = F, warning = F, message = F}
+
+
+## BP, CC, or MF
+GO.ontology = 'BP'
+
+rt = tree(cat.data, GO.ontology)
+  
+treemapPlot(rt)
+
+```
+
+
+```{r echo = F, warning = F}
+
+##a parent category generated in the treemapPlot function
+parent.category = 'membrane lipid biosynthetic process'
+
+plotparentcat.genes(parent.category, FC, FDR, mean.data)
+
+```
+
+
+```{r echo = F}
+
+##a parent category generated in the treemapPlot function
+##parent.category = 'small molecule biosynthetic process'
+
+compareparent.genes(parent.category, FC, FDR, mean.data)
+##dot size is relative to the max FDR of either condition
+
+
+```  
+
+
+
+
+
+
+
+
+

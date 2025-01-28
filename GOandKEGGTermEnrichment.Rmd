@@ -47,31 +47,10 @@ if(length(intersect(comparison, names(G85R.comparekey))) == 1){
   }
 }
 
-subset = T
-
-
-s1 = intersect(row.names(FDR[FDR[1] <.05,]), row.names(FC[FC[1] < 0,]))
-s2 = intersect(row.names(FDR[FDR[2] <.05,]), row.names(FC[FC[2] < 0,]))
-s3 = intersect(row.names(FDR[FDR[1] <.05,]), row.names(FC[FC[1] > 0,]))
-s4 = intersect(row.names(FDR[FDR[2] <.05,]), row.names(FC[FC[2] > 0,]))
-
-biomarkers = row.names(A4V.FDR[(A4V.FDR$AvS3FT > .05 &
-                       A4V.FDR$AvS9FT > .05 &
-                       A4V.FDR$AvS40FT < .05 &
-                       A4V.FDR$AvS3MT > .05 &
-                       A4V.FDR$AvS9MT < .05),])
-expression.max = apply(A4V.meancpm[biomarkers, c("A40FT","S40FT","A9MT","S9MT")], MARGIN = 1, max)[biomarkers]
-biomarkers = biomarkers[expression.max > 20]
-
-NADmetab = names(kegg[grep('00760', kegg)])
-biomarkers = row.names(GeneIDKey[GeneIDKey$Symbol %in% NADmetab, ])
+subset = F
 
 if(subset == T){
   geneset = biomarkers
-  s1 = intersect(s1, geneset)
-  s2 = intersect(s2, geneset)
-  s3 = intersect(s3, geneset)
-  s4 = intersect(s4, geneset)
   FC[setdiff(row.names(FC),geneset),] = 1 
   FDR[setdiff(row.names(FDR),geneset),] = 1 
 }
@@ -98,14 +77,14 @@ compare.genes(FC, FDR, mean.data)
 
 
 ```{r echo = F}
-library(heatmaply)
-hmdata = mean.data[geneset,]
-row.names(hmdata) = GeneIDKey[geneset, 'Symbol']
-hmdata = na.omit(hmdata)
+#library(heatmaply)
+#hmdata = mean.data[geneset,]
+#row.names(hmdata) = GeneIDKey[geneset, 'Symbol']
+#hmdata = na.omit(hmdata)
 
-heatmaply(hmdata,
-          scale = 'row',
-          Colv = F)
+#heatmaply(hmdata,
+#          scale = 'row',
+#          Colv = F)
 
 ```
 

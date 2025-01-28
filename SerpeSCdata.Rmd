@@ -1,0 +1,279 @@
+---
+title: "Serpe SC data"
+author: "John Santiago"
+date: "2025-01-16"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo = F}
+
+#library("hdf5r")
+#library(SCopeLoomR)
+
+#loom <- open_loom("/Users/johncsantiago/Downloads/5a3ba000_20180809__Davie_Janssens_Koldere_et_al_2018_Adult_Brain.HARMONY_SCENIC.loom", mode = "r")
+
+##loom = open_loom("/Users/johncsantiago/Downloads/Goodwin_Fly_AdultVNC_elife54074.loom", mode = "r")
+
+#dgem <- get_dgem(loom)
+#close_loom(loom)
+#dgem[1:5,100:105]
+
+#clustering_annotations_df <- get_clustering_annotations(loom = loom)
+
+```
+
+
+
+```{r echo = F}
+
+##manually currated
+serpe = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Nguyen Serpe 2024 scRNA-seq VNC.csv", row.names = 1)
+
+serpe.glia = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Serpe 2024 GliaSubtypes.csv", row.names = 1)
+
+serpe.mn = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Serpe 2024 MNClusters.csv", row.names = 1)
+
+serpe.inter = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Serpe 2024 InterneuronClusters.csv", row.names = 1)
+
+serpe.annotated.names = as.character(read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Nguyen Serpe 2024 scRNA-seq VNC.csv", row.names = 1, header = F)[1,])
+
+serpe.glia.names = as.character(read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Serpe 2024 GliaSubtypes.csv", row.names = 1, header = F)[1,])
+
+```
+
+
+
+
+```{r echo = F}
+
+plot.serpe = function(gene.name){
+serpe.annotated.gene = data.frame(level = as.numeric(serpe[gene.name,]),
+                                  cluster = serpe.annotated.names,
+                                  color = "darkgreen")
+
+
+serpe.mn.gene = data.frame(level = as.numeric(serpe.mn[gene.name,]),
+                           cluster = colnames(serpe.mn),
+                           color = "brown")
+
+
+serpe.inter.gene = data.frame(level = as.numeric(serpe.inter[gene.name,]),
+                              cluster = colnames(serpe.inter),
+                              color = "gold")
+
+
+serpe.glia.gene = data.frame(level = as.numeric(serpe.glia[gene.name,]),
+                             cluster = serpe.glia.names,
+                             color = "steelblue")
+
+serpe.all = rbind(serpe.annotated.gene,
+                  rbind(serpe.mn.gene,
+                        rbind(serpe.inter.gene,
+                              serpe.glia.gene)))
+
+
+par(mar = c(4, 13, 4, 8))
+barplot(as.numeric(serpe.all[,"level"])-1,
+        names.arg = serpe.all$cluster,
+        las = 2, 
+        beside = T,
+        col = serpe.all$color,
+        cex.names = .75,
+        main = gene.name,
+        horiz = T,
+        xlab = "Mean Expression Level per Cell")
+      legend(x = max(as.numeric(serpe.all[,"level"])-1),
+             y = 125,
+             pch = 21,
+             legend = c("Glia", "Interneurons", "Motor Neurons", "Manually Curated"),
+             pt.bg = c("steelblue", "gold", "brown", "darkgreen"),
+             bty = "n",
+             xpd = T,
+             pt.cex = 1.5,
+             y.intersp = 1)
+}
+```
+
+
+
+```{r echo = F, fig.width= 10, fig.height=15}
+
+##gene.name = "gbb"
+
+##plot.serpe(gene.name)
+
+```
+
+
+```{r echo = F}
+
+##Function to plot a specific gene expression levels in all cell types for the SC data
+plot.serpe.allclusters = function(gene.name){
+  
+  ID.row = serpe[grep(gene.name, row.names(serpe)),]
+  
+  if(nrow(ID.row) < 50 & nrow(ID.row) > 0){
+    if(nrow(ID.row) == 1 | length(intersect(gene.name, row.names(serpe))) == 1){
+
+      
+  serpe.annotated.gene = data.frame(level = as.numeric(serpe[gene.name,]),
+                                    cluster = serpe.annotated.names,
+                                    color = "darkgreen")
+
+
+  serpe.mn.gene = data.frame(level = as.numeric(serpe.mn[gene.name,]),
+                            cluster = colnames(serpe.mn),
+                            color = "brown")
+
+
+  serpe.inter.gene = data.frame(level = as.numeric(serpe.inter[gene.name,]),
+                                cluster = colnames(serpe.inter),
+                                color = "gold")
+
+
+  serpe.glia.gene = data.frame(level = as.numeric(serpe.glia[gene.name,]),
+                              cluster = serpe.glia.names,
+                              color = "steelblue")
+
+  serpe.all = rbind(serpe.annotated.gene,
+                    rbind(serpe.mn.gene,
+                          rbind(serpe.inter.gene,
+                                serpe.glia.gene)))
+
+  #serpe.all$level = serpe.all$level - 1    
+      
+  #highlight = rep(0, nrow(serpe.all))
+  #highlight[(serpe.all$level > highlight.cutoff*(mean(serpe.all$level)))] = 1
+  #serpe.all$highlight = serpe.all$level * highlight
+  
+  #serpe.all$color[highlight > 0 & serpe.all$color == "lightgreen"] = "darkgreen"
+  #serpe.all$color[highlight > 0 & serpe.all$color == "thistle1"] = "brown"
+  #serpe.all$color[highlight > 0 & serpe.all$color == "lightyellow"] = "gold"
+  #serpe.all$color[highlight > 0 & serpe.all$color == "lightcyan"] = "royalblue"
+  serpe.all$color[serpe.all$level < 1.5] = "darkgrey"
+  
+  #label.colors = serpe.all$color
+
+  
+        
+  #label.colors[serpe.all$color == "darkgreen"] = "darkgreen"
+  #label.colors[serpe.all$color == "brown"] = "brown"
+  #label.colors[serpe.all$color == "gold"] = "gold"
+  #label.colors[serpe.all$color == "royalblue"] = "royalblue"
+  #serpe.all$label.colors = label.colors
+      
+  
+  xmax = max(serpe.all$level)
+  if(xmax < 10){
+    xmax = 10
+  }
+      
+      par(mar = c(4, 13, 4, 8), xpd=TRUE)
+      
+      plot(x = NA,
+           y = NA,
+           type = 'n',
+           ylim = c(4.5, 120),
+           xlim = c(0, xmax),
+           xaxt = "n",
+           ylab="",
+           yaxt = "n",
+           xlab = "Mean Expression Levels",
+           bty = "n",
+           main = gene.name)
+      
+      barplot(height = serpe.all$level, 
+              horiz = T, 
+              #las = 2,
+              xlim = c(0, xmax),
+              names.arg = NA,
+              border = T,
+              col = serpe.all$color,
+              add = T)
+
+      mtext(side = 2,
+            las = 2,
+            at = .7+(1.2*(0:104)),
+            text = serpe.all$cluster,
+            col = serpe.all$color,
+            line = 0)
+      
+      legend(x = xmax,
+             y = 125,
+             pch = 21,
+             legend = c("Glia", "Interneurons", "Motor Neurons", "Manually Curated"),
+             pt.bg = c("steelblue", "gold", "brown", "darkgreen"),
+             bty = "n",
+             xpd = T,
+             pt.cex = 1.5,
+             y.intersp = 1)
+      
+      rect(0 - (xmax/40), 0, 0 - (xmax/100), 18*1.2, col = 'darkgreen')
+      rect(0 - (xmax/40), 18*1.2, 0 - (xmax/100), 46*1.2, col = 'brown')
+      rect(0 - (xmax/40), 46*1.2, 0 - (xmax/100), 95*1.2, col = 'gold')
+      rect(0 - (xmax/40), 95*1.2, 0 - (xmax/100), 105*1.2, col = 'steelblue')
+      
+    }
+    
+    #if(nrow(ID.row) != 1 | length(intersect(gene.name, row.names(serpe))) > 1){
+    #  ID.row
+    #}
+  }
+}
+
+
+```
+
+
+```{r echo = F, fig.width= 10, fig.height=16}
+
+gene.name = "gbb"
+
+plot.serpe.allclusters(gene.name)
+
+```
+
+
+
+```{r echo = F, fig.width= 10, fig.height=16}
+
+gene.name = "dpp"
+
+plot.serpe.allclusters(gene.name)
+
+```
+
+
+```{r echo = F, fig.width= 10, fig.height=16}
+
+gene.name = "wit"
+
+plot.serpe.allclusters(gene.name)
+
+```
+
+
+```{r echo = F, fig.width= 10, fig.height=16}
+
+gene.name = "mav"
+
+plot.serpe.allclusters(gene.name)
+
+```
+
+
+
+```{r echo = F, fig.width= 10, fig.height=16}
+
+gene.name = "put"
+
+plot.serpe.allclusters(gene.name)
+
+```
+
+
+

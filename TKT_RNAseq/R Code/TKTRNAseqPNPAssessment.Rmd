@@ -24,6 +24,7 @@ nodeID[['31309']] = c("3.1.4.17", '3.1.4.53')
 nodeID['37741'] = '3.1.4.53'
 
 source('/Users/johncsantiago/Documents/GitHub/WhartonLab/GOandKEGGPlottingFunctions.R')
+
 mean.cpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT_meancpmdata.csv", row.names = 1)
 cpmdata = G85R.cpm
 groups = G85R.meta
@@ -251,16 +252,12 @@ TerminalPoints = data.frame(enzyme = TerminalPoints$enzyme,
                             from = TerminalPoints$from,
                             to = TerminalPoints$to,
                             arrows = 'to',
-                            FBgn = NA,
-                            color = 'black',
-                            width = 1,
-                            symbol = NA,
-                            fdr = NA,
-                            GR = NA,
-                            WT = NA,
-                            title = '')
+                            FBgn = NA)
 
 
+purine.path = rbind(purine.path, TerminalPoints)
+row.names(purine.path) = 1:nrow(purine.path)
+#write.csv(purine.path, "/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/purine.path.csv")
 
 temp = keggGet("dme:CG16758" )[[1]]
 
@@ -305,7 +302,104 @@ while(i <= length(unique.metabs)){
 interactions = interactions[c(1:5, 7:9), c(1,4,5)]
 
 
+purine.path = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/purine.path.csv", row.names = 1)
+
+
+temp.edges = data.frame(from = purine.path$from,
+                        to = purine.path$to,
+                        arrows = purine.path$arrows,
+                        color = "black",
+                        width = 0,
+                        title = "",
+                        FBgn = purine.path$FBgn)
+
+add.edges = data.frame(enzyme = c("3.5.4.10", 
+                                "2.1.2.3",
+                                "4.3.2.2",
+                                "6.3.2.6",
+                                "4.1.1.21",
+                                "6.3.3.1",
+                                "6.3.5.3",
+                                "2.1.2.2",
+                                "6.3.4.13",
+                                "2.4.2.14",
+                                "2.7.6.1"),
+                       from = c("FAICAR", 
+                                "AICA ribonucleotide", 
+                                "SAICAR",
+                                "CAIR",
+                                "AIR",
+                                "2-(Formamido)-N1-(5-phospho-D-ribosyl)acetamidine",
+                                "FGAR",
+                                "GAR",
+                                "Ribosylamine-5p",
+                                "PRPP",
+                                "D-ribose-1/5-phosphate / D-ribulose 5-phosphate"),
+                       
+                       to = c("IMP", 
+                              "FAICAR", 
+                              "AICA ribonucleotide",
+                              "SAICAR",
+                              "CAIR",
+                              "AIR",
+                              "2-(Formamido)-N1-(5-phospho-D-ribosyl)acetamidine",
+                              "FGAR",
+                              "GAR",
+                              "Ribosylamine-5p",
+                              "PRPP"),
+                       arrows = c("to;from", 
+                                  "to", 
+                                  "to;from",
+                                  "to;from",
+                                  "to;from",
+                                  "to",
+                                  "to",
+                                  "to",
+                                  "to",
+                                  "to",
+                                  "to"),
+                       FBgn = "")
+
+
+
+#write.csv(temp.edges, "/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/purine.edges.csv")
+
+i = 1
+new.edges = data.frame(enzyme = as.character(),
+                       from = as.character(),
+                       to = as.character(),
+                       arrows = as.character(),
+                       FBgn = as.character())
+
+while(i <= nrow(add.edges)){
+  temp.fbgn = names(nodeID[grep(add.edges[i, "enzyme"], nodeID)])
+  temp.fbgn = GeneIDKey[GeneIDKey$ensembl %in% temp.fbgn, "FBgn"]
+  temp.new.edges = add.edges[rep(i, length(temp.fbgn)), ]
+  temp.new.edges$FBgn = temp.fbgn
+  new.edges = rbind(new.edges, temp.new.edges)
+  i = i +1
+}
+
+purine.path = rbind(purine.path, new.edges)
+row.names(purine.path) = 1:nrow(purine.path)
+#write.csv(purine.path, "/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/purine.path.csv")
+
+temp.edges = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/purine.edges.csv", row.names = 1)
+
+new.edges$color = "black"
+new.edges$width = 0
+new.edges$title = ""
+
+new.edges = new.edges[, colnames(temp.edges)]
+
+temp.edges = rbind(temp.edges, new.edges)
+
+#write.csv(temp.edges, "/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/purine.edges.csv")
+
 ```
+
+
+
 
 ```{r echo = F}
 
@@ -1135,7 +1229,6 @@ while(i<=ncol(mean.data)){
   i = i+1
 }
 
-mean.cpm
 
 compare.conditions = function(condition1, condition2){
   columns1 = metadata[metadata$Group == condition1, "Sample"]
@@ -1177,14 +1270,566 @@ WT.CxOE = compare.conditions("A", "C")
 TKT.EdgeR.FC = G85R.FC
 TKT.EdgeR = G85R.FDR
 
+```
+
+
+```{r echo = F}
+
+temp.edges = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/purine.edges.csv", row.names = 1)
+
+purine.path = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/purine.path.csv", row.names = 1)
+
+temp.nodes = data.frame(id = unique(c(purine.path$from, purine.path$to)),
+                        group = "metabolite",
+                        color.background = "white",
+                        color.border = "black",
+                        x = 0,
+                        y = 0,
+                        size = 30,
+                        FC = NA,
+                        pval = NA,
+                        title = "")
+temp.nodes$title = temp.nodes$id
+
+row.names(temp.nodes) = temp.nodes$id
+
+temp.nodes[c("Pentose Phosphate", "Excretion", "Riboflavin.Metabolism",
+            "Folate.Biosynthesis", "DNA.A", "DNA.G", "RNA.A", "RNA.G"), "group"] = "Outside Path"
+
+temp.nodes["RNA.G", 'x'] = 0
+temp.nodes["RNA.G", 'y'] = 1.5
+
+temp.nodes["Folate.Biosynthesis", 'x'] = 0
+temp.nodes["Folate.Biosynthesis", 'y'] = 2
+
+temp.nodes["Riboflavin.Metabolism", 'x'] = 0
+temp.nodes["Riboflavin.Metabolism", 'y'] = 2.5
+
+temp.nodes["DNA.G", 'x'] = 0
+temp.nodes["DNA.G", 'y'] = 4
+
+temp.nodes["GTP", 'x'] = 1
+temp.nodes["GTP", 'y'] = 2
+
+temp.nodes["dGTP", 'x'] = 1
+temp.nodes["dGTP", 'y'] = 4
+
+temp.nodes["GDP", 'x'] = 2
+temp.nodes["GDP", 'y'] = 3
+
+temp.nodes["dGDP", 'x'] = 2
+temp.nodes["dGDP", 'y'] = 3
+
+temp.nodes["dGMP", 'x'] = 2
+temp.nodes["dGMP", 'y'] = 4
+
+temp.nodes["deoxyguanosine", 'x'] = 2
+temp.nodes["deoxyguanosine", 'y'] = 5
+
+temp.nodes["GMP", 'x'] = 3
+temp.nodes["GMP", 'y'] = 2
+
+temp.nodes["guanosine", 'x'] = 3
+temp.nodes["guanosine", 'y'] = 3
+
+temp.nodes["guanine", 'x'] = 3
+temp.nodes["guanine", 'y'] = 4
+
+temp.nodes["IDP", 'x'] = 4
+temp.nodes["IDP", 'y'] = 1
+
+temp.nodes["XMP", 'x'] = 4
+temp.nodes["XMP", 'y'] = 2
+
+temp.nodes["xanthosine", 'x'] = 4
+temp.nodes["xanthosine", 'y'] = 3
+
+temp.nodes["xanthine", 'x'] = 4
+temp.nodes["xanthine", 'y'] = 4
+
+temp.nodes["uric acid", 'x'] = 4
+temp.nodes["uric acid", 'y'] = 5
+
+temp.nodes["Excretion", 'x'] = 4
+temp.nodes["Excretion", 'y'] = 6
+
+temp.nodes = temp.nodes[temp.nodes$id != "Pentose Phosphate" ,]
+temp.edges = temp.edges[temp.edges$from != "Pentose Phosphate" & temp.edges$to != "Pentose Phosphate" ,]
+
+
+temp.nodes["FAICAR", "x"] = 5
+temp.nodes["FAICAR", "y"] = 1
+
+temp.nodes["AICA ribonucleotide", "x"] = 5
+temp.nodes["AICA ribonucleotide", "y"] = 0
+
+temp.nodes["IMP", 'x'] = 5
+temp.nodes["IMP", 'y'] = 2
+
+temp.nodes["inosine", 'x'] = 5
+temp.nodes["inosine", 'y'] = 3
+
+temp.nodes["hypoxanthine", 'x'] = 5
+temp.nodes["hypoxanthine", 'y'] = 4
+
+temp.nodes["deoxyinosine", 'x'] = 5
+temp.nodes["deoxyinosine", 'y'] = 5
+
+temp.nodes["adenylosuccinate", 'x'] = 6
+temp.nodes["adenylosuccinate", 'y'] = 1
+
+temp.nodes["AMP", 'x'] = 6
+temp.nodes["AMP", 'y'] = 2
+
+temp.nodes["adenosine", 'x'] = 6
+temp.nodes["adenosine", 'y'] = 3
+
+temp.nodes["adenine", 'x'] = 6
+temp.nodes["adenine", 'y'] = 4
+
+temp.nodes["deoxyadenosine", 'x'] = 6
+temp.nodes["deoxyadenosine", 'y'] = 5
+
+temp.nodes["cAMP", 'x'] = 7
+temp.nodes["cAMP", 'y'] = 1
+
+temp.nodes["ADP", 'x'] = 7
+temp.nodes["ADP", 'y'] = 3
+
+temp.nodes["dADP", 'x'] = 7
+temp.nodes["dADP", 'y'] = 4
+
+temp.nodes["dAMP", 'x'] = 7
+temp.nodes["dAMP", 'y'] = 5
+
+temp.nodes["ATP", 'x'] = 8
+temp.nodes["ATP", 'y'] = 2
+
+temp.nodes["dATP", 'x'] = 8
+temp.nodes["dATP", 'y'] = 4
+
+temp.nodes["RNA.A", 'x'] = 9
+temp.nodes["RNA.A", 'y'] = 2
+
+temp.nodes["DNA.A", 'x'] = 9
+temp.nodes["DNA.A", 'y'] = 4
+
+temp.nodes$x = temp.nodes$x*150
+temp.nodes$y = temp.nodes$y*150
+
+visNetwork(temp.nodes, temp.edges)%>%
+  visNodes(physics = F)
+
+#write.csv(temp.nodes, "/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/purine.nodes.csv")
+
+
+```
+
+
+```{r}
+temp.edges = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/purine.edges.csv", row.names = 1)
+
+temp.edges[temp.edges$from == "Pentose Phosphate", "to"] = "PRPP"
+
+purine.path = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/purine.path.csv", row.names = 1)
+
+add.edges = data.frame(enzyme = c("2.2.1.1",
+                                  "5.1.3.1",
+                                  "5.3.1.6",
+                                  "5.4.2.7",
+                                  "5.4.2.2"),
+                       from = c("D-ribose-1/5-phosphate / D-ribulose 5-phosphate",
+                                "D-ribose-1/5-phosphate / D-ribulose 5-phosphate",
+                                "D-ribose-1/5-phosphate / D-ribulose 5-phosphate",
+                                "D-ribose-1/5-phosphate / D-ribulose 5-phosphate"),
+                       to = c("D-sedoheptulose-7-phosphate",
+                              "D-Xylulose 5-phosphate",
+                              "D-ribose-1/5-phosphate / D-ribulose 5-phosphate",
+                              "D-ribose-1/5-phosphate / D-ribulose 5-phosphate"),
+                       arrows = c("to;from",
+                                  "to;from",
+                                  "to;from",
+                                  "to;from",
+                                  "to;from"),
+                       FBgn = "")
+
+```
+
+
+
+
+```{r echo = F}
+
+temp.edges = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/purine.edges.csv", row.names = 1)
+
+temp.edges[temp.edges$from == "Pentose Phosphate", "to"] = "PRPP"
+
+purine.path = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/purine.path.csv", row.names = 1)
+
+temp.nodes = data.frame(id = unique(c(purine.path$from, purine.path$to)),
+                        group = "metabolite",
+                        color.background = "white",
+                        color.border = "black",
+                        x = 0,
+                        y = 0,
+                        size = 0,
+                        FC = NA,
+                        pval = NA,
+                        title = "",
+                        label = "")
+temp.nodes$label = temp.nodes$id
+
+row.names(temp.nodes) = temp.nodes$id
+
+temp.nodes[c("Pentose Phosphate", "Excretion", "Riboflavin.Metabolism",
+            "Folate.Biosynthesis", "DNA.A", "DNA.G", "RNA.A", "RNA.G"), "group"] = "Outside Path"
+
+
+
+temp.nodes["Pentose Phosphate" , 'x'] = -2.5
+temp.nodes["Pentose Phosphate" , 'y'] = -1.5
+
+temp.nodes["D-ribose-1/5-phosphate / D-ribulose 5-phosphate", 'x'] = -3.5
+temp.nodes["D-ribose-1/5-phosphate / D-ribulose 5-phosphate", 'y'] = 0.25
+
+temp.nodes["PRPP", 'x'] = -2.5
+temp.nodes["PRPP", 'y'] = 0
+
+temp.nodes["Ribosylamine-5p", 'x'] = -1.5
+temp.nodes["Ribosylamine-5p", 'y'] = 0.25
+
+temp.nodes["GAR", 'x'] = -.5
+temp.nodes["GAR", 'y'] = 0
+
+temp.nodes["RNA.G", 'x'] = -.25
+temp.nodes["RNA.G", 'y'] = 1
+
+temp.nodes["Folate.Biosynthesis", 'x'] = -.25
+temp.nodes["Folate.Biosynthesis", 'y'] = 1.5
+
+temp.nodes["Riboflavin.Metabolism", 'x'] = -.25
+temp.nodes["Riboflavin.Metabolism", 'y'] = 2
+
+temp.nodes["DNA.G", 'x'] = 0
+temp.nodes["DNA.G", 'y'] = 4.5
+
+temp.nodes["FGAR", 'x'] = .5
+temp.nodes["FGAR", 'y'] = 0.25
+
+temp.nodes["GTP", 'x'] = .75
+temp.nodes["GTP", 'y'] = 1.5
+
+temp.nodes["dGTP", 'x'] = .75
+temp.nodes["dGTP", 'y'] = 3.75
+
+temp.nodes["2-(Formamido)-N1-(5-phospho-D-ribosyl)acetamidine", 'x'] = 1.5
+temp.nodes["2-(Formamido)-N1-(5-phospho-D-ribosyl)acetamidine", 'y'] = 0
+
+temp.nodes["GDP", 'x'] = 1.75
+temp.nodes["GDP", 'y'] = 2.25
+
+temp.nodes["dGDP", 'x'] = 1.5
+temp.nodes["dGDP", 'y'] = 3
+
+temp.nodes["dGMP", 'x'] = 1.75
+temp.nodes["dGMP", 'y'] = 3.75
+
+temp.nodes["AIR", 'x'] = 2.5
+temp.nodes["AIR", 'y'] = 0.25
+
+temp.nodes["deoxyguanosine", 'x'] = 2.75
+temp.nodes["deoxyguanosine", 'y'] = 4.25
+
+temp.nodes["GMP", 'x'] = 2.75
+temp.nodes["GMP", 'y'] = 1.75
+
+temp.nodes["CAIR", 'x'] = 3.5
+temp.nodes["CAIR", 'y'] = 0
+
+temp.nodes["guanosine", 'x'] = 3.5
+temp.nodes["guanosine", 'y'] = 2.5
+
+temp.nodes["guanine", 'x'] = 3.5
+temp.nodes["guanine", 'y'] = 3.5
+
+temp.nodes["IDP", 'x'] = 4.5
+temp.nodes["IDP", 'y'] = 1.25
+
+temp.nodes["SAICAR", 'x'] = 4.5
+temp.nodes["SAICAR", 'y'] = 0.25
+
+temp.nodes["XMP", 'x'] = 4.5
+temp.nodes["XMP", 'y'] = 2
+
+temp.nodes["xanthosine", 'x'] = 4.5
+temp.nodes["xanthosine", 'y'] = 3
+
+temp.nodes["xanthine", 'x'] = 4.5
+temp.nodes["xanthine", 'y'] = 4
+
+temp.nodes["uric acid", 'x'] = 4.5
+temp.nodes["uric acid", 'y'] = 5
+
+temp.nodes["Excretion", 'x'] = 4.5
+temp.nodes["Excretion", 'y'] = 6
+
+temp.nodes["AICA ribonucleotide", "x"] = 5.5
+temp.nodes["AICA ribonucleotide", "y"] = 0
+
+temp.nodes["FAICAR", "x"] = 5.5
+temp.nodes["FAICAR", "y"] = 1
+
+temp.nodes["IMP", 'x'] = 5.5
+temp.nodes["IMP", 'y'] = 2
+
+temp.nodes["inosine", 'x'] = 5.5
+temp.nodes["inosine", 'y'] = 3
+
+temp.nodes["hypoxanthine", 'x'] = 5.5
+temp.nodes["hypoxanthine", 'y'] = 4
+
+temp.nodes["deoxyinosine", 'x'] = 6.5
+temp.nodes["deoxyinosine", 'y'] = 4.5
+
+temp.nodes["adenylosuccinate", 'x'] = 6.5
+temp.nodes["adenylosuccinate", 'y'] = 1.25
+
+temp.nodes["AMP", 'x'] = 7.5
+temp.nodes["AMP", 'y'] = 2
+
+temp.nodes["adenosine", 'x'] = 6.5
+temp.nodes["adenosine", 'y'] = 2.5
+
+temp.nodes["adenine", 'x'] = 7.5
+temp.nodes["adenine", 'y'] = 3
+
+temp.nodes["deoxyadenosine", 'x'] = 7.5
+temp.nodes["deoxyadenosine", 'y'] = 4
+
+temp.nodes["cAMP", 'x'] = 8.25
+temp.nodes["cAMP", 'y'] = 1.25
+
+temp.nodes["ADP", 'x'] = 8.25
+temp.nodes["ADP", 'y'] = 2.5
+
+temp.nodes["dADP", 'x'] = 8.5
+temp.nodes["dADP", 'y'] = 3
+
+temp.nodes["dAMP", 'x'] = 8.5
+temp.nodes["dAMP", 'y'] = 4
+
+temp.nodes["ATP", 'x'] = 9
+temp.nodes["ATP", 'y'] = 1.825
+
+temp.nodes["dATP", 'x'] = 9.25
+temp.nodes["dATP", 'y'] = 3.5
+
+temp.nodes["RNA.A", 'x'] = 10
+temp.nodes["RNA.A", 'y'] = 1.825
+
+temp.nodes["DNA.A", 'x'] = 10
+temp.nodes["DNA.A", 'y'] = 4
+
+temp.nodes$x = temp.nodes$x*150
+temp.nodes$y = temp.nodes$y*150
+
+visNetwork(temp.nodes, temp.edges)%>%
+  visNodes(physics = F, shape = "box")
+
+#write.csv(temp.nodes, "/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/purine.nodes.csv")
+
+
+```
+
+
+```{r}
+
+
+##genes in the kegg pathway and their enzyme IDs
+glycolysis.genes = read.csv('/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GlycolysisGenesKEGGinfo.csv')
+##Edge data for genes connecting metabolites
+glycolysis.edges = read.csv('/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GlycolysisEnzymeEdgesKEGGinfo.csv')
+##Metabolites in the KEGG pathway with their ID
+glycolysis.metabs = read.csv('/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GlycolysisMetaboliteKEGGinfo.csv')
+
+
+
+node.data = node.info('/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/R Code/dme00010.xml')
+
+##extracting position data for nodes
+node.info = data.frame(ID = unlist(node.data$kegg.names, use.names = F),
+                       number = rep(names(node.data$kegg.names),
+                                    lengths(node.data$kegg.names)),
+                       x = 0,
+                       y = 0,
+                       color = 0,
+                       names = "")
+node.info$x = node.data$x[node.info$number]
+node.info$y = node.data$y[node.info$number]
+
+##make new columns for transcriptomic data
+glycolysis.genes$FBgn = ""
+glycolysis.genes$Symbol = ""
+glycolysis.genes$FC = 0
+glycolysis.genes$pval = 1
+
+##Isolate gene ID info for goi
+temp = GeneIDKey[GeneIDKey$CG %in% glycolysis.genes$CG,]
+row.names(temp) = temp$CG
+
+##fill in new columns with transcriptomic data
+glycolysis.genes$FBgn = temp[glycolysis.genes$CG,'FBgn']
+glycolysis.genes$Symbol = temp[glycolysis.genes$CG,'Symbol']
+glycolysis.genes$FC = 0
+glycolysis.genes$FC = 0
+
+##make new columns for metabolomic data
+row.names(glycolysis.metabs) = glycolysis.metabs$KEGG.ID
+glycolysis.metabs$metabolomicsID = ""
+glycolysis.metabs$FC = 0
+glycolysis.metabs$pval = 1
+
+##retrieve name used in metabolomic data for metabolite IDs in path
+##including IDs associated with multiple metabolomic names
+i = 1
+while(i<=nrow(glycolysis.metabs)){
+  if(length(grep(glycolysis.metabs$KEGG.ID[i], KEGG.Key)) > 0){
+    glycolysis.metabs$metabolomicsID[i]= names(KEGG.Key[grep(glycolysis.metabs$KEGG.ID[i], KEGG.Key)])
+  }
+  i = i +1
+}
+
+##retrieve metabolite fold change and pvalue data
+glycolysis.metabs$FC = 0
+glycolysis.metabs$pval = 0
+
+##using the positions for nodes (metabolites) only
+metab.info = node.info[node.info$ID %in% glycolysis.metabs$KEGG.ID,]
+
+
+
+metab.info$FC = glycolysis.metabs[metab.info$ID, 'FC']
+metab.info$pval = glycolysis.metabs[metab.info$ID, 'pval']
+metab.info$names = glycolysis.metabs[metab.info$ID, 'Metabolite']
+metab.info$color = glycolysis.metabs[metab.info$ID, 'FC']
+metab.info$size = glycolysis.metabs[metab.info$ID, 'pval']
+
+color.pallette = colorRampPalette(c('royalblue', 'grey', "firebrick"))(401)
+
+metab.info$color[metab.info$color > 1] = 1
+metab.info$color[metab.info$color < -1] = -1
+metab.info$color = (metab.info$color * 200) +201
+metab.info$color = color.pallette[metab.info$color]
+metab.info$color[is.na(metab.info$color)] = 'dimgrey'
+
+metab.info$size = 10 + 10*abs(metab.info$size)
+metab.info$size[is.na(metab.info$size)] = 10
+
+metab.info$title = paste0(glycolysis.metabs[metab.info$ID, "metabolomicsID"],
+                          "<br>log2(FC): ", signif(metab.info$FC,3),
+                          "<br>pval: ", signif(10^-metab.info$pval,3))
+
+nodes = data.frame(id = paste0(metab.info$names),
+                   color = metab.info$color,
+                   size = metab.info$size,
+                   x = 2*metab.info$x,
+                   y = 2*metab.info$y,
+                   physics = F,
+                   group = "",
+                   title = metab.info$title)
+
+glycolysis.edges$FBgn = ''
+temp.glycolysis.path = glycolysis.edges
+
+i = 1
+while(i<=nrow(glycolysis.edges)){
+  enzymeID = paste0(glycolysis.edges$enzyme[i], "$")
+  if(nrow(glycolysis.genes[grep(enzymeID, glycolysis.genes$Enzyme),])>0){
+    temp = glycolysis.genes[grep(enzymeID, glycolysis.genes$Enzyme), "CG"]
+    temp = row.names(GeneIDKey[GeneIDKey$CG %in% temp,])
+    temp2 = glycolysis.edges[rep(i, length(temp)),]
+    temp2$FBgn = temp
+  }else{
+    temp2 = glycolysis.edges[i,]
+  }
+  temp.glycolysis.path = rbind(temp.glycolysis.path,temp2)
+  
+  i = i +1
+}
+
+glycolysis.edges = temp.glycolysis.path[(nrow(glycolysis.edges)+1):nrow(temp.glycolysis.path),]
+
+
+glycolysis.edges$size = 0
+glycolysis.edges$size[glycolysis.edges$size <1] = 1
+glycolysis.edges$size[is.na(glycolysis.edges$size)] = 1
+glycolysis.edges$size = 2*glycolysis.edges$size
+
+
+glycolysis.edges$color = "white"
+## max color intensity is at FC of 2
+#glycolysis.edges$color[glycolysis.edges$color>2] = 2
+#glycolysis.edges$color[glycolysis.edges$color<(-2)] = -2
+#glycolysis.edges$color = 201+(glycolysis.edges$color *100)
+#glycolysis.edges$color = color.pallette[glycolysis.edges$color]
+#glycolysis.edges$color[is.na(glycolysis.edges$color)] = 'dimgrey'
+
+
+
+glycolysis.edges$title = paste0(GeneIDKey[glycolysis.edges$FBgn, "Symbol"],
+                          "<br>log2(FC): ", signif(TKT.EdgeR.FC[glycolysis.edges[,'FBgn'], comparison.T],3),
+                          "<br>FDR: ", signif(TKT.EdgeR[glycolysis.edges[,'FBgn'], comparison.T],3),
+                          "<br>", comparison.means[[comparison.T]][1], " cpm: ", signif(mean.cpm[glycolysis.edges[,'FBgn'],comparison.means[[comparison.T]][1]],3),
+                          "<br>", comparison.means[[comparison.T]][2], " cpm: ", signif(mean.cpm[glycolysis.edges[,'FBgn'],comparison.means[[comparison.T]][2]],3))
+
+
+glycolysis.edges = data.frame(from = glycolysis.edges$from.name,
+                              to = glycolysis.edges$to.name)
+,
+                              arrows = glycolysis.edges$arrow)
+,
+                              color = glycolysis.edges$color)
+,
+                              width = glycolysis.edges$size)
+,
+                              title = glycolysis.edges$title,
+                              physics = T)
+
+nodes = data.frame(id = paste0(nodes$id),
+                   color = nodes$color,
+                   size = nodes$size,
+                   x = nodes$x,
+                   y = nodes$y,
+                   physics = F,
+                   group = "",
+                   title = nodes$title)
+
+OutsidePath = data.frame(id = c('Pentose Phosphate Pathway',
+                               'Propanoate Metabolism',
+                               'Starch and Sucrose Metabolism',
+                               'Citrate Cycle'),
+                        color = "black",
+                        size = 15,
+                        x= c(1350,1254,966,175),
+                        y=c(1112,1822,110,1700),
+                        physics = F,
+                        group = 'Outside Path',
+                        title = "")
+
+nodes = rbind(nodes, OutsidePath)
+
+
+```
+
+
+```{r echo = F}
+
+
 network.fun = function(comparison.T, comparison.M, cond1, cond2, pnp){
-temp = colorRampPalette(c('royalblue',"dodgerblue",'red', "firebrick"))(401)
+temp = colorRampPalette(c("dodgerblue", 'royalblue', "firebrick",'red'))(401)
 
-
-
-visedges = purine.path
+visedges = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/purine.edges.csv", row.names = 1)
 visedges$color = round(TKT.EdgeR.FC[purine.path$FBgn, comparison.T],2)
-##visedges$width = .5 + abs(visedges$color)
 visedges$color[visedges$color < (-2)] = -2
 visedges$color[visedges$color > (2)] = 2
 visedges$color = (visedges$color * 100) +201
@@ -1194,119 +1839,51 @@ visedges$fdr = signif(TKT.EdgeR[visedges$FBgn, comparison.T], 2)
 visedges$GR = round(mean.cpm[visedges$FBgn, cond1],1)
 visedges$WT = round(mean.cpm[visedges$FBgn, cond2],1)
 visedges$width = .01 + (1*abs(log10(visedges$WT)))
-
 visedges$title = paste0(visedges$symbol,
                         "<br>FDR: ", visedges$fdr, 
                         "<br>",cond1," CPM: ", visedges$GR, 
                         "<br>",cond2," CPM: ", visedges$WT)
-visedges = na.omit(visedges)
-visedges = rbind(visedges, TerminalPoints)
-
-node.names = unique(c(visedges$from, visedges$to))
-node.data = data.frame(id = node.names,
-                       color = 'dimgrey',
-                       size = 10,
-                       FC = NA,
-                       pval = NA,
-                       row.names = node.names)
-
 
 row.names(comparison.M)[row.names(comparison.M) == "cAMP(2',3') / cAMP(3',5')"] = 'cAMP'
 
+node.data = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/purine.nodes.csv", row.names = 1)
 node.colors = na.omit(comparison.M[intersect(row.names(comparison.M), node.names),])
 node.pval = setNames(signif((node.colors$p),2), row.names(node.colors))
 node.data[names(node.pval), 'pval'] = node.pval
 node.colors = setNames(round(log2(node.colors$FC),2), row.names(node.colors))
 node.data[names(node.colors), "FC"] = node.colors
 node.data[names(node.colors),'size'] = node.colors
-#node.data[names(node.colors),'size'] = 
-#  (node.data[names(node.colors),'size'] + .5 + abs(min(node.colors)))*7.5
-node.data[names(node.colors),'size'] = 
-  (node.data[names(node.colors),'size'] + 4.5)*7.5
-
+node.data[,'size'] = (node.data[,'size'] + 4.5)*7.5
 node.colors[node.colors < (-2)] = -2
 node.colors[node.colors>2] = 2
-
-
 node.colors = (node.colors*100)+201
-
-
-
 node.colors = setNames(temp[node.colors], names(node.colors)) 
-node.data[names(node.colors), 'color'] = node.colors
-
+node.data[names(node.colors), 'color.background'] = node.colors
 node.data$title = paste0(node.data$id,
                          "<br>FC: ", node.data$FC,
                          "<br>pval: ", node.data$pval)
-
-node.data[unique(TerminalPoints$enzyme), 'color'] = 'black'
-
-node.data$group = 'metabolite'
-node.data[node.data$color == 'black', 'group'] = "Outside Path"
-node.data[node.data$color == 'dimgrey', 'group'] = "no data"
-
-node.data$x = 1
-node.data$y = 1
-node.data["Excretion", 'x'] = -200
-node.data["Excretion", 'y'] = 500
-
-node.data["Pentose Phosphate" , 'x'] = 50
-node.data["Pentose Phosphate" , 'y'] = -400
-
-node.data["RNA.A", 'x'] = 850
-node.data["RNA.A", 'y'] = -250
-
-node.data["RNA.G", 'x'] = -1000
-node.data["RNA.G", 'y'] = -250
-
-node.data["Folate.Biosynthesis", 'x'] = -1000
-node.data["Folate.Biosynthesis", 'y'] = -350
-
-node.data["Riboflavin.Metabolism", 'x'] = -1000
-node.data["Riboflavin.Metabolism", 'y'] = -150
-
-node.data["DNA.A", 'x'] = 850
-node.data["DNA.A", 'y'] = 250
-
-node.data["DNA.G", 'x'] = -1000
-node.data["DNA.G", 'y'] = 250
-
-# passing custom nodes and/or edges
-lnodes <- data.frame(label = c("Increased", "Decreased", "No Data"), 
-shape = 'dot', color = c("firebrick", "royalblue",'dimgrey'),
- title = "") 
-
+node.data[node.data$group == "Outside Path", 'color.background'] = 'black'
+node.data[node.data$color.background == 'white', 'group'] = "no data"
 
 nodes = node.data
-
-##nodes$color[nodes$color != "black"] = 'dimgrey'
-
-
-colored.nodes = unique(c(interactions[,1], interactions[,3]))
-colored.nodes = c(setdiff(row.names(nodes), c(colored.nodes, row.names(nodes)[nodes$color == "black"])))
-
-#nodes[row.names(nodes) %in% colored.nodes, 'color'] = "gold"
+nodes[names(node.pval[node.pval > 0.05]), "color"] = 'grey'
 
 
+visedges$color[visedges$from %in% row.names(nodes)[nodes$group == "Outside Path"]] = 'black'
+visedges$color[visedges$to %in% row.names(nodes)[nodes$group == "Outside Path"]] = 'black'
 visedges = visedges[,c('from', 'to', 'arrows', 'color', 'width', 'title')]
 row.names(visedges) = c(1:nrow(visedges))
+visedges = visedges[!is.na(visedges$color),]
 
-colored.edges = row.names(visedges[grep("CG16758", visedges$title),])
-colored.edges = setdiff(row.names(visedges), colored.edges)
-
-if(pnp == T){
-  nodes[row.names(nodes) %in% colored.nodes, 'color'] = "lightgrey"
-  visedges[row.names(visedges) %in% colored.edges, "color"] = 'lightgrey'
-}
-
-
-
+lnodes <- data.frame(label = c("Sig. Increased", "Sig. Decreased", "Not. Sig.", "No Data"), 
+shape = 'dot', color = list(background = c("red", "dodgerblue",'dimgrey', 'white'), border = "black"),
+size = c(40, 15, 25, 25),
+ title = "") 
 
 visNetwork(nodes,visedges,
                   main = paste0(cond1, " vs ", cond2))%>%
-  visNodes(physics = T)%>%
+  visNodes(physics = F)%>%
   visLayout(hierarchical=F, improvedLayout=T)%>%
-  ##visPhysics(solver="forceAtlas2Based", forceAtlas2Based = list(gravitationalConstant=-50),enabled=T, minVelocity = .5)%>%
   visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE)%>%
   visEdges(arrows = visedges$arrows)%>%
   visGroups(groupname = "Outside Path", shape = 'box', physics=F, size = 25, font=list(color="white"))%>%
@@ -1315,6 +1892,9 @@ visNetwork(nodes,visedges,
 }
 
 ```
+
+
+
 
 
 ```{r echo = F}
