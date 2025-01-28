@@ -53,7 +53,7 @@ colnames(norm.data) = Metab.Meta[colnames(norm.data), "Genotypes"]
 ##manually currated
 serpe = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Nguyen Serpe 2024 scRNA-seq VNC.csv", row.names = 1)
 
-serpe.glia = read.csv(paste0(git.dir, "Nguyen%20Serpe%202024%20scRNA-seq%20VNC.csv"), row.names = 1)
+serpe.glia = read.csv(paste0(git.dir, "Serpe%202024%20GliaSubtypes.csv"), row.names = 1)
 
 serpe.mn = read.csv(paste0(git.dir, "Serpe%202024%20MNClusters.csv"), row.names = 1)
 
@@ -561,6 +561,7 @@ plot.gbbKO = function(ID){
 plot.serpe.allclusters = function(gene.name){
   
   ID.row = serpe[grep(gene.name, row.names(serpe)),]
+  
   
   if(nrow(ID.row) < 50 & nrow(ID.row) > 0){
     if(nrow(ID.row) == 1 | length(intersect(gene.name, row.names(serpe))) == 1){

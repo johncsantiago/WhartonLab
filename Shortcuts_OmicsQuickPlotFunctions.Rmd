@@ -50,14 +50,26 @@ plot.metab(metabID)
 ```
 
 
-```{r echo = F}
+```{r echo = F, fig.width= 10, fig.height=16}
 
 ## Plot gene expression from Single Cell RNAseq experiment
 ## gene name needs to be the full or partial gene symbol as listed in the table (case sensitive)
 
-gene.name = 'gbb'
+gene.name = "gbb"
 
-plot.SC(gene.name)
+plot.serpe.allclusters(gene.name)
+
+```
+
+
+```{r echo = F, fig.width= 10, fig.height=16}
+
+## Plot expression of a gene set from Single Cell RNAseq experiment
+## gene name needs to be the full or partial gene symbol as listed in the table (case sensitive)
+
+heat.genes = c("dpp", "gbb", "put", "wit", "mav", "sax", "tkv", "repo", "ACC", "Ack-like")
+
+serpe.heatmap(gene.name)
 
 ```
 
