@@ -196,6 +196,7 @@ plot.G85R = function(ID){
   if(nrow(ID.row) != 1
      | length(intersect(GeneIDKey$FBgn, ID)) > 1
      | length(intersect(GeneIDKey$Symbol, ID)) > 1){
+    print(paste0("Multiple gene symbols match the ID ", ID))
     ID.row
   }
 }
@@ -262,6 +263,7 @@ plot.A4V = function(ID){
     if(nrow(ID.row) != 1
        | length(intersect(GeneIDKey$FBgn, ID)) > 1
        | length(intersect(GeneIDKey$Symbol, ID)) > 1){
+      print(paste0("Multiple gene symbols match the ID ", ID))
       ID.row
     }
   }
@@ -364,6 +366,7 @@ plot.metab = function(metabID){
     }
     
     if(length(ID.row) != 1 | length(intersect(row.names(norm.data), metabID)) > 1){
+      print(paste0("Multiple metabolites match the ID ", ID))
       norm.data[ID.row,]
     }
     
@@ -470,6 +473,7 @@ plot.SC = function(gene.name){
     }
     
     if(nrow(ID.row) != 1 | length(intersect(gene.name, SCdata$Gene.name)) > 1){
+      print(paste0("Multiple gene symbols match the ID ", ID))
       ID.row
     }
   }
@@ -513,6 +517,7 @@ plot.gbbOE = function(ID){
     }
     
     if(nrow(ID.row) != 1){
+      print(paste0("Multiple gene symbols match the ID ", ID))
       ID.row
     }
   }
@@ -552,6 +557,7 @@ plot.gbbKO = function(ID){
     }
     
     if(nrow(ID.row) != 1){
+      print(paste0("Multiple gene symbols match the ID ", ID))
       ID.row
     }
   }

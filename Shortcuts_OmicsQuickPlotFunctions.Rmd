@@ -20,7 +20,7 @@ source('https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/ma
 ## Plot gene expression from G85R TKT RNAseq experiment
 ## ID needs to be the full or partial gene symbol or FBgn (case sensitive)
 
-ID = "Arc1"
+ID = "Arc"
 
 plot.G85R(ID)
 
@@ -32,7 +32,7 @@ plot.G85R(ID)
 ## Plot gene expression from A4V RNAseq experiment
 ## ID needs to be the full or partial gene symbol or FBgn (case sensitive)
 
-ID = "Arc1"
+ID = "Arc"
   
 plot.A4V(ID)
 ```
@@ -62,14 +62,14 @@ plot.serpe.allclusters(gene.name)
 ```
 
 
-```{r echo = F, fig.width= 10, fig.height=16}
+```{r echo = F, fig.width=16, fig.height=10}
 
 ## Plot expression of a gene set from Single Cell RNAseq experiment
 ## gene name needs to be the full or partial gene symbol as listed in the table (case sensitive)
 
 heat.genes = c("dpp", "gbb", "put", "wit", "mav", "sax", "tkv", "repo", "ACC", "Ack-like")
 
-serpe.heatmap(gene.name)
+serpe.heatmap(heat.genes)
 
 ```
 
