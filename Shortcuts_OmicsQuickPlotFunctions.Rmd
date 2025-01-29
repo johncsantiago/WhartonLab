@@ -32,7 +32,7 @@ plot.G85R(ID)
 ## Plot gene expression from A4V RNAseq experiment
 ## ID needs to be the full or partial gene symbol or FBgn (case sensitive)
 
-ID = "Arc"
+ID = "Arc1"
   
 plot.A4V(ID)
 ```

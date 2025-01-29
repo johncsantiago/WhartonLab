@@ -136,7 +136,7 @@ plot.G85R = function(ID){
                y=gene$cpm,
                cex=1,
                pch=21,
-               bg=c('firebrick',"gold","darkgreen","dodgerblue")[as.numeric(factor(gene$group))])
+               bg=c("darkgreen", 'firebrick',"dodgerblue","gold")[as.numeric(factor(gene$group))])
         
         axis(side = 1,
              at = 1:12,
@@ -255,7 +255,7 @@ plot.A4V = function(ID){
         points(x=as.numeric(factor(gene$condition)),y=gene$cpm,cex=1,pch=21,bg=c('firebrick',"gold","darkgreen","dodgerblue")[as.numeric(factor(gene$group))])
         legend('topright',
                inset=c(-0.275,0),
-               legend = c('Silent F', 'A4V F', 'Silent M', 'A4V M', 'Silent M'), 
+               legend = c('Silent F', 'A4V F', 'Silent M', 'A4V M'), 
                fill = c('firebrick', "gold", "darkgreen", "dodgerblue"),
                cex = .65,
                bty = 'n',
@@ -295,14 +295,15 @@ plot.metab = function(metabID){
       
       metab = data.frame(data = as.numeric(norm.data[metab,]), 
                          group = colnames(norm.data), 
-                         geno = colnames(norm.data))
+                         geno = "WT")
       
       
       metab$group = factor(metab$group, levels = c("WT", "TktDfWT", "TktOEWT",
-                                                   "GR", "TktDfGR", "TktOEGR"))
+                                                   "G85R", "TktDfGR", "TktOEGR"))
       
-      metab$geno = factor(substr(metab$group, (nchar(as.character(metab$group)) -1), nchar(as.character(metab$group))), 
-                          levels = c("WT", "GR"))
+      metab$geno[grep("G", metab$group)] = "G85R"
+      metab$geno = factor(metab$geno, 
+                          levels = c("WT", "G85R"))
       
       par(mar = c(5,7,5,2))
       plot(x = NA,
