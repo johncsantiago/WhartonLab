@@ -20,7 +20,7 @@ source('https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/ma
 ## Plot gene expression from G85R TKT RNAseq experiment
 ## ID needs to be the full or partial gene symbol or FBgn (case sensitive)
 
-ID = "Arc1"
+ID = "gbb"
 
 plot.G85R(ID)
 
@@ -77,7 +77,7 @@ serpe.heatmap(heat.genes)
 ```{r echo = F}
 ##Plot expression levels for a specific gene in the gbbOE dataset
 
-ID = "Arc"
+ID = "Arc1"
 
 plot.gbbOE(ID)
 

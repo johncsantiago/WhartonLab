@@ -21,11 +21,11 @@ A4V.cpm = read.csv(paste0(git.dir, "A4V.cpmdata.csv"), row.names = 1)
 
 
 
-gbbOE = read.csv(paste0(git.dir, "gbbOE_CountTable.csv"), row.names = 1)
+gbbOE.cpmdata = read.csv(paste0(git.dir, "gbbOE_CountTable.csv"), row.names = 1)
 
 gbbOE.groups = read.csv(paste0(git.dir, "gbbOE_Metadata.csv"), row.names = 1)
 
-gbbOE = gbbOE[,row.names(gbbOE.groups)]
+gbbOE.cpmdata = gbbOE.cpmdata[,row.names(gbbOE.groups)]
 gbbOE.groups$group = paste0(gbbOE.groups$genotype, "_",gbbOE.groups$stage)
 
 gbbKO.cpmdata = read.csv(paste0(git.dir, "gbbKO.cpmdata.csv"), row.names = 1)
