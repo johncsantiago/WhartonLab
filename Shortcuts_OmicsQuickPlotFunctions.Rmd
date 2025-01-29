@@ -20,7 +20,7 @@ source('https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/ma
 ## Plot gene expression from G85R TKT RNAseq experiment
 ## ID needs to be the full or partial gene symbol or FBgn (case sensitive)
 
-ID = "Arc"
+ID = "Arc1"
 
 plot.G85R(ID)
 

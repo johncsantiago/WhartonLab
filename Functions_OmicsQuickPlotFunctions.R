@@ -67,6 +67,7 @@ serpe.glia.names = as.character(read.csv(paste0(git.dir, "Serpe%202024%20GliaSub
 
 ##Function to plot all G85R groups
 plot.G85R = function(ID){
+  
   ID.row = GeneIDKey[c(grep(ID, GeneIDKey$FBgn),
                        grep(ID, GeneIDKey$Symbol)),]
   
@@ -89,9 +90,11 @@ plot.G85R = function(ID){
       
       
       
-      gene = data.frame(cpm = as.numeric(TKT.cpm[FBgn,]), condition = TKT.groups$Group, group = paste0(TKT.groups$Genotype, TKT.groups$Sex))
+      gene = data.frame(cpm = as.numeric(TKT.cpm[FBgn,]), 
+                        condition = TKT.groups$Group, 
+                        group = paste0(TKT.groups$Genotype, TKT.groups$Sex))
       
-      gene$group = factor(gene$group, levels = c("WT.f", "GR.F", "WT.M", "GR.M"))
+      gene$group = factor(gene$group, levels = c("WTF", "GRF", "WTM", "GRM"))
       gene$condition = factor(gene$condition, levels = c('WT.F', "TktDfWT.F", "TktOEWT.F",
                                                          'GR.F', "TktDfGR.F", "TktOEGR.F",
                                                          'WT.M', "TktDfWT.M", "TktOEWT.M",
