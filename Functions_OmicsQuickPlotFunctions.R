@@ -3,6 +3,10 @@
 
 ##library(plotly)
 
+if(!require(gplots)){
+  install.packages("gplots")
+}
+
 library(gplots)
 
 ##load all files from github
