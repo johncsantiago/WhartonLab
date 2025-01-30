@@ -55,7 +55,8 @@ colnames(norm.data) = Metab.Meta[colnames(norm.data), "Genotypes"]
 
 
 ##manually currated
-serpe = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Nguyen Serpe 2024 scRNA-seq VNC.csv", row.names = 1)
+serpe = read.csv(paste0(git.dir, "Nguyen%20Serpe%202024%20scRNA-seq%20VNC.csv"), row.names = 1)
+
 
 serpe.glia = read.csv(paste0(git.dir, "Serpe%202024%20GliaSubtypes.csv"), row.names = 1)
 

@@ -1,5 +1,5 @@
 ---
-title: "Specifgic Gene or Metabolite Levels"
+title: "Specific Gene or Metabolite Levels"
 author: "John Santiago"
 date: "2024-05-24"
 output: html_document
