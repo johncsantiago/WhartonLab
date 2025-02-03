@@ -6,14 +6,11 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
+
 knitr::opts_chunk$set(echo = TRUE)
-```
-
-```{r echo = F, message = F}
-
-source('/Users/johncsantiago/Documents/GitHub/WhartonLab/GOandKEGGPlottingFunctions.R')
 
 ```
+
 
 
 ```{r echo = F, message = F}
@@ -31,73 +28,49 @@ Geno2 = "WT"
 TKT2 = "C"
 Sex2 = "F"
 
-temp.FC = colnames(G85R.FC)
-temp1 = temp.FC[grep(Geno1, temp.FC)]
+##Conditions for second comparison
+Geno3 = "GR"
+TKT3 = "C"
+Sex3 = "M"
 
-if(Sex1 != Sex2){
-  temp1 = temp1[intersect(grep(Sex1, temp1), grep(Sex2, temp1))]
-  temp1 = temp1[grep(Geno1)]
-}
-
-if(Sex1 == Sex2){
-  if(Geno1 == Geno2){
-  temp1 = temp1[grep(setdiff(c("WT", "GR"), c(Geno1, Geno2)), temp1, invert = T)]
-  }
-  
-  if(Geno1 != Geno2){
-  temp1 = temp1[intersect(grep(Geno1, temp1), grep(Geno2, temp1))]
-  }
-  
-  temp1 = temp1[intersect(grep(TKT1, temp1), grep(TKT2, temp1))]
-  
-  temp1 = temp1[grep(Sex1, temp1)]
-}
-
-
-
-FC = G85R.FC[temp1]
-FDR = G85R.FC[temp1]
+Geno4 = "WT"
+TKT4 = "C"
+Sex4 = "M"
 
 
 
 
 
-Variable.Condition = "GRFC" 
-Control.Condition = "WTFC"
-secondary.Variable.Condition = "GRMC"
-secondary.Control.Condition = "WTMC"
+```
+
+```{r echo = F, message = F}
+
+source('/Users/johncsantiago/Documents/GitHub/WhartonLab/G85R.GOandKEGGPlottingFunctions.R')
+
+plot.data = G85R.data(Geno1, Geno2, Geno3, Geno4,
+                      Sex1, Sex2, Sex3, Sex4,
+                      TKT1, TKT2, TKT3, TKT4)
+
+```
 
 
+```{r echo = F}
 
-comparison = paste0(Variable.Condition, 'v', Control.Condition)
-secondary.comparison = paste0(secondary.Variable.Condition, 'v', secondary.Control.Condition)
+##Uses data from primary comparison
+##Plots genes with an FDR <= 0.05
+##point size is relative to maximum mean expression in the two conditions
 
-if(length(intersect(comparison, names(A4V.comparekey))) == 1){
-  FC = A4V.FC[,c(A4V.comparekey[comparison], A4V.comparekey[secondary.comparison])]
-  FDR = A4V.FDR[,c(A4V.comparekey[comparison], A4V.comparekey[secondary.comparison])]
-  mean.data = A4V.meancpm[,c(Variable.Condition, Control.Condition, 
-                             secondary.Variable.Condition, secondary.Control.Condition)]
-  metab.data = 'none'
-}
+G85R.volcano(plot.data)
 
-if(length(intersect(comparison, names(G85R.comparekey))) == 1){
-  FC = G85R.FC[,c(G85R.comparekey[comparison], G85R.comparekey[secondary.comparison])]
-  FDR = G85R.FDR[,c(G85R.comparekey[comparison], G85R.comparekey[secondary.comparison])]
-  mean.data = G85R.meancpm[,c(Variable.Condition, Control.Condition, 
-                              secondary.Variable.Condition, secondary.Control.Condition)]
-  metab.data = G85R.metab.comparekey[c(comparison, secondary.comparison)]
-  if(G85R.metab.comparekey[c(comparison)] == G85R.metab.comparekey[c(secondary.comparison)]){
-    metab.data = G85R.metab.comparekey[c(comparison)]
-  }
-}
+```
 
-subset = F
 
-if(subset == T){
-  geneset = biomarkers
-  FC[setdiff(row.names(FC),geneset),] = 1 
-  FDR[setdiff(row.names(FDR),geneset),] = 1 
-}
+```{r echo = F}
+
+##Uses data from primary comparison
+##point size is relative to max mean expression in any condition
+##grey points indicate less than 1 fold difference between the comparisons
+G85R.compare.genes(plot.data)
 
 ```
 
@@ -106,45 +79,14 @@ if(subset == T){
 
 ##Uses data from primary comparison
 ##point size is relative to mean expression in variable condition
-volcano(FC, FDR, mean.data)
+G85R.DEG.venn(plot.data)
 
 ```
 
-
-```{r echo = F}
-
-##Uses data from primary comparison
-##point size is relative to mean expression in variable condition
-compare.genes(FC, FDR, mean.data)
-
-```
-
-
-```{r echo = F}
-#library(heatmaply)
-#hmdata = mean.data[geneset,]
-#row.names(hmdata) = GeneIDKey[geneset, 'Symbol']
-#hmdata = na.omit(hmdata)
-
-#heatmaply(hmdata,
-#          scale = 'row',
-#          Colv = F)
-
-```
-
-
-```{r echo = F}
-
-##Uses data from primary comparison
-##point size is relative to mean expression in variable condition
-DEG.venn(FDR, FC)
-
-```
-
-```{r echo = F, include = F}
+```{r echo = F, include = F, warning = F}
 
 ####Uses sigDEGs from primary comparison
-cat.data = Enrichment(FDR)
+cat.data = G85R.Enrichment(plot.data)
 
 ```
 
@@ -155,11 +97,11 @@ cat.data = Enrichment(FDR)
 ##which ranks of categories to use
 ##a vector of numbers specifying which ranks to use
 ##eg. c(1, 5:6) will use the first, fifth and sixth most sig. cats.
-##can also just type 'sigs.only' 
+##can also just type 'sigs' 
 usecats=c(1:20)
-#usecats = 'sigs.only'  
+#usecats = 'sigs'  
 
-KEGG20(cat.data, FC, FDR, usecats)
+G85R.KEGG20(cat.data, plot.data, usecats)
 
 ```
 
@@ -169,7 +111,7 @@ KEGG20(cat.data, FC, FDR, usecats)
 ##can be the exact name or 5 digit code in quotes
 specific.kegg = "00980"
 
-plotkegg.genes(specific.kegg, FC, FDR, mean.data)
+G85R.plotkegg.genes(specific.kegg, plot.data)
 
 ```
 
@@ -182,7 +124,9 @@ PathwayID = "00010"
 #options include 'primary' or 'both'
 use = 'both'
 
-KEGG.diagram(PathwayID, FC, use, metab.data)
+
+G85R.KEGG.diagram(PathwayID, plot.data, use, sigs.only = F)
+
 
 ```
 
@@ -192,7 +136,7 @@ KEGG.diagram(PathwayID, FC, use, metab.data)
 ##can be the exact name or 5 digit code in quotes
 specific.kegg = "00010"
 
-comparekegg.genes(specific.kegg, FC, FDR, mean.data)
+G85R.comparekegg.genes(specific.kegg, plot.data)
 
 ```
 
@@ -206,7 +150,7 @@ GO.ontology = 'BP'
 usecats=c(1:20)
 #usecats = 'sigs.only'
 
-GO20(cat.data, GO.ontology, FC, FDR, usecats)
+G85R.GO20(cat.data, GO.ontology, plot.data, usecats)
 
 ```
 
@@ -216,7 +160,7 @@ GO20(cat.data, GO.ontology, FC, FDR, usecats)
 ##the 7 digits of a GOterm id or the exact term name
 specific.go = '0005811'
 
-plotgo.genes(specific.go, FC, FDR, mean.data)
+G85R.plotgo.genes(specific.go, plot.data)
 
 ```
 
@@ -226,7 +170,7 @@ plotgo.genes(specific.go, FC, FDR, mean.data)
 ##the 7 digits of a GOterm id or the exact term name
 specific.go = '0005811'
 
-comparego.genes(specific.go, FC, FDR, mean.data)
+G85R.comparego.genes(specific.go, plot.data)
 
 ```
 
@@ -247,9 +191,9 @@ treemapPlot(rt)
 ```{r echo = F, warning = F}
 
 ##a parent category generated in the treemapPlot function
-parent.category = 'membrane lipid biosynthetic process'
+parent.category = 'neurogenesis'
 
-plotparentcat.genes(parent.category, FC, FDR, mean.data)
+G85R.plotparentcat.genes(parent.category, plot.data)
 
 ```
 
@@ -259,7 +203,7 @@ plotparentcat.genes(parent.category, FC, FDR, mean.data)
 ##a parent category generated in the treemapPlot function
 ##parent.category = 'small molecule biosynthetic process'
 
-compareparent.genes(parent.category, FC, FDR, mean.data)
+G85R.compareparent.genes(parent.category, plot.data)
 ##dot size is relative to the max FDR of either condition
 
 

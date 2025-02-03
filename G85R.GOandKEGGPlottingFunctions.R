@@ -1016,7 +1016,7 @@ G85R.plotparentcat.genes = function(parent.category, plot.data){
   i=1
   while(i<=length(GOterm.genes)){
     goinparent = rt[grep(names(GOterm.genes)[i], rt$parent),'go']
-    genesinparent = genesingo$Gene[genesingo$GO == goinparent]
+    genesinparent = genesingo$Gene[genesingo$GO %in% goinparent]
     GOterm.genes[[i]] = GeneIDKey[GeneIDKey$ensembl %in% genesinparent, 'FBgn']
     i = i +1
   }
@@ -1097,7 +1097,7 @@ G85R.compareparent.genes = function(parent.category, plot.data){
   i=1
   while(i<=length(GOterm.genes)){
     goinparent = rt[grep(names(GOterm.genes)[i], rt$parent),'go']
-    genesinparent = genesingo$Gene[genesingo$GO == goinparent]
+    genesinparent = genesingo$Gene[genesingo$GO %in% goinparent]
     GOterm.genes[[i]] = GeneIDKey[GeneIDKey$ensembl %in% genesinparent, 'FBgn']
     i = i +1
   }
