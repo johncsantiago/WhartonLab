@@ -19,6 +19,9 @@ if(!require(pathview, quietly = TRUE))
 if(!require(VennDiagram, quietly = TRUE))
   install.packages("VennDiagram")
 
+if(!require(rstudioapi, quietly = TRUE))
+  install.packages('rstudioapi')
+
 library(plotly)
 library(goseq)
 library(org.Dm.eg.db)
