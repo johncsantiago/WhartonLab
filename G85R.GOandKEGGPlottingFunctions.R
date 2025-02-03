@@ -41,9 +41,9 @@ G85R.FC = read.csv(paste0(git.dir, "TKT.EdgeR.FCTable.csv"), row.names = 1)
 
 G85R.metabFC = read.csv(paste0(git.dir, "MetaboliteFCs.csv"), row.names = 1)
 
-genesingo = read.csv(paste0(git.dir, "genesingo.csv"))
+genesingo = read.csv(paste0(git.dir, "genesingo.csv"), row.names = 1)
 
-GenesInKegg = read.csv(paste0(git.dir, "kegg.symbol2path.csv"))
+GenesInKegg = read.csv(paste0(git.dir, "kegg.symbol2path.csv"), row.names = 1)
 
 KEGG.Names = read.csv(paste0(git.dir, "KEGG.names.csv"), row.names = 1)
 
@@ -397,7 +397,7 @@ G85R.KEGG20 = function(cat.data, plot.data, usecats = 'sigs'){
   i = 1
   while(i <= nrow(data)){
     kegg.id = data$category[i]
-    kegg.genes = names(GenesInKegg[grep(kegg.id, GenesInKegg)])
+    kegg.genes = GenesInKegg$Gene[grep(kegg.id, GenesInKegg$KEGG)]
     kegg.genes = GeneIDKey[GeneIDKey$Symbol %in% kegg.genes, "FBgn"]
     kegg.genes = intersect(kegg.genes, names(FC.data))
     sig.kegg.genes = intersect(kegg.genes, sigs)
@@ -484,7 +484,7 @@ G85R.plotkegg.genes = function(specific.kegg, plot.data){
   
   kegg.id = row.names(KEGG.Names)[c(grep(specific.kegg, KEGG.Names), 
                                     grep(specific.kegg, row.names(KEGG.Names)))]
-  kegg.genes = names(GenesInKegg[grep(kegg.id, GenesInKegg)])
+  kegg.genes = GenesInKegg$Gene[grep(kegg.id, GenesInKegg$KEGG)]
   volcano.data$Color = 'honeydew'
   #row.names(volcano.data) = volcano.data$Symbol
   volcano.data[volcano.data$Symbol %in% kegg.genes, 'Color'] = 'deeppink'
@@ -674,7 +674,7 @@ G85R.comparekegg.genes = function(specific.kegg, plot.data){
   
   kegg.id = row.names(KEGG.Names)[c(grep(specific.kegg, KEGG.Names), 
                                     grep(specific.kegg, row.names(KEGG.Names)))]
-  kegg.genes = names(GenesInKegg[grep(kegg.id, GenesInKegg)])
+  kegg.genes = GenesInKegg$Gene[grep(kegg.id, GenesInKegg$KEGG)]
   
   kegg.fbgn = GeneIDKey[GeneIDKey$Symbol %in% kegg.genes,]
   kegg.fbgn = setNames(kegg.fbgn$FBgn, kegg.fbgn$Symbol)
@@ -772,7 +772,7 @@ G85R.GO20 = function(cat.data, GO.ontology, plot.data, usecats){
   i = 1
   while(i <= nrow(data)){
     go.id = row.names(data)[i]
-    go.genes = genesingo[[go.id]]
+    go.genes = genesingo$Gene[genesingo$GO == go.id]
     go.genes = GeneIDKey[GeneIDKey$ensembl %in% go.genes, "FBgn"]
     go.genes = intersect(go.genes, names(FC.data))
     sig.go.genes = intersect(go.genes, sigs)
@@ -860,7 +860,7 @@ G85R.plotgo.genes = function(specific.go, plot.data){
   
   go.id = row.names(GO.Names)[c(grep(specific.go, GO.Names$category),
                                 grep(specific.go, GO.Names$term))]
-  go.genes = (genesingo[go.id])[[1]]
+  go.genes = genesingo$Gene[genesingo$GO == go.id]
   go.genes = GeneIDKey[GeneIDKey$ensembl %in% go.genes, 'Symbol']
   volcano.data$Color = 'honeydew'
   #row.names(volcano.data) = volcano.data$Symbol
@@ -909,7 +909,7 @@ G85R.comparego.genes = function(specific.go, plot.data){
   
   go.id = row.names(GO.Names)[c(grep(specific.go, GO.Names$category),
                                 grep(specific.go, GO.Names$term))]
-  go.genes = (genesingo[go.id])[[1]]
+  go.genes = genesingo$Gene[genesingo$GO == go.id]
   go.genes = GeneIDKey[GeneIDKey$ensembl %in% go.genes, 'FBgn']
   
   
@@ -1016,7 +1016,7 @@ G85R.plotparentcat.genes = function(parent.category, plot.data){
   i=1
   while(i<=length(GOterm.genes)){
     goinparent = rt[grep(names(GOterm.genes)[i], rt$parent),'go']
-    genesinparent = unlist(genesingo[goinparent])
+    genesinparent = genesingo$Gene[genesingo$GO == goinparent]
     GOterm.genes[[i]] = GeneIDKey[GeneIDKey$ensembl %in% genesinparent, 'FBgn']
     i = i +1
   }
@@ -1097,7 +1097,7 @@ G85R.compareparent.genes = function(parent.category, plot.data){
   i=1
   while(i<=length(GOterm.genes)){
     goinparent = rt[grep(names(GOterm.genes)[i], rt$parent),'go']
-    genesinparent = unlist(genesingo[goinparent])
+    genesinparent = genesingo$Gene[genesingo$GO == goinparent]
     GOterm.genes[[i]] = GeneIDKey[GeneIDKey$ensembl %in% genesinparent, 'FBgn']
     i = i +1
   }
