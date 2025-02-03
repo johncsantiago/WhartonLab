@@ -990,7 +990,7 @@ tree = function(cat.data, GO.ontology){
   return(reducedTerms)
 }
 
-G85R.plotparentcat.genes = function(parent.category, plot.data){
+G85R.plotparentcat.genes = function(parent.category, plot.data, sigs.only = T){
   
   FC.data = plot.data[, grep("lFC", colnames(plot.data))]
   colnames(FC.data) = substr(colnames(FC.data), 1, (nchar(colnames(FC.data)) - 5))
@@ -1051,6 +1051,11 @@ G85R.plotparentcat.genes = function(parent.category, plot.data){
     volcano.data$Color[volcano.data$FDR < -log2(.05)] = 'honeydew'
   }
   
+  if(sigs.only == T){
+    volcano.data = volcano.data[volcano.data$FDR >= -log(.05), ]
+  }
+  
+  
   fig = plot_ly(data = volcano.data,
                 x = ~FC,
                 y = ~FDR,
@@ -1071,7 +1076,7 @@ G85R.plotparentcat.genes = function(parent.category, plot.data){
   return(fig)
 }
 
-G85R.compareparent.genes = function(parent.category, plot.data){
+G85R.compareparent.genes = function(parent.category, plot.data, sigs.only = T){
   
   FC.data = plot.data[, grep("lFC", colnames(plot.data))]
   colnames(FC.data) = substr(colnames(FC.data), 1, (nchar(colnames(FC.data)) - 5))
@@ -1129,6 +1134,12 @@ G85R.compareparent.genes = function(parent.category, plot.data){
   data$size = 2.5*apply(data[,c('FDR1', 'FDR2')], MARGIN = 1, max)
   data$size[data$size < -2.5*log2(.05)] = 5
   data = na.omit(data)
+  
+  if(sigs.only == T){
+    maxFDR = apply(data[,c("FDR1", "FDR2")], MARGIN = 1, max)
+    data = data[maxFDR >= -log(.05), ]
+  }
+  
   
   fig = plot_ly(data = data,
                 x = ~FC1,
