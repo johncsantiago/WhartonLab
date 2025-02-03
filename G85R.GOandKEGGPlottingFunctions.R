@@ -41,16 +41,13 @@ G85R.FC = read.csv(paste0(git.dir, "TKT.EdgeR.FCTable.csv"), row.names = 1)
 
 G85R.metabFC = read.csv(paste0(git.dir, "MetaboliteFCs.csv"), row.names = 1)
 
-genesingo = read.csv(paste0(git.dir, "genesingo.RData"))
+genesingo = read.csv(paste0(git.dir, "genesingo.csv"))
 
-GenesInKegg = read.csv(paste0(git.dir, "kegg.symbol2path.RData"))
+GenesInKegg = read.csv(paste0(git.dir, "kegg.symbol2path.csv"))
 
 KEGG.Names = read.csv(paste0(git.dir, "KEGG.names.csv"), row.names = 1)
 
 GO.Names = read.csv(paste0(git.dir, "GO.names.csv"), row.names = 1)
-
-
-
 
 
 G85R.data = function(Geno1, Geno2, Geno3, Geno4,
