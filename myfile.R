@@ -1,0 +1,1180 @@
+if (!require("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+
+if(!require(gplots, quietly = TRUE))
+  install.packages("plotly")
+
+if(!require(gplots, quietly = TRUE))
+  BiocManager::install("goseq")
+
+if(!require(org.Dm.eg.db, quietly = TRUE))
+  BiocManager::install("org.Dm.eg.db")
+
+if(!require(rrvgo, quietly = TRUE))
+  BiocManager::install("rrvgo")
+
+if(!require(pathview, quietly = TRUE))
+  BiocManager::install("pathview")
+
+if(!require(VennDiagram, quietly = TRUE))
+  install.packages("VennDiagram")
+
+library(plotly)
+library(goseq)
+library(org.Dm.eg.db)
+library(rrvgo)
+library(pathview)
+library(VennDiagram)
+
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/GeneralDataFiles/"
+
+GeneIDKey = read.csv(paste0(git.dir, "GeneIDKey.csv"), row.names = 1)
+
+G85R.meancpm = read.csv(paste0(git.dir, "TKT_meancpmdata.csv"), row.names = 1)
+colnames(G85R.meancpm) = c('GRFC', 'GRMC', 
+                           'GRFDf', 'GRMDf', 'WTFDf', 'WTMDf',
+                           'GRFOE', 'GRMOE', 'WTFOE', 'WTMOE',
+                           'WTFC', 'WTMC')
+
+G85R.FDR = read.csv(paste0(git.dir, "TKT.EdgeR.FDRTable.csv"),row.names = 1)
+G85R.FC = read.csv(paste0(git.dir, "TKT.EdgeR.FCTable.csv"), row.names = 1)
+
+G85R.metabFC = read.csv(paste0(git.dir, "MetaboliteFCs.csv"), row.names = 1)
+
+genesingo = read.csv(paste0(git.dir, "genesingo.csv"), row.names = 1)
+
+GenesInKegg = read.csv(paste0(git.dir, "kegg.symbol2path.csv"), row.names = 1)
+
+KEGG.Names = read.csv(paste0(git.dir, "KEGG.names.csv"), row.names = 1)
+
+GO.Names = read.csv(paste0(git.dir, "GO.names.csv"), row.names = 1)
+
+
+G85R.data = function(Geno1, Geno2, Geno3, Geno4,
+                     Sex1, Sex2, Sex3, Sex4,
+                     TKT1, TKT2, TKT3, TKT4){
+  
+  temp.FC = colnames(G85R.FC)
+  temp1 = temp.FC[grep(Geno1, temp.FC)]
+  
+  if(Sex1 != Sex2){
+    temp1 = temp1[intersect(grep(Sex1, temp1), grep(Sex2, temp1))]
+    temp1 = temp1[grep(Geno1)]
+  }
+  
+  if(Sex1 == Sex2){
+    if(Geno1 == Geno2){
+      temp1 = temp1[grep(setdiff(c("WT", "GR"), c(Geno1, Geno2)), temp1, invert = T)]
+    }
+    
+    if(Geno1 != Geno2){
+      temp1 = temp1[intersect(grep(Geno1, temp1), grep(Geno2, temp1))]
+    }
+    
+    temp1 = temp1[intersect(grep(TKT1, temp1), grep(TKT2, temp1))]
+    
+    temp1 = temp1[grep(Sex1, temp1)]
+  }
+  
+  
+  temp2 = temp.FC
+  
+  if(length(intersect(c("WT", "GR"), c(Geno3, Geno4))) > 0 &
+     length(intersect(c("M", "F"), c(Sex3, Sex4))) > 0 &
+     length(intersect(c("C", "OE", "Df"), c(TKT3, TKT4))) > 0){
+    
+    temp2 = temp.FC[grep(Geno3, temp.FC)]
+    
+    if(Sex3 != Sex4){
+      temp2 = temp2[intersect(grep(Sex3, temp2), grep(Sex4, temp2))]
+      temp2 = temp2[grep(Geno3)]
+    }
+    
+    if(Sex3 == Sex4){
+      if(Geno3 == Geno4){
+        temp2 = temp2[grep(setdiff(c("WT", "GR"), c(Geno3, Geno4)), temp2, invert = T)]
+      }
+      
+      if(Geno3 != Geno4){
+        temp2 = temp2[intersect(grep(Geno3, temp2), grep(Geno4, temp2))]
+      }
+      
+      
+      
+      temp2 = temp2[intersect(grep(TKT3, temp2), grep(TKT4, temp2))]
+      
+      temp2 = temp2[grep(Sex3, temp2)]
+    }
+  }
+  
+  
+  if(length(temp2) == 1){
+    
+    FC = G85R.FC[, c(temp1, temp2)]
+    colnames(FC) = paste0(colnames(FC), c(".lFC1", ".lFC2"))
+    FDR = G85R.FDR[, c(temp1, temp2)]
+    colnames(FDR) = paste0(colnames(FDR), c(".FDR1", ".FDR2"))
+    
+    mean1 = paste0(Geno1, Sex1, TKT1)
+    mean2 = paste0(Geno2, Sex2, TKT2)
+    mean3 = paste0(Geno3, Sex3, TKT3)
+    mean4 = paste0(Geno4, Sex4, TKT4)
+    
+    mean.data = G85R.meancpm[, c(mean1, mean2, mean3, mean4)]
+    colnames(mean.data) = paste0(colnames(mean.data), c(".mean1", ".mean2", ".mean3", ".mean4"))
+    all.data = cbind(FC, FDR, mean.data)
+  }
+  
+  if(length(temp2) != 1){
+    
+    FCFDR = cbind(G85R.FC[, c(temp1)], G85R.FDR[, c(temp1)])
+    colnames(FCFDR) = paste0(c(temp1, temp1), c(".lFC1", ".FDR1"))
+    
+    mean1 = paste0(Geno1, Sex1, TKT1)
+    mean2 = paste0(Geno2, Sex2, TKT2)
+    
+    mean.data = G85R.meancpm[, c(mean1, mean2)]
+    colnames(mean.data) = paste0(colnames(mean.data), c(".mean1", ".mean2"))
+    all.data = cbind(FCFDR, mean.data)
+    
+  }
+  
+  
+  return(all.data)
+}
+
+G85R.volcano = function(plot.data, subset = 'sigs'){
+  
+  FC.data = setNames(plot.data[,grep("lFC1", colnames(plot.data))], row.names(plot.data))
+  FDR.data = setNames(plot.data[,grep("FDR1", colnames(plot.data))], row.names(plot.data))
+  mean.data = plot.data[,c(grep("mean1", colnames(plot.data)),
+                           grep("mean2", colnames(plot.data)))]
+  
+  ##select F if you want point size to scale with mean cpm of variable data
+  set.size = F
+  ##select T if you only want the genes in category to show
+  catgenes.only = T
+  
+  volcano.data = data.frame(Symbol = GeneIDKey[names(FDR.data), "Symbol"], 
+                            FDR = -log2(FDR.data),
+                            FC = FC.data,
+                            Color = 'grey',
+                            size = 5*log(apply(mean.data, 1, max)+2),
+                            Variable.cpm = mean.data[,1],
+                            Control.cpm = mean.data[,2])
+  
+  if(set.size == T){
+    volcano.data$size = 15
+    volcano.data$size[volcano.data$FDR <= -log2(.05)] = 5
+  }
+  
+  volcano.data$Color[volcano.data$FDR >= -log2(.05) & volcano.data$FC < 0] = 'lightblue'
+  volcano.data$Color[volcano.data$FDR >= -log2(.0001) & volcano.data$FC < 0] = 'steelblue'
+  volcano.data$Color[volcano.data$FDR >= -log2(.000001) & volcano.data$FC < 0] = 'dodgerblue'
+  
+  volcano.data$Color[volcano.data$FDR >= -log2(.05) & volcano.data$FC > 0] = 'lightcoral'
+  volcano.data$Color[volcano.data$FDR >= -log2(.0001) & volcano.data$FC > 0] = 'tomato'
+  volcano.data$Color[volcano.data$FDR >= -log2(.000001) & volcano.data$FC > 0] = 'firebrick'
+  
+  volcano.data$size[volcano.data$FDR <= -log2(.05)] = 3
+  
+  main.title = paste(substr(colnames(mean.data)[1], 1, (nchar(colnames(mean.data)[1]) - 6)),
+                     "vs. ", 
+                     substr(colnames(mean.data)[2], 1, (nchar(colnames(mean.data)[2]) - 6)))
+  
+  if(set.size == T){
+    volcano.data$size = 15
+    volcano.data$size[volcano.data$FDR <= -log2(.05)] = 5
+  }
+  
+  if(subset[1] == "sigs"){
+    volcano.data = volcano.data[volcano.data$FDR >= -log2(.05),]
+  }
+  
+  if(subset[1] != "sigs"){
+    volcano.data = volcano.data[subset,]
+  }
+  
+  fig = plot_ly(data = volcano.data,
+                x = ~FC,
+                y = ~FDR,
+                type = 'scatter',
+                mode = 'markers',
+                marker = list(color = ~Color, colors = ~Color, size = volcano.data$size,
+                              line = list(color = 'black', width = .5)),
+                hoverinfo = "text",
+                hovertext = paste("Gene:", volcano.data$Symbol,
+                                  "\n-log2(FDR): ", round(volcano.data$FDR,2),
+                                  "\nFC: ", round(volcano.data$FC,2),
+                                  "\n ", colnames(mean.data)[1], "mean cpm: ",
+                                  round(volcano.data$Variable.cpm, 1),
+                                  "\n ", colnames(mean.data)[2], "mean cpm: ",
+                                  round(volcano.data$Control.cpm, 1)))
+  fig = fig %>% layout(title = main.title)
+  
+  ##color = ~Color,
+  ##colors = 'Spectral')
+  ##color = ~Color,
+  ##colors = ~Color)
+  ##marker = list(colorscale = list(c(0,.5,1), c("blue","yellow", "red")), color = ~Color))
+  
+  fig
+  
+}
+
+G85R.compare.genes = function(plot.data, subset = "sigs"){
+  
+  if(ncol(plot.data == 8)){
+  FC.data = plot.data[,grep("lFC", colnames(plot.data))]
+  colnames(FC.data)  = substr(colnames(FC.data), 1, nchar(colnames(FC.data)) - 5)
+  FDR.data = plot.data[,grep("FDR", colnames(plot.data))]
+  colnames(FDR.data)  = substr(colnames(FDR.data), 1, nchar(colnames(FDR.data)) - 5)
+  mean.data = plot.data[,grep("mean", colnames(plot.data))]
+  
+  data = data.frame(Symbol = GeneIDKey[row.names(FC.data), "Symbol"],
+                    FBgn = row.names(FC.data),
+                    FDR1 = -log2(FDR.data[row.names(FC.data), 1]),
+                    FDR2 = -log2(FDR.data[row.names(FC.data), 2]),
+                    FC1 = FC.data[, 1],
+                    FC2 = FC.data[row.names(FC.data), 2],
+                    Color = 'grey',
+                    size = 1,
+                    Variable1.cpm = mean.data[row.names(FC.data),1],
+                    Control1.cpm = mean.data[row.names(FC.data),2],
+                    Variable2.cpm = mean.data[row.names(FC.data),3],
+                    Control2.cpm = mean.data[row.names(FC.data),4])
+  
+  main.title = ""
+  
+  data$Color[(data$FC1 - 1) > data$FC2] = 'royalblue'
+  data$Color[(data$FC2 - 1) > data$FC1] = 'firebrick' 
+  data$size = log2(apply(data[,c('Variable1.cpm', 'Control1.cpm',
+                            'Variable2.cpm', 'Control2.cpm')], 1, max)) *5
+  data$size[data$size < 2] = 2
+  
+  #data$size = 2.5*apply(data[,c('FDR1', 'FDR2')], MARGIN = 1, max)
+  #data$size[data$size < -2.5*log2(.05)] = 5
+  data = na.omit(data)
+  
+
+  
+  if(subset[1] == "sigs"){
+    data = data[(data$FDR1 >= -log2(.05) | data$FDR2 >= -log2(.05)),]
+  }
+  
+  if(subset[1] != "sigs"){  
+    data = data[data$FBgn %in% subset,]
+  }
+  
+  fig = plot_ly(data = data,
+                x = ~FC1,
+                y = ~FC2,
+                type = 'scatter',
+                mode = 'markers',
+                marker = list(color = ~Color,
+                              colors = ~Color,
+                              line = list(color = "black", width = 1.5),
+                              size = ~size),
+                hoverinfo = "text",
+                hovertext = paste("Symbol:", data$Symbol,
+                                  "\nFBgn:", data$FBgn,
+                                  "\n ", colnames(FDR.data)[1], "FDR: ", round(2^-data$FDR1, 2),
+                                  "\n ", colnames(FDR.data)[2], "FDR: ", round(2^-data$FDR2,2),
+                                  "\n ", colnames(FC.data)[1], "FC: ", round(data$FC1, 2),
+                                  "\n ", colnames(FC.data)[2], "FC: ", round(data$FC2,2),
+                                  "\n ", colnames(mean.data)[1], "mean CPM: ", signif(data$Variable1,2),
+                                  "\n ", colnames(mean.data)[2], "mean CPM: ", signif(data$Control1,2),
+                                  "\n ", colnames(mean.data)[3], "mean CPM: ", signif(data$Variable2,2),
+                                  "\n ", colnames(mean.data)[4], "mean CPM: ", signif(data$Control2,2)))
+  
+  
+  fig = fig %>% layout(title = main.title,
+                       shapes = list(
+                         type = "line",
+                         line = list(color = "black", dash = 'dash', width = 2),
+                         x0 = min(data$FC1, data$FC2) - 1,
+                         x1 = max(data$FC1, data$FC2) + 1,
+                         y0 = min(data$FC1, data$FC2) - 1,
+                         y1 = max(data$FC1, data$FC2) + 1),
+                       xaxis = list(title = paste(colnames(FC.data)[1], "FC")),
+                       yaxis = list(title = paste(colnames(FC.data)[2], "FC")))
+  
+  
+  fig
+  }
+  
+}
+
+G85R.DEG.venn = function(plot.data, subset = "sigs"){
+  
+  FDR = plot.data[, grep("FDR", colnames(plot.data))]
+  colnames(FDR) = substr(colnames(FDR), 1, (nchar(colnames(FDR))-5))
+  
+  FC = plot.data[, grep("lFC", colnames(plot.data))]
+
+  ##Sample titles as strings. Only fill in up to your number of selected categories
+  set3=paste(colnames(FDR)[1], 'up')
+  set1=paste(colnames(FDR)[1], 'down')
+  set4=paste(colnames(FDR)[2], 'up')
+  set2=paste(colnames(FDR)[2], 'down')
+  
+  ##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+  s3 = intersect(row.names(FDR[FDR[1] <.05,]), row.names(FC[FC[1] > 0,]))
+  s1 = intersect(row.names(FDR[FDR[1] <.05,]), row.names(FC[FC[1] < 0,]))
+  s4 = intersect(row.names(FDR[FDR[2] <.05,]), row.names(FC[FC[2] > 0,]))
+  s2 = intersect(row.names(FDR[FDR[2] <.05,]), row.names(FC[FC[2] < 0,]))
+  
+  main = 
+    
+    grid.newpage()
+  tempvenn=draw.quad.venn(area1=length(s1),area2=length(s2),area3=length(s3),area4=length(s4), n12=length(intersect(s1,s2)),n13 = length(intersect(s1,s3)),n14 = length(intersect(s1,s4)),n23 = length(intersect(s2,s3)),n24 = length(intersect(s2,s4)),n34 = length(intersect(s3,s4)),n123 =  length(intersect(s1,intersect(s2,s3))),n124 =  length(intersect(s1,intersect(s2,s4))), n134 = length(intersect(s1,intersect(s3,s4))),n234 = length(intersect(s2,intersect(s3,s4))),n1234 = length(intersect(s1,intersect(s2,intersect(s3,s4)))),category =c(set1,set2,set3,set4),fill = c("blue", "red","green","yellow"),cex=2,cat.cex = 1, title = "main")
+}
+
+G85R.Enrichment = function(plot.data){
+  
+  sigs = row.names(plot.data)[plot.data[,grep("FDR1",colnames(plot.data))] < .05]
+  bg = row.names(plot.data)
+  
+  
+  sigsKEY = GeneIDKey[sigs,]
+  sigs = na.omit(sigsKEY$Symbol)
+  bgKEY = GeneIDKey[bg,]
+  bg = na.omit(bgKEY$Symbol)
+  
+  genes = setNames(rep(0, length(bg)), bg)
+  genes[sigs] = 1
+  pwf=nullp(genes,"dm3","geneSymbol")
+  GO.wall=goseq(pwf,"dm3","geneSymbol")
+  GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+  row.names(GO.wall) = GO.wall$category
+  KEGG=goseq(pwf,gene2cat=GenesInKegg)
+  KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
+  row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
+  KEGG$Name=KEGG.Names[row.names(KEGG),1]
+  
+  enrichment.data = list(GO.wall, KEGG)
+  names(enrichment.data) = c("GO", "KEGG")
+  return(enrichment.data)
+}
+
+G85R.KEGG20 = function(cat.data, plot.data, usecats = 'sigs'){
+  
+  KEGG.data = cat.data$KEGG
+  FC.data = setNames(plot.data[,grep("lFC1", colnames(plot.data))],
+                     row.names(plot.data))
+  
+  FDR.data = setNames(plot.data[,grep("FDR1", colnames(plot.data))],
+                      row.names(plot.data))
+  
+  
+  data = KEGG.data[, c("category", "Name","adjp", "numDEInCat", "numInCat")]
+  
+  data$term = data$Name
+  if(length(unique(data$term)) < length(data$term)){
+    data$term[duplicated(data$term)] = paste(data$term[duplicated(data$term)], "2")
+  }  
+  data = na.omit(data[data$Name != 'Metabolic pathways',])
+  
+  if(usecats[1] != 'sigs'){
+    data = data[usecats[length(usecats):1],]
+  }
+  
+  if(usecats[1] == 'sigs'){
+    data = data[data$adjp < .05,]
+    data = data[ncol(data):1,]
+    data = na.omit(data)
+  }
+  
+  data$Score = -log10(data$adjp)
+  data$term = factor(data$term, levels = c(unique(data$term)))
+  data$up = 0
+  data$down = 0
+  data$allup = 0
+  data$alldown = 0
+  
+  sigs = names(FDR.data[FDR.data <= 0.05])
+  
+  i = 1
+  while(i <= nrow(data)){
+    kegg.id = data$category[i]
+    kegg.genes = GenesInKegg$Gene[grep(kegg.id, GenesInKegg$KEGG)]
+    kegg.genes = GeneIDKey[GeneIDKey$Symbol %in% kegg.genes, "FBgn"]
+    kegg.genes = intersect(kegg.genes, names(FC.data))
+    sig.kegg.genes = intersect(kegg.genes, sigs)
+    kegg.FC = FC.data[kegg.genes]
+    sig.kegg.FC = FC.data[sig.kegg.genes]
+    data$allup[i] = length(kegg.FC[kegg.FC>0])
+    data$alldown[i] = length(kegg.FC[kegg.FC<0])
+    data$up[i] = length(sig.kegg.FC[sig.kegg.FC>0])
+    data$down[i] = length(sig.kegg.FC[sig.kegg.FC<0])
+    i = i +1
+  }
+  
+  data$down = data$down * -1
+  data$alldown = data$alldown * -1
+  
+  
+  m <- list(
+    l = 50,
+    r = 50,
+    b = 100,
+    t = 100,
+    pad = 4
+  )
+  
+  fig <- plot_ly(data,
+                 x = ~up, y = ~term, 
+                 type = 'bar',
+                 name = "Sig. Increased FC",
+                 marker = list(color = 'brown',
+                               line = list(color = "black", 
+                                           width = 1.5)),
+                 hoverinfo = "text",
+                 hovertext = paste("Sample:", data$term,
+                                   "\nKEGG ID: ", data$category,
+                                   "\nTotal DE: ", data$numDEInCat,
+                                   "\nTotal in Cat.: ", data$numInCat,
+                                   "\nDE up: ", data$up,
+                                   "\nDE down: ", data$down,
+                                   "\nFDR: ", signif(data$adjp, 3))) %>%
+    add_trace(x = ~down, 
+              y ~term, 
+              marker = list(color = 'steelblue', 
+                            line = list(color = "black", 
+                                        width = 1.5)), 
+              name = "Sig. Decreased FC")%>%
+    layout(xaxis = list(title = "Number of Genes"),
+           yaxis = list(title = ""),
+           title = paste0("Top 20 Most Enriched KEGG Terms"),
+           margin = m, barmode = 'overlay')
+  
+  return(fig)
+  
+}
+
+G85R.plotkegg.genes = function(specific.kegg, plot.data){
+  
+  FC.data = setNames(plot.data[,grep("lFC1", colnames(plot.data))],
+                     row.names(plot.data))
+  FDR.data = setNames(plot.data[,grep("FDR1", colnames(plot.data))],
+                     row.names(plot.data))
+  ##table with mean cpm of variable and control conditions
+  mean.data = plot.data[ ,c(grep("mean1", colnames(plot.data)),
+                            grep("mean2", colnames(plot.data)))]
+  
+  ##select F if you want point size to scale with mean cpm of variable data
+  set.size = F
+  ##select T if you only want the genes in category to show
+  catgenes.only = T
+  
+  volcano.data = data.frame(Symbol = GeneIDKey[names(FDR.data), "Symbol"],  
+                            FBgn = names(FDR.data),
+                            FDR = -log2(FDR.data),
+                            FC = FC.data,
+                            Color = 'grey',
+                            size = 5*log(mean.data[,1]),
+                            Variable.cpm = mean.data[,1],
+                            Control.cpm = mean.data[,2])
+  
+  if(set.size == T){
+    volcano.data$size = 15
+    volcano.data$size[volcano.data$FDR <= -log2(.05)] = 5
+  }
+  
+  
+  kegg.id = row.names(KEGG.Names)[c(grep(specific.kegg, KEGG.Names), 
+                                    grep(specific.kegg, row.names(KEGG.Names)))]
+  kegg.genes = GenesInKegg$Gene[grep(kegg.id, GenesInKegg$KEGG)]
+  volcano.data$Color = 'honeydew'
+  #row.names(volcano.data) = volcano.data$Symbol
+  volcano.data[volcano.data$Symbol %in% kegg.genes, 'Color'] = 'deeppink'
+  volcano.data = volcano.data[order(volcano.data$Color, decreasing = T),]
+  main.title = KEGG.Names[c(grep(specific.kegg, KEGG.Names),
+                            grep(specific.kegg, row.names(KEGG.Names))),]
+  
+  if(catgenes.only == T){
+    volcano.data = volcano.data[volcano.data$Color == 'deeppink',]
+    volcano.data$Color[volcano.data$FDR < -log2(.05)] = 'honeydew'
+  }
+  
+  
+  
+  
+  fig = plot_ly(data = volcano.data,
+                x = ~FC,
+                y = ~FDR,
+                type = 'scatter',
+                mode = 'markers',
+                marker = list(color = ~Color, colors = ~Color, size = volcano.data$size,
+                              line = list(color = 'black', width = .5)),
+                hoverinfo = "text",
+                hovertext = paste("Gene:", volcano.data$Symbol,
+                                  "\nFBgn:", volcano.data$FBgn,
+                                  "\n-log2(FDR): ", round(volcano.data$FDR,2),
+                                  "\nFC: ", round(volcano.data$FC,2),
+                                  "\n ", colnames(mean.data)[1], "mean cpm: ",
+                                  round(volcano.data$Variable.cpm, 1),
+                                  "\n ", colnames(mean.data)[2], "mean cpm: ",
+                                  round(volcano.data$Control.cpm, 1)))
+  fig = fig %>% layout(title = main.title)
+  
+  
+  return(fig)
+}
+
+G85R.KEGG.diagram = function(PathwayID, plot.data, use, sigs.only = F){
+
+  ##table with the FC data you want to use for coloring with FBgn for row names 
+  
+  FC.cols = colnames(plot.data)[c(grep("lFC", colnames(plot.data)))]
+  FC.data = cbind(row.names(plot.data), plot.data[,FC.cols])
+  colnames(FC.data)[1] = "FBgn"
+  
+  metab.cols = colnames(G85R.metabFC)
+  
+  temp1 = metab.cols[grep(Geno1, metab.cols)]
+  if((Geno1 == Geno2)){
+    temp1 = temp1[grep(setdiff(c("GR", "WT"), Geno1), temp1, invert = T)]
+  }
+  if((Geno1 != Geno2)){
+    temp1 = temp1[intersect(grep(Geno1, temp1), grep(Geno2, temp1))]
+  }
+  
+  temp1 = temp1[grep(TKT1, temp1)]
+  
+  temp2 = metab.cols[grep(Geno3, metab.cols)]
+  if((Geno3 == Geno4)){
+    temp2 = temp2[grep(setdiff(c("GR", "WT"), Geno3), temp2, invert = T)]
+  }
+  if((Geno3 != Geno4)){
+    temp2 = temp2[intersect(grep(Geno3, temp2), grep(Geno4, temp2))]
+  }
+  
+  temp2 = temp2[grep(TKT2, temp2)]
+  
+  temp.metabs = c(temp1, temp2)
+  
+  if(temp1 == temp2)
+    temp.metabs = temp1
+  
+  
+  #Any column name from G85R.metabFC or 'none'
+  metab.data = G85R.metabFC[,c("KEGG", temp.metabs)]
+
+  ##all or a subset of row.names used in FC.data
+  usegenes = row.names(FC.data)
+  
+  
+  pv.metabs = G85R.metabFC
+  pv.metabs$Name = row.names(pv.metabs)
+  pv.IDs = unlist(strsplit(unlist(strsplit(G85R.metabFC$KEGG, split = " / ")), split = "-"))
+  pv.IDs = pv.IDs[pv.IDs != "n/a"]
+  
+  pv.metabs = G85R.metabFC[grep(pv.IDs[1], G85R.metabFC$KEGG),]
+  pv.metabs$KEGG = pv.IDs[1]
+  
+  i=2
+  while(i <= length(pv.IDs)){
+    temp.pv.metabs = G85R.metabFC[grep(pv.IDs[i], G85R.metabFC$KEGG),]
+    temp.pv.metabs$KEGG = pv.IDs[i]
+    pv.metabs = rbind(pv.metabs, temp.pv.metabs)
+    i =  i + 1
+  }
+  
+  
+  if(use == 'primary'){
+    
+    ##File name prefix
+    out.id = substr(FC.cols[1], 1, (nchar(FC.cols)[1] -5))
+    
+    ##table with the FC data you want to use for coloring with FBgn for row names 
+    ##if only analyzing 1 condition, use setNames to make a named vector
+    ##A4V.FC or G85R.FC
+    
+    FC.data =  setNames(FC.data[,2], rownames(FC.data))
+    deg.data=setNames(FC.data,GeneIDKey[names(FC.data), "ensembl"])
+    
+    #Any column name from G85R.metabFC or 'none'
+    metab.data = setNames(pv.metabs[,temp.metabs[1]], 
+                          pv.metabs$KEGG)
+    
+  }
+  
+  if(use == 'both'){
+    
+    ##File name prefix
+    out.id = paste0(substr(FC.cols[1], 1, (nchar(FC.cols)[1] -5)),
+                    "_", substr(FC.cols[2], 1, (nchar(FC.cols)[1] -5)))
+                    
+    
+    ##table with the FC data you want to use for coloring with FBgn for row names 
+    ##if only analyzing 1 condition, use setNames to make a named vector
+    ##A4V.FC or G85R.FC
+    
+    FC.data =  FC.data[,2:3]
+    deg.data = as.matrix(FC.data)
+    row.names(deg.data) = GeneIDKey[row.names(FC.data), "ensembl"]
+
+    
+    if(length(temp.metabs) == 1)
+      metab.data = setNames(pv.metabs[,temp.metabs[1]], 
+                            pv.metabs$KEGG)
+    if(length(temp.metabs) == 2){
+      metab.data = pv.metabs[,temp.metabs]
+      row.names(metab.data) = pv.metabs$KEGG
+    }
+    
+  }
+  
+  
+  Home = dirname(rstudioapi::getSourceEditorContext()$path)
+  OutputDir = paste0(Home, "/KEGG_Image_Files/")
+
+  
+  ##KEGG Mapping Function
+  if(length(intersect(list.files(Home), "KEGG_Image_Files")) == 0){
+    dir.create(paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/KEGG_Image_Files/"))
+  }
+
+
+  
+  setwd(OutputDir) 
+  pv.out <- pathview(gene.data =  deg.data,
+                     cpd.data = metab.data,
+                     pathway.id = PathwayID,
+                     species = "dme",
+                     kegg.native = T,
+                     limit=list(gene=c(-2,2)),
+                     node.sum="max.abs",
+                     low="royalblue",mid = "grey",high="firebrick",
+                     out.suffix = out.id,
+                     bins=list(genes=30),
+                     plot.col.key = F,
+                     match.data = F)
+  setwd(Home)
+
+  if(class(FC.data)=="numeric"){
+    img.file = paste0(OutputDir, "dme",PathwayID, ".", out.id, ".png")
+  }
+  
+  if(class(FC.data)=="data.frame"){
+    img.file = paste0(OutputDir, "dme",PathwayID, ".", out.id, ".multi.png")
+  }
+  
+  knitr::include_graphics(img.file)
+
+}
+
+G85R.comparekegg.genes = function(specific.kegg, plot.data){
+  
+  FC.data = plot.data[,grep("lFC", colnames(plot.data))]
+  FDR.data = plot.data[,grep("FDR", colnames(plot.data))]
+  
+  mean.data = plot.data[,grep("mean", colnames(plot.data))]
+  
+  kegg.id = row.names(KEGG.Names)[c(grep(specific.kegg, KEGG.Names), 
+                                    grep(specific.kegg, row.names(KEGG.Names)))]
+  kegg.genes = GenesInKegg$Gene[grep(kegg.id, GenesInKegg$KEGG)]
+  
+  kegg.fbgn = GeneIDKey[GeneIDKey$Symbol %in% kegg.genes,]
+  kegg.fbgn = setNames(kegg.fbgn$FBgn, kegg.fbgn$Symbol)
+  kegg.fbgn = na.omit(kegg.fbgn[kegg.genes])
+  
+  data = data.frame(Symbol = names(kegg.fbgn),
+                    FBgn = kegg.fbgn,
+                    FDR1 = -log2(FDR.data[kegg.fbgn, 1]),
+                    FDR2 = -log2(FDR.data[kegg.fbgn, 2]),
+                    FC1 = FC.data[kegg.fbgn, 1],
+                    FC2 = FC.data[kegg.fbgn, 2],
+                    Color = 'grey',
+                    size = 1,
+                    Variable1.cpm = mean.data[kegg.fbgn,1],
+                    Control1.cpm = mean.data[kegg.fbgn,2],
+                    Variable2.cpm = mean.data[kegg.fbgn,3],
+                    Control2.cpm = mean.data[kegg.fbgn,4])
+  
+  main.title = KEGG.Names[kegg.id, 1]
+  
+  data$Color[(data$FC1 - 1) > data$FC2] = 'royalblue'
+  data$Color[(data$FC2 - 1) > data$FC1] = 'firebrick' 
+  data$size = 2.5*apply(data[,c('FDR1', 'FDR2')], MARGIN = 1, max)
+  data$size[data$size < -2.5*log2(.05)] = 5
+  data = na.omit(data)
+  
+  fig = plot_ly(data = data,
+                x = ~FC1,
+                y = ~FC2,
+                type = 'scatter',
+                mode = 'markers',
+                marker = list(color = ~Color,
+                              colors = ~Color,
+                              line = list(color = "black", width = 1.5),
+                              size = ~size),
+                hoverinfo = "text",
+                hovertext = paste("Symbol:", data$Symbol,
+                                  "\nFBgn:", data$FBgn,
+                                  "\n ", colnames(FDR.data)[1], "FDR: ", round(2^-data$FDR1, 2),
+                                  "\n ", colnames(FDR.data)[2], "FDR: ", round(2^-data$FDR2,2),
+                                  "\n ", colnames(FC.data)[1], "FC: ", round(data$FC1, 2),
+                                  "\n ", colnames(FC.data)[2], "FC: ", round(data$FC2,2),
+                                  "\n ", colnames(mean.data)[1], "mean CPM: ", signif(data$Variable1,2),
+                                  "\n ", colnames(mean.data)[2], "mean CPM: ", signif(data$Control1,2),
+                                  "\n ", colnames(mean.data)[3], "mean CPM: ", signif(data$Variable2,2),
+                                  "\n ", colnames(mean.data)[4], "mean CPM: ", signif(data$Control2,2)))
+  fig = fig %>% layout(title = main.title,
+                       shapes = list(
+                         type = "line",
+                         line = list(color = "black", dash = 'dash', width = 2),
+                         x0 = min(data$FC1, data$FC2) - 1,
+                         x1 = max(data$FC1, data$FC2) + 1,
+                         y0 = min(data$FC1, data$FC2) - 1,
+                         y1 = max(data$FC1, data$FC2) + 1),
+                       xaxis = list(title = paste(colnames(FC.data)[1], "FC")),
+                       yaxis = list(title = paste(colnames(FC.data)[2], "FC")))
+  
+  
+  fig
+}
+
+G85R.GO20 = function(cat.data, GO.ontology, plot.data, usecats){
+  
+  GO.data = cat.data$GO
+  
+  FC.data = setNames(plot.data[,grep("lFC1", colnames(plot.data))], row.names(plot.data))
+  FDR.data = setNames(plot.data[,grep("FDR1", colnames(plot.data))], row.names(plot.data))
+  
+  GO.data = GO.data[GO.data$ontology == GO.ontology,
+                    c("category", "term","adjp", "numDEInCat", "numInCat")]
+  
+  data = GO.data[usecats[length(usecats):1],c("term","adjp","numDEInCat", "numInCat", "category")]
+  if(usecats[1] == 'sigs.only'){
+    data = GO.data[GO.data$adjp < .05,c("term","adjp","numDEInCat", "numInCat", "category")]
+    if(nrow(data)>20){
+      data = data[1:20,]
+    }
+    data = data[nrow(data):1,]
+  }
+  
+  data$Score = -log10(data$adjp)
+  
+  temp = nchar(data$term)
+  data$label = data$term
+  ##data$label[temp > 40] = paste0(substr(data$term[temp>40], 1 ,35), "...")
+  
+  data$term = factor(data$term, levels = c(unique(data$term)))
+  data$up = 0
+  data$down = 0
+  data$allup = 0
+  data$alldown = 0
+  
+  sigs = names(FDR.data[FDR.data <= 0.05])
+  
+  i = 1
+  while(i <= nrow(data)){
+    go.id = row.names(data)[i]
+    go.genes = genesingo$Gene[genesingo$GO == go.id]
+    go.genes = GeneIDKey[GeneIDKey$ensembl %in% go.genes, "FBgn"]
+    go.genes = intersect(go.genes, names(FC.data))
+    sig.go.genes = intersect(go.genes, sigs)
+    go.FC = FC.data[go.genes]
+    sig.go.FC = FC.data[sig.go.genes]  
+    
+    data$allup[i] = length(go.FC[go.FC>0])
+    data$alldown[i] = length(go.FC[go.FC<0])
+    data$up[i] = length(sig.go.FC[sig.go.FC>0])
+    data$down[i] = length(sig.go.FC[sig.go.FC<0])
+    i = i +1
+  }
+  
+  data$down = data$down * -1
+  data$alldown = data$alldown * -1
+  
+  m <- list(
+    l = 50,
+    r = 50,
+    b = 100,
+    t = 100,
+    pad = 4
+  )
+  
+  data$label = factor(data$label, levels = data$label)
+  
+  fig <- plot_ly(data, 
+                 x = ~up, y = ~label, 
+                 type = 'bar',
+                 name = "Sig. Increased FC",
+                 marker = list(color = 'brown',
+                               line = list(color = "black", 
+                                           width = 1.5)),
+                 hoverinfo = "text",
+                 hovertext = paste("Sample:", data$term,
+                                   "\nGO ID: ", data$category,
+                                   "\nTotal DE: ", data$numDEInCat,
+                                   "\nTotal in Cat.: ", data$numInCat,
+                                   "\nDE up: ", data$up,
+                                   "\nDE down: ", data$down,
+                                   "\nFDR: ", signif(data$adjp, 3))) %>%
+    add_trace(x = ~down, 
+              y ~term, 
+              marker = list(color = 'steelblue', 
+                            line = list(color = "black", width = 1.5)), 
+              name = "Sig. Decreased FC")%>%
+    
+    layout(xaxis = list(title = "Number of Genes"),
+           yaxis = list(title = ""),
+           title = paste0("Top 20 Most Enriched ",GO.ontology, " GO Terms"),
+           margin = m, barmode = 'overlay')
+  
+  return(fig)
+}
+
+G85R.plotgo.genes = function(specific.go, plot.data){
+  
+  FC.data = setNames(plot.data[,grep("lFC1", colnames(plot.data))], 
+                     row.names(plot.data))
+  FDR.data = setNames(plot.data[,grep("FDR1", colnames(plot.data))], 
+                      row.names(plot.data))
+  mean.data = plot.data[,grep("mean", colnames(plot.data))]
+  colnames(mean.data) = substr(colnames(mean.data), 1, (nchar(colnames(mean.data)) - 6))
+  
+  
+  ##select F if you want point size to scale with mean cpm of variable data
+  set.size = F
+  ##select T if you only want the genes in category to show
+  catgenes.only = T
+  
+  volcano.data = data.frame(Symbol = GeneIDKey[names(FDR.data), "Symbol"], 
+                            FBgn = names(FDR.data),
+                            FDR = -log2(FDR.data),
+                            FC = FC.data,
+                            Color = 'grey',
+                            size = 5*log(mean.data[,1]),
+                            Variable.cpm = mean.data[,1],
+                            Control.cpm = mean.data[,2])
+  
+  if(set.size == T){
+    volcano.data$size = 15
+    volcano.data$size[volcano.data$FDR <= -log2(.05)] = 5
+  }
+  
+  
+  go.id = row.names(GO.Names)[c(grep(specific.go, GO.Names$category),
+                                grep(specific.go, GO.Names$term))]
+  go.genes = genesingo$Gene[genesingo$GO == go.id]
+  go.genes = GeneIDKey[GeneIDKey$ensembl %in% go.genes, 'Symbol']
+  volcano.data$Color = 'honeydew'
+  #row.names(volcano.data) = volcano.data$Symbol
+  volcano.data[volcano.data$Symbol %in% go.genes, 'Color'] = 'deeppink'
+  volcano.data = volcano.data[order(volcano.data$Color, decreasing = T),]
+  main.title = GO.Names[go.id, 'term']
+  
+  if(catgenes.only == T){
+    volcano.data = volcano.data[volcano.data$Color == 'deeppink',]
+    volcano.data$Color[volcano.data$FDR < -log2(.05)] = 'honeydew'
+  }
+  
+  
+  fig = plot_ly(data = volcano.data,
+                x = ~FC,
+                y = ~FDR,
+                type = 'scatter',
+                mode = 'markers',
+                marker = list(color = ~Color, colors = ~Color, size = volcano.data$size,
+                              line = list(color = 'black', width = .5)),
+                hoverinfo = "text",
+                hovertext = paste("Gene:", volcano.data$Symbol,
+                                  "\nFBgn:", volcano.data$FBgn,
+                                  "\n-log2(FDR): ", round(volcano.data$FDR,2),
+                                  "\nFC: ", round(volcano.data$FC,2),
+                                  "\n ", colnames(mean.data)[1], "mean cpm: ",
+                                  round(volcano.data$Variable.cpm, 1),
+                                  "\n ", colnames(mean.data)[2], "mean cpm: ",
+                                  round(volcano.data$Control.cpm, 1)))
+  fig = fig %>% layout(title = main.title)
+  
+  
+  return(fig)
+}
+
+G85R.comparego.genes = function(specific.go, plot.data){
+  
+  FC.data = plot.data[, grep("lFC", colnames(plot.data))]
+  colnames(FC.data) = substr(colnames(FC.data), 1, (nchar(colnames(FC.data)) - 5))
+  
+  FDR.data = plot.data[, grep("FDR", colnames(plot.data))]
+  colnames(FDR.data) = substr(colnames(FDR.data), 1, (nchar(colnames(FDR.data)) - 5))
+  
+  mean.data = plot.data[, grep("mean", colnames(plot.data))]
+  colnames(mean.data) = substr(colnames(mean.data), 1, (nchar(colnames(mean.data)) - 6))
+  
+  go.id = row.names(GO.Names)[c(grep(specific.go, GO.Names$category),
+                                grep(specific.go, GO.Names$term))]
+  go.genes = genesingo$Gene[genesingo$GO == go.id]
+  go.genes = GeneIDKey[GeneIDKey$ensembl %in% go.genes, 'FBgn']
+  
+  
+  data = data.frame(Symbol = GeneIDKey[go.genes, "Symbol"],
+                    FBgn = go.genes,
+                    FDR1 = -log2(FDR.data[go.genes, 1]),
+                    FDR2 = -log2(FDR.data[go.genes, 2]),
+                    FC1 = FC.data[go.genes, 1],
+                    FC2 = FC.data[go.genes, 2],
+                    Color = 'grey',
+                    size = 1,
+                    Variable1.cpm = mean.data[go.genes,1],
+                    Control1.cpm = mean.data[go.genes,2],
+                    Variable2.cpm = mean.data[go.genes,3],
+                    Control2.cpm = mean.data[go.genes,4])
+  
+  main.title = GO.Names[go.id, 'term']
+  
+  data$Color[(data$FC1 - 1) > data$FC2] = 'royalblue'
+  data$Color[(data$FC2 - 1) > data$FC1] = 'firebrick' 
+  data$size = 2.5*apply(data[,c('FDR1', 'FDR2')], MARGIN = 1, max)
+  data$size[data$size < -2.5*log2(.05)] = 5
+  data = na.omit(data)
+  
+  fig = plot_ly(data = data,
+                x = ~FC1,
+                y = ~FC2,
+                type = 'scatter',
+                mode = 'markers',
+                marker = list(color = ~Color,
+                              colors = ~Color,
+                              line = list(color = "black", width = 1.5),
+                              size = ~size),
+                hoverinfo = "text",
+                hovertext = paste("Symbol:", data$Symbol,
+                                  "\nFBgn:", data$FBgn,
+                                  "\n ", colnames(FDR.data)[1], "FDR: ", round(2^-data$FDR1, 2),
+                                  "\n ", colnames(FDR.data)[2], "FDR: ", round(2^-data$FDR2,2),
+                                  "\n ", colnames(FC.data)[1], "FC: ", round(data$FC1, 2),
+                                  "\n ", colnames(FC.data)[2], "FC: ", round(data$FC2,2),
+                                  "\n ", colnames(mean.data)[1], "mean CPM: ", signif(data$Variable1,2),
+                                  "\n ", colnames(mean.data)[2], "mean CPM: ", signif(data$Control1,2),
+                                  "\n ", colnames(mean.data)[3], "mean CPM: ", signif(data$Variable2,2),
+                                  "\n ", colnames(mean.data)[4], "mean CPM: ", signif(data$Control2,2)))
+  fig = fig %>% layout(title = main.title,
+                       shapes = list(
+                         type = "line",
+                         line = list(color = "black", dash = 'dash', width = 2),
+                         x0 = min(data$FC1, data$FC2) - 1,
+                         x1 = max(data$FC1, data$FC2) + 1,
+                         y0 = min(data$FC1, data$FC2) - 1,
+                         y1 = max(data$FC1, data$FC2) + 1),
+                       xaxis = list(title = paste(colnames(FC.data)[1], "FC")),
+                       yaxis = list(title = paste(colnames(FC.data)[2], "FC")))
+  
+  
+  fig
+}
+
+tree = function(cat.data, GO.ontology){
+  
+  GO.data = cat.data$GO
+  
+  go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & 
+                                   GO.data$ontology == GO.ontology]
+  scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+  
+  simMatrix <- calculateSimMatrix(go_analysis,
+                                  orgdb="org.Dm.eg.db",
+                                  ont=GO.ontology,
+                                  method="Rel")
+  
+  reducedTerms <- reduceSimMatrix(simMatrix,
+                                  scores,
+                                  threshold=0.7,
+                                  orgdb="org.Dm.eg.db")
+  
+  return(reducedTerms)
+}
+
+G85R.plotparentcat.genes = function(parent.category, plot.data, sigs.only = T){
+  
+  FC.data = plot.data[, grep("lFC", colnames(plot.data))]
+  colnames(FC.data) = substr(colnames(FC.data), 1, (nchar(colnames(FC.data)) - 5))
+  
+  FDR.data = plot.data[, grep("FDR", colnames(plot.data))]
+  colnames(FDR.data) = substr(colnames(FDR.data), 1, (nchar(colnames(FDR.data)) - 5))
+  
+  mean.data = plot.data[, grep("mean", colnames(plot.data))]
+  colnames(mean.data) = substr(colnames(mean.data), 1, (nchar(colnames(mean.data)) - 6))
+  
+  if(length(rt[rt$parentTerm == parent.category, "go"]) == 0){
+    parent.category = rt$parentTerm[1]
+  }
+  
+  ##select F if you want point size to scale with mean cpm of variable data
+  set.size = F
+  ##select T if you only want the genes in category to show
+  catgenes.only = T
+  
+  GOterm.genes = vector('list', length = length(unique(rt$parent)))
+  names(GOterm.genes) = unique(rt$parent)
+  
+  i=1
+  while(i<=length(GOterm.genes)){
+    goinparent = rt[grep(names(GOterm.genes)[i], rt$parent),'go']
+    genesinparent = genesingo$Gene[genesingo$GO %in% goinparent]
+    GOterm.genes[[i]] = GeneIDKey[GeneIDKey$ensembl %in% genesinparent, 'FBgn']
+    i = i +1
+  }
+  
+  size = apply(mean.data[, c(1,2)], MARGIN = 1, max)
+  
+  volcano.data = data.frame(Symbol = GeneIDKey[row.names(FDR.data), "Symbol"], 
+                            FDR = -log2(FDR.data[,1]),
+                            FC = FC.data[,1],
+                            Color = 'grey',
+                            size = 5*log(size+2),
+                            Variable.cpm = mean.data[,1],
+                            Control.cpm = mean.data[,2],
+                            GO.terms = "none")
+  row.names(volcano.data)= row.names(FDR.data)
+  
+  if(set.size == T){
+    volcano.data$size = 15
+    volcano.data$size[volcano.data$FDR <= -log2(.05)] = 5
+  }
+  
+  parent.genes = GOterm.genes[[intersect(rt[rt$parentTerm == parent.category, "go"],
+                                         names(GOterm.genes))]]
+  parent.genes = intersect(parent.genes, row.names(volcano.data))
+  volcano.data$Color = 'honeydew'
+  volcano.data[parent.genes, 'Color'] = 'deeppink'
+  volcano.data = volcano.data[order(volcano.data$Color, decreasing = T),]
+  main.title = parent.category
+  
+  if(catgenes.only == T){
+    volcano.data = volcano.data[volcano.data$Color == 'deeppink',]
+    volcano.data$Color[volcano.data$FDR < -log2(.05)] = 'honeydew'
+  }
+  
+  if(sigs.only == T){
+    volcano.data = volcano.data[volcano.data$FDR >= -log(.05), ]
+  }
+  
+  
+  fig = plot_ly(data = volcano.data,
+                x = ~FC,
+                y = ~FDR,
+                type = 'scatter',
+                mode = 'markers',
+                marker = list(color = ~Color, colors = ~Color, size = volcano.data$size,
+                              line = list(color = 'black', width = .5)),
+                hoverinfo = "text",
+                hovertext = paste("Gene:", volcano.data$Symbol,
+                                  "\n-log2(FDR): ", round(2^-volcano.data$FDR,2),
+                                  "\nFC: ", round(volcano.data$FC,2),
+                                  "\n ", colnames(mean.data)[1], "mean cpm: ",
+                                  round(volcano.data$Variable.cpm, 1),
+                                  "\n ", colnames(mean.data)[2], "mean cpm: ",
+                                  round(volcano.data$Control.cpm, 1)))
+  fig = fig %>% layout(title = main.title)
+  
+  return(fig)
+}
+
+G85R.compareparent.genes = function(parent.category, plot.data, sigs.only = T){
+  
+  FC.data = plot.data[, grep("lFC", colnames(plot.data))]
+  colnames(FC.data) = substr(colnames(FC.data), 1, (nchar(colnames(FC.data)) - 5))
+  
+  FDR.data = plot.data[, grep("FDR", colnames(plot.data))]
+  colnames(FDR.data) = substr(colnames(FDR.data), 1, (nchar(colnames(FDR.data)) - 5))
+  
+  mean.data = plot.data[, grep("mean", colnames(plot.data))]
+  colnames(mean.data) = substr(colnames(mean.data), 1, (nchar(colnames(mean.data)) - 6))
+  
+  if(length(rt[rt$parentTerm == parent.category, "go"]) == 0){
+    parent.category = rt$parentTerm[1]
+  }
+  
+  ##select F if you want point size to scale with mean cpm of variable data
+  set.size = F
+  ##select T if you only want the genes in category to show
+  catgenes.only = T
+  
+  GOterm.genes = vector('list', length = length(unique(rt$parent)))
+  names(GOterm.genes) = unique(rt$parent)
+  
+  i=1
+  while(i<=length(GOterm.genes)){
+    goinparent = rt[grep(names(GOterm.genes)[i], rt$parent),'go']
+    genesinparent = genesingo$Gene[genesingo$GO %in% goinparent]
+    GOterm.genes[[i]] = GeneIDKey[GeneIDKey$ensembl %in% genesinparent, 'FBgn']
+    i = i +1
+  }
+  
+  parent.genes = GOterm.genes[[intersect(rt[rt$parentTerm == parent.category, "go"],
+                                         names(GOterm.genes))]]
+  parent.genes = intersect(parent.genes, row.names(FDR.data))
+  
+  
+  data = data.frame(Symbol = GeneIDKey[parent.genes, "Symbol"],
+                    FBgn = parent.genes,
+                    FDR1 = -log2(FDR.data[parent.genes, 1]),
+                    FDR2 = -log2(FDR.data[parent.genes, 2]),
+                    FC1 = FC.data[parent.genes, 1],
+                    FC2 = FC.data[parent.genes, 2],
+                    Color = 'grey',
+                    size = 1,
+                    Variable1.cpm = mean.data[parent.genes,1],
+                    Control1.cpm = mean.data[parent.genes,2],
+                    Variable2.cpm = mean.data[parent.genes,3],
+                    Control2.cpm = mean.data[parent.genes,4])
+  
+  main.title = parent.category
+  
+  data$Color[(data$FC1 - 1) > data$FC2] = 'royalblue'
+  data$Color[(data$FC2 - 1) > data$FC1] = 'firebrick' 
+  
+  
+  data$size = 2.5*apply(data[,c('FDR1', 'FDR2')], MARGIN = 1, max)
+  data$size[data$size < -2.5*log2(.05)] = 5
+  data = na.omit(data)
+  
+  if(sigs.only == T){
+    maxFDR = apply(data[,c("FDR1", "FDR2")], MARGIN = 1, max)
+    data = data[maxFDR >= -log(.05), ]
+  }
+  
+  
+  fig = plot_ly(data = data,
+                x = ~FC1,
+                y = ~FC2,
+                type = 'scatter',
+                mode = 'markers',
+                marker = list(color = ~Color,
+                              colors = ~Color,
+                              line = list(color = "black", width = 1.5),
+                              size = ~size),
+                hoverinfo = "text",
+                hovertext = paste("Symbol:", data$Symbol,
+                                  "\nFBgn:", data$FBgn,
+                                  "\n ", colnames(FDR.data)[1], "FDR: ", round(2^-data$FDR1, 2),
+                                  "\n ", colnames(FDR.data)[2], "FDR: ", round(2^-data$FDR2,2),
+                                  "\n ", colnames(FC.data)[1], "FC: ", round(data$FC1, 2),
+                                  "\n ", colnames(FC.data)[2], "FC: ", round(data$FC2,2),
+                                  "\n ", colnames(mean.data)[1], "mean CPM: ", signif(data$Variable1,2),
+                                  "\n ", colnames(mean.data)[2], "mean CPM: ", signif(data$Control1,2),
+                                  "\n ", colnames(mean.data)[3], "mean CPM: ", signif(data$Variable2,2),
+                                  "\n ", colnames(mean.data)[4], "mean CPM: ", signif(data$Control2,2)))
+  fig = fig %>% layout(title = main.title,
+                       shapes = list(
+                         type = "line",
+                         line = list(color = "black", dash = 'dash', width = 2),
+                         x0 = min(data$FC1, data$FC2) - 1,
+                         x1 = max(data$FC1, data$FC2) + 1,
+                         y0 = min(data$FC1, data$FC2) - 1,
+                         y1 = max(data$FC1, data$FC2) + 1),
+                       xaxis = list(title = paste(colnames(FC.data)[1], "FC")),
+                       yaxis = list(title = paste(colnames(FC.data)[2], "FC")))
+  
+  
+  fig
+}
+
+
+

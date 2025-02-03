@@ -43,10 +43,9 @@ Sex4 = "M"
 
 ```
 
-```{r echo = F, message = F, warning = F}
+```{r echo = F, message = F}
 
-
-source('https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/G85R.GOandKEGGPlottingFunctions.R')
+source('/Users/johncsantiago/Documents/GitHub/WhartonLab/G85R.GOandKEGGPlottingFunctions.R')
 
 plot.data = G85R.data(Geno1, Geno2, Geno3, Geno4,
                       Sex1, Sex2, Sex3, Sex4,
@@ -194,7 +193,7 @@ treemapPlot(rt)
 ##a parent category generated in the treemapPlot function
 parent.category = 'neurogenesis'
 
-G85R.plotparentcat.genes(parent.category, plot.data, sigs.only = T)
+G85R.plotparentcat.genes(parent.category, plot.data)
 
 ```
 
@@ -204,7 +203,7 @@ G85R.plotparentcat.genes(parent.category, plot.data, sigs.only = T)
 ##a parent category generated in the treemapPlot function
 ##parent.category = 'small molecule biosynthetic process'
 
-G85R.compareparent.genes(parent.category, plot.data, sigs.only = T)
+G85R.compareparent.genes(parent.category, plot.data)
 ##dot size is relative to the max FDR of either condition
 
 
