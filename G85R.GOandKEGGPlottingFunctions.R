@@ -1,10 +1,10 @@
 if (!require("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
 
-if(!require(gplots, quietly = TRUE))
+if(!require(plotly, quietly = TRUE))
   install.packages("plotly")
 
-if(!require(gplots, quietly = TRUE))
+if(!require(goseq, quietly = TRUE))
   BiocManager::install("goseq")
 
 if(!require(org.Dm.eg.db, quietly = TRUE))
