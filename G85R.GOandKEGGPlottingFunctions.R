@@ -19,9 +19,6 @@ if(!require(pathview, quietly = TRUE))
 if(!require(VennDiagram, quietly = TRUE))
   install.packages("VennDiagram")
 
-if(!require(CollapsABEL, quietly = TRUE))
-  install.packages('CollapsABEL')
-
 library(plotly)
 library(goseq)
 library(org.Dm.eg.db)
