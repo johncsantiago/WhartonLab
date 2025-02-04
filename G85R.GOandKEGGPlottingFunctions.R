@@ -639,7 +639,8 @@ G85R.KEGG.diagram = function(PathwayID, plot.data, use, sigs.only = F){
     dir.create(paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/KEGG_Image_Files/"))
   }
 
-
+  metab.data = na.omit(metab.data)
+  metab.data = log2(metab.data)
   
   setwd(OutputDir) 
   pv.out <- pathview(gene.data =  deg.data,
@@ -671,9 +672,13 @@ G85R.KEGG.diagram = function(PathwayID, plot.data, use, sigs.only = F){
 G85R.comparekegg.genes = function(specific.kegg, plot.data){
   
   FC.data = plot.data[,grep("lFC", colnames(plot.data))]
+  colnames(FC.data) = substr(colnames(FC.data), 1, (nchar(colnames(FC.data)) - 5))
+  
   FDR.data = plot.data[,grep("FDR", colnames(plot.data))]
+  colnames(FDR.data) = substr(colnames(FDR.data), 1, (nchar(colnames(FDR.data)) - 5))
   
   mean.data = plot.data[,grep("mean", colnames(plot.data))]
+  colnames(mean.data) = substr(colnames(mean.data), 1, (nchar(colnames(mean.data)) - 5))
   
   kegg.id = row.names(KEGG.Names)[c(grep(specific.kegg, KEGG.Names), 
                                     grep(specific.kegg, row.names(KEGG.Names)))]

@@ -94,9 +94,9 @@ cat.data = G85R.Enrichment(plot.data)
 
 ```{r echo = F}
 
-
+##plots the specified most significantly enriched KEGG categories
 ##which ranks of categories to use
-##a vector of numbers specifying which ranks to use
+##usecats is a vector of numbers specifying which ranks to use
 ##eg. c(1, 5:6) will use the first, fifth and sixth most sig. cats.
 ##can also just type 'sigs' 
 usecats=c(1:20)
@@ -110,7 +110,7 @@ G85R.KEGG20(cat.data, plot.data, usecats)
 ```{r echo = F, include = T}
 
 ##can be the exact name or 5 digit code in quotes
-specific.kegg = "00980"
+specific.kegg = "00230"
 
 G85R.plotkegg.genes(specific.kegg, plot.data)
 
@@ -119,8 +119,10 @@ G85R.plotkegg.genes(specific.kegg, plot.data)
 
 ```{r echo = F, message=F, fig.width=7}
 
+##Color is relative to Fold Change
+
 ##5 digits from KEGG ID
-PathwayID = "00010"
+PathwayID = "00230"
 
 #options include 'primary' or 'both'
 use = 'both'
@@ -134,8 +136,13 @@ G85R.KEGG.diagram(PathwayID, plot.data, use, sigs.only = F)
 
 ```{r echo = F, include = T, warnings = F}
 
+##Uses data from both comparisons
+##Plot all of the genes in the selected KEGG category
+##Size is relative to significance 
+
+
 ##can be the exact name or 5 digit code in quotes
-specific.kegg = "00010"
+specific.kegg = "00230"
 
 G85R.comparekegg.genes(specific.kegg, plot.data)
 
@@ -159,7 +166,7 @@ G85R.GO20(cat.data, GO.ontology, plot.data, usecats)
 ```{r echo = F}
 
 ##the 7 digits of a GOterm id or the exact term name
-specific.go = '0005811'
+specific.go = '0022008'
 
 G85R.plotgo.genes(specific.go, plot.data)
 
@@ -169,7 +176,7 @@ G85R.plotgo.genes(specific.go, plot.data)
 ```{r echo = F, warning = F}
 
 ##the 7 digits of a GOterm id or the exact term name
-specific.go = '0005811'
+specific.go = '0022008'
 
 G85R.comparego.genes(specific.go, plot.data)
 
@@ -178,7 +185,7 @@ G85R.comparego.genes(specific.go, plot.data)
 
 ```{r echo = F, warning = F, message = F}
 
-
+##This function is very slow
 ## BP, CC, or MF
 GO.ontology = 'BP'
 
@@ -202,7 +209,7 @@ G85R.plotparentcat.genes(parent.category, plot.data, sigs.only = T)
 ```{r echo = F}
 
 ##a parent category generated in the treemapPlot function
-##parent.category = 'small molecule biosynthetic process'
+##parent.category = 'neurogenesis'
 
 G85R.compareparent.genes(parent.category, plot.data, sigs.only = T)
 ##dot size is relative to the max FDR of either condition
