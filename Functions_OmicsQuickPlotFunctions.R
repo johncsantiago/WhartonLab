@@ -696,23 +696,25 @@ serpe.heatmap = function(heat.genes){
     max.break = 7
   }
   
+  heat.data[heat.data > 1000] =1000
+  
   color.breaks = 2^(c(0:(numcols))*(max.break/(numcols + 1)))
   
   heatmap.2(heat.data,
-            Colv = NA,
+            Colv = F,
             #Rowv = NA,
             labCol = Cluster.id,
             scale = 'none',
-            ColSideColors = Cluster.labelcolor,
+            #ColSideColors = Cluster.labelcolor,
             trace = "none",
             col = heat.colors(numcols),
             dendrogram = "none",
             na.color = "white",
             key.title = "Mean Expression",
-            colCol = Cluster.labelcolor,
+            #colCol = Cluster.labelcolor,
             margins = c(10, 5), 
-            colsep = c(18, 46, 95),
-            sepcolor = "black",
+            #colsep = c(18, 46, 95),
+            #sepcolor = "black",
             breaks = color.breaks)
   legend("left",
          title = "Cell Types",
