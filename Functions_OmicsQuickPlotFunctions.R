@@ -702,7 +702,7 @@ serpe.heatmap = function(heat.genes){
   
   heatmap.2(heat.data,
             Colv = F,
-            #Rowv = NA,
+            Rowv = F,
             labCol = Cluster.id,
             scale = 'none',
             ColSideColors = Cluster.labelcolor,
