@@ -186,7 +186,7 @@ plot.serpe.allclusters(gene.name)
 
 ```{r echo = F, fig.width= 10, fig.height=16}
 
-gene.name = "burs"
+gene.name = "Burs"
 
 plot.serpe.allclusters(gene.name)
 
@@ -325,55 +325,61 @@ legend("left",
 ```
 
 
-```{r echo = F, fig.width=16, fig.height=10}
+```{r echo = F, fig.width=10, fig.height=16}
 
-heat.genes = c("dpp", "gbb", "put", "wit", "mav", "sax", "tkv", "repo", "ACC", "Ack-like")
+heat.genes = c("VGlut", "ChAT", "VAChT", "VGAT", "Gad1", "DAT", "ple", "SerT", "Hdc", "dimm", "Burs")
 
 
-heat.data = na.omit(serpe[heat.genes,])
+heat.data = na.omit(serpe.inter[heat.genes,])
 
 heat.data = apply(heat.data, MARGIN = 2, as.numeric)
-#heat.data = log2(heat.data)
+#heat.data = log10(heat.data)
 row.names(heat.data) = heat.genes
 
 #heat.data[heat.data == 0] = NA
 
-Cluster.id = c(serpe.annotated.names)
+Cluster.id = colnames(serpe.inter)
 
-Cluster.labelcolor = c(rep("darkgreen", length(serpe.annotated.names)))
+Cluster.labelcolor = c(rep("darkgreen", ncol(serpe.inter)))
 
 
 heat.colors = colorRampPalette(c("grey95", "steelblue", "gold", "red3"))
+heat.colors = colorRampPalette(c("white", "darkgreen", "darkgreen"))
 
 numcols = 100
 
-max.break = log2(max(heat.data))
+max.break = log10(max(log10(heat.data)))
 
 if(max.break > 7){
   max.break = 7
 }
 
-color.breaks = 2^(c(0:(numcols))*(max.break/(numcols + 1)))
+color.breaks = 10^(c(0:(numcols))*(max.break/(numcols + 1)))
 
-heatmap.2(heat.data,
+heat.data = t(heat.data)
+
+numcols = 75
+
+heatmap.2(log10(heat.data),
         Colv = NA,
-        #Rowv = NA,
-        labCol = Cluster.id,
-        scale = 'none',
-        ColSideColors = Cluster.labelcolor,
+        Rowv = NA,
+        #labCol = Cluster.id,
+        scale = "none",
+        #ColSideColors = Cluster.labelcolor,
         trace = "none",
         col = heat.colors(numcols),
         dendrogram = "none",
         na.color = "white",
-        key.title = "Mean Expression",
-        colCol = Cluster.labelcolor,
-        margins = c(10, 5), 
+        key.title = "Mean Expression")#,
+        #colCol = Cluster.labelcolor,
+        #margins = c(10, 5), 
         #colsep = c(18, 46, 95),
         #sepcolor = "black",
-        breaks = color.breaks)
+        #breaks = color.breaks)
+        #breaks = c(0:numcols))
 legend("left",
        title = "Cell Types",
-       legend = c("Manually Currated"),
+       legend = c("Interneurons"),
        fill = c("darkgreen"),
        xpd = T)
 #library(corrplot)

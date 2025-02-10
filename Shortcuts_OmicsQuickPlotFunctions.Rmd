@@ -20,7 +20,7 @@ source('https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/ma
 ## Plot gene expression from G85R TKT RNAseq experiment
 ## ID needs to be the full or partial gene symbol or FBgn (case sensitive)
 
-ID = "gbb"
+ID = "Arc1"
 
 plot.G85R(ID)
 
@@ -32,7 +32,7 @@ plot.G85R(ID)
 ## Plot gene expression from A4V RNAseq experiment
 ## ID needs to be the full or partial gene symbol or FBgn (case sensitive)
 
-ID = "Arc1"
+ID = "Arc2"
   
 plot.A4V(ID)
 ```
@@ -43,7 +43,7 @@ plot.A4V(ID)
 ## Plot metabolite levels from the G85R TKT metabolomics experiment
 ## metabID needs to be the full or partial metabolite name as listed in the table (case sensitive)
 
-metabID = 'NADH'
+metabID = 'uric acid'
 
 plot.metab(metabID)
 
@@ -67,7 +67,7 @@ plot.serpe.allclusters(gene.name)
 ## Plot expression of a gene set from Single Cell RNAseq experiment
 ## gene name needs to be the full or partial gene symbol as listed in the table (case sensitive)
 
-heat.genes = c("dpp", "gbb", "put", "wit", "mav", "sax", "tkv", "repo", "ACC", "Ack-like")
+heat.genes = c("dpp", "gbb", "put", "wit", "mav", "sax", "tkv", "repo")
 
 serpe.heatmap(heat.genes)
 
