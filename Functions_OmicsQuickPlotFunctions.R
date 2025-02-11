@@ -375,7 +375,7 @@ plot.metab = function(metabID){
     }
     
     if(length(ID.row) != 1 | length(intersect(row.names(norm.data), metabID)) > 1){
-      print(paste0("Multiple metabolites match the ID ", ID))
+      print(paste0("Multiple metabolites match the ID ", metabID))
       norm.data[ID.row,]
     }
     
