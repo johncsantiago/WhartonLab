@@ -79,7 +79,7 @@ filter4.genes = row.names(TKT.EdgeR)
 ui <- fluidPage(
   
 ##Sidebar control code 
-  titlePanel("TKT RNAseq Experiment: Custom PCA Figure"),
+  titlePanel("TKT RNAseq Experiment: Specific Gene Boxplot"),
   sidebarLayout(position="left", sidebarPanel(
     
 ##General plot customization tools 

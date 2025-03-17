@@ -724,3 +724,67 @@ serpe.heatmap = function(heat.genes){
   
 }
 
+
+##Function to plot expression levels for a specified set of genes in all cell types for the SC data EXCLUDES MANUALLY CURRATED CATEGORIES
+serpe.heatmap.noman = function(heat.genes){
+  heat.data = na.omit(cbind(serpe[heat.genes,],
+                            cbind(serpe.mn[heat.genes,],
+                                  cbind(serpe.inter[heat.genes,], serpe.glia[heat.genes,]))))
+  
+  heat.data = apply(heat.data, MARGIN = 2, as.numeric)
+  #heat.data = log2(heat.data)
+  row.names(heat.data) = heat.genes
+  
+  #heat.data[heat.data == 0] = NA
+  
+  Cluster.id = c(serpe.annotated.names,
+                 colnames(serpe.mn),
+                 colnames(serpe.inter),
+                 serpe.glia.names)
+  
+  Cluster.labelcolor = c(rep("darkgreen", length(serpe.annotated.names)),
+                         rep("brown", ncol(serpe.mn)),
+                         rep("orange", ncol(serpe.inter)),
+                         rep("steelblue", length(serpe.glia.names)))
+  
+  
+  heat.colors = colorRampPalette(c("grey95", "steelblue", "gold", "red3"))
+  
+  numcols = 100
+  
+  max.break = log2(max(heat.data))
+  
+  if(max.break > 7){
+    max.break = 7
+  }
+  
+  heat.data[heat.data > 1000] =1000
+  
+  color.breaks = 2^(c(0:(numcols))*(max.break/(numcols + 1)))
+
+Cluster.id = Cluster.id[(length(serpe.annotated.names)+1):ncol(heat.data)]
+Cluster.labelcolor = Cluster.labelcolor[(length(serpe.annotated.names)+1):ncol(heat.data)]
+heat.data = heat.data[,(length(serpe.annotated.names)+1):ncol(heat.data)]
+
+heatmap.2(heat.data,
+          Colv = F,
+          Rowv = F,
+          labCol = Cluster.id,
+          scale = 'none',
+          ColSideColors = Cluster.labelcolor,
+          trace = "none",
+          col = heat.colors(numcols),
+          dendrogram = "none",
+          na.color = "white",
+          key.title = "Mean Expression",
+          colCol = Cluster.labelcolor,
+          margins = c(10, 5), 
+          colsep = c(28, 77),
+          sepcolor = "black",
+          breaks = color.breaks)
+legend("left",
+       title = "Cell Types",
+       legend = c("Motor Neurons", "Interneurons", "Glia"),
+       fill = c("brown", "orange", "steelblue"),
+       xpd = T)
+}

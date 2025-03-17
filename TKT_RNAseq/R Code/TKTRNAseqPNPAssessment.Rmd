@@ -1433,25 +1433,25 @@ temp.edges[temp.edges$from == "Pentose Phosphate", "to"] = "PRPP"
 
 purine.path = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/purine.path.csv", row.names = 1)
 
-add.edges = data.frame(enzyme = c("2.2.1.1",
-                                  "5.1.3.1",
-                                  "5.3.1.6",
-                                  "5.4.2.7",
-                                  "5.4.2.2"),
-                       from = c("D-ribose-1/5-phosphate / D-ribulose 5-phosphate",
-                                "D-ribose-1/5-phosphate / D-ribulose 5-phosphate",
-                                "D-ribose-1/5-phosphate / D-ribulose 5-phosphate",
-                                "D-ribose-1/5-phosphate / D-ribulose 5-phosphate"),
-                       to = c("D-sedoheptulose-7-phosphate",
-                              "D-Xylulose 5-phosphate",
-                              "D-ribose-1/5-phosphate / D-ribulose 5-phosphate",
-                              "D-ribose-1/5-phosphate / D-ribulose 5-phosphate"),
-                       arrows = c("to;from",
-                                  "to;from",
-                                  "to;from",
-                                  "to;from",
-                                  "to;from"),
-                       FBgn = "")
+#add.edges = data.frame(enzyme = c("2.2.1.1",
+#                                  "5.1.3.1",
+#                                  "5.3.1.6",
+#                                  "5.4.2.7",
+#                                  "5.4.2.2"),
+#                       from = c("D-ribose-1/5-phosphate / D-ribulose 5-phosphate",
+#                                "D-ribose-1/5-phosphate / D-ribulose 5-phosphate",
+#                                "D-ribose-1/5-phosphate / D-ribulose 5-phosphate",
+#                                "D-ribose-1/5-phosphate / D-ribulose 5-phosphate"),
+#                       to = c("D-sedoheptulose-7-phosphate",
+#                              "D-Xylulose 5-phosphate",
+#                              "D-ribose-1/5-phosphate / D-ribulose 5-phosphate",
+#                              "D-ribose-1/5-phosphate / D-ribulose 5-phosphate"),
+#                       arrows = c("to;from",
+#                                  "to;from",
+#                                 "to;from",
+#                                "to;from",
+#                                  "to;from"),
+#                       FBgn = "")
 
 ```
 
@@ -1775,23 +1775,18 @@ glycolysis.edges$color = "white"
 #glycolysis.edges$color[is.na(glycolysis.edges$color)] = 'dimgrey'
 
 
-
 glycolysis.edges$title = paste0(GeneIDKey[glycolysis.edges$FBgn, "Symbol"],
-                          "<br>log2(FC): ", signif(TKT.EdgeR.FC[glycolysis.edges[,'FBgn'], comparison.T],3),
-                          "<br>FDR: ", signif(TKT.EdgeR[glycolysis.edges[,'FBgn'], comparison.T],3),
-                          "<br>", comparison.means[[comparison.T]][1], " cpm: ", signif(mean.cpm[glycolysis.edges[,'FBgn'],comparison.means[[comparison.T]][1]],3),
-                          "<br>", comparison.means[[comparison.T]][2], " cpm: ", signif(mean.cpm[glycolysis.edges[,'FBgn'],comparison.means[[comparison.T]][2]],3))
+                          "<br>log2(FC): ", 1,
+                          "<br>FDR: ", 1,
+                          "<br>", " cpm: ", 1,
+                          "<br>", " cpm: ", 1)
 
 
 glycolysis.edges = data.frame(from = glycolysis.edges$from.name,
-                              to = glycolysis.edges$to.name)
-,
-                              arrows = glycolysis.edges$arrow)
-,
-                              color = glycolysis.edges$color)
-,
-                              width = glycolysis.edges$size)
-,
+                              to = glycolysis.edges$to.name,
+                              arrows = glycolysis.edges$arrow,
+                              color = glycolysis.edges$color,
+                              width = glycolysis.edges$size,
                               title = glycolysis.edges$title,
                               physics = T)
 
@@ -1847,6 +1842,7 @@ visedges$title = paste0(visedges$symbol,
 row.names(comparison.M)[row.names(comparison.M) == "cAMP(2',3') / cAMP(3',5')"] = 'cAMP'
 
 node.data = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/purine.nodes.csv", row.names = 1)
+node.names = unique(c(visedges$from, visedges$to))
 node.colors = na.omit(comparison.M[intersect(row.names(comparison.M), node.names),])
 node.pval = setNames(signif((node.colors$p),2), row.names(node.colors))
 node.data[names(node.pval), 'pval'] = node.pval
@@ -1863,6 +1859,8 @@ node.data$title = paste0(node.data$id,
                          "<br>FC: ", node.data$FC,
                          "<br>pval: ", node.data$pval)
 node.data[node.data$group == "Outside Path", 'color.background'] = 'black'
+
+
 node.data[node.data$color.background == 'white', 'group'] = "no data"
 
 nodes = node.data
@@ -2321,6 +2319,7 @@ edges = rbind(edges,
                                 rbind(FBgn0037955, HKY2NAMN)))))
 
 NAD.path = edges
+#write.csv(NAD.path, "/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/NAD.path.csv")
 
 ```
 
@@ -2329,7 +2328,7 @@ NAD.path = edges
 NAD.network.fun = function(comparison.T, comparison.M, cond1, cond2){
 temp = colorRampPalette(c('royalblue',"dodgerblue",'red', "firebrick"))(401)
 
-visedges = NAD.path
+visedges = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/NAD.path.csv", row.names = 1)
 visedges$color = round(TKT.EdgeR.FC[NAD.path$FBgn, comparison.T],2)
 ##visedges$width = .5 + abs(visedges$color)
 visedges$color[visedges$color < (-2)] = -2
@@ -2375,7 +2374,7 @@ node.data[names(node.colors),'size'] = node.colors
 #node.data[names(node.colors),'size'] = 
 #  (node.data[names(node.colors),'size'] + .5 + abs(min(node.colors)))*7.5
 node.data[names(node.colors),'size'] = 
-  (node.data[names(node.colors),'size'] + 3)*3.5
+  (abs(node.data[names(node.colors),'size']) + 3)*3.5
 
 node.colors[node.colors < (-2)] = -2
 node.colors[node.colors>2] = 2

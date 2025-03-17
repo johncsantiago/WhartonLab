@@ -115,16 +115,15 @@
 "114","GTP","RNA.G","to","black",0,NA,NA
 "115","GTP","Riboflavin.Metabolism","to","black",0,NA,NA
 "116","GTP","Folate.Biosynthesis","to","black",0,NA,NA
-"117","Pentose Phosphate","IMP","to","black",0,NA,NA
-"118","FAICAR","IMP","to;from","black",0,"","FBgn0039241"
-"210","AICA ribonucleotide","FAICAR","to","black",0,"","FBgn0039241"
-"310","SAICAR","AICA ribonucleotide","to;from","black",0,"","FBgn0038467"
-"410","CAIR","SAICAR","to;from","black",0,"","FBgn0020513"
-"510","AIR","CAIR","to;from","black",0,"","FBgn0020513"
-"610","2-(Formamido)-N1-(5-phospho-D-ribosyl)acetamidine","AIR","to","black",0,"","FBgn0000053"
-"710","FGAR","2-(Formamido)-N1-(5-phospho-D-ribosyl)acetamidine","to","black",0,"","FBgn0000052"
-"810","GAR","FGAR","to","black",0,"","FBgn0000053"
-"910","Ribosylamine-5p","GAR","to","black",0,"","FBgn0000053"
-"1010","PRPP","Ribosylamine-5p","to","black",0,"","FBgn0004901"
-"10.1","PRPP","Ribosylamine-5p","to","black",0,"","FBgn0041194"
-"119","D-ribose-1/5-phosphate / D-ribulose 5-phosphate","PRPP","to","black",0,"","FBgn0036030"
+"118","FAICAR","IMP","to;from","black",0,NA,"FBgn0039241"
+"210","AICA ribonucleotide","FAICAR","to","black",0,NA,"FBgn0039241"
+"310","SAICAR","AICA ribonucleotide","to;from","black",0,NA,"FBgn0038467"
+"410","CAIR","SAICAR","to;from","black",0,NA,"FBgn0020513"
+"510","AIR","CAIR","to;from","black",0,NA,"FBgn0020513"
+"610","2-(Formamido)-N1-(5-phospho-D-ribosyl)acetamidine","AIR","to","black",0,NA,"FBgn0000053"
+"710","FGAR","2-(Formamido)-N1-(5-phospho-D-ribosyl)acetamidine","to","black",0,NA,"FBgn0000052"
+"810","GAR","FGAR","to","black",0,NA,"FBgn0000053"
+"910","Ribosylamine-5p","GAR","to","black",0,NA,"FBgn0000053"
+"1010","PRPP","Ribosylamine-5p","to","black",0,NA,"FBgn0004901"
+"10.1","PRPP","Ribosylamine-5p","to","black",0,NA,"FBgn0041194"
+"119","D-ribose-1/5-phosphate / D-ribulose 5-phosphate","PRPP","to","black",0,NA,"FBgn0036030"

@@ -1,0 +1,447 @@
+---
+title: "Russo Fig1 Replots"
+author: "John Santiago"
+date: "2025-03-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r echo = F}
+
+B = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Russo Fig 1 eclosion.csv")
+
+B = B[c("w1118", "WTloxP", "G85Rhr", 
+        "WTcr", "G85Rcr", "A4V.A4V",
+        "null26.null26", "WTcr.null26",
+        "G85Rcr.null26", "A4V.X16",
+        "A4V.G85Rcr")]
+
+mean.B = setNames(rep(0, ncol(B)), colnames(B))
+i=1
+while(i<=ncol(B)){
+  mean.B[i] = mean(na.omit(B[,i]))
+  i=i+1
+}
+
+B.labels = c("w1118",
+             "WTLoxP/WTLoxP", "G85R/G85R(HR)",
+             "WT/WT(CR)", "G85R/G85R(CR)",
+             "A4V/A4V", "Sod1null/Sod1null", 
+             "WT/Sod1null", "G85R(CR)/Sod1null",
+             "A4V/X16", "A4V/G85R(CR)")
+
+```
+
+```{r echo = F, fig.width=10, fig.height=7}
+
+par(mar = c(9,4,4,2))
+
+barplot(height = mean.B,
+        ylim = c(0, 100),
+        col = "black",
+        las = 2,
+        ylab = "Eclosion rate (%)",
+        main = "Eclosion from the pupal case",
+        xaxt = "n")
+axis(side = 1,
+     at = c(.7 + (c(0:10)*1.2)),
+     lwd = 3,
+     line = 0,
+     labels = B.labels,
+     xpd = T,
+     las = 2)
+axis(side = 2,
+     at = c(0,20,40,60,80,100),
+     lwd = 3,
+     line = 0,
+     labels = F,
+     xpd = T)
+lines(x = c(-0.5,13.5),
+     y = c(0,0),
+     lwd = 3,
+     xpd = T)
+
+#abline(h = 100, lty = 2, lwd = 3)
+
+```
+
+```{r echo = F}
+
+C = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Figure 1C pharate_bouton_counts.xlsx - counts.csv")
+
+W1118 = data.frame(Genotype = "W1118",
+                   Boutons = na.omit(C$W1118),
+                   x = 1)
+W1118 = W1118[order(W1118$Boutons),]
+W1118$x[c(3)] = .85
+W1118$x[c(4)] = 1.15
+
+
+SILENT = data.frame(Genotype = "SILENT",
+                   Boutons = na.omit(C$SILENT),
+                   x = 2)
+SILENT = SILENT[order(SILENT$Boutons),]
+SILENT$x[c(3)] = 1.85
+SILENT$x[c(4)] = 2.15
+
+G85Rcr = data.frame(Genotype = "G85Rcr",
+                   Boutons = na.omit(C$G85Rcr),
+                   x = 3)
+G85Rcr = G85Rcr[order(G85Rcr$Boutons),]
+G85Rcr$x[c(4,10)] = 2.875
+G85Rcr$x[c(5,9)] = 3.125
+G85Rcr$x[c(1)] = 2.925
+G85Rcr$x[c(2)] = 3.075
+G85Rcr$x[c(6)] = 2.75
+G85Rcr$x[c(7)] = 3.25
+
+A4V = data.frame(Genotype = "A4V",
+                   Boutons = na.omit(C$A4V),
+                   x = 4)
+A4V = A4V[order(A4V$Boutons),]
+A4V$x[c(4, 8)] = 3.875
+A4V$x[c(5, 9)] = 4.125
+A4V$x[c(6)] = 3.75
+A4V$x[c(7)] = 4.25
+A4V$x[c(1)] = 3.925
+A4V$x[c(2)] = 4.075
+
+
+C = rbind(W1118, rbind(SILENT,
+                       rbind(G85Rcr, A4V)))
+
+C$Genotype = factor(C$Genotype, levels = c("W1118", "SILENT", "G85Rcr", "A4V"))
+
+C.labels = c("w1118", "WT(CR)", "G85R", "A4V")
+     
+hex = function(color, alpha){
+  rgbvals = col2rgb(color)
+  rgb2hex = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+  return(rgb2hex)
+}
+     
+```
+
+```{r echo = F, fig.width=10, fig.height=7}
+ 
+par(mar = c(5,7,5,2))
+      
+plot(x = NA,
+     y = NA,
+     type = 'n',
+     ylim = c(0, 150),
+     xlim = c(.5, 4.5),
+     xaxt = "n",
+     ylab="Bouton Number",
+     yaxt = "n",
+     xlab = NA,
+     frame = F,
+     main = "Pharate muscle VM NMJ bouton counts")
+      
+boxplot(C$Boutons~C$Genotype,
+        xlab="",
+        las = 2,
+        cex.axis = 1,
+        ylim = c(0, 150),
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        col = c(hex("navy", .25),
+                hex("skyblue", .25),
+                hex('orange', .25),
+                hex("deeppink", .25)),
+        add = T, 
+        xaxt = "n",
+        frame = F)
+
+
+points(x=as.numeric(C$x),
+       y=C$Boutons,
+       cex=2.25,
+       pch=21,
+       bg=c('navy',"skyblue", 'orange', "deeppink")[as.numeric(C$Genotype)])
+      
+axis(side = 1,
+     at = c(1:4),
+     lwd = 3,
+     line = -.9,
+     labels = C.labels,
+     xpd = T)
+
+
+axis(side = 2,
+     at = c(0, 50, 100, 150),
+     lwd = 3,
+     line = 0,
+     labels = F,
+     xpd = T)
+
+lines(x = c(0.35,4.5),
+     y = c(0,0),
+     lwd = 3,
+     xpd = T)
+
+lines(x = c(1, 4),
+     y = c(140,140),
+     lwd = 3)
+
+lines(x = c(3, 3),
+     y = c(60,140),
+     lwd = 3)
+
+lines(x = c(1, 1),
+     y = c(120,140),
+     lwd = 3)
+
+lines(x = c(2, 2),
+     y = c(120,140),
+     lwd = 3)
+
+lines(x = c(4, 4),
+     y = c(120,140),
+     lwd = 3)
+
+text(x = 3,
+     y = 145,
+    labels = "*",
+    cex = 2)
+
+
+```
+
+
+```{r echo = F}
+
+D = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Figure 1D NMJ_quantification_larva.csv")
+
+w1118 = data.frame(Genotype = "w1118",
+                   Boutons = na.omit(D$w1118),
+                   x = 1)
+w1118 = w1118[order(w1118$Boutons),]
+w1118$x[c(3, 8, 15)] = .85
+w1118$x[c(4, 9, 16)] = 1.15
+w1118$x[c(5, 10, 13)] = .7
+w1118$x[c(6, 11, 14)] = 1.3
+
+
+LoxP = data.frame(Genotype = "LoxP",
+                   Boutons = na.omit(D$LoxP),
+                   x = 2)
+LoxP = LoxP[order(LoxP$Boutons),]
+LoxP$x[c(3)] = 1.85
+LoxP$x[c(4)] = 2.15
+LoxP$x[c(5)] = 1.7
+LoxP$x[c(6)] = 2.3
+
+G85R_HR = data.frame(Genotype = "G85R_HR",
+                   Boutons = na.omit(D$G85R_HR),
+                   x = 3)
+G85R_HR = G85R_HR[order(G85R_HR$Boutons),]
+G85R_HR$x[c(2, 5, 12)] = 2.85
+G85R_HR$x[c(3, 6, 13)] = 3.15
+G85R_HR$x[c(7, 10)] = 2.7
+G85R_HR$x[c(8, 11)] = 3.3
+
+silent = data.frame(Genotype = "silent",
+                   Boutons = na.omit(D$silent),
+                   x = 4)
+silent = silent[order(silent$Boutons),]
+silent$x[c(2, 5, 12, 14, 16)] = 3.85
+silent$x[c(3, 6, 11, 15, 17)] = 4.15
+silent$x[c(7, 10)] = 3.7
+silent$x[c(8, 9)] = 4.3
+
+G85R_WG = data.frame(Genotype = "G85R_WG",
+                   Boutons = na.omit(D$G85R_WG),
+                   x = 5)
+G85R_WG = G85R_WG[order(G85R_WG$Boutons),]
+G85R_WG$x[c(2)] = 4.85
+G85R_WG$x[c(3)] = 5.15
+G85R_WG$x[c(4)] = 4.7
+G85R_WG$x[c(5)] = 5.3
+
+A4V = data.frame(Genotype = "A4V",
+                   Boutons = na.omit(D$A4V),
+                   x = 6)
+A4V = A4V[order(A4V$Boutons),]
+A4V$x[c(1, 3)] = 5.85
+A4V$x[c(2, 4)] = 6.15
+
+
+D = rbind(w1118, rbind(LoxP,
+    rbind(G85R_HR, 
+    rbind(silent,
+    rbind(G85R_WG, A4V)))))
+
+D$Genotype = factor(D$Genotype, levels = c("w1118", "LoxP", "G85R_HR", "silent", "G85R_WG", "A4V"))
+
+
+D.labels = c("w1118", "WTLoxP", "G85R(HR)", "WT(CR)", "G85R", "A4V")
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=7}
+ 
+par(mar = c(5,7,5,2))
+      
+plot(x = NA,
+     y = NA,
+     type = 'n',
+     ylim = c(0, 150),
+     xlim = c(.5, 6.5),
+     xaxt = "n",
+     ylab="Bouton Number",
+     yaxt = "n",
+     xlab = NA,
+     frame = F,
+     main = "Larval muscle 6/7 NMJ bouton counts")
+      
+boxplot(D$Boutons~D$Genotype,
+        xlab="",
+        las = 2,
+        cex.axis = 1,
+        ylim = c(0, 150),
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        col = c(hex("navy", .25),
+                hex("gold2", .25),
+                hex("turquoise4", .25),
+                hex("skyblue", .25),
+                hex('orange', .25),
+                hex("deeppink", .25)),
+        add = T, 
+        xaxt = "n",
+        frame = F)
+
+
+points(x=as.numeric(D$x),
+       y=D$Boutons,
+       cex=2.25,
+       pch=21,
+       bg=c('navy', "gold2", "turquoise4", 
+            "skyblue", 'orange', "deeppink")[as.numeric(D$Genotype)])
+      
+axis(side = 1,
+     at = c(1:6),
+     lwd = 3,
+     line = -.9,
+     labels = D.labels,
+     xpd = T)
+
+
+axis(side = 2,
+     at = c(0, 50, 100, 150),
+     lwd = 3,
+     line = 0,
+     labels = F,
+     xpd = T)
+
+lines(x = c(0.25,6.5),
+     y = c(0,0),
+     lwd = 3,
+     xpd = T)
+
+
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=7}
+
+E = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Figure 1E LarvalLocomotion.csv")
+
+E = E[c("w1118", "WTLoxP.WTLoxP", "G85R.G85R.HR.", "WT.WT",
+        "G85R.G85R.CR.", "A4V.A4V",
+        "A4V.X16", "A4V.G85R.CR.")]
+
+E.labels = c("w1118", "WTLoxP", "G85R(HR)", 
+             "WT(CR)", "G85R", "A4V",
+             "A4V/X16", "A4V/G85R")
+
+n.E = setNames(rep(0, ncol(E)), colnames(E))
+mean.E = n.E
+sd.E = n.E
+
+i=1
+while(i<= ncol(E)){
+  mean.E[i] = mean(na.omit(E[,i]))
+  sd.E[i] = sd(na.omit(E[,i]))
+  n.E[i] = (length(na.omit(E[,i])))
+  i=i+1
+}
+
+stderr.E = sd.E/(sqrt(n.E))
+
+bar.colors = c(hex("navy", .75),
+                hex("gold2", .75),
+                hex("turquoise4", .75),
+                hex("skyblue", .75),
+                hex('orange', .75),
+                hex("deeppink", .75),
+                hex('grey', .75),
+                hex("darkgreen", .75))
+
+border.colors = c('navy', "gold2", "turquoise4",
+                  "skyblue", 'orange', "deeppink", 
+                  "grey", "green4")
+
+tick.x = c(.7 + (c(0:7)*1.2))
+
+par(mar = c(8,4,4,2), lwd = 3)
+
+barplot(height = mean.E,
+        ylim = c(0, 80),
+        col = border.colors,
+        las = 2,
+        ylab = "Distance traveled (mm)",
+        main = "Larval locomotion",
+        border = border.colors,
+        xaxt = "n")
+
+axis(side = 1,
+     at = tick.x,
+     lwd = 3,
+     line = 0,
+     labels = E.labels,
+     xpd = T)
+
+axis(side = 2,
+     at = c(0,20,40,60,80),
+     lwd = 3,
+     line = 0,
+     labels = F,
+     xpd = T)
+lines(x = c(-0.2,13.5),
+     y = c(0,0),
+     lwd = 3,
+     xpd = T)
+
+i = 1
+while(i <= length(stderr.E)){
+  lines(x = tick.x[c(i,i)],
+        y = c(mean.E[i], (mean.E[i] + stderr.E[i])),
+        lwd = 3,
+        col = border.colors[i])
+  
+  lines(x = c((tick.x[i] - .25), (tick.x[i] + .25)),
+        y = c((mean.E[i] + stderr.E[i]), (mean.E[i] + stderr.E[i])),
+        lwd = 3,
+        col = border.colors[i])
+  
+  i = i +1
+}
+
+text(x = tick.x[3],
+     y = (mean.E[3] + stderr.E[3]) + 5,
+    labels = "*",
+    cex = 2)
+
+```
