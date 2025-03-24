@@ -202,8 +202,8 @@ beta-D-Glucose,beta-D-Glucose 6P,to,black,0,NA,FBgn0042711,T
 beta-D-Glucose,beta-D-Glucose 6P,to,black,0,NA,FBgn0001187,T
 beta-D-Glucose,beta-D-Glucose 6P,to,black,0,NA,FBgn0036402,T
 alpha-D-Glucose 6-phosphate,beta-D-Glucose 6P,to;from,black,0,NA,FBgn0028540,T
-alpha-D-Glucose 6-phosphate,beta-D-Glucose 6P,to;from,black,0,NA,FBgn003074,T
-alpha-D-Glucose 6-phosphate,D-Fructose 6-phosphate,to;from,black,0,NA,FBgn003074,T
+alpha-D-Glucose 6-phosphate,beta-D-Glucose 6P,to;from,black,0,NA,FBgn0003074,T
+alpha-D-Glucose 6-phosphate,D-Fructose 6-phosphate,to;from,black,0,NA,FBgn0003074,T
 D-Fructose 6-phosphate,"D-Fructose-1,6P",to,black,0,NA,FBgn0003071,T
 D-Fructose 6-phosphate,"D-Fructose-1,6P",from,black,0,NA,FBgn0032820,T
 "D-Fructose-1,6P",D-Glyceraldehyde 3-phosphate,to;from,black,0,NA,FBgn0039425,T
