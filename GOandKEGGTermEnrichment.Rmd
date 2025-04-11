@@ -133,7 +133,7 @@ plotkegg.genes(specific.kegg, FC, FDR, mean.data)
 ```{r echo = F, message=F, fig.width=7}
 
 ##5 digits from KEGG ID
-PathwayID = "00010"
+PathwayID = "00030"
 
 #options include 'primary' or 'both'
 use = 'both'

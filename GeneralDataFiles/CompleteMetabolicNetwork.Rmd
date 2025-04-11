@@ -15,32 +15,60 @@ library(visNetwork)
 
 git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/GeneralDataFiles/"
 
-
+GeneIDKey = read.csv(paste0(git.dir, "GeneIDKey.csv"), row.names = 1)
 G85R.geneFC = read.csv(paste0(git.dir, "TKT.EdgeR.FCTable.csv"), row.names = 1)
 G85R.metabFC = read.csv(paste0(git.dir, "MetaboliteFCs.csv"), row.names = 1)
+G85R.metabFC[,2:ncol(G85R.metabFC)] = log2(G85R.metabFC[,2:ncol(G85R.metabFC)])
 
 raw.nodes = read.csv(paste0(git.dir, "combined.nodes.csv"), row.names = 1)
 raw.edges = read.csv(paste0(git.dir, "combined.edges.csv"))
 
-temp = colorRampPalette(c('royalblue',"dodgerblue",'red', "firebrick"))(401)
+temp = colorRampPalette(c("dodgerblue", "grey",'red'))(401)
 
 ```
 
 
 ```{r echo = F}
+##"GRxWT.C"  "GRxWT.Df" "GRxWT.OE" "GR.CxDf" "WT.CxDf"  "GR.CxOE"  "WT.CxOE"
+metab = "GR.CxDf"
+
+enzyme = "GRF.CxDf"
 
 nodes = raw.nodes
 edges = raw.edges
 
+nodes[nodes$shape == "dot", "label"] = NA
+
 nodes[nodes$shape == "circle", "size"] = 20
 nodes$shape = 'dot'
 
-node.colors = G85R.metabFC[nodes$data.id, "GR.CxOE"]
+
+node.colors = (G85R.metabFC[nodes$data.id, metab])
 node.colors = temp[(200*node.colors/max(abs(na.exclude(node.colors)))) + 201]
 node.colors[na.action(na.exclude(node.colors))] = "white"
 
 nodes$color.background = node.colors
 
+nodes$title = paste0(nodes$id,
+                     "<br>FC: ", 
+                     signif((G85R.metabFC[nodes$data.id, metab]), 3))
+
+
+edges$title = paste0(GeneIDKey[edges$FBgn, "Symbol"],
+                     "<br>FC: ", 
+                     signif(G85R.geneFC[edges$FBgn,
+                                 enzyme],3))
+
+edges.colors = G85R.geneFC[edges$FBgn, enzyme]
+edges$width = abs(edges.colors) * 10
+
+edges.colors = temp[(200*edges.colors/max(abs(na.exclude(edges.colors)))) + 202]
+edges.colors[na.action(na.exclude(edges.colors))] = "white"
+
+edges$color = edges.colors
+
+#edges = edges[c(224,225, 226,227),]
+#edges$title = c("A","B","C", "D")
 
 ```
 
@@ -49,8 +77,26 @@ nodes$color.background = node.colors
 
 visNetwork(nodes, edges)%>%
   visNodes(physics = F)%>%
-  visLayout(hierarchical=F, improvedLayout=T)%>%
-  visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE)%>%
+  #visLayout(hierarchical=F, improvedLayout=T)%>%
+  visOptions(highlightNearest = TRUE, nodesIdSelection = T)%>%
   visEdges(arrows = visedges$arrows)
 
 ```
+
+
+
+```{r echo = F}
+
+nodes = raw.nodes
+edges = raw.edges
+
+nodes[nodes$shape == "circle", "size"] = 20
+nodes$shape = "dot"
+
+visNetwork(nodes, edges)%>%
+  visNodes(physics = F)
+
+```
+
+
+

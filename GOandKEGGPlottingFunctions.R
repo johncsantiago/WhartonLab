@@ -545,14 +545,16 @@ KEGG.diagram = function(PathwayID, FC, use, metab.data){
     FC.data =  FC[,1]
     
     #Any column name from G85R.metabFC or 'none'
-    metab.data = metab.data[,1]
+    metab.data = metab.data[1]
   }
   
-  ##KEGG Mapping Function
-  if(length(intersect(list.files(), "KEGG_Image_Files")) == 0){
-    dir.create(paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/KEGG_Image_Files/"))
-  }
   Home = dirname(rstudioapi::getSourceEditorContext()$path)
+  
+  ##KEGG Mapping Function
+  if(length(intersect(list.files(Home), "KEGG_Image_Files")) == 0){
+    dir.create(paste0(Home, "/KEGG_Image_Files/"))
+  }
+
   OutputDir = paste0(Home, "/KEGG_Image_Files/")
   #setwd(OutputDir)
   sigs = usegenes
@@ -572,8 +574,8 @@ KEGG.diagram = function(PathwayID, FC, use, metab.data){
     metab.data = setNames(log2(G85R.metabFC[metab.id, metab.data]), names(metab.id))
   }
   
-  
-  
+
+  setwd(OutputDir)
   pv.out <- pathview(gene.data =  deg.data,
                      cpd.data = metab.data,
                      pathway.id = PathwayID,
@@ -586,7 +588,7 @@ KEGG.diagram = function(PathwayID, FC, use, metab.data){
                      bins=list(genes=30),
                      plot.col.key = F,
                      match.data = F)
-  #setwd(Home)
+  setwd(Home)
   
   
   if(class(FC.data)=="numeric"){

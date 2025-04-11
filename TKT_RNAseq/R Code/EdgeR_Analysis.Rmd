@@ -71,15 +71,37 @@ library(plotly)
 library(heatmaply)
 library(VennDiagram)
 
+GeneIDKey = read.csv("https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/GeneralDataFiles/GeneIDKey.csv", row.names = 1)
+
+#raw count data directory
+cd.dir = "/Users/johncsantiago/Documents/GitHub/Datasets/GBB_Count_Tables/"
+
+GBB.countdata = read.csv(paste0(cd.dir, list.files(cd.dir)[1]), 
+                   sep = "\t", row.names = 1)
+colnames(GBB.countdata) = substr(list.files(cd.dir)[1], 1, 7)
+
+i=2
+while(i <= length(list.files(cd.dir))){
+  temp.cd = read.csv(paste0(cd.dir, list.files(cd.dir)[i]), 
+                     sep = "\t", row.names = 1)
+  colnames(temp.cd) = substr(list.files(cd.dir)[i], 1, 7)
+  temp.cd[,1] = temp.cd[row.names(GBB.countdata),]
+  GBB.countdata = cbind(GBB.countdata, temp.cd)
+  i = i + 1
+}
+
+GBB.groups = read.csv("/Users/johncsantiago/Documents/GitHub/Datasets/GBB_Metadata.csv", row.names = 1)
+
+
+
 ##Clean Trait Data and calculate CPMs
-countdata=read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT.counttable.csv",row.names=1)
-groups=read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/All.TKT.metadata.csv",row.names=1)
+countdata=GBB.countdata
+groups=GBB.groups
 
-
-convert=read.csv("https://raw.githubusercontent.com/DavidRandLab/Santiago-et-al-2021-BMC-Genomics/main/Data%20Files/FBgnConversionTable.csv",row.names=1)
+groups = groups[groups$Experiment == "GBB-KO",]
 
 ##normalize data
-countdata=countdata[, row.names(groups)]
+countdata= countdata[,row.names(groups)]
 x <- countdata
 gr <- factor(groups$Group)
 y <- DGEList(counts=x,group=gr)
@@ -99,196 +121,54 @@ plotQLDisp(fit)
 ##Will calculate fold-change with the first over the second
 
 ##GR.F TKT control vs TKT altered
-compare = makeContrasts(TktDfGR.F-GR.F, levels=design)
-lrt = glmQLFTest(fit,contrast=as.vector(compare))
-G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
-DEout=G_X_E$table
-GR.F.CxDf=DEout
-sGR.F.CxDf=DEout[DEout$FDR<.05,]
-
-compare = makeContrasts(TktOEGR.F-GR.F, levels=design)
-lrt = glmQLFTest(fit,contrast=as.vector(compare))
-G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
-DEout=G_X_E$table
-GR.F.CxOE=DEout
-sGR.F.CxOE=DEout[DEout$FDR<.05,]
-
-##WT.F TKT control vs TKT altered
-compare = makeContrasts(TktDfWT.F-WT.F, levels=design)
-lrt = glmQLFTest(fit,contrast=as.vector(compare))
-G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
-DEout=G_X_E$table
-WT.F.CxDf=DEout
-sWT.F.CxDf=DEout[DEout$FDR<.05,]
-
-compare = makeContrasts(TktOEWT.F-WT.F, levels=design)
-lrt = glmQLFTest(fit,contrast=as.vector(compare))
-G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
-DEout=G_X_E$table
-WT.F.CxOE=DEout
-sWT.F.CxOE=DEout[DEout$FDR<.05,]
-
-
-##WT.F vs GR.F
-compare = makeContrasts(GR.F-WT.F, levels=design)
-lrt = glmQLFTest(fit,contrast=as.vector(compare))
-G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
-DEout=G_X_E$table
-GRxWT.F=DEout
-sGRxWT.F=DEout[DEout$FDR<.05,]
-
-compare = makeContrasts(TktDfGR.F-TktDfWT.F, levels=design)
-lrt = glmQLFTest(fit,contrast=as.vector(compare))
-G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
-DEout=G_X_E$table
-GRxWT.FDf=DEout
-sGRxWT.FDf=DEout[DEout$FDR<.05,]
-
-compare = makeContrasts(TktOEGR.F-TktOEWT.F, levels=design)
-lrt = glmQLFTest(fit,contrast=as.vector(compare))
-G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
-DEout=G_X_E$table
-GRxWT.FOE=DEout
-sGRxWT.FOE=DEout[DEout$FDR<.05,]
+#compare = makeContrasts(TktDfGR.F-GR.F, levels=design)
+#lrt = glmQLFTest(fit,contrast=as.vector(compare))
+#G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+#DEout=G_X_E$table
+#GR.F.CxDf=DEout
+#sGR.F.CxDf=DEout[DEout$FDR<.05,]
 
 
 
-##GR.M TKT control vs TKT altered
-compare = makeContrasts(TktDfGR.M-GR.M, levels=design)
-lrt = glmQLFTest(fit,contrast=as.vector(compare))
-G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
-DEout=G_X_E$table
-GR.M.CxDf=DEout
-sGR.M.CxDf=DEout[DEout$FDR<.05,]
-
-compare = makeContrasts(TktOEGR.M-GR.M, levels=design)
-lrt = glmQLFTest(fit,contrast=as.vector(compare))
-G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
-DEout=G_X_E$table
-GR.M.CxOE=DEout
-sGR.M.CxOE=DEout[DEout$FDR<.05,]
-
-##WT.M TKT control vs TKT altered
-compare = makeContrasts(TktDfWT.M-WT.M, levels=design)
-lrt = glmQLFTest(fit,contrast=as.vector(compare))
-G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
-DEout=G_X_E$table
-WT.M.CxDf=DEout
-sWT.M.CxDf=DEout[DEout$FDR<.05,]
-
-compare = makeContrasts(TktOEWT.M-WT.M, levels=design)
-lrt = glmQLFTest(fit,contrast=as.vector(compare))
-G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
-DEout=G_X_E$table
-WT.M.CxOE=DEout
-sWT.M.CxOE=DEout[DEout$FDR<.05,]
-
-
-##WT.M vs GR.M
-compare = makeContrasts(GR.M-WT.M, levels=design)
-lrt = glmQLFTest(fit,contrast=as.vector(compare))
-G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
-DEout=G_X_E$table
-GRxWT.M=DEout
-sGRxWT.M=DEout[DEout$FDR<.05,]
-
-compare = makeContrasts(TktDfGR.M-TktDfWT.M, levels=design)
-lrt = glmQLFTest(fit,contrast=as.vector(compare))
-G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
-DEout=G_X_E$table
-GRxWT.MDf=DEout
-sGRxWT.MDf=DEout[DEout$FDR<.05,]
-
-compare = makeContrasts(TktOEGR.M-TktOEWT.M, levels=design)
-lrt = glmQLFTest(fit,contrast=as.vector(compare))
-G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
-DEout=G_X_E$table
-GRxWT.MOE=DEout
-sGRxWT.MOE=DEout[DEout$FDR<.05,]
-
-TKT.EdgeR = data.frame(GRF.CxDf = GR.F.CxDf[row.names(cpmdata),'FDR'],
-                       GRF.CxOE = GR.F.CxOE[row.names(cpmdata),'FDR'],
-                       
-                       WTF.CxDf = WT.F.CxDf[row.names(cpmdata),'FDR'],
-                       WTF.CxOE = WT.F.CxOE[row.names(cpmdata),'FDR'],
-                       
-                       GRxWT.FC = GRxWT.F[row.names(cpmdata),'FDR'],
-                       GRxWT.FDf = GRxWT.FDf[row.names(cpmdata),'FDR'],
-                       GRxWT.FOE = GRxWT.FOE[row.names(cpmdata),'FDR'],
-                       
-                       GRM.CxDf = GR.M.CxDf[row.names(cpmdata),'FDR'],
-                       GRM.CxOE = GR.M.CxOE[row.names(cpmdata),'FDR'],
-                       
-                       WTM.CxDf = WT.M.CxDf[row.names(cpmdata),'FDR'],
-                       WTM.CxOE = WT.M.CxOE[row.names(cpmdata),'FDR'],
-                       
-                       GRxWT.MC = GRxWT.M[row.names(cpmdata),'FDR'],
-                       GRxWT.MDf = GRxWT.MDf[row.names(cpmdata),'FDR'],
-                       GRxWT.MOE = GRxWT.MOE[row.names(cpmdata),'FDR'])
-
-row.names(TKT.EdgeR) = row.names(cpmdata)
-##write.csv(TKT.EdgeR, "/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT.EdgeR.Table.csv")
-
-Female = c(nrow(sGR.F.CxDf), nrow(sGR.F.CxOE),
-           nrow(sWT.F.CxDf), nrow(sWT.F.CxOE),
-           nrow(sGRxWT.F), nrow(sGRxWT.FDf), nrow(sGRxWT.FOE))
-
-Male = c(nrow(sGR.M.CxDf), nrow(sGR.M.CxOE),
-         nrow(sWT.M.CxDf), nrow(sWT.M.CxOE),
-         nrow(sGRxWT.M), nrow(sGRxWT.MDf), nrow(sGRxWT.MOE))
-  
-
-MDSdata = plotMDS(z, top = 13582, col=as.numeric(factor(gr)))
-
-temp=convert[,"Symbol"]
-temp2=setdiff(row.names(countdata),convert[,2])
-names(temp)=convert[,2]
-names(temp2)=temp2
-convert=c(temp,temp2)
-
-Comparisons = list(row.names(sGR.F.CxDf), row.names(sGR.F.CxOE),
-                row.names(sWT.F.CxDf), row.names(sWT.F.CxOE),
-                row.names(sGRxWT.F), row.names(sGRxWT.FDf), row.names(sGRxWT.FOE),
-                row.names(sGR.M.CxDf), row.names(sGR.M.CxOE),
-                row.names(sWT.M.CxDf), row.names(sWT.M.CxOE),
-                row.names(sGRxWT.M), row.names(sGRxWT.MDf), row.names(sGRxWT.MOE))
-
-GroupsToDEGs = matrix("", nrow = 28, ncol = 3)
-
-GroupsToDEGs[,1] = c("GR.F", "TktDfGR.F",
-                     "GR.F", "TktOEGR.F",
-                     "WT.F", "TktDfWT.F",
-                     "WT.F", "TktOEWT.F",
-                     "GR.F", "WT.F",
-                     "TktDfGR.F", "TktDfWT.F",
-                     "TktOEGR.F", "TktOEWT.F",
-                     "GR.M", "TktDfGR.M",
-                     "GR.M", "TktOEGR.M",
-                     "WT.M", "TktDfWT.M",
-                     "WT.M", "TktOEWT.M",
-                     "GR.M", "WT.M",
-                     "TktDfGR.M", "TktDfWT.M",
-                     "TktOEGR.M", "TktOEWT.M")
-
-GroupsToDEGs[,2] = c("TktDfGR.F", "GR.F",
-                     "TktOEGR.F", "GR.F", 
-                     "TktDfWT.F", "WT.F", 
-                     "TktOEWT.F", "WT.F", 
-                     "WT.F", "GR.F", 
-                     "TktDfWT.F", "TktDfGR.F", 
-                     "TktOEWT.F", "TktOEGR.F", 
-                     "TktDfGR.M", "GR.M", 
-                     "TktOEGR.M", "GR.M", 
-                     "TktDfWT.M", "WT.M", 
-                     "TktOEWT.M", "WT.M", 
-                     "WT.M", "GR.M", 
-                     "TktDfWT.M", "TktDfGR.M", 
-                     "TktOEWT.M", "TktOEGR.M")
-
-GroupsToDEGs[,3] = c(1,1,2,2,3,3,4,4,5,5,6,6,7,7,
-                     8,8,9,9,10,10,11,11,12,12,13,13,14,14)
+MDSdata = plotMDS(z, 
+                  top = 15000, 
+                  col = as.numeric(factor(gr)), 
+                  labels =  paste(groups$Group, groups$Replicate))
 
 ```
+
+```{r echo = F}
+
+countdata=GBB.countdata
+groups=GBB.groups
+
+groups = groups[groups$Experiment == "GBB-OE",]
+
+##normalize data
+countdata= countdata[,row.names(groups)]
+x <- countdata
+gr <- factor(groups$Group)
+y <- DGEList(counts=x,group=gr)
+keep <- filterByExpr(y)
+y <- y[keep,,keep.lib.sizes=FALSE]
+z <- calcNormFactors(y, method = "TMM")
+##normalized cpm
+cpmdata=cpm(z)
+
+design<-model.matrix(~0 + gr)
+colnames(design) = unique(gr)
+z = estimateDisp(z, design, robust = T)
+
+fit <- glmQLFit(z, design)
+
+MDSdata = plotMDS(z, 
+                  top = 15000, 
+                  col = as.numeric(factor(gr)), 
+                  labels =  paste(groups$Group, groups$Replicate))
+
+```
+
+
 
 ## <span style="text-decoration:underline">Do the samples group by condition?</span> 
 ```{r fig1, echo = F, warning=F, fig.height=10, fig.width=10, fig.cap= 'MDS plot using all samples. Of these, samples GR.F3, WT.F3 and TktDfWT.F3 stand out as potential outliers.'}
