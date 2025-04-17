@@ -123,7 +123,7 @@ plot.pos = function(chr, start, end){
   fig = fig %>% add_lines(x = ~dfx,
                           y = ~dfy,
                           type = 'scatter',
-                          mode = "lines",
+                          mode = "lines + markers",
                           name = ~dfName,
                           showlegend = F,
                           fill = 'tozeroy',
