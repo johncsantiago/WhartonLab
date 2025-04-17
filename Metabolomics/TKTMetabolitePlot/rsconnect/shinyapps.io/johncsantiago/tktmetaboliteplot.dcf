@@ -1,0 +1,10 @@
+name: tktmetaboliteplot
+title:
+username: johncsantiago
+account: johncsantiago
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 14539741
+bundleId: 10128128
+url: https://johncsantiago.shinyapps.io/tktmetaboliteplot/
+version: 1

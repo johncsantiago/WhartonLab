@@ -14,11 +14,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 B = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Russo Fig 1 eclosion.csv")
 
-B = B[c("w1118", "WTloxP", "G85Rhr", 
-        "WTcr", "G85Rcr", "A4V.A4V",
-        "null26.null26", "WTcr.null26",
-        "G85Rcr.null26", "A4V.X16",
-        "A4V.G85Rcr")]
 
 mean.B = setNames(rep(0, ncol(B)), colnames(B))
 i=1
@@ -28,11 +23,11 @@ while(i<=ncol(B)){
 }
 
 B.labels = c("w1118",
-             "WTLoxP/WTLoxP", "G85R/G85R(HR)",
-             "WT/WT(CR)", "G85R/G85R(CR)",
-             "A4V/A4V", "Sod1null/Sod1null", 
-             "WT/Sod1null", "G85R(CR)/Sod1null",
-             "A4V/X16", "A4V/G85R(CR)")
+             "WT(LoxP)", "G85R(hr)",
+             "WT(cr)", "G85R(cr)",
+             "G85R(cr)/Sod1null", "WT(cr)/Sod1null", "Sod1null", 
+             "A4V/A4V", "A4V/Sod1null","A4V/X16", "A4V/G85R(cr)")
+              
 
 ```
 
@@ -44,11 +39,11 @@ barplot(height = mean.B,
         ylim = c(0, 100),
         col = "black",
         las = 2,
-        ylab = "Eclosion rate (%)",
+        ylab = "Eclosion frequency (%)",
         main = "Eclosion from the pupal case",
         xaxt = "n")
 axis(side = 1,
-     at = c(.7 + (c(0:10)*1.2)),
+     at = c(.7 + (c(0:11)*1.2)),
      lwd = 3,
      line = 0,
      labels = B.labels,

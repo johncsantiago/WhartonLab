@@ -43,7 +43,7 @@ plot.A4V(ID)
 ## Plot metabolite levels from the G85R TKT metabolomics experiment
 ## metabID needs to be the full or partial metabolite name as listed in the table (case sensitive)
 
-metabID = "NADPH"
+metabID = "FAD"
 
 plot.metab(metabID)
 
