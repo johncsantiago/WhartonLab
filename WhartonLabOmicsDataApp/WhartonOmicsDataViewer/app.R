@@ -34,7 +34,7 @@ ui <- fluidPage(
       width = 4,
       h4("Fold Change and FDR Summary"),
       div(
-        DTOutput("metabTable", height = "300px"),
+        DTOutput("metabTable", height = "350px"),
         style = "max-width: 400px;"  # Example narrower width
       )
     )
@@ -144,7 +144,7 @@ server <- function(input, output, session) {
         paging = FALSE,
         scrollX = TRUE,
         scrollCollapse = TRUE,
-        scrollY = "300px",  # adjust height as needed
+        scrollY = "350px",  # adjust height as needed
         scroller = TRUE,
         rowCallback = JS(
           'function(row, data) {

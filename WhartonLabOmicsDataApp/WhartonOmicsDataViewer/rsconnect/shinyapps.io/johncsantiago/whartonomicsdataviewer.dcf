@@ -1,0 +1,10 @@
+name: whartonomicsdataviewer
+title:
+username: johncsantiago
+account: johncsantiago
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 14547755
+bundleId: 10132628
+url: https://johncsantiago.shinyapps.io/whartonomicsdataviewer/
+version: 1
