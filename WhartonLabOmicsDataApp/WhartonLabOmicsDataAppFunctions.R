@@ -108,7 +108,7 @@ plot.G85R = function(ID){
         
         points(x=as.numeric(factor(gene$condition)),
                y=gene$cpm,
-               cex=2.5,
+               cex=1.5,
                pch=21,
                bg=c("darkgreen", 'firebrick',"dodgerblue","gold")[as.numeric(factor(gene$group))])
         
