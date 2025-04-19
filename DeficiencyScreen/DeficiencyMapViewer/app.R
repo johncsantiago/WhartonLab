@@ -39,14 +39,14 @@ ui <- fluidPage(
                numericInput("start.range",
                             h5("Upstream Distance from TSS"),
                             min = 0,
-                            value = 1000000),),
+                            value = 100000),),
         
         ##Downstream from gene end
         column(6,
                numericInput("end.range",
                             h5("Downstream Distance from TES"),
                             min = 0,
-                            value = 1000000),),
+                            value = 100000),),
       ),
       ),
     
@@ -72,11 +72,10 @@ ui <- fluidPage(
                numericInput("end",
                             h5("End Position"),
                             min = 0,
-                            value = 15000000),),
+                            value = 14100000),),
       ),),
     
     actionButton("updatePlot", "Update Plot"),
-    
     
     width = 3),
     
@@ -90,20 +89,25 @@ ui <- fluidPage(
     ),),)
 
 
-
 # Define server logic required to draw a histogram ----
 server <- function(input, output, session) {
   
   
-  session$onFlushed(function() {
-    # Only trigger once to avoid infinite loops
-    isolate({
-      updateActionButton(session, "updatePlot", label = NULL, icon = NULL)
-      session$sendInputMessage("updatePlot", list(value = 1))
-    })
-  }, once = TRUE)
+  #session$onFlushed(function() {
+  #  # Only trigger once to avoid infinite loops
+  #  isolate({
+  #    updateActionButton(session, "updatePlot", label = NULL, icon = NULL)
+  #    session$sendInputMessage("updatePlot", list(value = 1))
+  #  })
+  #}, once = TRUE)
   
-  
+  #  session$onFlushed(function() {
+  #  isolate({
+  #    shinyjs::click("updatePlot")
+  #  })
+  #}, once = TRUE)
+
+    
   updateData <- eventReactive(input$updatePlot, {
     if (input$locfactor == "gene") {
       req(input$gene, input$start.range, input$end.range)
@@ -157,19 +161,15 @@ server <- function(input, output, session) {
   })
   
   
-  output$url <- renderUI({
-    req(input$gene)
-    tags$a(href = paste0("http://flybase.org/reports/", 
-                         GeneIDKey[GeneIDKey$Symbol == input$gene, "FBgn"]),
-           "FlyBase Gene Summary Page",
-           target = "_blank")
+  output$click <- renderPrint({
+    d <- event_data("plotly_click")
+    if (is.null(d)) "Flybase link will appear here after click (double-click to clear)" else{
+      page = a(paste0("Flybase Page for ", fbID$Symbol[grep(d$x,fbID$Position)]), href = paste0("http://flybase.org/reports/",fbID$FBgn[grep(d$x,fbID$Position)]), target="_blank")
+      tagList(page)
+    }
   })
+  
 }
-
-
-
-
-
 
 
 # Run the application 

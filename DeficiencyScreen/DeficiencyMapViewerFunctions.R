@@ -3,7 +3,7 @@ DfKey = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/DfKey.csv"), row.na
 row.names(DfKey) = DfKey$Deficiency
 DfKey[DfKey$MLE == 0, "MLE"] = .05
 GeneIDKey = read.csv(paste0(git.dir,"GeneralDataFiles/GeneIDKey.csv"),row.names = 1)
-
+GeneIDKey = GeneIDKey[-grep("_", GeneIDKey$Symbol),]
 temp.DFKey = DfKey[, c("FBab..", "Deficiency", "Start", "End", "Chr", "Deficiency")]
 colnames(temp.DFKey) = c("FBgn", "Symbol", "Start", "End", "CHR", "Name")
 temp.DFKey$ensembl = ""
@@ -17,6 +17,7 @@ GeneIDKey = rbind(GeneIDKey, temp.DFKey)
 fbID = data.frame(FBgn = c(rep(GeneIDKey$FBgn, 2)),
                   Symbol = c(rep(GeneIDKey$Symbol, 2)),
                   Position = c(GeneIDKey$Start, GeneIDKey$End))
+
 
 plot.pos = function(chr, start, end){
   goi = data.frame(Start = start,
