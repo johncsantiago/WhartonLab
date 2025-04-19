@@ -6,6 +6,7 @@ library(plotly)
 
 source("https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/DeficiencyScreen/DeficiencyMapViewerFunctions.R")
 
+
 ui <- fluidPage(
   
   ##Sidebar control code 
@@ -74,6 +75,9 @@ ui <- fluidPage(
                             value = 15000000),),
       ),),
     
+    actionButton("updatePlot", "Update Plot"),
+    
+    
     width = 3),
     
     ##Figure display settings    
@@ -90,69 +94,78 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram ----
 server <- function(input, output, session) {
   
-  output$geneControls = renderUI({
-    selectizeInput("gene", label = "Select Gene", 
-                   choices = NULL,  # leave empty for server-side
-                   options = list(
-                     create = TRUE,
-                     placeholder = 'Select a gene name'
-                   ),
-                   selected = "Arc1")
-  })  
   
-  observe({
-    updateSelectizeInput(
-      session, 
-      "gene", 
-      choices = GeneIDKey$Symbol, 
-      server = TRUE
-    )
-  })
-  
-  # Debounced reactive inputs
-  debounced_gene <- debounce(reactive(input$gene), 500)
-  debounced_start <- debounce(reactive(input$start.range), 500)
-  debounced_end <- debounce(reactive(input$end.range), 500)
+  session$onFlushed(function() {
+    # Only trigger once to avoid infinite loops
+    isolate({
+      updateActionButton(session, "updatePlot", label = NULL, icon = NULL)
+      session$sendInputMessage("updatePlot", list(value = 1))
+    })
+  }, once = TRUE)
   
   
-  output$plot <- renderPlotly({
+  updateData <- eventReactive(input$updatePlot, {
     if (input$locfactor == "gene") {
-      req(debounced_gene())  # Wait until gene input stabilizes
-      
-      p = plot.gene(
-        gene.symbol = debounced_gene(),
-        start.range = debounced_start(),
-        end.range = debounced_end()
+      req(input$gene, input$start.range, input$end.range)
+      list(
+        type = "gene",
+        gene = input$gene,
+        start.range = input$start.range,
+        end.range = input$end.range
       )
     } else {
-      p = plot.pos(
+          req(input$CHR, input$start, input$end)
+      list(
+        type = "pos",
         chr = input$CHR,
         start = input$start,
         end = input$end
       )
     }
-    
-    p %>%
-      layout(dragmode = "select") %>%
-      event_register("plotly_selecting") %>%
-      event_register("plotly_click")
   })
-  
-  
-  output$click <- renderPrint({
-    d <- event_data("plotly_click")
-    if (is.null(d)) {
-      "Flybase link will appear here after click (double-click to clear)"
+
+
+  output$plot <- renderPlotly({
+    req(updateData())
+    params <- updateData()
+    
+    if (params$type == "gene") {
+      plot.gene(params$gene, params$start.range, params$end.range)
     } else {
-      page = a(
-        paste0("Flybase Page for ", fbID$Symbol[grep(d$x, fbID$Position)]),
-        href = paste0("http://flybase.org/reports/", fbID$FBgn[grep(d$x, fbID$Position)]),
-        target = "_blank"
-      )
-      tagList(page)
+      plot.pos(params$chr, params$start, params$end)
     }
   })
+  
+  
+  output$geneControls <- renderUI({
+    selectizeInput("gene",
+                   label = h5("Gene Symbol"),
+                   choices = NULL,   # No choices here
+                   selected = "Arc1",
+                   multiple = FALSE)
+  })
+  
+  
+  observe({
+    updateSelectizeInput(
+      session,
+      inputId = "gene",
+      choices = sort(unique(GeneIDKey$Symbol)),
+      server = TRUE,
+      selected = "Arc1"
+    )
+  })
+  
+  
+  output$url <- renderUI({
+    req(input$gene)
+    tags$a(href = paste0("http://flybase.org/reports/", 
+                         GeneIDKey[GeneIDKey$Symbol == input$gene, "FBgn"]),
+           "FlyBase Gene Summary Page",
+           target = "_blank")
+  })
 }
+
 
 
 

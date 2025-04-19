@@ -4,6 +4,16 @@ row.names(DfKey) = DfKey$Deficiency
 DfKey[DfKey$MLE == 0, "MLE"] = .05
 GeneIDKey = read.csv(paste0(git.dir,"GeneralDataFiles/GeneIDKey.csv"),row.names = 1)
 
+temp.DFKey = DfKey[, c("FBab..", "Deficiency", "Start", "End", "Chr", "Deficiency")]
+colnames(temp.DFKey) = c("FBgn", "Symbol", "Start", "End", "CHR", "Name")
+temp.DFKey$ensembl = ""
+temp.DFKey$CG = ""
+temp.DFKey$Strand = 0
+
+temp.DFKey = temp.DFKey[, colnames(GeneIDKey)]
+
+GeneIDKey = rbind(GeneIDKey, temp.DFKey)
+
 fbID = data.frame(FBgn = c(rep(GeneIDKey$FBgn, 2)),
                   Symbol = c(rep(GeneIDKey$Symbol, 2)),
                   Position = c(GeneIDKey$Start, GeneIDKey$End))
@@ -267,7 +277,7 @@ plot.gene = function(gene.symbol, start.range, end.range){
   fig = fig %>% add_lines(x = ~dfx,
                           y = ~dfy,
                           type = 'scatter',
-                          mode = "lines",
+                          mode = "lines + markers",
                           name = ~dfName,
                           showlegend = F,
                           fill = 'tozeroy',
