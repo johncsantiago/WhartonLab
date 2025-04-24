@@ -65,17 +65,17 @@ ui <- fluidPage(
                numericInput("start",
                             h5("Start Position"),
                             min = 0,
-                            value = 14000000),),
+                            value = 12650000),),
         
         ##Downstream from gene end
         column(6,
                numericInput("end",
                             h5("End Position"),
                             min = 0,
-                            value = 14100000),),
+                            value = 12850000),),
       ),),
     
-    actionButton("updatePlot", "Update Plot"),
+    actionButton("updatePlot", "Show Genomic Region"),
     
     width = 3),
     
@@ -91,29 +91,14 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram ----
 server <- function(input, output, session) {
-  
-  
-  #session$onFlushed(function() {
-  #  # Only trigger once to avoid infinite loops
-  #  isolate({
-  #    updateActionButton(session, "updatePlot", label = NULL, icon = NULL)
-  #    session$sendInputMessage("updatePlot", list(value = 1))
-  #  })
-  #}, once = TRUE)
-  
-  #  session$onFlushed(function() {
-  #  isolate({
-  #    shinyjs::click("updatePlot")
-  #  })
-  #}, once = TRUE)
 
-    
+
   updateData <- eventReactive(input$updatePlot, {
     if (input$locfactor == "gene") {
       req(input$gene, input$start.range, input$end.range)
       list(
         type = "gene",
-        gene = input$gene,
+        gene = strsplit(input$gene, split = " ")[[1]][1],
         start.range = input$start.range,
         end.range = input$end.range
       )
@@ -145,7 +130,7 @@ server <- function(input, output, session) {
     selectizeInput("gene",
                    label = h5("Gene Symbol"),
                    choices = NULL,   # No choices here
-                   selected = "Arc1",
+                   selected = "Atf6",
                    multiple = FALSE)
   })
   
@@ -154,9 +139,9 @@ server <- function(input, output, session) {
     updateSelectizeInput(
       session,
       inputId = "gene",
-      choices = sort(unique(GeneIDKey$Symbol)),
+      choices = sort(unique(paste0(GeneIDKey$Symbol, " (", GeneIDKey$FBgn, ")"))),
       server = TRUE,
-      selected = "Arc1"
+      selected = "Atf6 (FBgn0033010)"
     )
   })
   

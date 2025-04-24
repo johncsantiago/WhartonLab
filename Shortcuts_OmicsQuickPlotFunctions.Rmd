@@ -20,7 +20,7 @@ source('https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/ma
 ## Plot gene expression from G85R TKT RNAseq experiment
 ## ID needs to be the full or partial gene symbol or FBgn (case sensitive)
 
-ID = "FBgn0004654"
+ID = "FBgn0003071"
 
 plot.G85R(ID)
 
@@ -43,7 +43,7 @@ plot.A4V(ID)
 ## Plot metabolite levels from the G85R TKT metabolomics experiment
 ## metabID needs to be the full or partial metabolite name as listed in the table (case sensitive)
 
-metabID = "FAD"
+metabID = "NADPH"
 
 plot.metab(metabID)
 
