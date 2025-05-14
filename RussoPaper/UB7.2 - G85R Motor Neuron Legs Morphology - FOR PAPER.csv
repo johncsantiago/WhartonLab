@@ -1,0 +1,27 @@
+,,,,,Leg Length,,Bundle,,Branching,,,Mito,,,,,,5
+Animal #,Genotype,Sex,Leg Location,Femur Length,Is the leg short,Is there scrunching/curving,Is the axonal bundle straight?,Does the axonal bundle split/thin/are there chunks missing,Does the branching look organized,Is the branching following a pattern/tiling,Is there branching in all aspects of the femur,Is there mitochondria in the entire axonal bundle,Do all branches have mitochondria?,Leg Length Total /2,Bundle Total /2,Branching Total /3,Mito /2,Total /9
+4,WT,M,B,589.824,1,1,1,0,1,1,1,1,1,2,1,3,2,8
+11,WT,M,B,443.025,0,1,1,1,1,1,1,1,0,1,2,3,1,6
+1,WT,M,B,542.879,1,1,1,1,1,1,1,1,1,2,2,3,2,9
+3,WT,M,B,446.781,0,1,1,0,1,1,0,1,1,1,1,2,2,6
+6,WT,M,B,557.962,1,1,1,1,1,1,0,1,1,2,2,2,2,8
+8,WT,M,B,515.389,1,0,1,1,1,1,1,1,1,1,2,3,2,8
+2,WT,M,B,574.832,1,1,1,1,1,1,0,1,1,2,2,2,2,8
+4,WT,M,B,573.581,1,1,1,0,0,0,1,0,1,2,1,1,1,5
+5,WT,M,B,604.836,1,1,1,1,1,1,1,1,1,2,2,3,2,9
+3,G85R,M,B,557.324,1,0,0,0,0,0,1,0,1,1,0,1,1,3
+10,G85R,M,B,550.853,1,1,1,0,0,1,0,0,0,2,1,1,0,4
+19,G85R,M,B,566.103,1,1,1,0,1,1,0,0,0,2,1,2,0,5
+20,G85R,M,B,535.96,1,1,0,0,0,1,1,0,0,2,0,2,0,4
+21,G85R,M,B,557.703,1,1,0,0,1,1,1,1,1,2,0,3,2,7
+22,G85R,M,B,579.136,1,0,0,0,1,1,1,0,1,1,0,3,1,5
+24,G85R,M,B,542.278,1,0,1,1,1,1,0,0,1,1,2,2,1,6
+25,G85R,M,B,536.458,1,0,0,0,1,1,1,1,1,1,0,3,2,6
+26,G85R,M,B,534.461,1,0,0,0,0,1,0,0,0,1,0,1,0,2
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,1 = normal,,,,,,,,,,,,,,,,,
+,0 = abnormal,,,,,,,,,,,,,,,,,

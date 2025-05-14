@@ -1,0 +1,1664 @@
+---
+title: "Jayden Stats Homework"
+author: "John Santiago"
+date: "2025-04-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r echo = F, warning=FALSE, message=FALSE}
+
+library(kableExtra)
+library(gtools)
+library(gplots)
+
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/UBLegMorphologyData.csv")
+
+temp$Genotype[temp$Genotype == "WT"] = "WT(cr)"
+temp$Genotype[temp$Genotype == "G85R"] = "G85R(cr)"
+
+temp$Genotype = factor(temp$Genotype, levels = unique(temp$Genotype))
+
+temp.titles = c("Is the leg short?",
+                "Is there scrunching or curving?",
+                "Is the axonal bundle straight?",
+                "Does the axonal bundle split or are there chunks missing?",
+                "Does the branching look organized?",
+                "Is the branching following a pattern tiling?",
+                "Is there branching in all aspects of the femur?",
+                "Is the mitochonria in the entire axonal bundle?",
+                "Do all branches have mitochondria?")
+
+
+
+std.colors = setNames(c('navy', "gold2", "turquoise4", "royalblue",
+                        'orange', "deeppink", "grey", "green4"),
+                      c("w1118", "WT(LoxP)", "G85R(hr)", "WT(cr)",
+                        "G85R(cr)", "A4V", "A4V/X16", "A4V/G85R(cr)"))
+
+
+hex = function(color, alpha){
+  rgb2hex = color
+  i = 1
+  while(i <= length(color)){
+    rgbvals = col2rgb(color[i])
+    rgb2hex[i] = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+    i = i+1
+  }
+  return(rgb2hex)
+}
+
+x.stagger.odd = c(0, -.1, .1, -.2, .2, -.3, .3, -.4, .4)
+x.stagger.even = c(-.05, .05, -.15, .15, -.25, .25, -.35, .35)
+
+```
+
+```{r echo = F}
+UB.barplot = function(i){
+  ##bar temp data
+  btd = temp[,i]
+  
+  
+  WT = factor(temp[temp$Genotype == "WT(cr)", i], levels = c(0, 1))
+  GR = factor(temp[temp$Genotype == "G85R(cr)", i], levels = c(0, 1))
+  fish.data = table(WT,
+                    GR)
+  fish.data
+  
+  pval = as.numeric(fisher.test(fish.data)[1][1])
+  
+  bar.temp = data.frame(WT = c(length(btd[temp$Genotype == "WT(cr)" &
+                                            btd == 0]),
+                               length(btd[temp$Genotype == "WT(cr)" &
+                                            btd == 1])),
+                        GR = c(length(btd[temp$Genotype == "G85R(cr)" &
+                                            btd == 0]),
+                               length(btd[temp$Genotype == "G85R(cr)" &
+                                            btd == 1])))
+  
+  
+  
+  bar.temp = as.matrix(bar.temp)
+  btd.names = unique(temp$Genotype)
+  
+  
+  opar <- par(lwd = 3)
+  
+  par(mar = c(3,4,4,5.5))
+  
+  plot(x = NA,
+       y = NA,
+       type = 'n',
+       ylim = c(0, 10),
+       xlim = c(1, 6),
+       xaxt = "n",
+       ylab= colnames(temp)[i],
+       yaxt = "n",
+       xlab = NA,
+       frame = F,
+       main = temp.titles[i-5])
+  
+  grid(nx=NA, ny=NULL, col = "grey50", lwd = .75)
+  
+  barplot(height = bar.temp,
+          ylim = c(0, 10),
+          beside = T,
+          col = "white",
+          las = 2,
+          ylab= colnames(temp)[i],
+          main = colnames(temp)[i],
+          xaxt = "n",
+          yaxt = "n",
+          add = T)
+  
+  barplot(height = bar.temp,
+          ylim = c(0, 10),
+          beside = T,
+          col = hex(c("firebrick", "royalblue"), .5),
+          las = 2,
+          ylab= colnames(temp)[i],
+          main = colnames(temp)[i],
+          xaxt = "n",
+          yaxt = "n",
+          add = T)
+  
+  
+  axis(side = 1,
+       at = c(2,5),
+       lwd = 0,
+       line = -0.5,
+       labels = btd.names,
+       xpd = T)
+  
+  lines(x = c(.75, 6.25),
+       y = c(0,0),
+       lwd = 3,
+       xpd = T)
+  
+  
+  axis(side = 2,
+       at = c(0:10),
+       lwd = 2,
+       line = 0,
+       labels = F,
+       xpd = T,
+       las = 2)
+  
+  axis(side = 2,
+       at = c(0, 5, 10),
+       lwd = 3,
+       line = 0,
+       labels = T,
+       xpd = T,
+       las = 2)
+  
+  legend('topright',
+         inset=c(-.15,0),
+         legend = c("Yes", "No"), 
+         fill = hex(c("firebrick", "royalblue"), .5),
+         cex = 1,
+         bty = 'n',
+         pt.cex = 1,
+         xpd = T)
+  
+  text(x = 6.35,
+       y = 8.0,
+      label = paste0("pval = ", signif(pval, 3)),
+      xpd = T,
+      adj = 0)
+}
+
+```
+
+
+```{r echo = F}
+i=5
+
+
+par(mar = c(5,7,5,2))
+      
+plot(x = NA,
+     y = NA,
+     type = 'n',
+     ylim = c(400, 650),
+     xlim = c(.5, 2.5),
+     xaxt = "n",
+     ylab= "Femur Length",
+     yaxt = "n",
+     xlab = NA,
+     frame = F,
+     main = "Femur Length")
+
+axis(side = 1,
+     at = c(1,2),
+     lwd = 3,
+     line = -.45,
+     labels = unique(temp$Genotype),
+     xpd = T)
+
+lines(x = c(0.4, 2.5),
+     y = c(400,400),
+     lwd = 3,
+     xpd = T)
+
+
+axis(side = 2,
+     at = c(400, 450, 500, 550, 600, 650),
+     lwd = 3,
+     line = 0,
+     labels = T,
+     las = 2,
+     xpd = T)
+
+      
+boxplot(temp[,i]~temp$Genotype,
+        xlab="",
+        las = 2,
+        cex.axis = 1,
+        ylim = c(400, 650),
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        col = hex(std.colors[unique(temp$Genotype)], .25),
+        add = T, 
+        xaxt = "n",
+        yaxt = "n",
+        frame = F)
+points(x = as.numeric(temp$Genotype),
+       y = temp[,i],
+       cex = 2.25,
+       pch = 21,
+       bg= std.colors[temp$Genotype])
+
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=7, include = F}
+i=6 
+
+
+par(mar = c(5,7,5,2))
+      
+plot(x = NA,
+     y = NA,
+     type = 'n',
+     ylim = c(0, 1.25),
+     xlim = c(.5, 2.5),
+     xaxt = "n",
+     ylab= colnames(temp)[i],
+     yaxt = "n",
+     xlab = NA,
+     frame = F,
+     main = colnames(temp)[i])
+
+axis(side = 1,
+     at = c(1,2),
+     lwd = 3,
+     line = -.9,
+     labels = unique(temp$Genotype),
+     xpd = T)
+
+lines(x = c(0.5, 2.5),
+     y = c(0,0),
+     lwd = 3,
+     xpd = T)
+
+
+axis(side = 2,
+     at = c(0, .5, 1),
+     lwd = 3,
+     line = 0,
+     labels = F,
+     xpd = T)
+
+      
+boxplot(temp[,i]~temp$Genotype,
+        xlab="",
+        las = 2,
+        cex.axis = 1,
+        ylim = c(0, 1.25),
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        col = hex(std.colors[unique(temp$Genotype)], .25),
+        add = T, 
+        xaxt = "n",
+        yaxt = "n",
+        frame = F)
+
+```
+
+
+
+```{r echo = F, warning=F}
+
+i = 6
+
+UB.barplot(i)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=7, include = F}
+i=7
+
+
+par(mar = c(5,7,5,2))
+      
+plot(x = NA,
+     y = NA,
+     type = 'n',
+     ylim = c(-0.25, 1.25),
+     xlim = c(.5, 2.5),
+     xaxt = "n",
+     ylab= colnames(temp)[i],
+     yaxt = "n",
+     xlab = NA,
+     frame = F,
+     main = colnames(temp)[i])
+      
+boxplot(temp[,i]~temp$Genotype,
+        xlab="",
+        las = 2,
+        cex.axis = 1,
+        ylim = c(-0.25, 1.25),
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        col = hex(std.colors[unique(temp$Genotype)], .25),
+        add = T, 
+        xaxt = "n",
+        frame = F)
+
+
+xpos = as.numeric(temp$Genotype)
+ones = temp[,i] == 1
+zeros = temp[,i] == 0
+
+
+if(odd(length(xpos[ones & xpos == 1]))){
+  xpos[ones & xpos == 1] = xpos[ones & xpos == 1] + x.stagger.odd[1:length(xpos[ones & xpos == 1])]
+}else{
+  xpos[ones & xpos == 1] = xpos[ones & xpos == 1] + x.stagger.even[1:length(xpos[ones & xpos == 1])]  
+}
+
+if(odd(length(xpos[ones & xpos == 2]))){
+  xpos[ones & xpos == 2] = xpos[ones & xpos == 2] + x.stagger.odd[1:length(xpos[ones & xpos == 2])]
+}else{
+  xpos[ones & xpos == 2] = xpos[ones & xpos == 2] + x.stagger.even[1:length(xpos[ones & xpos == 2])] 
+}
+
+
+if(odd(length(xpos[zeros & xpos == 1]))){
+  xpos[zeros & xpos == 1] = xpos[zeros & xpos == 1] + x.stagger.odd[1:length(xpos[zeros & xpos == 1])]
+}else{
+  xpos[zeros & xpos == 1] = xpos[zeros & xpos == 1] + x.stagger.even[1:length(xpos[zeros & xpos == 1])]  
+}
+
+if(odd(length(xpos[zeros & xpos == 2]))){
+  xpos[zeros & xpos == 2] = xpos[zeros & xpos == 2] + x.stagger.odd[1:length(xpos[zeros & xpos == 2])]
+}else{
+  xpos[zeros & xpos == 2] = xpos[zeros & xpos == 2] + x.stagger.even[1:length(xpos[zeros & xpos == 2])] 
+}
+
+
+points(x = xpos,
+       y = temp[,i],
+       cex = 2.25,
+       pch = 21,
+       bg= std.colors[temp$Genotype])
+
+```
+
+
+```{r echo = F, warning=F}
+
+i = 7
+
+UB.barplot(i)
+
+```
+
+```{r echo = F}
+
+i=15
+
+par(mar = c(5,7,5,2))
+      
+plot(x = NA,
+     y = NA,
+     type = 'n',
+     ylim = c(0.5, 2.5),
+     xlim = c(.5, 2.5),
+     xaxt = "n",
+     ylab= colnames(temp)[i],
+     yaxt = "n",
+     xlab = NA,
+     frame = F,
+     main = "Leg Length (Total)")
+      
+boxplot(temp[,i]~temp$Genotype,
+        xlab="",
+        las = 2,
+        cex.axis = 1,
+        ylim = c(0.5, 2.5),
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        col = hex(std.colors[unique(temp$Genotype)], .25),
+        add = T, 
+        xaxt = "n",
+        yaxt = "n",
+        frame = F)
+
+
+xpos = as.numeric(temp$Genotype)
+ones = temp[,i] == 1
+zeros = temp[,i] == 2
+
+pval = t.test(x = temp[1:9, i],
+              y = temp[10:18, i],
+              paired = F)[[3]]
+
+
+if(odd(length(xpos[ones & xpos == 1]))){
+  xpos[ones & xpos == 1] = xpos[ones & xpos == 1] + x.stagger.odd[1:length(xpos[ones & xpos == 1])]
+}else{
+  xpos[ones & xpos == 1] = xpos[ones & xpos == 1] + x.stagger.even[1:length(xpos[ones & xpos == 1])]  
+}
+
+if(odd(length(xpos[ones & xpos == 2]))){
+  xpos[ones & xpos == 2] = xpos[ones & xpos == 2] + x.stagger.odd[1:length(xpos[ones & xpos == 2])]
+}else{
+  xpos[ones & xpos == 2] = xpos[ones & xpos == 2] + x.stagger.even[1:length(xpos[ones & xpos == 2])] 
+}
+
+
+if(odd(length(xpos[zeros & xpos == 1]))){
+  xpos[zeros & xpos == 1] = xpos[zeros & xpos == 1] + x.stagger.odd[1:length(xpos[zeros & xpos == 1])]
+}else{
+  xpos[zeros & xpos == 1] = xpos[zeros & xpos == 1] + x.stagger.even[1:length(xpos[zeros & xpos == 1])]  
+}
+
+if(odd(length(xpos[zeros & xpos == 2]))){
+  xpos[zeros & xpos == 2] = xpos[zeros & xpos == 2] + x.stagger.odd[1:length(xpos[zeros & xpos == 2])]
+}else{
+  xpos[zeros & xpos == 2] = xpos[zeros & xpos == 2] + x.stagger.even[1:length(xpos[zeros & xpos == 2])] 
+}
+
+
+points(x = xpos,
+       y = temp[,i],
+       cex = 2.25,
+       pch = 21,
+       bg= std.colors[temp$Genotype])
+
+
+  axis(side = 1,
+       at = c(1,2),
+       lwd = 3,
+       line = -.45,
+       labels = unique(temp$Genotype),
+       xpd = T)
+  
+    lines(x = c(0.4, 2.5),
+       y = c(0.5,0.5),
+       lwd = 3,
+       xpd = T)
+    
+      axis(side = 2,
+       at = c(0.5, 1, 1.5, 2, 2.5),
+       lwd = 3,
+       line = 0,
+       labels = T,
+       xpd = T,
+       las = 2)
+  
+  text(x = 2.25,
+       y = 2.5,
+       label = paste0("pval = ", signif(pval, 3)))
+  
+```
+
+
+```{r echo = F, fig.width=10, fig.height=7, include = F}
+i=9
+
+par(mar = c(5,7,5,2))
+      
+plot(x = NA,
+     y = NA,
+     type = 'n',
+     ylim = c(-0.25, 1.25),
+     xlim = c(.5, 2.5),
+     xaxt = "n",
+     ylab= colnames(temp)[i],
+     yaxt = "n",
+     xlab = NA,
+     frame = F,
+     main = colnames(temp)[i])
+      
+boxplot(temp[,i]~temp$Genotype,
+        xlab="",
+        las = 2,
+        cex.axis = 1,
+        ylim = c(-0.25, 1.25),
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        col = hex(std.colors[unique(temp$Genotype)], .25),
+        add = T, 
+        xaxt = "n",
+        frame = F)
+
+
+xpos = as.numeric(temp$Genotype)
+ones = temp[,i] == 1
+zeros = temp[,i] == 0
+
+
+if(odd(length(xpos[ones & xpos == 1]))){
+  xpos[ones & xpos == 1] = xpos[ones & xpos == 1] + x.stagger.odd[1:length(xpos[ones & xpos == 1])]
+}else{
+  xpos[ones & xpos == 1] = xpos[ones & xpos == 1] + x.stagger.even[1:length(xpos[ones & xpos == 1])]  
+}
+
+if(odd(length(xpos[ones & xpos == 2]))){
+  xpos[ones & xpos == 2] = xpos[ones & xpos == 2] + x.stagger.odd[1:length(xpos[ones & xpos == 2])]
+}else{
+  xpos[ones & xpos == 2] = xpos[ones & xpos == 2] + x.stagger.even[1:length(xpos[ones & xpos == 2])] 
+}
+
+
+if(odd(length(xpos[zeros & xpos == 1]))){
+  xpos[zeros & xpos == 1] = xpos[zeros & xpos == 1] + x.stagger.odd[1:length(xpos[zeros & xpos == 1])]
+}else{
+  xpos[zeros & xpos == 1] = xpos[zeros & xpos == 1] + x.stagger.even[1:length(xpos[zeros & xpos == 1])]  
+}
+
+if(odd(length(xpos[zeros & xpos == 2]))){
+  xpos[zeros & xpos == 2] = xpos[zeros & xpos == 2] + x.stagger.odd[1:length(xpos[zeros & xpos == 2])]
+}else{
+  xpos[zeros & xpos == 2] = xpos[zeros & xpos == 2] + x.stagger.even[1:length(xpos[zeros & xpos == 2])] 
+}
+
+
+points(x = xpos,
+       y = temp[,i],
+       cex = 2.25,
+       pch = 21,
+       bg= std.colors[temp$Genotype])
+
+```
+
+```{r echo = F, warning=F}
+
+i = 8
+
+UB.barplot(i)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=7, include = F}
+i=10
+
+
+par(mar = c(5,7,5,2))
+      
+plot(x = NA,
+     y = NA,
+     type = 'n',
+     ylim = c(-0.25, 1.25),
+     xlim = c(.5, 2.5),
+     xaxt = "n",
+     ylab= colnames(temp)[i],
+     yaxt = "n",
+     xlab = NA,
+     frame = F,
+     main = colnames(temp)[i])
+      
+boxplot(temp[,i]~temp$Genotype,
+        xlab="",
+        las = 2,
+        cex.axis = 1,
+        ylim = c(-0.25, 1.25),
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        col = hex(std.colors[unique(temp$Genotype)], .25),
+        add = T, 
+        xaxt = "n",
+        frame = F)
+
+
+xpos = as.numeric(temp$Genotype)
+ones = temp[,i] == 1
+zeros = temp[,i] == 0
+
+
+if(odd(length(xpos[ones & xpos == 1]))){
+  xpos[ones & xpos == 1] = xpos[ones & xpos == 1] + x.stagger.odd[1:length(xpos[ones & xpos == 1])]
+}else{
+  xpos[ones & xpos == 1] = xpos[ones & xpos == 1] + x.stagger.even[1:length(xpos[ones & xpos == 1])]  
+}
+
+if(odd(length(xpos[ones & xpos == 2]))){
+  xpos[ones & xpos == 2] = xpos[ones & xpos == 2] + x.stagger.odd[1:length(xpos[ones & xpos == 2])]
+}else{
+  xpos[ones & xpos == 2] = xpos[ones & xpos == 2] + x.stagger.even[1:length(xpos[ones & xpos == 2])] 
+}
+
+
+if(odd(length(xpos[zeros & xpos == 1]))){
+  xpos[zeros & xpos == 1] = xpos[zeros & xpos == 1] + x.stagger.odd[1:length(xpos[zeros & xpos == 1])]
+}else{
+  xpos[zeros & xpos == 1] = xpos[zeros & xpos == 1] + x.stagger.even[1:length(xpos[zeros & xpos == 1])]  
+}
+
+if(odd(length(xpos[zeros & xpos == 2]))){
+  xpos[zeros & xpos == 2] = xpos[zeros & xpos == 2] + x.stagger.odd[1:length(xpos[zeros & xpos == 2])]
+}else{
+  xpos[zeros & xpos == 2] = xpos[zeros & xpos == 2] + x.stagger.even[1:length(xpos[zeros & xpos == 2])] 
+}
+
+
+points(x = xpos,
+       y = temp[,i],
+       cex = 2.25,
+       pch = 21,
+       bg= std.colors[temp$Genotype])
+
+```
+
+
+```{r echo = F, warning=F}
+
+i = 9
+
+UB.barplot(i)
+
+```
+
+```{r echo = F}
+
+i=16
+
+par(mar = c(5,7,5,2))
+      
+plot(x = NA,
+     y = NA,
+     type = 'n',
+     ylim = c(-0.5, 2.5),
+     xlim = c(.5, 2.5),
+     xaxt = "n",
+     ylab= colnames(temp)[i],
+     yaxt = "n",
+     xlab = NA,
+     frame = F,
+     main = "Axonal Bundle (Total)")
+      
+boxplot(temp[,i]~temp$Genotype,
+        xlab="",
+        las = 2,
+        cex.axis = 1,
+        ylim = c(-0.5, 2.5),
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        col = hex(std.colors[unique(temp$Genotype)], .25),
+        add = T, 
+        xaxt = "n",
+        yaxt = "n",
+        frame = F)
+
+
+xpos = as.numeric(temp$Genotype)
+ones = temp[,i] == 1
+zeros = temp[,i] == 0
+twos = temp[,i] == 2
+
+pval = t.test(x = temp[1:9, i],
+              y = temp[10:18, i],
+              paired = F)[[3]]
+
+
+if(odd(length(xpos[twos & xpos == 1]))){
+  xpos[twos & xpos == 1] = xpos[twos & xpos == 1] + x.stagger.odd[1:length(xpos[twos & xpos == 1])]
+}else{
+  xpos[twos & xpos == 1] = xpos[twos & xpos == 1] + x.stagger.even[1:length(xpos[twos & xpos == 1])]  
+}
+
+if(odd(length(xpos[twos & xpos == 2]))){
+  xpos[twos & xpos == 2] = xpos[twos & xpos == 2] + x.stagger.odd[1:length(xpos[twos & xpos == 2])]
+}else{
+  xpos[twos & xpos == 2] = xpos[twos & xpos == 2] + x.stagger.even[1:length(xpos[twos & xpos == 2])] 
+}
+
+
+if(odd(length(xpos[ones & xpos == 1]))){
+  xpos[ones & xpos == 1] = xpos[ones & xpos == 1] + x.stagger.odd[1:length(xpos[ones & xpos == 1])]
+}else{
+  xpos[ones & xpos == 1] = xpos[ones & xpos == 1] + x.stagger.even[1:length(xpos[ones & xpos == 1])]  
+}
+
+if(odd(length(xpos[ones & xpos == 2]))){
+  xpos[ones & xpos == 2] = xpos[ones & xpos == 2] + x.stagger.odd[1:length(xpos[ones & xpos == 2])]
+}else{
+  xpos[ones & xpos == 2] = xpos[ones & xpos == 2] + x.stagger.even[1:length(xpos[ones & xpos == 2])] 
+}
+
+
+if(odd(length(xpos[zeros & xpos == 1]))){
+  xpos[zeros & xpos == 1] = xpos[zeros & xpos == 1] + x.stagger.odd[1:length(xpos[zeros & xpos == 1])]
+}else{
+  xpos[zeros & xpos == 1] = xpos[zeros & xpos == 1] + x.stagger.even[1:length(xpos[zeros & xpos == 1])]  
+}
+
+if(odd(length(xpos[zeros & xpos == 2]))){
+  xpos[zeros & xpos == 2] = xpos[zeros & xpos == 2] + x.stagger.odd[1:length(xpos[zeros & xpos == 2])]
+}else{
+  xpos[zeros & xpos == 2] = xpos[zeros & xpos == 2] + x.stagger.even[1:length(xpos[zeros & xpos == 2])] 
+}
+
+
+points(x = xpos,
+       y = temp[,i],
+       cex = 2.25,
+       pch = 21,
+       bg= std.colors[temp$Genotype])
+
+
+  axis(side = 1,
+       at = c(1,2),
+       lwd = 3,
+       line = -.45,
+       labels = unique(temp$Genotype),
+       xpd = T)
+  
+    lines(x = c(0.4, 2.5),
+       y = c(-0.5,-0.5),
+       lwd = 3,
+       xpd = T)
+    
+      axis(side = 2,
+       at = c(-0.5, 0, 0.5, 1, 1.5, 2, 2.5),
+       lwd = 3,
+       line = 0,
+       labels = T,
+       xpd = T,
+       las = 2)
+  
+  text(x = 2.25,
+       y = 2.5,
+       label = paste0("pval = ", signif(pval, 3)))
+  
+```
+
+```{r echo = F, warning=F}
+
+i = 10
+
+UB.barplot(i)
+
+```
+
+```{r echo = F, fig.width=10, fig.height=7, include = F}
+i=11
+
+
+
+par(mar = c(5,7,5,2))
+      
+plot(x = NA,
+     y = NA,
+     type = 'n',
+     ylim = c(-0.25, 1.25),
+     xlim = c(.5, 2.5),
+     xaxt = "n",
+     ylab= colnames(temp)[i],
+     yaxt = "n",
+     xlab = NA,
+     frame = F,
+     main = colnames(temp)[i])
+      
+boxplot(temp[,i]~temp$Genotype,
+        xlab="",
+        las = 2,
+        cex.axis = 1,
+        ylim = c(-0.25, 1.25),
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        col = hex(std.colors[unique(temp$Genotype)], .25),
+        add = T, 
+        xaxt = "n",
+        frame = F)
+
+
+xpos = as.numeric(temp$Genotype)
+ones = temp[,i] == 1
+zeros = temp[,i] == 0
+
+
+if(odd(length(xpos[ones & xpos == 1]))){
+  xpos[ones & xpos == 1] = xpos[ones & xpos == 1] + x.stagger.odd[1:length(xpos[ones & xpos == 1])]
+}else{
+  xpos[ones & xpos == 1] = xpos[ones & xpos == 1] + x.stagger.even[1:length(xpos[ones & xpos == 1])]  
+}
+
+if(odd(length(xpos[ones & xpos == 2]))){
+  xpos[ones & xpos == 2] = xpos[ones & xpos == 2] + x.stagger.odd[1:length(xpos[ones & xpos == 2])]
+}else{
+  xpos[ones & xpos == 2] = xpos[ones & xpos == 2] + x.stagger.even[1:length(xpos[ones & xpos == 2])] 
+}
+
+
+if(odd(length(xpos[zeros & xpos == 1]))){
+  xpos[zeros & xpos == 1] = xpos[zeros & xpos == 1] + x.stagger.odd[1:length(xpos[zeros & xpos == 1])]
+}else{
+  xpos[zeros & xpos == 1] = xpos[zeros & xpos == 1] + x.stagger.even[1:length(xpos[zeros & xpos == 1])]  
+}
+
+if(odd(length(xpos[zeros & xpos == 2]))){
+  xpos[zeros & xpos == 2] = xpos[zeros & xpos == 2] + x.stagger.odd[1:length(xpos[zeros & xpos == 2])]
+}else{
+  xpos[zeros & xpos == 2] = xpos[zeros & xpos == 2] + x.stagger.even[1:length(xpos[zeros & xpos == 2])] 
+}
+
+
+points(x = xpos,
+       y = temp[,i],
+       cex = 2.25,
+       pch = 21,
+       bg= std.colors[temp$Genotype])
+
+```
+
+```{r echo = F, warning=F}
+
+i = 11
+
+UB.barplot(i)
+
+```
+
+```{r echo = F, fig.width=10, fig.height=7, include = F}
+i=12
+
+
+par(mar = c(5,7,5,2))
+      
+plot(x = NA,
+     y = NA,
+     type = 'n',
+     ylim = c(-0.25, 1.25),
+     xlim = c(.5, 2.5),
+     xaxt = "n",
+     ylab= colnames(temp)[i],
+     yaxt = "n",
+     xlab = NA,
+     frame = F,
+     main = colnames(temp)[i])
+      
+boxplot(temp[,i]~temp$Genotype,
+        xlab="",
+        las = 2,
+        cex.axis = 1,
+        ylim = c(-0.25, 1.25),
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        col = hex(std.colors[unique(temp$Genotype)], .25),
+        add = T, 
+        xaxt = "n",
+        frame = F)
+
+
+xpos = as.numeric(temp$Genotype)
+ones = temp[,i] == 1
+zeros = temp[,i] == 0
+
+
+if(odd(length(xpos[ones & xpos == 1]))){
+  xpos[ones & xpos == 1] = xpos[ones & xpos == 1] + x.stagger.odd[1:length(xpos[ones & xpos == 1])]
+}else{
+  xpos[ones & xpos == 1] = xpos[ones & xpos == 1] + x.stagger.even[1:length(xpos[ones & xpos == 1])]  
+}
+
+if(odd(length(xpos[ones & xpos == 2]))){
+  xpos[ones & xpos == 2] = xpos[ones & xpos == 2] + x.stagger.odd[1:length(xpos[ones & xpos == 2])]
+}else{
+  xpos[ones & xpos == 2] = xpos[ones & xpos == 2] + x.stagger.even[1:length(xpos[ones & xpos == 2])] 
+}
+
+
+if(odd(length(xpos[zeros & xpos == 1]))){
+  xpos[zeros & xpos == 1] = xpos[zeros & xpos == 1] + x.stagger.odd[1:length(xpos[zeros & xpos == 1])]
+}else{
+  xpos[zeros & xpos == 1] = xpos[zeros & xpos == 1] + x.stagger.even[1:length(xpos[zeros & xpos == 1])]  
+}
+
+if(odd(length(xpos[zeros & xpos == 2]))){
+  xpos[zeros & xpos == 2] = xpos[zeros & xpos == 2] + x.stagger.odd[1:length(xpos[zeros & xpos == 2])]
+}else{
+  xpos[zeros & xpos == 2] = xpos[zeros & xpos == 2] + x.stagger.even[1:length(xpos[zeros & xpos == 2])] 
+}
+
+
+points(x = xpos,
+       y = temp[,i],
+       cex = 2.25,
+       pch = 21,
+       bg= std.colors[temp$Genotype])
+
+```
+
+```{r echo = F, warning=F}
+
+i = 12
+
+UB.barplot(i)
+
+```
+
+```{r echo = F}
+
+i=17
+
+par(mar = c(5,7,5,2))
+      
+plot(x = NA,
+     y = NA,
+     type = 'n',
+     ylim = c(0.5, 3.5),
+     xlim = c(.5, 2.5),
+     xaxt = "n",
+     ylab= colnames(temp)[i],
+     yaxt = "n",
+     xlab = NA,
+     frame = F,
+     main = "Axonal Branching (Total)")
+      
+boxplot(temp[,i]~temp$Genotype,
+        xlab="",
+        las = 2,
+        cex.axis = 1,
+        ylim = c(0.5, 3.5),
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        col = hex(std.colors[unique(temp$Genotype)], .25),
+        add = T, 
+        xaxt = "n",
+        yaxt = "n",
+        frame = F)
+
+
+xpos = as.numeric(temp$Genotype)
+ones = temp[,i] == 1
+zeros = temp[,i] == 3
+twos = temp[,i] == 2
+
+pval = t.test(x = temp[1:9, i],
+              y = temp[10:18, i],
+              paired = F)[[3]]
+
+
+if(odd(length(xpos[twos & xpos == 1]))){
+  xpos[twos & xpos == 1] = xpos[twos & xpos == 1] + x.stagger.odd[1:length(xpos[twos & xpos == 1])]
+}else{
+  xpos[twos & xpos == 1] = xpos[twos & xpos == 1] + x.stagger.even[1:length(xpos[twos & xpos == 1])]  
+}
+
+if(odd(length(xpos[twos & xpos == 2]))){
+  xpos[twos & xpos == 2] = xpos[twos & xpos == 2] + x.stagger.odd[1:length(xpos[twos & xpos == 2])]
+}else{
+  xpos[twos & xpos == 2] = xpos[twos & xpos == 2] + x.stagger.even[1:length(xpos[twos & xpos == 2])] 
+}
+
+
+if(odd(length(xpos[ones & xpos == 1]))){
+  xpos[ones & xpos == 1] = xpos[ones & xpos == 1] + x.stagger.odd[1:length(xpos[ones & xpos == 1])]
+}else{
+  xpos[ones & xpos == 1] = xpos[ones & xpos == 1] + x.stagger.even[1:length(xpos[ones & xpos == 1])]  
+}
+
+if(odd(length(xpos[ones & xpos == 2]))){
+  xpos[ones & xpos == 2] = xpos[ones & xpos == 2] + x.stagger.odd[1:length(xpos[ones & xpos == 2])]
+}else{
+  xpos[ones & xpos == 2] = xpos[ones & xpos == 2] + x.stagger.even[1:length(xpos[ones & xpos == 2])] 
+}
+
+
+if(odd(length(xpos[zeros & xpos == 1]))){
+  xpos[zeros & xpos == 1] = xpos[zeros & xpos == 1] + x.stagger.odd[1:length(xpos[zeros & xpos == 1])]
+}else{
+  xpos[zeros & xpos == 1] = xpos[zeros & xpos == 1] + x.stagger.even[1:length(xpos[zeros & xpos == 1])]  
+}
+
+if(odd(length(xpos[zeros & xpos == 2]))){
+  xpos[zeros & xpos == 2] = xpos[zeros & xpos == 2] + x.stagger.odd[1:length(xpos[zeros & xpos == 2])]
+}else{
+  xpos[zeros & xpos == 2] = xpos[zeros & xpos == 2] + x.stagger.even[1:length(xpos[zeros & xpos == 2])] 
+}
+
+
+points(x = xpos,
+       y = temp[,i],
+       cex = 2.25,
+       pch = 21,
+       bg= std.colors[temp$Genotype])
+
+
+  axis(side = 1,
+       at = c(1,2),
+       lwd = 3,
+       line = -.45,
+       labels = unique(temp$Genotype),
+       xpd = T)
+  
+    lines(x = c(0.4, 2.5),
+       y = c(0.5,0.5),
+       lwd = 3,
+       xpd = T)
+    
+      axis(side = 2,
+       at = c(0.5, 1, 1.5, 2, 2.5, 3, 3.5),
+       lwd = 3,
+       line = 0,
+       labels = T,
+       xpd = T,
+       las = 2)
+  
+  text(x = 2.25,
+       y = 3.5,
+       label = paste0("pval = ", signif(pval, 3)))
+  
+```
+
+```{r echo = F, fig.width=10, fig.height=7, include = F}
+i=13
+
+par(mar = c(5,7,5,2))
+      
+plot(x = NA,
+     y = NA,
+     type = 'n',
+     ylim = c(-0.25, 1.25),
+     xlim = c(.5, 2.5),
+     xaxt = "n",
+     ylab= colnames(temp)[i],
+     yaxt = "n",
+     xlab = NA,
+     frame = F,
+     main = colnames(temp)[i])
+      
+boxplot(temp[,i]~temp$Genotype,
+        xlab="",
+        las = 2,
+        cex.axis = 1,
+        ylim = c(-0.25, 1.25),
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        col = hex(std.colors[unique(temp$Genotype)], .25),
+        add = T, 
+        xaxt = "n",
+        frame = F)
+
+
+xpos = as.numeric(temp$Genotype)
+ones = temp[,i] == 1
+zeros = temp[,i] == 0
+
+
+if(odd(length(xpos[ones & xpos == 1]))){
+  xpos[ones & xpos == 1] = xpos[ones & xpos == 1] + x.stagger.odd[1:length(xpos[ones & xpos == 1])]
+}else{
+  xpos[ones & xpos == 1] = xpos[ones & xpos == 1] + x.stagger.even[1:length(xpos[ones & xpos == 1])]  
+}
+
+if(odd(length(xpos[ones & xpos == 2]))){
+  xpos[ones & xpos == 2] = xpos[ones & xpos == 2] + x.stagger.odd[1:length(xpos[ones & xpos == 2])]
+}else{
+  xpos[ones & xpos == 2] = xpos[ones & xpos == 2] + x.stagger.even[1:length(xpos[ones & xpos == 2])] 
+}
+
+
+if(odd(length(xpos[zeros & xpos == 1]))){
+  xpos[zeros & xpos == 1] = xpos[zeros & xpos == 1] + x.stagger.odd[1:length(xpos[zeros & xpos == 1])]
+}else{
+  xpos[zeros & xpos == 1] = xpos[zeros & xpos == 1] + x.stagger.even[1:length(xpos[zeros & xpos == 1])]  
+}
+
+if(odd(length(xpos[zeros & xpos == 2]))){
+  xpos[zeros & xpos == 2] = xpos[zeros & xpos == 2] + x.stagger.odd[1:length(xpos[zeros & xpos == 2])]
+}else{
+  xpos[zeros & xpos == 2] = xpos[zeros & xpos == 2] + x.stagger.even[1:length(xpos[zeros & xpos == 2])] 
+}
+
+
+points(x = xpos,
+       y = temp[,i],
+       cex = 2.25,
+       pch = 21,
+       bg= std.colors[temp$Genotype])
+
+```
+
+```{r echo = F, warning=F}
+
+i = 13
+
+UB.barplot(i)
+
+```
+
+```{r echo = F, fig.width=10, fig.height=7, include = F}
+i=14
+
+par(mar = c(5,7,5,2))
+      
+plot(x = NA,
+     y = NA,
+     type = 'n',
+     ylim = c(-0.25, 1.25),
+     xlim = c(.5, 2.5),
+     xaxt = "n",
+     ylab= colnames(temp)[i],
+     yaxt = "n",
+     xlab = NA,
+     frame = F,
+     main = colnames(temp)[i])
+      
+boxplot(temp[,i]~temp$Genotype,
+        xlab="",
+        las = 2,
+        cex.axis = 1,
+        ylim = c(-0.25, 1.25),
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        col = hex(std.colors[unique(temp$Genotype)], .25),
+        add = T, 
+        xaxt = "n",
+        frame = F)
+
+
+xpos = as.numeric(temp$Genotype)
+ones = temp[,i] == 1
+zeros = temp[,i] == 0
+
+
+if(odd(length(xpos[ones & xpos == 1]))){
+  xpos[ones & xpos == 1] = xpos[ones & xpos == 1] + x.stagger.odd[1:length(xpos[ones & xpos == 1])]
+}else{
+  xpos[ones & xpos == 1] = xpos[ones & xpos == 1] + x.stagger.even[1:length(xpos[ones & xpos == 1])]  
+}
+
+if(odd(length(xpos[ones & xpos == 2]))){
+  xpos[ones & xpos == 2] = xpos[ones & xpos == 2] + x.stagger.odd[1:length(xpos[ones & xpos == 2])]
+}else{
+  xpos[ones & xpos == 2] = xpos[ones & xpos == 2] + x.stagger.even[1:length(xpos[ones & xpos == 2])] 
+}
+
+
+if(odd(length(xpos[zeros & xpos == 1]))){
+  xpos[zeros & xpos == 1] = xpos[zeros & xpos == 1] + x.stagger.odd[1:length(xpos[zeros & xpos == 1])]
+}else{
+  xpos[zeros & xpos == 1] = xpos[zeros & xpos == 1] + x.stagger.even[1:length(xpos[zeros & xpos == 1])]  
+}
+
+if(odd(length(xpos[zeros & xpos == 2]))){
+  xpos[zeros & xpos == 2] = xpos[zeros & xpos == 2] + x.stagger.odd[1:length(xpos[zeros & xpos == 2])]
+}else{
+  xpos[zeros & xpos == 2] = xpos[zeros & xpos == 2] + x.stagger.even[1:length(xpos[zeros & xpos == 2])] 
+}
+
+
+points(x = xpos,
+       y = temp[,i],
+       cex = 2.25,
+       pch = 21,
+       bg= std.colors[temp$Genotype])
+
+```
+
+```{r echo = F, warning=F}
+
+i = 14
+
+UB.barplot(i)
+
+```
+
+
+
+
+  
+
+
+
+
+```{r echo = F}
+
+i=18
+
+par(mar = c(5,7,5,2))
+      
+plot(x = NA,
+     y = NA,
+     type = 'n',
+     ylim = c(-0.5, 2.5),
+     xlim = c(.5, 2.5),
+     xaxt = "n",
+     ylab= colnames(temp)[i],
+     yaxt = "n",
+     xlab = NA,
+     frame = F,
+     main = "Mitochondria (Total)")
+      
+boxplot(temp[,i]~temp$Genotype,
+        xlab="",
+        las = 2,
+        cex.axis = 1,
+        ylim = c(-0.5, 2.5),
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        col = hex(std.colors[unique(temp$Genotype)], .25),
+        add = T, 
+        xaxt = "n",
+        yaxt = "n",
+        frame = F)
+
+
+xpos = as.numeric(temp$Genotype)
+ones = temp[,i] == 1
+zeros = temp[,i] == 0
+twos = temp[,i] == 2
+
+pval = t.test(x = temp[1:9, i],
+              y = temp[10:18, i],
+              paired = F)[[3]]
+
+
+if(odd(length(xpos[twos & xpos == 1]))){
+  xpos[twos & xpos == 1] = xpos[twos & xpos == 1] + x.stagger.odd[1:length(xpos[twos & xpos == 1])]
+}else{
+  xpos[twos & xpos == 1] = xpos[twos & xpos == 1] + x.stagger.even[1:length(xpos[twos & xpos == 1])]  
+}
+
+if(odd(length(xpos[twos & xpos == 2]))){
+  xpos[twos & xpos == 2] = xpos[twos & xpos == 2] + x.stagger.odd[1:length(xpos[twos & xpos == 2])]
+}else{
+  xpos[twos & xpos == 2] = xpos[twos & xpos == 2] + x.stagger.even[1:length(xpos[twos & xpos == 2])] 
+}
+
+
+if(odd(length(xpos[ones & xpos == 1]))){
+  xpos[ones & xpos == 1] = xpos[ones & xpos == 1] + x.stagger.odd[1:length(xpos[ones & xpos == 1])]
+}else{
+  xpos[ones & xpos == 1] = xpos[ones & xpos == 1] + x.stagger.even[1:length(xpos[ones & xpos == 1])]  
+}
+
+if(odd(length(xpos[ones & xpos == 2]))){
+  xpos[ones & xpos == 2] = xpos[ones & xpos == 2] + x.stagger.odd[1:length(xpos[ones & xpos == 2])]
+}else{
+  xpos[ones & xpos == 2] = xpos[ones & xpos == 2] + x.stagger.even[1:length(xpos[ones & xpos == 2])] 
+}
+
+
+if(odd(length(xpos[zeros & xpos == 1]))){
+  xpos[zeros & xpos == 1] = xpos[zeros & xpos == 1] + x.stagger.odd[1:length(xpos[zeros & xpos == 1])]
+}else{
+  xpos[zeros & xpos == 1] = xpos[zeros & xpos == 1] + x.stagger.even[1:length(xpos[zeros & xpos == 1])]  
+}
+
+if(odd(length(xpos[zeros & xpos == 2]))){
+  xpos[zeros & xpos == 2] = xpos[zeros & xpos == 2] + x.stagger.odd[1:length(xpos[zeros & xpos == 2])]
+}else{
+  xpos[zeros & xpos == 2] = xpos[zeros & xpos == 2] + x.stagger.even[1:length(xpos[zeros & xpos == 2])] 
+}
+
+
+points(x = xpos,
+       y = temp[,i],
+       cex = 2.25,
+       pch = 21,
+       bg= std.colors[temp$Genotype])
+
+
+  axis(side = 1,
+       at = c(1,2),
+       lwd = 3,
+       line = -.45,
+       labels = unique(temp$Genotype),
+       xpd = T)
+  
+    lines(x = c(0.4, 2.5),
+       y = c(-0.5,-0.5),
+       lwd = 3,
+       xpd = T)
+    
+      axis(side = 2,
+       at = c(-0.5, 0, 0.5, 1, 1.5, 2, 2.5),
+       lwd = 3,
+       line = 0,
+       labels = T,
+       xpd = T,
+       las = 2)
+  
+  text(x = 2.25,
+       y = 2.5,
+       label = paste0("pval = ", signif(pval, 3)))
+  
+```
+
+
+
+```{r echo = F}
+
+i=19
+
+par(mar = c(5,7,5,2))
+      
+plot(x = NA,
+     y = NA,
+     type = 'n',
+     ylim = c(0, 10),
+     xlim = c(.5, 2.5),
+     xaxt = "n",
+     ylab= colnames(temp)[i],
+     yaxt = "n",
+     xlab = NA,
+     frame = F,
+     main = "Overall Morphology Score")
+
+grid(nx=NA, ny=NULL, col = "grey50", lwd = .75)
+      
+boxplot(temp[,i]~temp$Genotype,
+        xlab="",
+        las = 2,
+        cex.axis = 1,
+        ylim = c(0, 10),
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        col = hex(std.colors[unique(temp$Genotype)], .25),
+        add = T, 
+        xaxt = "n",
+        yaxt = "n",
+        frame = F)
+
+
+xpos = as.numeric(temp$Genotype)
+ones = temp[,i] == 1
+zeros = temp[,i] == 0
+twos = temp[,i] == 2
+
+pval = t.test(x = temp[1:9, i],
+              y = temp[10:18, i],
+              paired = F)[[3]]
+
+xpos = c(-.05, -.05, -.05, .05, .05, -.15, .15, 0, .05,
+         0, -.05, -.05, .05, 0, .05, -.05, .05, 0) + as.numeric(temp$Genotype)
+
+points(x = xpos,
+       y = temp[,i],
+       cex = 2.25,
+       pch = 21,
+       bg= std.colors[temp$Genotype])
+
+
+  axis(side = 1,
+       at = c(1,2),
+       lwd = 3,
+       line = -.45,
+       labels = unique(temp$Genotype),
+       xpd = T)
+  
+    lines(x = c(0.4, 2.5),
+       y = c(0,0),
+       lwd = 3,
+       xpd = T)
+    
+      axis(side = 2,
+       at = c(0, 5, 10),
+       lwd = 3,
+       line = 0,
+       labels = T,
+       xpd = T,
+       las = 2)
+  
+  text(x = 2.25,
+       y = 9.5,
+       label = paste0("pval = ", signif(pval, 3)))
+  
+```
+
+
+
+```{r echo = F}
+
+i=20
+
+par(mar = c(5,7,5,2))
+      
+plot(x = NA,
+     y = NA,
+     type = 'n',
+     ylim = c(0, 4),
+     xlim = c(.5, 2.5),
+     xaxt = "n",
+     ylab= colnames(temp)[i],
+     yaxt = "n",
+     xlab = NA,
+     frame = F,
+     main = "Supervised Morphology Score\n(Axonal Bundle and Mitochondria)")
+
+grid(nx=NA, ny=NULL, col = "grey50", lwd = .75)
+      
+boxplot(temp[,i]~temp$Genotype,
+        xlab="",
+        las = 2,
+        cex.axis = 1,
+        ylim = c(0, 4),
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        col = hex(std.colors[unique(temp$Genotype)], .25),
+        add = T, 
+        xaxt = "n",
+        yaxt = "n",
+        frame = F)
+
+
+  axis(side = 1,
+       at = c(1,2),
+       lwd = 3,
+       line = -.45,
+       labels = unique(temp$Genotype),
+       xpd = T)
+  
+    lines(x = c(0.4, 2.5),
+       y = c(0,0),
+       lwd = 3,
+       xpd = T)
+    
+
+pval = t.test(x = temp[1:9, i],
+              y = temp[10:18, i],
+              paired = F)[[3]]
+
+xpos = c(0, -.1, 0, .1, -.1, .1, -.2, 0, .2,
+         -.05, .05, -.15, -.05, -.05, .15, 0, .05, .05) + as.numeric(temp$Genotype)
+
+points(x = xpos,
+       y = temp[,i],
+       cex = 2.25,
+       pch = 21,
+       bg= std.colors[temp$Genotype])
+
+
+
+      axis(side = 2,
+       at = c(0:4),
+       lwd = 3,
+       line = 0,
+       labels = T,
+       xpd = T,
+       las = 2)
+  
+  text(x = 2.25,
+       y = 3.75,
+       label = paste0("pval = ", signif(pval, 3)))
+  
+```
+
+
+
+```{r echo = F, include = F}
+
+heat.data = temp[,6:14]
+row.names(heat.data) = paste0(temp$Genotype,temp$Animal..)
+heat.data = as.matrix(t(heat.data))
+
+heat.colors = colorRampPalette(c("firebrick", "deepskyblue"))
+sample.colors = c(rep("darkgreen", 9), rep("gold2", 9))
+category.colors = c(rep("darkgreen", 2), 
+                    rep("navy", 2),
+                    rep("deeppink", 3), 
+                    rep("gold2", 2))
+
+heatmap.2(heat.data,
+          Colv = T,
+          Rowv = T,
+          margins = c(7, 15),
+          trace = "none",
+          ColSideColors = sample.colors,
+          RowSideColors = category.colors,
+          col = heat.colors)
+```
+
+
+
+
+
+```{r echo = F}
+
+# Assume:
+# - data_matrix: 18 x 9 matrix
+# - group_labels: factor of length 18 with two levels (e.g., "WT", "KO")
+
+
+
+find_best_category_combos <- function(data_matrix, group_labels, max_k = 9) {
+  n_categories <- ncol(data_matrix)
+  category_names <- colnames(data_matrix)
+  
+  results <- list()
+
+  for (k in 1:max_k) {
+    combs <- combn(n_categories, k, simplify = FALSE)
+    for (combo in combs) {
+      summed <- rowSums(data_matrix[, combo, drop = FALSE])
+      test <- t.test(summed ~ group_labels)
+      results[[paste(combo, collapse = ",")]] <- list(
+        categories = category_names[combo],
+        mean_diff = abs(diff(tapply(summed, group_labels, mean))),
+        p_value = test$p.value
+      )
+    }
+  }
+
+  # Convert to data frame
+  results_df <- do.call(rbind, lapply(results, as.data.frame))
+  results_df$combo <- rownames(results_df)
+  results_df <- results_df[order(results_df$p_value), ]
+  return(results_df)
+}
+
+
+
+```
+
+
+```{r echo = F, warning=F}
+
+data_matrix = t(heat.data)
+group_labels = temp$Genotype
+
+temp.combos = find_best_category_combos(data_matrix, group_labels, max_k = 9)
+
+row.names(temp.combos) = c(1:nrow(temp.combos))
+
+best.combo = data_matrix[,c(2,3,4,7,8)]
+
+sum.best.combo = apply(best.combo, MARGIN = 1, sum)
+
+best.pval = t.test(sum.best.combo[1:9], sum.best.combo[10:18])[[3]]
+
+supervised.combo = temp.combos[temp.combos$combo == "3,4,8,9.1",]
+
+```
+
+```{r echo = F}
+
+
+
+par(mar = c(5,7,5,2))
+      
+plot(x = NA,
+     y = NA,
+     type = 'n',
+     ylim = c(0, 5),
+     xlim = c(.5, 2.5),
+     xaxt = "n",
+     ylab= "Morphology Score",
+     yaxt = "n",
+     xlab = NA,
+     frame = F,
+     main = "Most Significantly Different Combination of Traits")
+
+grid(nx=NA, ny=NULL, col = "grey50", lwd = .75)
+      
+boxplot(sum.best.combo~temp$Genotype,
+        xlab="",
+        las = 2,
+        cex.axis = 1,
+        ylim = c(0, 5),
+        boxwex = .75,
+        boxlwd = 2,
+        lwd = 2,
+        cex.ticks = 2,
+        col = hex(std.colors[unique(temp$Genotype)], .25),
+        add = T, 
+        xaxt = "n",
+        yaxt = "n",
+        frame = F)
+
+
+  axis(side = 1,
+       at = c(1,2),
+       lwd = 3,
+       line = -.45,
+       labels = unique(temp$Genotype),
+       xpd = T)
+  
+    lines(x = c(0.4, 2.5),
+       y = c(0,0),
+       lwd = 3,
+       xpd = T)
+    
+
+pval = t.test(x = sum.best.combo[1:9],
+              y = sum.best.combo[10:18],
+              paired = F)[[3]]
+
+xpos = c(-.05, 0, -.1, -.1, .05, -.1, .1, .1, .1,
+         -.05, 0, -.1, .1, 0, .05, -.2, .2, 0) + as.numeric(temp$Genotype)
+
+points(x = xpos,
+       y = sum.best.combo,
+       cex = 2.25,
+       pch = 21,
+       bg= std.colors[temp$Genotype])
+
+
+
+      axis(side = 2,
+       at = c(0:5),
+       lwd = 3,
+       line = 0,
+       labels = T,
+       xpd = T,
+       las = 2)
+  
+  text(x = 2.25,
+       y = 4.75,
+       label = paste0("pval = ", signif(pval, 3)))
+  
+```

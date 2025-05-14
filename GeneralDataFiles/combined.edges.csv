@@ -147,15 +147,15 @@ NC2,NC11,to,black,0,NA,FBgn0037607,F
 NC3,NC16,to,black,0,NA,FBgn0036784,F
 NC2,NC34,to,black,0,NA,FBgn0037607,F
 NC3,NC35,to,black,0,NA,FBgn0036784,F
-NC4,NC22,to,black,0,NA,FBgn0037607,F
+NC4,NC22,to,black,0,NA,FBgn0036784,F
 NC6,NC23,to,black,0,NA,FBgn0037607,F
-NC12,NC14,to,black,0,NA,FBgn0037607,F
+NC12,NC14,to,black,0,NA,FBgn0036784,F
 NC33,NC19,to,black,0,NA,FBgn0037607,F
-NC4,NC20,to,black,0,NA,FBgn0037607,F
+NC4,NC20,to,black,0,NA,FBgn0036784,F
 NC6,NC21,to,black,0,NA,FBgn0037607,F
 NC27,NC26,to,black,0,NA,FBgn0037607,F
-NC29,NC24,to,black,0,NA,FBgn0037607,F
-NC25,NC28,to,black,0,NA,FBgn0037607,F
+NC29,NC24,to,black,0,NA,FBgn0036784,F
+NC25,NC28,to,black,0,NA,FBgn0036784,F
 NC30,NC31,to,black,0,NA,FBgn0037607,F
 nicotinamide riboside+,nicotinamide,to;from,black,0,NA,FBgn0034898,T
 nicotinamide riboside+,nicotinamide,to;from,black,0,NA,FBgn0035348,T
