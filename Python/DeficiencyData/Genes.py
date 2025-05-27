@@ -98,8 +98,8 @@ for df in dfs:
                                                             currentdf.append(str(df))
     #print(df, len(FBgns), len(currentdf), str(df))
     #remove duplicates
-    genesFBgn+=list(set(FBgns))
-    genesName+=list(set(names))
+    genesFBgn+=list(FBgns)
+    genesName+=list(names)
     genesdf+=list(currentdf)
 
     print(df, len(FBgns), len(currentdf), len(genesdf), len(genesName))
@@ -108,7 +108,7 @@ for df in dfs:
     time.sleep(0.5)
 
 #Format output as pair of FBgn and gene name removing duplicates again
-final = list(map(lambda x, y, z: [x,y,z], list(set(genesFBgn)), list(set(genesName)), genesdf))
+final = list(map(lambda x, y, z: [x,y,z], list(genesFBgn), list(genesName), genesdf))
 #final = list(map(lambda x, y: [x,y], list(set(genesFBgn)), list(set(genesName))))
 
 #Create dateframe of output
