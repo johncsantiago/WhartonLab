@@ -26,73 +26,97 @@ library(plotly)
 ##load all files from github
 git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"
 
-DfKey = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/DfKey.csv"), row.names = 1)
-old = read.csv(paste0(git.dir,"DeficiencyScreen/DataFiles/DeficiencyModifierGenes.csv"),row.names = 1)
+##DfKey = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/DfKey.csv"))
+##colnames(DfKey)[c(1,3)] = c("BDSC", "FBab")
+##DfKey$FollowUp = "FALSE"
+##DfKey$Excluded = "FALSE"
 
-GeneIDKey = read.csv(paste0(git.dir,"GeneralDataFiles/GeneIDKey.csv"),row.names = 1)
+#old.dfdata = read.csv(paste0(git.dir,"DeficiencyScreen/DataFiles/DeficiencyModifierGenes.csv"),row.names)
 
-dfdata = read.csv(paste0(git.dir,"DeficiencyScreen/DataFiles/20250602_UpdatedModiferData.csv"))
-row.names(dfdata) = dfdata$Fbab
-dfgenes = read.csv(paste0(git.dir,"DeficiencyScreen/DataFiles/GenesInDeficiency.csv"))
+##GeneIDKey = read.csv(paste0(git.dir,"GeneralDataFiles/GeneIDKey.csv"),row.names = 1)
 
-fulldf = cbind(dfgenes, dfdata[dfgenes$FBab,])
-row.names(fulldf) = 1:nrow(fulldf)
-fulldf$Modifier[fulldf$Modifier ==  "Supressor"] = "Suppressor"
-fulldf$Modifier[fulldf$Modifier ==  "No effect"] = "No Effect"
-new=fulldf
+##dfdata = read.csv(paste0(git.dir,"DeficiencyScreen/DataFiles/20250602_UpdatedModiferData.csv"))
+##colnames(dfdata)[3] = "FBab"
+##dfdata$Excluded = "FALSE"
 
-olddf = DfKey$Deficiency
-newdf = unique(new$Deficiency)
-oldfb = old$FBgn
-newfb = unique(new$FBgn)
-oldsym = old$Symbol
-newsym = unique(new$Symbol)
+##DfKey[DfKey$FBab %in% setdiff(DfKey$FBab, dfdata$FBab), "Excluded"] = "TRUE"
 
-#old = cbind(old, GeneIDKey[row.names(old), c("Start", "End", "CHR")])
-old = GeneIDKey[, c("FBgn", "Start", "End", "CHR")]
+##fullDfKey = rbind(dfdata, DfKey[DfKey$Excluded == TRUE, colnames(dfdata)])
 
-old.left = apply(old[,c("Start", "End")], MARGIN = 1, min)
-old.right = apply(old[,c("Start", "End")], MARGIN = 1, max)
-Df.left = apply(DfKey[,c("Start", "End")], MARGIN = 1, min)
-Df.right = apply(DfKey[,c("Start", "End")], MARGIN = 1, max)
+##fullDfKey$Modifier[fullDfKey$Modifier == "No effect"] = "No Effect"
 
-genesinolddf = list()
+##fullDfKey$Modifier[fullDfKey$Modifier == "Supressor"] = "Suppressor"
+
+##fullDfKey$Modifier[fullDfKey$Modifier == "Strong Suppressor"] = "Suppressor"
+
+##changed start location for FBab0002465
+###was listed as 1 but on Flybase it listed a different start site
+
+##write.csv(fullDfKey, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/20250613_FullDfData.csv")
+
+##dfgenes = read.csv(paste0(git.dir,"DeficiencyScreen/DataFiles/GenesInDeficiency.csv"))
+
+##fulldf = cbind(dfgenes, dfdata[dfgenes$FBab,])
+##row.names(fulldf) = 1:nrow(fulldf)
+##fulldf$Modifier[fulldf$Modifier ==  "Supressor"] = "Suppressor"
+##fulldf$Modifier[fulldf$Modifier ==  "No effect"] = "No Effect"
+##new=fulldf
+
+##olddf = DfKey$Deficiency
+##newdf = unique(new$Deficiency)
+##oldfb = old$FBgn
+##newfb = unique(new$FBgn)
+##oldsym = old$Symbol
+##newsym = unique(new$Symbol)
+
+
+fullDfKey = read.csv(paste0(git.dir,"DeficiencyScreen/DataFiles/20250613_FullDfData.csv"),row.names = 1)
+
+row.names(fullDfKey) = fullDfKey$FBab
+
+#Build a fresh gene id data table
+gene.chr = as.data.frame(org.Dm.egCHR)
+row.names(gene.chr) = gene.chr$gene_id
+gene.start = as.list(org.Dm.egCHRLOC)
+gene.start = lapply(gene.start, min)
+gene.start = unlist(gene.start)
+gene.end = as.list(org.Dm.egCHRLOCEND)
+gene.end = lapply(gene.end, max)
+gene.end = unlist(gene.end)
+FBid = as.data.frame(org.Dm.egFLYBASE)
+row.names(FBid) = FBid$gene_id
+Symbols = as.data.frame(org.Dm.egSYMBOL)
+row.names(Symbols) = Symbols$gene_id
+
+gene.location = data.frame(FBgn = FBid[names(gene.start), "flybase_id"],
+                           Symbol = Symbols[names(gene.start), "symbol"],
+                           ensembl = names(gene.start),
+                           CHR = gene.chr[names(gene.start), "chromosome"],
+                           Start = abs(gene.start),
+                           End = abs(gene.end[names(gene.start)]),
+                           Strand = gene.start/abs(gene.start))
+
+
+
+gl = apply(gene.location[,c("Start", "End")], MARGIN = 1, min)
+gr = apply(gene.location[,c("Start", "End")], MARGIN = 1, max)
+Dfl = apply(fullDfKey[,c("Start", "End")], MARGIN = 1, min)
+Dfr = apply(fullDfKey[,c("Start", "End")], MARGIN = 1, max)
+
+genesindf = list()
 i=1
-while(i <= nrow(DfKey)){
-  temp = na.omit(old[((old.left <= Df.left[i] & old.right >= Df.right[i]) |
-           (old.left >= Df.left[i] & old.left <= Df.right[i]) |
-           (old.right >= Df.left[i] & old.right <= Df.right[i])) &
-            old$CHR == DfKey$Chr[i],])
+while(i <= nrow(fullDfKey)){
+  temp = na.omit(gene.location[((gl <= Dfl[i] & gr >= Dfr[i]) |
+                               (gl >= Dfl[i] & gl <= Dfr[i]) |
+                               (gr >= Dfl[i] & gr <= Dfr[i])) &
+                               gene.location$CHR == fullDfKey$Chr[i],])
 
-  genesinolddf[[DfKey$Deficiency[i]]] = temp$FBgn
+  genesindf[[fullDfKey$Deficiency[i]]] = temp$FBgn
   i=i+1
 }
 
-#new.loc = GeneIDKey[new$FBgn,c("Start","End","CHR")]
-new.loc = GeneIDKey[,c("FBgn", "Start","End","CHR")]
-new.left = apply(new.loc[,c("Start", "End")], MARGIN = 1, min)
-new.right = apply(new.loc[,c("Start", "End")], MARGIN = 1, max)
-newDf.left = apply(new[,c("Start", "End")], MARGIN = 1, min)
-newDf.right = apply(new[,c("Start", "End")], MARGIN = 1, max)
-
-new.keep = !duplicated(paste0(new$Deficiency, newDf.left, newDf.right))
-newDf.left = newDf.left[new.keep]
-newDf.right = newDf.right[new.keep]
-newDf = new$Deficiency[new.keep]
-newChr = new$Chr[new.keep]
 
 
-genesinnewdf = list()
-i=1
-while(i <= length(newDf)){
-      temp = na.omit(new.loc[((new.left <= newDf.left[i] & new.right >= newDf.right[i]) |
-           (new.left >= newDf.left[i] & new.left <= newDf.right[i]) |
-           (new.right >= newDf.left[i] & new.right <= newDf.right[i])) &
-            new.loc$CHR == newChr[i],])
-
-    genesinnewdf[[newDf[i]]] = temp$FBgn
-  i=i+1
-}
 
 
 ```
