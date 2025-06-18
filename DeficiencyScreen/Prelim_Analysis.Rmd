@@ -103,7 +103,9 @@ gr = apply(gene.location[,c("Start", "End")], MARGIN = 1, max)
 Dfl = apply(fullDfKey[,c("Start", "End")], MARGIN = 1, min)
 Dfr = apply(fullDfKey[,c("Start", "End")], MARGIN = 1, max)
 
-genesindf = list()
+genesindf = data.frame(Df = character(),
+                       FBgn = character(),
+                       Symbol = character())
 i=1
 while(i <= nrow(fullDfKey)){
   temp = na.omit(gene.location[((gl <= Dfl[i] & gr >= Dfr[i]) |
@@ -111,13 +113,67 @@ while(i <= nrow(fullDfKey)){
                                (gr >= Dfl[i] & gr <= Dfr[i])) &
                                gene.location$CHR == fullDfKey$Chr[i],])
 
-  genesindf[[fullDfKey$Deficiency[i]]] = temp$FBgn
+  if(nrow(temp) > 0){
+    temp$Df = fullDfKey$Deficiency[i]
+    genesindf = rbind(genesindf, temp[, c("Df", "FBgn", "Symbol")])
+  }
+  #genesindf[[fullDfKey$Deficiency[i]]] = temp$FBgn
+  
+
   i=i+1
 }
 
+python.genesindf = read.csv("/Users/johncsantiago/Documents/GitHub/Python/DeficiencyData/Output.csv", row.names = 1)
+
+py.gid = python.genesindf[,c(3,1,2)]
+colnames(py.gid) = c("Df", "FBgn", "Symbol")
+py.gid$Df = fullDfKey[py.gid$Df, "Deficiency"]
+
+##Dealing with nomenclature issues
+##identifying genes with an FBgn found using python method that were not identified using org.Dm.eg.db approach
+
+py.only = py.gid[py.gid$FBgn %in% setdiff(py.gid$FBgn, gene.location$FBgn),]
+
+##of these 23 genes, how many have a symbol only found with python
+
+py.only = py.only[py.only$Symbol %in% setdiff(py.only$Symbol, gene.location$Symbol),]
+
+##only 8 genes that were not found using the org.Dm.eg.db approach by symbol or FBgn 
+
+##unique(py.only$Symbol)
+#"Est17" found under CG10175 in R data
+#"Dld" found under CG7430 in R data
 
 
+##NOT in the R data
+#"lncRNA:CR46532" 
+#"asRNA:PS4"     
+#"lncRNA:CR46530" 
+#"lncRNA:CR46535"
+#"lncRNA:CR46529"
+#"lncRNA:CR46534" 
 
+py.only.FBgn = c("lncRNA:CR46532", "FBgn0288728", "lncRNA:CR46530", "lncRNA:CR46535", "lncRNA:CR46529", "lncRNA:CR46534")
+
+py.only.sym = c("lncRNA:CR46532", "asRNA:PS4", "lncRNA:CR46530", "lncRNA:CR46535", "lncRNA:CR46529", "lncRNA:CR46534")
+
+py.only.ens = c("lncRNA:CR46532", "asRNA:PS4", "lncRNA:CR46530", "lncRNA:CR46535", "lncRNA:CR46529", "lncRNA:CR46534")
+
+py.only.CHR = c("lncRNA:CR46532", "3R", "lncRNA:CR46530", "lncRNA:CR46535", "lncRNA:CR46529", "lncRNA:CR46534")
+
+py.only.Start = c("lncRNA:CR46532", 16720127, "lncRNA:CR46530", "lncRNA:CR46535", "lncRNA:CR46529", "lncRNA:CR46534")
+
+py.only.End = c("lncRNA:CR46532", 16729959, "lncRNA:CR46530", "lncRNA:CR46535", "lncRNA:CR46529", "lncRNA:CR46534")
+
+py.only.Strand = c("lncRNA:CR46532", 1, "lncRNA:CR46530", "lncRNA:CR46535", "lncRNA:CR46529", "lncRNA:CR46534")
+
+add.gene.locations = data.frame(FBgn = py.only.FBgn,
+                                Symbol = py.only.sym,
+                                ensembl = py.only.ens,
+                                CHR = py.only.CHR,
+                                Start = py.only.Start,
+                                End = py.only.End,
+                                Strand = py.only.Strand)
 
 ```
 

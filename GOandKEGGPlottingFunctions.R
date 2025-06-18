@@ -38,7 +38,7 @@ A4V.comparekey = setNames(colnames(A4V.FDR),
                             'A9FHvA40FH', 'S9FHvS40FH', 'A3FHvA40FH', 'S3FHvS40FH',
                             
                             'A3FTvS3FT', 'A3MTvS3MT', 'A9FTvS9FT', 'A9MTvS9MT', 'A40FTvS40FT',
-                            'A3FTvA9FT', 'S3FTvS9FT', 'A3MTvA9MT', 'S3FTvS9MT',
+                            'A3FTvA9FT', 'S3FTvS9FT', 'A3MTvA9MT', 'S3MTvS9MT',
                             'A9FTvA40FT', 'S9FTvS40FT', 'A3FTvA40FT', 'S3FTvS40FT',
                             
                             'A3FAvS3FA', 'A3MAvS3MA', 'A9FAvS9FA', 'A9MAvS9MA', 'A40FAvS40FA',

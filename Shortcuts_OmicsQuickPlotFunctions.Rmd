@@ -20,11 +20,11 @@ source('https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/ma
 ## Plot gene expression from G85R TKT RNAseq experiment
 ## ID needs to be the full or partial gene symbol or FBgn (case sensitive)
 
-ID = "Zw"
+ID = "FBgn0003733"
 
 plot.G85R(ID)
-G85R.FC[GeneIDKey[GeneIDKey$Symbol == ID, "FBgn"],]
-G85R.FDR[GeneIDKey[GeneIDKey$Symbol == ID, "FBgn"],]
+#G85R.FC[GeneIDKey[GeneIDKey$Symbol == ID, "FBgn"],]
+#G85R.FDR[GeneIDKey[GeneIDKey$Symbol == ID, "FBgn"],]
 
 ```
 
@@ -34,7 +34,7 @@ G85R.FDR[GeneIDKey[GeneIDKey$Symbol == ID, "FBgn"],]
 ## Plot gene expression from A4V RNAseq experiment
 ## ID needs to be the full or partial gene symbol or FBgn (case sensitive)
 
-ID = "FBgn0000635"
+ID = "FBgn0003733"
   
 plot.A4V(ID)
 ```

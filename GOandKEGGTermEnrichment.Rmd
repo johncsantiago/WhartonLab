@@ -18,6 +18,17 @@ source('/Users/johncsantiago/Documents/GitHub/WhartonLab/GOandKEGGPlottingFuncti
 
 ```{r echo = F, message = F}
 
+
+#A4V conditions use 4 parameters:   A or S for genotype
+#                                   3, 9 or 40 for time
+#                                   M or F for sex
+#                                   H, T or A for body section
+#                                   example: A3MT
+
+#G85R conditions use 3 parameters:  GR or WT for genotype
+#                                   M or F for sex
+#                                   C, Df or OE for TKT modulation
+#                                   example: GRMOE
 Variable.Condition = "GRFC" 
 Control.Condition = "WTFC"
 secondary.Variable.Condition = "GRMC"
@@ -102,6 +113,13 @@ DEG.venn(FDR, FC)
 ####Uses sigDEGs from primary comparison
 cat.data = Enrichment(FDR)
 
+cat.data = Subset.Enrichment(row.names(FDR), row.names(FDR)[FDR[,1]<=0.05 & FDR[,2]<=0.05])
+
+cat.data = Subset.Enrichment(row.names(FDR), row.names(FDR)[FDR[,1]>0.05 & FDR[,2]<=0.05])
+
+cat.data = Subset.Enrichment(row.names(FDR), row.names(FDR)[FDR[,1]<=0.05 & FDR[,2]>0.05])
+
+
 ```
 
 
@@ -123,7 +141,7 @@ KEGG20(cat.data, FC, FDR, usecats)
 ```{r echo = F, include = T}
 
 ##can be the exact name or 5 digit code in quotes
-specific.kegg = "00980"
+specific.kegg = "04146"
 
 plotkegg.genes(specific.kegg, FC, FDR, mean.data)
 
@@ -133,7 +151,7 @@ plotkegg.genes(specific.kegg, FC, FDR, mean.data)
 ```{r echo = F, message=F, fig.width=7}
 
 ##5 digits from KEGG ID
-PathwayID = "00030"
+PathwayID = "03050"
 
 #options include 'primary' or 'both'
 use = 'both'
@@ -146,7 +164,7 @@ KEGG.diagram(PathwayID, FC, use, metab.data)
 ```{r echo = F, include = T, warnings = F}
 
 ##can be the exact name or 5 digit code in quotes
-specific.kegg = "00010"
+specific.kegg = "03050"
 
 comparekegg.genes(specific.kegg, FC, FDR, mean.data)
 
@@ -170,7 +188,7 @@ GO20(cat.data, GO.ontology, FC, FDR, usecats)
 ```{r echo = F}
 
 ##the 7 digits of a GOterm id or the exact term name
-specific.go = '0005811'
+specific.go = '0043228'
 
 plotgo.genes(specific.go, FC, FDR, mean.data)
 
@@ -203,7 +221,7 @@ treemapPlot(rt)
 ```{r echo = F, warning = F}
 
 ##a parent category generated in the treemapPlot function
-parent.category = 'membrane lipid biosynthetic process'
+parent.category = 'double-strand break repair via break-induced replication'
 
 plotparentcat.genes(parent.category, FC, FDR, mean.data)
 

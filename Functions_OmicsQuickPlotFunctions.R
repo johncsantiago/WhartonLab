@@ -788,3 +788,21 @@ legend("left",
        fill = c("brown", "orange", "steelblue"),
        xpd = T)
 }
+
+
+metab.mean = norm.data[,unique(colnames(norm.data))]
+i=1
+while(i <= nrow(norm.data)){
+  j = 1
+  while(j <= ncol(metab.mean)){
+    metab.mean[i,j] = mean(na.omit(norm.data[i, colnames(norm.data) == colnames(metab.mean)[j]]))
+    j = j+1
+  }
+  i=i+1
+}
+
+metab.mean["NAD+",]/metab.mean["NADH",]
+metab.mean["NADP+",]/metab.mean["NADPH",]
+
+NAD = mean(norm.data["NAD+", colnames(norm.data) == "WT"])
+

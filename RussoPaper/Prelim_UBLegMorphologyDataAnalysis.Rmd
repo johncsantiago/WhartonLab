@@ -1503,6 +1503,8 @@ points(x = xpos,
 ```{r echo = F, include = F}
 
 heat.data = temp[,6:14]
+heat.data = temp[,c(7:9,12:14)]
+
 row.names(heat.data) = paste0(temp$Genotype,temp$Animal..)
 heat.data = as.matrix(t(heat.data))
 
@@ -1515,11 +1517,12 @@ category.colors = c(rep("darkgreen", 2),
 
 heatmap.2(heat.data,
           Colv = T,
-          Rowv = T,
+          Rowv = F,
+          dendrogram = "column",
           margins = c(7, 15),
           trace = "none",
           ColSideColors = sample.colors,
-          RowSideColors = category.colors,
+          #RowSideColors = category.colors,
           col = heat.colors)
 ```
 
@@ -1582,6 +1585,11 @@ sum.best.combo = apply(best.combo, MARGIN = 1, sum)
 best.pval = t.test(sum.best.combo[1:9], sum.best.combo[10:18])[[3]]
 
 supervised.combo = temp.combos[temp.combos$combo == "3,4,8,9.1",]
+
+temp.combos$combo = (substr(temp.combos$combo, 1, nchar(temp.combos$combo)-2))
+temp.combos= temp.combos[!duplicated(temp.combos[, "combo"]),]
+ 
+temp.combos[1:20, 2:4]
 
 ```
 
@@ -1661,4 +1669,138 @@ points(x = xpos,
        y = 4.75,
        label = paste0("pval = ", signif(pval, 3)))
   
+```
+
+
+
+
+```{r}
+
+library(ggridges)
+
+#best.combo = data_matrix[,c(2,3,4,7,8,9)]
+
+
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/UBLegMorphologyData.csv")
+
+temp.titles = c("Is the leg short?",
+                "Is there scrunching or curving?",
+                "Is the axonal bundle straight?",
+                "Does the axonal bundle split or are there chunks missing?",
+                "Does the branching look organized?",
+                "Is the branching following a pattern tiling?",
+                "Is there branching in all aspects of the femur?",
+                "Is the mitochonria in the entire axonal bundle?",
+                "Do all branches have mitochondria?")
+
+
+best.titles = temp.titles[c(2,3,4,7,8,9)]
+
+temp$Genotype[temp$Genotype == "WT"] = "WT(cr)"
+temp$Genotype[temp$Genotype == "G85R"] = "G85R(cr)"
+
+temp$Genotype = factor(temp$Genotype, levels = unique(temp$Genotype))
+
+morph.data = temp[,c(1:2,7:9,12:14)]
+
+WT.morphdata = morph.data[morph.data$Genotype == "WT(cr)",]
+WT.morphdata = t(WT.morphdata[,3:8])
+WT.morphdata = as.data.frame(WT.morphdata)
+WT.morphdata$Morph = best.titles
+wt.morphplot = data.frame(Morph = as.character(),
+                          Score = as.numeric())
+i=1
+while(i<=9){
+  temp.morph = data.frame(Morph = WT.morphdata$Morph,
+                          Score = WT.morphdata[,i])
+  wt.morphplot = rbind(wt.morphplot, temp.morph)
+  i = i +1
+}
+wt.morphplot$Morph = factor(wt.morphplot$Morph, levels = best.titles)
+wt.morphplot$Species = "WT(cr)"
+
+
+GR.morphdata = morph.data[morph.data$Genotype == "G85R(cr)",]
+GR.morphdata = t(GR.morphdata[,3:8])
+GR.morphdata = as.data.frame(GR.morphdata)
+GR.morphdata$Morph = best.titles
+GR.morphplot = data.frame(Morph = as.character(),
+                          Score = as.numeric())
+i=1
+while(i<=9){
+  temp.morph = data.frame(Morph = GR.morphdata$Morph,
+                          Score = GR.morphdata[,i])
+  GR.morphplot = rbind(GR.morphplot, temp.morph)
+  i = i +1
+}
+GR.morphplot$Morph = factor(GR.morphplot$Morph, levels = best.titles)
+GR.morphplot$Species = "G85R(cr)"
+
+sum.morph = data.frame(Morph = "Total Score",
+                       Score = apply(morph.data[,3:8], MARGIN = 1, sum),
+                       Species = morph.data$Genotype)
+sum.morph$Species = factor(sum.morph$Species, levels = c("WT(cr)", "G85R(cr)"))
+
+all.morphplot = rbind(wt.morphplot, GR.morphplot)
+all.morphplot$Species = factor(all.morphplot$Species, levels = c("WT(cr)", "G85R(cr)"))
+#all.morphplot = rbind(all.morphplot, sum.morph)
+
+
+ggplot(
+  all.morphplot, 
+  aes(x = `Score`, y = `Morph`)
+  ) +
+  geom_density_ridges_gradient(
+    aes(fill = Species), scale = 1
+    ) +
+  scale_fill_manual(
+    values = alpha(c("royalblue", "orange"), .5)
+  ) +
+  labs(title = 'Morphology Score')
+
+```
+
+```{r echo = F}
+
+ggplot(
+  sum.morph, 
+  aes(x = `Score`, y = `Morph`)
+  ) +
+  geom_density_ridges_gradient(
+    aes(fill = Species), scale = 1
+    ) +
+  scale_fill_manual(
+    values = alpha(c("royalblue", "orange"), .5)
+  ) +
+  labs(title = 'Morphology Score')
+
+
+```
+
+
+
+```{r echo = F}
+all.morphplot %>% 
+  ##pivot_longer(cols = -Species,
+  ##             names_to = "Param",
+  ##             values_to = "Value") %>% 
+      ggplot(aes(x = Score, y = Morph))+
+      geom_density_ridges(aes(fill = Species),
+                          stat = "binline",
+                          alpha = 0.5)
+
+ggplot(
+  all.morphplot, 
+  aes(x = `Score`, y = `Morph`)
+  ) +
+  geom_density_ridges_gradient(
+    #aes(fill = ..x..), scale = 3, size = 0.3
+    aes(fill = Species), alpha = .9, scale = 1
+    ) +
+  #scale_fill_gradientn(
+  #  colours = c("#0D0887FF", "#CC4678FF", "#F0F921FF"),
+  #  name = "Score"
+  #  )+
+  labs(title = 'Morphology Score') 
+
 ```
