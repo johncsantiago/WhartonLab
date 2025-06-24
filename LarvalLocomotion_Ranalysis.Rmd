@@ -1,0 +1,160 @@
+---
+title: "Larval Locomotion"
+author: "John Santiago"
+date: "2025-05-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo = F}
+
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Python/LarvalLocomotion/PreliminaryCode/object_trajectories.csv")
+
+plot(x = temp$x[temp$object_id ==0],
+     y = temp$y[temp$object_id ==0],
+     pch = 21,
+     cex = .5,
+     col = "darkgreen",
+     xlim = c(0, 500),
+     ylim = c(0,500))
+
+points(x = temp$x[temp$object_id ==1],
+     y = temp$y[temp$object_id ==1],
+     pch = 21,
+     cex = .5,
+     col = "firebrick")
+
+points(x = temp$x[temp$object_id ==2],
+     y = temp$y[temp$object_id ==2],
+     pch = 21,
+     cex = .5,
+     col = "royalblue")
+
+```
+
+
+```{r echo = F}
+
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Python/LarvalLocomotion/PreliminaryCode/object_trajectories.csv")
+
+duration = 91.8
+
+distance = setNames(rep(0, length(unique(temp$object_id))), unique(temp$object_id))
+
+i=1
+while(i<=length(unique(names(distance)))){
+  j = 101
+  while(j < max(temp$frame)){
+    x1 = temp[temp$frame == j-100 & temp$object_id == names(distance)[i], "x"]
+    x2 = temp[temp$frame == j & temp$object_id == names(distance)[i], "x"]
+    y1 = temp[temp$frame == j-100 & temp$object_id == names(distance)[i], "y"]
+    y2 = temp[temp$frame == j & temp$object_id == names(distance)[i], "y"]
+    distance[i] = distance[i] + sqrt((x2-x1)^2 + (y2-y1)^2)
+    j=j+100
+  }
+  i=i+1
+}
+
+```
+
+
+
+```{r echo = F}
+
+library(png)
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Python/LarvalLocomotion/PreliminaryCode/object_trajectories.csv")
+
+bgpic = readPNG("/Users/johncsantiago/Documents/GitHub/WhartonLab/Python/LarvalLocomotion/PreliminaryCode/trajectory_with_snapshots.png")
+
+temp$y = 720 - temp$y
+
+plot(0:1080, type ="n",
+     
+     ylim = c(0,720), xlim = c(0,1080)) #ylim = c(300,600), xlim = c(200,600))#
+
+rasterImage(bgpic, xleft = 0,
+            xright = 1080,
+            ybottom = 0,
+            ytop = 720)
+
+```
+
+```{r echo = F}
+
+library(png)
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Python/LarvalLocomotion/PreliminaryCode/object_trajectories.csv")
+
+bgpic = readPNG("/Users/johncsantiago/Documents/GitHub/WhartonLab/Python/LarvalLocomotion/PreliminaryCode/trajectory_with_snapshots.png")
+
+temp$y = 720 - temp$y
+
+plot(0:1080, type ="n",
+     
+     ylim = c(0,720), xlim = c(0,1080)) #ylim = c(300,600), xlim = c(200,600))#
+
+rasterImage(bgpic, xleft = 0,
+            xright = 1080,
+            ybottom = 0,
+            ytop = 720)
+
+lines(x = temp$x[temp$object_id ==0],
+     y = temp$y[temp$object_id ==0],
+     lwd = 1,
+     col = "gold")
+
+
+lines(x = temp$x[temp$object_id ==1],
+     y = temp$y[temp$object_id ==1],
+     lwd = 1,
+     col = "deeppink")
+
+lines(x = temp$x[temp$object_id ==2],
+     y = temp$y[temp$object_id ==2],
+     lwd = 1,
+     col = "cyan")
+
+text(x = 550,
+     y = 450,
+    labels = paste("Sample 1: ", signif(distance[1]), "px"),
+    col = "gold",
+    cex = 1)
+
+text(x = 350,
+     y = 510,
+    labels = paste("Sample 2: ", signif(distance[2]), "px"),
+    col = "deeppink",
+    cex = 1)
+
+text(x = 275,
+     y = 375,
+    labels = paste("Sample 3: ", signif(distance[3]), "px"),
+    col = "cyan",
+    cex = 1)
+
+```
+
+
+
+
+```{r}
+
+library(ggridges)
+
+ggplot(
+  lincoln_weather, 
+  aes(x = `Mean Temperature [F]`, y = `Month`)
+  ) +
+  geom_density_ridges_gradient(
+    aes(fill = ..x..), scale = 3, size = 0.3
+    ) +
+  scale_fill_gradientn(
+    colours = c("#0D0887FF", "#CC4678FF", "#F0F921FF"),
+    name = "Temp. [F]"
+    )+
+  labs(title = 'Temperatures in Lincoln NE') 
+
+```
+
