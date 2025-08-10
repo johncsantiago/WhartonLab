@@ -15,9 +15,23 @@ knitr::knit_hooks$set(webgl = hook_webgl)
 ##Load Libraries
 
 library(org.Dm.eg.db)
-##library(goseq)
+library(goseq)
 library(rrvgo)
 library(plotly)
+library(VennDiagram)
+genesingo=as.list(org.Dm.egGO2ALLEGS)
+
+hex = function(color, alpha){
+  rgb2hex = color
+  i = 1
+  while(i <= length(color)){
+    rgbvals = col2rgb(color[i])
+    rgb2hex[i] = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+    i = i+1
+  }
+  return(rgb2hex)
+}
+
 ```
 
 
@@ -26,12 +40,12 @@ library(plotly)
 ##load all files from github
 git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"
 
-##DfKey = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/DfKey.csv"))
+DfKey = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/DfKey.csv"))
 ##colnames(DfKey)[c(1,3)] = c("BDSC", "FBab")
 ##DfKey$FollowUp = "FALSE"
 ##DfKey$Excluded = "FALSE"
 
-#old.dfdata = read.csv(paste0(git.dir,"DeficiencyScreen/DataFiles/DeficiencyModifierGenes.csv"),row.names)
+old.dfdata = read.csv(paste0(git.dir,"DeficiencyScreen/DataFiles/DeficiencyModifierGenes.csv"),row.names)
 
 ##GeneIDKey = read.csv(paste0(git.dir,"GeneralDataFiles/GeneIDKey.csv"),row.names = 1)
 
@@ -70,7 +84,7 @@ git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"
 ##newsym = unique(new$Symbol)
 
 
-fullDfKey = read.csv(paste0(git.dir,"DeficiencyScreen/DataFiles/20250613_FullDfData.csv"),row.names = 1)
+fullDfKey = read.csv(paste0(git.dir,"DeficiencyScreen/DataFiles/20250618_FullDfData.csv"),row.names = 1)
 
 row.names(fullDfKey) = fullDfKey$FBab
 
@@ -153,19 +167,19 @@ py.only = py.only[py.only$Symbol %in% setdiff(py.only$Symbol, gene.location$Symb
 #"lncRNA:CR46529"
 #"lncRNA:CR46534" 
 
-py.only.FBgn = c("lncRNA:CR46532", "FBgn0288728", "lncRNA:CR46530", "lncRNA:CR46535", "lncRNA:CR46529", "lncRNA:CR46534")
+py.only.FBgn = c("FBgn0289441", "FBgn0288728", "FBgn0289439", "FBgn0289444", "FBgn0289438", "FBgn0289443")
 
 py.only.sym = c("lncRNA:CR46532", "asRNA:PS4", "lncRNA:CR46530", "lncRNA:CR46535", "lncRNA:CR46529", "lncRNA:CR46534")
 
-py.only.ens = c("lncRNA:CR46532", "asRNA:PS4", "lncRNA:CR46530", "lncRNA:CR46535", "lncRNA:CR46529", "lncRNA:CR46534")
+py.only.ens = c("86703978", "86703974", "86703976", "86703981", "86703975", "86703980")
 
-py.only.CHR = c("lncRNA:CR46532", "3R", "lncRNA:CR46530", "lncRNA:CR46535", "lncRNA:CR46529", "lncRNA:CR46534")
+py.only.CHR = c("3R", "3R", "3R", "2L", "2L", "2R")
 
-py.only.Start = c("lncRNA:CR46532", 16720127, "lncRNA:CR46530", "lncRNA:CR46535", "lncRNA:CR46529", "lncRNA:CR46534")
+py.only.Start = c(7341783, 16720127, 13056818, 7595504, 9747046, 20149996)
 
-py.only.End = c("lncRNA:CR46532", 16729959, "lncRNA:CR46530", "lncRNA:CR46535", "lncRNA:CR46529", "lncRNA:CR46534")
+py.only.End = c(7344884, 16729959, 13057676, 7597500, 9747785, 20150499)
 
-py.only.Strand = c("lncRNA:CR46532", 1, "lncRNA:CR46530", "lncRNA:CR46535", "lncRNA:CR46529", "lncRNA:CR46534")
+py.only.Strand = c(-1, 1, -1, -1, -1, -1)
 
 add.gene.locations = data.frame(FBgn = py.only.FBgn,
                                 Symbol = py.only.sym,
@@ -174,23 +188,154 @@ add.gene.locations = data.frame(FBgn = py.only.FBgn,
                                 Start = py.only.Start,
                                 End = py.only.End,
                                 Strand = py.only.Strand)
+gene.location = rbind(gene.location, add.gene.locations)
+
+
+## redo genes in each Df
+gl = apply(gene.location[,c("Start", "End")], MARGIN = 1, min)
+gr = apply(gene.location[,c("Start", "End")], MARGIN = 1, max)
+Dfl = apply(fullDfKey[,c("Start", "End")], MARGIN = 1, min)
+Dfr = apply(fullDfKey[,c("Start", "End")], MARGIN = 1, max)
+
+genesindf = data.frame(Df = character(),
+                       FBgn = character(),
+                       Symbol = character())
+i=1
+while(i <= nrow(fullDfKey)){
+  temp = na.omit(gene.location[((gl <= Dfl[i] & gr >= Dfr[i]) |
+                               (gl >= Dfl[i] & gl <= Dfr[i]) |
+                               (gr >= Dfl[i] & gr <= Dfr[i])) &
+                               gene.location$CHR == fullDfKey$Chr[i],])
+
+  if(nrow(temp) > 0){
+    temp$Df = fullDfKey$Deficiency[i]
+    genesindf = rbind(genesindf, temp[, c("Df", "FBgn", "Symbol")])
+  }
+  i=i+1
+}
+
+
+```
+
+
+```{r echo = F}
+#all the current Df data after Jonah omissions
+#fullDfKey
+
+##genes in the current Df data
+##genesindf
+
+##the old Df data before Jonah omissions
+DfKey = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/DfKey.csv"))
+
+##Genes that were originally associated with the old Df data
+old.dfdata = read.csv(paste0(git.dir,"DeficiencyScreen/DataFiles/DeficiencyModifierGenes.csv"),row.names = 1)
+
+
+
+```
+
+
+```{r echo = F}
+
+  ##Sample titles as strings. Only fill in up to your number of selected categories
+  set1 = "All old Df"
+  set2 = "All new Df"
+  set3 = "Old Suppressors/Strong Suppressors"
+  set4 = "New Suppressors"
+  
+  ##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+  s1 = DfKey$FBab..
+  s2 = fullDfKey$FBab[fullDfKey$Omit == F]
+  s3 = DfKey$FBab..[grep("Sup",DfKey$Modifier)]
+  s4 = fullDfKey[fullDfKey$Omit == F,]
+  s4 = s4$FBab[grep("Sup", s4$Modifier)]
+  main = ""
+  
+  grid.newpage()
+  tempvenn=draw.quad.venn(area1=length(s1),area2=length(s2),area3=length(s3),area4=length(s4), n12=length(intersect(s1,s2)),n13 = length(intersect(s1,s3)),n14 = length(intersect(s1,s4)),n23 = length(intersect(s2,s3)),n24 = length(intersect(s2,s4)),n34 = length(intersect(s3,s4)),n123 =  length(intersect(s1,intersect(s2,s3))),n124 =  length(intersect(s1,intersect(s2,s4))), n134 = length(intersect(s1,intersect(s3,s4))),n234 = length(intersect(s2,intersect(s3,s4))),n1234 = length(intersect(s1,intersect(s2,intersect(s3,s4)))),category =c(set1,set2,set3,set4),fill = c("blue", "red","green","yellow"),cex=2,cat.cex = 1, title = "main")
 
 ```
 
 ```{r echo = F}
 
-newdfonly = setdiff(newdf, olddf)
-olddfonly = setdiff(olddf, newdf)
+trimmed.Df = fullDfKey[fullDfKey$Omit == "FALSE",]
+trimmed.genes = genesindf[genesindf$Df %in% trimmed.Df$Deficiency,]
+#trimmed.sup = fullDfKey[fullDfKey$Omit == "FALSE" & fullDfKey$MLE >= 2,] 
+trimmed.sup = fullDfKey[(fullDfKey$Omit == "FALSE" & fullDfKey$MLE == 2) &
+                         fullDfKey$Modifier ==  "No Effect",] 
+#trimmed.sup = fullDfKey[fullDfKey$Omit == "FALSE" & fullDfKey$Modifier ==  "Suppressor",] 
+trimmed.supgenes = genesindf[genesindf$Df %in% trimmed.sup$Deficiency,]
 
-newfbonly = setdiff(newfb, oldfb)
-oldfbonly = setdiff(oldfb, newfb)
 
-newsymonly = setdiff(newsym, oldsym)
-oldsymonly = setdiff(oldsym, newsym)
+sigs = unique(trimmed.supgenes$Symbol)
+genes = setNames(rep(0, length(unique(trimmed.genes$Symbol))), unique(trimmed.genes$Symbol))
 
-fbinnewdfonly = unique(fulldf[fulldf$Deficiency %in% newdfonly, "FBgn"])
-fbinolddfonly = unique(unlist(genesinolddf[olddfonly]))
+#randoms = sample(1:length(genes), 6061)
 
+genes[sigs] = 1
+#genes[randoms] = 1
+pwf=nullp(genes,"dm3","geneSymbol")
+##GO.wall=goseq(pwf,"dm3","geneSymbol")
+GO.wall=goseq(pwf,"dm3","geneSymbol", method = "Hypergeometric")
+
+GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+row.names(GO.wall) = GO.wall$category
+
+#suppressor.GO = GO.wall
+#twodayplus.GO = GO.wall
+#twotothree.GO = GO.wall
+
+```
+
+
+```{r echo = F, warning=F, message=F}
+##GO analysis of all Df with MLE 3 or greater, omitting Dfs with escapers
+sigs.Df = fullDfKey[fullDfKey$Omit == "FALSE" & fullDfKey$MLE > 3,]
+sigs = genesindf[genesindf$Df %in% sigs.Df$Deficiency, "Symbol"]
+
+genes.Df = fullDfKey[fullDfKey$Omit == "FALSE",]
+genes = genesindf[genesindf$Df %in% genes.Df$Deficiency, "Symbol"]
+sigs = unique(trimmed.supgenes$Symbol)
+genes = setNames(rep(0, length(unique(genes))), unique(genes))
+
+genes[sigs] = 1
+pwf=nullp(genes,"dm3","geneSymbol")
+GO.wall=goseq(pwf,"dm3","geneSymbol")
+GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+row.names(GO.wall) = GO.wall$category
+
+sup.GO = GO.wall
+
+
+```
+
+
+```{r echo = F}
+
+df.genesingo = gene.location[gene.location$ensembl %in% intersect(gene.location$ensembl, as.character(genesingo[["GO:0030527"]])),]
+
+summary(factor(genesindf[genesindf$FBgn %in% df.genesingo$FBgn, "Df"], levels = unique(genesindf[genesindf$FBgn %in% df.genesingo$FBgn, "Df"])))
+
+fullDfKey[fullDfKey$Deficiency == "Df(2L)ED1473",]
+
+```
+
+
+
+
+
+
+
+```{r echo = F, warning=F, include = F}
+
+hist(na.omit(as.numeric(dfdata$MLE)), col = hex('yellow', .25),
+     breaks = seq(-4, 7, by = 1),
+     xlab = "MLE",
+     main = "Old Df MLE data vs New")
+hist(na.omit(as.numeric(DfKey$MLE)), add = T, col = hex('blue', .2),
+     breaks = seq(-4, 7, by = 1))
+legend("topright", legend = c("old data", "new data"), fill = c("blue", "yellow"))
 ```
 
 
@@ -212,180 +357,6 @@ fbinolddfonly = unique(unlist(genesinolddf[olddfonly]))
   
   grid.newpage()
   tempvenn=draw.quad.venn(area1=length(s1),area2=length(s2),area3=length(s3),area4=length(s4), n12=length(intersect(s1,s2)),n13 = length(intersect(s1,s3)),n14 = length(intersect(s1,s4)),n23 = length(intersect(s2,s3)),n24 = length(intersect(s2,s4)),n34 = length(intersect(s3,s4)),n123 =  length(intersect(s1,intersect(s2,s3))),n124 =  length(intersect(s1,intersect(s2,s4))), n134 = length(intersect(s1,intersect(s3,s4))),n234 = length(intersect(s2,intersect(s3,s4))),n1234 = length(intersect(s1,intersect(s2,intersect(s3,s4)))),category =c(set1,set2,set3,set4),fill = c("blue", "red","green","yellow"),cex=2,cat.cex = 1, title = "main")
-
-```
-
-
-
-
-
-
-
-```{r echo = F}
-##kegg = readRDS(gzcon(url(paste0(git.dir,"DeficiencyScreen/DataFiles/kegg.symbol2path.RData"))))
-##kegg.names = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/KEGG.names.csv"), row.names = 1)
-
-Moderate.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/ModerateGOAnalysis.csv"), row.names = 1)
-Strong.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/StrongGOAnalysis.csv"), row.names = 1)
-Repress.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/RepressorGOAnalysis.csv"), row.names = 1)
-Lethal.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/LethalGOAnalysis.csv"), row.names = 1)
-Enhancer.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/EnhancerGOAnalysis.csv"), row.names = 1)
-
-genesingo=as.list(org.Dm.egGO2ALLEGS)
-
-```
-
-
-```{r echo = F}
-
-##dfbar = data.frame(Enhancer = c(DfKey[DfKey$Modifier == "Enhancer",], dfdata[dfdata$Modifier == "Enhancer",]),
-##                   NoEffect = c(DfKey[DfKey$Modifier == "No Effect",], dfdata[dfdata$Modifier == "No Effect",]),
-##                   Lethal = c(DfKey[DfKey$Modifier == "Lethal",], dfdata[dfdata$Modifier == "Lethal",]),
-##                   c(DfKey[DfKey$Modifier == "Enhancer",], dfdata[dfdata$Modifier == "Enhancer",]),
-##                   Moderate = c(DfKey[DfKey$Modifier == "Enhancer",], dfdata[dfdata$Modifier == "Enhancer",]),)
-
-#old = hist(as.numeric(DfKey$MLE))
-#new = hist(as.numeric(dfdata$MLE))
-
-
-hex = function(color, alpha){
-  rgb2hex = color
-  i = 1
-  while(i <= length(color)){
-    rgbvals = col2rgb(color[i])
-    rgb2hex[i] = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
-    i = i+1
-  }
-  return(rgb2hex)
-}
-
-```
-
-
-```{r echo = F, warning=F}
-
-hist(na.omit(as.numeric(dfdata$MLE)), col = hex('yellow', .25),
-     breaks = seq(-4, 7, by = 1),
-     xlab = "MLE",
-     main = "Old Df MLE data vs New")
-hist(na.omit(as.numeric(DfKey$MLE)), add = T, col = hex('blue', .2),
-     breaks = seq(-4, 7, by = 1))
-legend("topright", legend = c("old data", "new data"), fill = c("blue", "yellow"))
-```
-
-
-
-```{r include=F, echo=F}
-
-sigs = unique(fulldf[fulldf$Modifier == "Enhancer", "Symbol"])
-genes = setNames(rep(0, length(unique(fulldf$Symbol))), unique(fulldf$Symbol))
-genes[sigs] = 1
-pwf=nullp(genes,"dm3","geneSymbol")
-##GO.wall=goseq(pwf,"dm3","geneSymbol")
-GO.wall=goseq(pwf,"dm3","geneSymbol", method = "Hypergeometric")
-
-GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
-row.names(GO.wall) = GO.wall$category
-Enhancer.GO = GO.wall
-##write.csv(Suppressor.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/SupressorGOAnalysis.csv")
-
-  ##KEGG=goseq(pwf,gene2cat=kegg)
-##KEGG=goseq(pwf,gene2cat=kegg, method = "Hypergeometric")
-
-##KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
-##row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
-##KEGG$Name=kegg.names[row.names(KEGG),1]
-##Repress.KEGG = KEGG
-##write.csv(Repress.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/RepressorKEGGAnalysis.csv")
-
-##sigs = Df.data[Df.data$Moderate == 1 , "Symbol"]
-##genes = setNames(rep(0, nrow(Df.data)), Df.data$Symbol)
-##genes[sigs] = 1
-##pwf=nullp(genes,"dm3","geneSymbol")
-  ##GO.wall=goseq(pwf,"dm3","geneSymbol")
-##GO.wall=goseq(pwf,"dm3","geneSymbol", method = "Hypergeometric")
-
-##GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
-##row.names(GO.wall) = GO.wall$category
-##Moderate.GO = GO.wall
-##write.csv(Moderate.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/ModerateGOAnalysis.csv")
-
-
-  ##KEGG=goseq(pwf,gene2cat=kegg)
-##KEGG=goseq(pwf,gene2cat=kegg, method = "Hypergeometric")
-
-##KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
-##row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
-##KEGG$Name=kegg.names[row.names(KEGG),1]
-##Moderate.KEGG = KEGG
-##write.csv(Moderate.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/ModerateKEGGAnalysis.csv")
-
-
-##sigs = Df.data[Df.data$Strong == 1 , "Symbol"]
-##genes = setNames(rep(0, nrow(Df.data)), Df.data$Symbol)
-##genes[sigs] = 1
-##pwf=nullp(genes,"dm3","geneSymbol")
-  ##GO.wall=goseq(pwf,"dm3","geneSymbol")
-##GO.wall=goseq(pwf,"dm3","geneSymbol", method = "Hypergeometric")
-
-##GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
-##row.names(GO.wall) = GO.wall$category
-##Strong.GO = GO.wall
-##write.csv(Strong.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/StrongGOAnalysis.csv")
-
-
-  ##KEGG=goseq(pwf,gene2cat=kegg)
-##KEGG=goseq(pwf,gene2cat=kegg, method = "Hypergeometric")
-
-##KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
-##row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
-##KEGG$Name=kegg.names[row.names(KEGG),1]
-##Strong.KEGG = KEGG
-##write.csv(Strong.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/StrongKEGGAnalysis.csv")
-
-##sigs = Df.data[Df.data$Lethal == 1, "Symbol"]
-##genes = setNames(rep(0, nrow(Df.data)), Df.data$Symbol)
-##genes[sigs] = 1
-##pwf=nullp(genes,"dm3","geneSymbol")
-  ##GO.wall=goseq(pwf,"dm3","geneSymbol")
-##GO.wall=goseq(pwf,"dm3","geneSymbol", method = "Hypergeometric")
-
-##GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
-##row.names(GO.wall) = GO.wall$category
-##Lethal.GO = GO.wall
-##write.csv(Lethal.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/LethalGOAnalysis.csv")
-
-
-  ##KEGG=goseq(pwf,gene2cat=kegg)
-##KEGG=goseq(pwf,gene2cat=kegg, method = "Hypergeometric")
-
-##KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
-##row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
-##KEGG$Name=kegg.names[row.names(KEGG),1]
-##Lethal.KEGG = KEGG
-##write.csv(Lethal.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/LethalKEGGAnalysis.csv")
-
-##sigs = Df.data[Df.data$Enhancer == 1, "Symbol"]
-##genes = setNames(rep(0, nrow(Df.data)), Df.data$Symbol)
-##genes[sigs] = 1
-##pwf=nullp(genes,"dm3","geneSymbol")
-  ##GO.wall=goseq(pwf,"dm3","geneSymbol")
-##GO.wall=goseq(pwf,"dm3","geneSymbol", method = "Hypergeometric")
-
-##GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
-##row.names(GO.wall) = GO.wall$category
-##Enhance.GO = GO.wall
-##write.csv(Enhance.GO, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/EnhancerGOAnalysis.csv")
-
-
-  ##KEGG=goseq(pwf,gene2cat=kegg)
-##KEGG=goseq(pwf,gene2cat=kegg, method = "Hypergeometric")
-
-##KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
-##row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
-##KEGG$Name=kegg.names[row.names(KEGG),1]
-##Enhance.KEGG = KEGG
-##write.csv(Enhance.KEGG, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/EnhancerKEGGAnalysis.csv")
 
 ```
 
@@ -439,7 +410,7 @@ fig <- plot_ly(data,
 
 ```{r echo = F, include =F}
 
-GO.data = Enhancer.GO
+GO.data = sup.GO
 GO.ontology = "BP"
 GOBP.fig = GO20(GO.data, GO.ontology)
 
@@ -469,6 +440,23 @@ GOCC.fig
 GOMF.fig
 
 ```
+
+
+```{r echo = F}
+
+sig.sup.GOcats = sup.GO[sup.GO$adjp <= .05, "category"]
+
+ss.gocat.genes = genesingo[sig.sup.GOcats]
+
+ss.gocat1.genes = (gene.location[gene.location$ensembl %in% as.character(ss.gocat.genes[[1]]),])
+
+ss.gocat1.dfs = genesindf[genesindf$FBgn %in% ss.gocat1.genes$FBgn,]
+
+(unique(ss.gocat1.dfs$Df))
+
+
+```
+
 
 ```{r include=F, echo=F}
 

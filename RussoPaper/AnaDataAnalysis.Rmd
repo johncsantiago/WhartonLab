@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 
-```{r echo = F, warning=FALSE, message=FALSE}
+```{r echo=F, message=FALSE, warning=FALSE}
 
 library(kableExtra)
 library(gtools)
@@ -19,8 +19,9 @@ library(gplots)
 library(beeswarm)
 
 
-temp = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/20250621_AllAnaData.csv")
-
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/20250809_AllAnaData.csv", row.names = 1)
+temp = temp[temp$Boutons != "x",]
+temp$Boutons = as.numeric(temp$Boutons)
 temp$Genotype[temp$Genotype == "WT-cr/LoxP"] = "WT(cr/LoxP)"
 temp$Genotype[temp$Genotype == "G85R"] = "G85R(cr/hr)"
 temp$Genotype[temp$Genotype == "G85Rcr/G85Rhr"] = "G85R(cr/hr)"
@@ -30,6 +31,8 @@ temp$Genotype[temp$Genotype == "OK371 > gbb [G85R]"] = "OK371-gbb; G85R(cr/LoxP)
 temp$Genotype[temp$Genotype == "OK371>gbb [WT]"] = "OK371-gbb; WT(cr/LoxP)"
 temp$Genotype[temp$Genotype == "OK371>gbb [G85R]"] = "OK371-gbb; G85R(cr/LoxP)"
 temp$Genotype[temp$Genotype == "OK371>gbb [WTcr/LoxP]"] = "OK371-gbb; WT(cr/LoxP)"
+temp$Genotype[temp$Genotype == "OK371>gbb [WT-cr/LoxP]"] = "OK371-gbb; WT(cr/LoxP)"
+temp$Genotype[temp$Genotype == "OK371>gbb [G85Rcr/G85Rhr]"] = "OK371-gbb; G85R(cr/LoxP)"
 temp$Genotype[temp$Genotype == "OK371>gbb [G85cr/G85Rhr]"] = "OK371-gbb; G85R(cr/LoxP)"
 
 temp$Genotype[temp$Genotype == "OK371 > saxA [WT]"] = "OK371-saxA; WT(cr/LoxP)"
@@ -37,6 +40,7 @@ temp$Genotype[temp$Genotype == "OK371 > saxA [G85R]"] = "OK371-saxA; G85R(cr/Lox
 temp$Genotype[temp$Genotype == "OK371> saxA [WT-cr/LoxP]"] = "OK371-saxA; WT(cr/LoxP)"
 temp$Genotype[temp$Genotype == "OK371>saxA G85R"] = "OK371-saxA; G85R(cr/LoxP)"
 temp$Genotype[temp$Genotype == "OK371>saxA [WTcr/LoxP]"] = "OK371-saxA; WT(cr/LoxP)"
+temp$Genotype[temp$Genotype == "OK371>saxA [WT-cr/LoxP]"] = "OK371-saxA; WT(cr/LoxP)"
 temp$Genotype[temp$Genotype == "OK371>saxA [G85Rcr/G85Rhr]"] = "OK371-saxA; G85R(cr/LoxP)"
 
 
@@ -182,6 +186,64 @@ axis(side = 1,
 Boutons = temp[temp$Data == "Boutons",]
 boutdata = Boutons[Boutons$NMJ == "4" &
                         Boutons$Segment == "3",]
+boutdata$Boutons = as.numeric(boutdata$Boutons)
+
+geno = unique(boutdata$Genotype)
+labels = c("WT", "G85R",
+           "OK-gbb WT", "OK-gbb G85R",
+           "OK-SaxA WT", "OK-SaxA G85R")
+
+plot.bouts(boutdata)
+
+```
+
+```{r echo = F}
+
+btd = boutdata
+
+t.data = list("WT(cr/LoxP)" = btd$Boutons[btd$Genotype == "WT(cr/LoxP)"],
+                    "G85R(cr/hr)" = btd$Boutons[btd$Genotype == "G85R(cr/hr)"],
+                    "OK371-gbb; WT(cr/LoxP)" = btd$Boutons[btd$Genotype == "OK371-gbb; WT(cr/LoxP)"],
+                    "OK371-gbb; G85R(cr/LoxP)" = btd$Boutons[btd$Genotype == "OK371-gbb; G85R(cr/LoxP)"],
+                    "OK371-saxA; WT(cr/LoxP)" = btd$Boutons[btd$Genotype == "OK371-saxA; WT(cr/LoxP)"],
+                    "OK371-saxA; G85R(cr/LoxP)" = btd$Boutons[btd$Genotype == "OK371-saxA; G85R(cr/LoxP)"])
+
+t.table = data.frame(Genotype1 = character(),
+                     Genotype2 = character(),
+                     pval = numeric())
+
+i=1
+while(i <= length(t.data)){
+  j = i+1
+  while(j <= length(t.data)){
+    t.temp = data.frame(Genotype1 = geno[i],
+                        Genotype2 = geno[j],
+                        pval = t.test(x = t.data[[i]],
+                                      y = t.data[[j]],
+                                      paired = F)[[3]])
+    t.table = rbind(t.table, t.temp)
+      j = j+1
+  }
+  i = i+1
+}
+
+
+t.stripe = t.table$pval <= .05
+knitr::kable(t.table,
+             caption = 'All t-tests for segment 3, NMJ 4 Bouton Counts.')  %>%
+kable_styling() %>%
+row_spec(c(1:nrow(t.table))[t.table$pval <= .05], bold = T, color = "black", background = "gold")
+
+```
+
+
+```{r echo = F, fig.width = 7}
+
+Boutons = temp[temp$Data == "Boutons",]
+boutdata = Boutons[Boutons$NMJ == "4" &
+                        Boutons$Segment == "5",]
+boutdata = boutdata[boutdata$Boutons != "x",]
+boutdata$Boutons = as.numeric(boutdata$Boutons)
 
 geno = unique(boutdata$Genotype)
 labels = c("WT", "G85R",
@@ -238,6 +300,7 @@ row_spec(c(1:nrow(t.table))[t.table$pval <= .05], bold = T, color = "black", bac
 Boutons = temp[temp$Data == "Boutons",]
 boutdata = Boutons[Boutons$NMJ == "6-7" &
                         Boutons$Segment == "3",]
+boutdata$Boutons = as.numeric(boutdata$Boutons)
 
 geno = unique(boutdata$Genotype)
 labels = c("WT", "G85R",
@@ -290,118 +353,182 @@ row_spec(c(1:nrow(t.table))[t.table$pval <= .05], bold = T, color = "black", bac
 ```
 
 
-```{r echo = F, include = F}
-
-Boutons = temp[temp$Data == "Boutons",]
-boutdata = Boutons[Boutons$NMJ == "4" &
-                        Boutons$Segment == "4",]
-
-geno = unique(boutdata$Genotype)
-labels = c("WT", "G85R",
-           "OK-gbb WT", "OK-gbb G85R",
-           "OK-SaxA WT", "OK-SaxA G85R")
-
-
-plot.bouts(boutdata)
-
-```
-
-
-```{r echo = F, include = F}
-
-Boutons = temp[temp$Data == "Boutons",]
-boutdata = Boutons[Boutons$NMJ == "6-7" &
-                        Boutons$Segment == "4",]
-
-geno = unique(boutdata$Genotype)
-labels = c("WT", "G85R",
-           "OK-gbb WT", "OK-gbb G85R",
-           "OK-SaxA WT", "OK-SaxA G85R")
-
-
-plot.bouts(boutdata)
-
-```
-
-
-```{r echo = F, include = F}
-
-Boutons = temp[temp$Data == "Boutons",]
-boutdata = Boutons[Boutons$NMJ == "4" &
-                        Boutons$Segment == "5",]
-
-geno = unique(boutdata$Genotype)
-labels = c("WT", "G85R",
-           "OK-gbb WT", "OK-gbb G85R",
-           "OK-SaxA WT", "OK-SaxA G85R")
-
-
-plot.bouts(boutdata)
-
-```
-
-
-```{r echo = F, include = F}
-
-Boutons = temp[temp$Data == "Boutons",]
-boutdata = Boutons[Boutons$NMJ == "6-7" &
-                        Boutons$Segment == "5",]
-
-geno = unique(boutdata$Genotype)
-labels = c("WT", "G85R",
-           "OK-gbb WT", "OK-gbb G85R",
-           "OK-SaxA WT", "OK-SaxA G85R")
-
-
-plot.bouts(boutdata)
-
-```
-
-
-
-```{r echo = F, include = F}
-
-Boutons = temp[temp$Data == "Boutons",]
-boutdata = Boutons[Boutons$NMJ == "4" &
-                        Boutons$Segment == "6",]
-
-geno = unique(boutdata$Genotype)
-labels = c("WT", "G85R",
-           "OK-gbb WT", "OK-gbb G85R",
-           "OK-SaxA WT", "OK-SaxA G85R")
-
-
-plot.bouts(boutdata)
-
-```
-
-
-```{r echo = F, include = F}
-
-Boutons = temp[temp$Data == "Boutons",]
-boutdata = Boutons[Boutons$NMJ == "6-7" &
-                        Boutons$Segment == "6",]
-
-geno = unique(boutdata$Genotype)
-labels = c("WT", "G85R",
-           "OK-gbb WT", "OK-gbb G85R",
-           "OK-SaxA WT", "OK-SaxA G85R")
-
-
-plot.bouts(boutdata)
-
-```
-
 
 ```{r echo = F, fig.width = 7}
 
 Boutons = temp[temp$Data == "Boutons",]
+boutdata = Boutons[Boutons$NMJ == "6-7" &
+                        Boutons$Segment == "5",]
+boutdata = boutdata[boutdata$Boutons != "x",]
+boutdata$Boutons = as.numeric(boutdata$Boutons)
+geno = unique(boutdata$Genotype)
+labels = c("WT", "G85R",
+           "OK-gbb WT", "OK-gbb G85R",
+           "OK-SaxA WT", "OK-SaxA G85R")
+
+
+plot.bouts(boutdata)
+
+```
+
+
+```{r echo = F}
+
+btd = boutdata
+
+t.data = list("WT(cr/LoxP)" = btd$Boutons[btd$Genotype == "WT(cr/LoxP)"],
+                    "G85R(cr/hr)" = btd$Boutons[btd$Genotype == "G85R(cr/hr)"],
+                    "OK371-gbb; WT(cr/LoxP)" = btd$Boutons[btd$Genotype == "OK371-gbb; WT(cr/LoxP)"],
+                    "OK371-gbb; G85R(cr/LoxP)" = btd$Boutons[btd$Genotype == "OK371-gbb; G85R(cr/LoxP)"],
+                    "OK371-saxA; WT(cr/LoxP)" = btd$Boutons[btd$Genotype == "OK371-saxA; WT(cr/LoxP)"],
+                    "OK371-saxA; G85R(cr/LoxP)" = btd$Boutons[btd$Genotype == "OK371-saxA; G85R(cr/LoxP)"])
+
+t.table = data.frame(Genotype1 = character(),
+                     Genotype2 = character(),
+                     pval = numeric())
+
+i=1
+while(i <= length(t.data)){
+  j = i+1
+  while(j <= length(t.data)){
+    t.temp = data.frame(Genotype1 = geno[i],
+                        Genotype2 = geno[j],
+                        pval = t.test(x = t.data[[i]],
+                                      y = t.data[[j]],
+                                      paired = F)[[3]])
+    t.table = rbind(t.table, t.temp)
+      j = j+1
+  }
+  i = i+1
+}
+
+
+t.stripe = t.table$pval <= .05
+knitr::kable(t.table,
+             caption = 'All t-tests for segment 3, NMJ 6-7 Bouton Counts.')  %>%
+kable_styling() %>%
+row_spec(c(1:nrow(t.table))[t.table$pval <= .05], bold = T, color = "black", background = "gold")
+
+```
+
+```{r echo = F, include = F}
+
+Boutons = temp[temp$Data == "Boutons",]
 boutdata = Boutons[Boutons$NMJ == "4" &
-                     (Boutons$Genotype == "WT(cr/LoxP)" | Boutons$Genotype == "G85R(cr/hr)"),]
+                        Boutons$Segment == "4",]
+
+geno = unique(boutdata$Genotype)
+labels = c("WT", "G85R",
+           "OK-gbb WT", "OK-gbb G85R",
+           "OK-SaxA WT", "OK-SaxA G85R")
+
+
+plot.bouts(boutdata)
+
+```
+
+
+```{r echo = F, include = F}
+
+Boutons = temp[temp$Data == "Boutons",]
+boutdata = Boutons[Boutons$NMJ == "6-7" &
+                        Boutons$Segment == "4",]
+
+geno = unique(boutdata$Genotype)
+labels = c("WT", "G85R",
+           "OK-gbb WT", "OK-gbb G85R",
+           "OK-SaxA WT", "OK-SaxA G85R")
+
+
+plot.bouts(boutdata)
+
+```
+
+
+```{r echo = F, include = F}
+
+Boutons = temp[temp$Data == "Boutons",]
+boutdata = Boutons[Boutons$NMJ == "4" &
+                        Boutons$Segment == "5",]
+
+geno = unique(boutdata$Genotype)
+labels = c("WT", "G85R",
+           "OK-gbb WT", "OK-gbb G85R",
+           "OK-SaxA WT", "OK-SaxA G85R")
+
+
+plot.bouts(boutdata)
+
+```
+
+
+```{r echo = F, include = F}
+
+Boutons = temp[temp$Data == "Boutons",]
+boutdata = Boutons[Boutons$NMJ == "6-7" &
+                        Boutons$Segment == "5",]
+
+geno = unique(boutdata$Genotype)
+labels = c("WT", "G85R",
+           "OK-gbb WT", "OK-gbb G85R",
+           "OK-SaxA WT", "OK-SaxA G85R")
+
+
+plot.bouts(boutdata)
+
+```
+
+
+
+```{r echo = F, include = F}
+
+Boutons = temp[temp$Data == "Boutons",]
+boutdata = Boutons[Boutons$NMJ == "4" &
+                        Boutons$Segment == "6",]
+
+geno = unique(boutdata$Genotype)
+labels = c("WT", "G85R",
+           "OK-gbb WT", "OK-gbb G85R",
+           "OK-SaxA WT", "OK-SaxA G85R")
+
+
+plot.bouts(boutdata)
+
+```
+
+
+```{r echo = F, include = F}
+
+Boutons = temp[temp$Data == "Boutons",]
+boutdata = Boutons[Boutons$NMJ == "6-7" &
+                        Boutons$Segment == "6",]
+
+geno = unique(boutdata$Genotype)
+labels = c("WT", "G85R",
+           "OK-gbb WT", "OK-gbb G85R",
+           "OK-SaxA WT", "OK-SaxA G85R")
+
+
+plot.bouts(boutdata)
+
+```
+
+
+```{r echo = F, fig.width = 10}
+
+Boutons = temp[temp$Data == "Boutons",]
+
+#boutdata = Boutons[Boutons$NMJ == "4" &
+#                     (Boutons$Genotype == "WT(cr/LoxP)" | #Boutons$Genotype == "G85R(cr/hr)"),]
+
+boutdata = Boutons[Boutons$NMJ == "4",]
 boutdata$Genotype = paste(boutdata$Segment, boutdata$Genotype)
 
 geno = unique(boutdata$Genotype)
-geno = geno[c(1,5,2,6,3,7,4,8)]
+geno = geno[c(1,5, 9:12, 
+              2,6, 
+              3,7, 13:16,
+              4,8)]
 
 boutdata$Genotype = factor(boutdata$Genotype, levels = geno)
 
@@ -412,7 +539,15 @@ boutmeans = c(mean(boutdata[boutdata$Genotype == geno[1], "Boutons"]),
               mean(boutdata[boutdata$Genotype == geno[5], "Boutons"]),
               mean(boutdata[boutdata$Genotype == geno[6], "Boutons"]),
               mean(boutdata[boutdata$Genotype == geno[7], "Boutons"]),
-              mean(boutdata[boutdata$Genotype == geno[8], "Boutons"]))
+              mean(boutdata[boutdata$Genotype == geno[8], "Boutons"]),
+              mean(boutdata[boutdata$Genotype == geno[9], "Boutons"]),
+              mean(boutdata[boutdata$Genotype == geno[10], "Boutons"]),
+              mean(boutdata[boutdata$Genotype == geno[11], "Boutons"]),
+              mean(boutdata[boutdata$Genotype == geno[12], "Boutons"]),
+              mean(boutdata[boutdata$Genotype == geno[13], "Boutons"]),
+              mean(boutdata[boutdata$Genotype == geno[14], "Boutons"]),
+              mean(boutdata[boutdata$Genotype == geno[15], "Boutons"]),
+              mean(boutdata[boutdata$Genotype == geno[16], "Boutons"]))
 
 par(mar=c(4, 4.1, 4.1, 5.6))
 
@@ -448,25 +583,25 @@ lines(x = c(2.65,3.35),
      y = rep(boutmeans[3], 2),
      type = 'l',
      lwd = 3,
-     col = std.colors[1])
+     col = std.colors[3])
 
 lines(x = c(3.65,4.35),
      y = rep(boutmeans[4], 2),
      type = 'l',
      lwd = 3,
-     col = std.colors[2])
+     col = std.colors[4])
 
 lines(x = c(4.65,5.35),
      y = rep(boutmeans[5], 2),
      type = 'l',
      lwd = 3,
-     col = std.colors[1])
+     col = std.colors[5])
 
 lines(x = c(5.65,6.35),
      y = rep(boutmeans[6], 2),
      type = 'l',
      lwd = 3,
-     col = std.colors[2])
+     col = std.colors[6])
 
 lines(x = c(6.65,7.35),
      y = rep(boutmeans[7], 2),
@@ -480,50 +615,99 @@ lines(x = c(7.65,8.35),
      lwd = 3,
      col = std.colors[2])
 
+lines(x = c(8.65,9.35),
+     y = rep(boutmeans[9], 2),
+     type = 'l',
+     lwd = 3,
+     col = std.colors[1])
+
+lines(x = c(9.65,10.35),
+     y = rep(boutmeans[10], 2),
+     type = 'l',
+     lwd = 3,
+     col = std.colors[2])
+
+lines(x = c(10.65,11.35),
+     y = rep(boutmeans[11], 2),
+     type = 'l',
+     lwd = 3,
+     col = std.colors[3])
+
+lines(x = c(11.65,12.35),
+     y = rep(boutmeans[12], 2),
+     type = 'l',
+     lwd = 3,
+     col = std.colors[4])
+
+lines(x = c(12.65,13.35),
+     y = rep(boutmeans[13], 2),
+     type = 'l',
+     lwd = 3,
+     col = std.colors[5])
+
+lines(x = c(13.65,14.35),
+     y = rep(boutmeans[14], 2),
+     type = 'l',
+     lwd = 3,
+     col = std.colors[6])
+
+lines(x = c(14.65,15.35),
+     y = rep(boutmeans[15], 2),
+     type = 'l',
+     lwd = 3,
+     col = std.colors[1])
+
+lines(x = c(15.65,16.35),
+     y = rep(boutmeans[16], 2),
+     type = 'l',
+     lwd = 3,
+     col = std.colors[2])
+
+
 
 beeswarm(boutdata$Boutons~boutdata$Genotype,
        pch = 21,
        method = "center",
-       bg = hex(std.colors[1:2],.5),
+       bg = hex(std.colors[c(1:6, 1:2, 1:6, 1:2)],.5),
        add = T)
 
-lines(x = c(2.5,2.5),
-      y = c(-2.5,50),
-      lty = 2,
-      xpd = T)
-
-lines(x = c(4.5,4.5),
-      y = c(-2.5,50),
-      lty = 2,
-      xpd = T)
-
 lines(x = c(6.5,6.5),
-      y = c(-2.5,50),
+      y = c(-2.5,70),
+      lty = 2,
+      xpd = T)
+
+lines(x = c(8.5,8.5),
+      y = c(-2.5,70),
+      lty = 2,
+      xpd = T)
+
+lines(x = c(14.5,14.5),
+      y = c(-2.5,70),
       lty = 2,
       xpd = T)
 
 
 axis(side = 1,
-     at = c(1.5, 3.5, 5.5, 7.5),
+     at = c(3.5, 7.5, 11.5, 15.5),
      labels = c(3,4,5,6),
      las = 1,
      lwd = 0,
      line = -.75)
 
 axis(side = 1,
-     at = c(4.5),
+     at = c(8.5),
      labels = c("Larval Segment"),
      las = 1,
      lwd = 0,
      cex = 2,
      line = 0.5)
 
-    lines(x = c(.2, length(na.omit(boutmeans))+.5),
+    lines(x = c(-.10, length(na.omit(boutmeans))+.5),
        y = c(0,0),
        lwd = 3,
        xpd = T)
     
-  y.at = c(0, 10*1:5)
+  y.at = c(0, 10*1:7)
     
   axis(side = 2,
        at = y.at,
@@ -543,12 +727,14 @@ axis(side = 1,
        las = 2)
 
   legend('topright',
-       inset=c(-0.185,0),
-       legend = c('WT(cr/LoxP)', 'G85R(cr/hr)'), 
-       fill = std.colors[1:2],
-       cex = 1,
+       inset=c(-0.14,0),
+       legend = c('WT(cr/LoxP)', 'G85R(cr/hr)', 
+                  "OK371-gbb; WT(cr/LoxP)", "OK371-gbb; G85R(cr/LoxP)",
+                  "OK371-saxA; WT(cr/LoxP)","OK371-saxA; G85R(cr/LoxP)"), 
+       fill = std.colors[1:6],
+       cex = .5,
        bty = 'n',
-       pt.cex = .5,
+       pt.cex = .4,
        xpd = T)
 
 ```
@@ -559,10 +745,18 @@ btd = boutdata
 
 t.data = list("3 WT(cr/LoxP)" = btd$Boutons[btd$Genotype == "3 WT(cr/LoxP)"],
               "3 G85R(cr/hr)" = btd$Boutons[btd$Genotype == "3 G85R(cr/hr)"],
+              "3 OK371-gbb; WT(cr/LoxP)" = btd$Boutons[btd$Genotype == "3 OK371-gbb; WT(cr/LoxP)"],
+              "3 OK371-gbb; G85R(cr/LoxP)" = btd$Boutons[btd$Genotype == "3 OK371-gbb; G85R(cr/LoxP)"],
+              "3 OK371-saxA; WT(cr/LoxP)" = btd$Boutons[btd$Genotype == "3 OK371-saxA; WT(cr/LoxP)"],
+              "3 OK371-saxA; G85R(cr/LoxP)" = btd$Boutons[btd$Genotype == "3 OK371-saxA; G85R(cr/LoxP)"],
               "4 WT(cr/LoxP)" = btd$Boutons[btd$Genotype == "4 WT(cr/LoxP)"],
               "4 G85R(cr/hr)" = btd$Boutons[btd$Genotype == "4 G85R(cr/hr)"],
               "5 WT(cr/LoxP)" = btd$Boutons[btd$Genotype == "5 WT(cr/LoxP)"],
               "5 G85R(cr/hr)" = btd$Boutons[btd$Genotype == "5 G85R(cr/hr)"],
+              "5 OK371-gbb; WT(cr/LoxP)" = btd$Boutons[btd$Genotype == "5 OK371-gbb; WT(cr/LoxP)"],
+              "5 OK371-gbb; G85R(cr/LoxP)" = btd$Boutons[btd$Genotype == "5 OK371-gbb; G85R(cr/LoxP)"],
+              "5 OK371-saxA; WT(cr/LoxP)" = btd$Boutons[btd$Genotype == "5 OK371-saxA; WT(cr/LoxP)"],
+              "5 OK371-saxA; G85R(cr/LoxP)" = btd$Boutons[btd$Genotype == "5 OK371-saxA; G85R(cr/LoxP)"],
               "6 WT(cr/LoxP)" = btd$Boutons[btd$Genotype == "6 WT(cr/LoxP)"],
               "6 G85R(cr/hr)" = btd$Boutons[btd$Genotype == "6 G85R(cr/hr)"])
 
@@ -595,7 +789,7 @@ row_spec(c(1:nrow(t.table))[t.table$pval <= .05], bold = T, color = "black", bac
 ```
 
 
-```{r echo = F, fig.width = 7}
+```{r echo = F, fig.width = 7, include = F}
 
 Boutons = temp[temp$Data == "Boutons",]
 boutdata = Boutons[Boutons$NMJ == "6-7" &
@@ -756,7 +950,7 @@ axis(side = 1,
 ```
 
 
-```{r echo = F}
+```{r echo = F, include = F}
 
 btd = boutdata
 
@@ -796,6 +990,282 @@ kable_styling() %>%
 row_spec(c(1:nrow(t.table))[t.table$pval <= .05], bold = T, color = "black", background = "gold")
 
 ```
+
+```{r echo = F, fig.width = 10}
+
+Boutons = temp[temp$Data == "Boutons",]
+
+#boutdata = Boutons[Boutons$NMJ == "6-7" &
+#                     (Boutons$Genotype == "WT(cr/LoxP)" | #Boutons$Genotype == "G85R(cr/hr)"),]
+
+boutdata = Boutons[Boutons$NMJ == "6-7",]
+boutdata$Genotype = paste(boutdata$Segment, boutdata$Genotype)
+
+geno = unique(boutdata$Genotype)
+geno = geno[c(1,5, 9:12, 
+              2,6, 
+              3,7, 13:16,
+              4,8)]
+
+boutdata$Genotype = factor(boutdata$Genotype, levels = geno)
+
+boutmeans = c(mean(boutdata[boutdata$Genotype == geno[1], "Boutons"]),
+              mean(boutdata[boutdata$Genotype == geno[2], "Boutons"]),
+              mean(boutdata[boutdata$Genotype == geno[3], "Boutons"]),
+              mean(boutdata[boutdata$Genotype == geno[4], "Boutons"]),
+              mean(boutdata[boutdata$Genotype == geno[5], "Boutons"]),
+              mean(boutdata[boutdata$Genotype == geno[6], "Boutons"]),
+              mean(boutdata[boutdata$Genotype == geno[7], "Boutons"]),
+              mean(boutdata[boutdata$Genotype == geno[8], "Boutons"]),
+              mean(boutdata[boutdata$Genotype == geno[9], "Boutons"]),
+              mean(boutdata[boutdata$Genotype == geno[10], "Boutons"]),
+              mean(boutdata[boutdata$Genotype == geno[11], "Boutons"]),
+              mean(boutdata[boutdata$Genotype == geno[12], "Boutons"]),
+              mean(boutdata[boutdata$Genotype == geno[13], "Boutons"]),
+              mean(boutdata[boutdata$Genotype == geno[14], "Boutons"]),
+              mean(boutdata[boutdata$Genotype == geno[15], "Boutons"]),
+              mean(boutdata[boutdata$Genotype == geno[16], "Boutons"]))
+
+par(mar=c(4, 4.1, 4.1, 5.6))
+
+plot(x = c(.75,1.25),
+     y = rep(boutmeans[1], 2),
+     type = 'l',
+     lwd = 3,
+     col = std.colors[1],
+     ylim = c(0, max(boutdata$Boutons)*1.1),
+     xlim = c(.5, length(na.omit(boutmeans))+.5),
+     xaxt = "n",
+     ylab="Bouton Number",
+     yaxt = "n",
+     xlab = NA,
+     frame = F,
+     main = paste("Larval muscle NMJ 6-7 bouton counts, segments 3-6"))
+
+
+
+lines(x = c(.65,1.35),
+     y = rep(boutmeans[1], 2),
+     type = 'l',
+     lwd = 3,
+     col = std.colors[1])
+
+lines(x = c(1.65,2.35),
+     y = rep(boutmeans[2], 2),
+     type = 'l',
+     lwd = 3,
+     col = std.colors[2])
+
+lines(x = c(2.65,3.35),
+     y = rep(boutmeans[3], 2),
+     type = 'l',
+     lwd = 3,
+     col = std.colors[3])
+
+lines(x = c(3.65,4.35),
+     y = rep(boutmeans[4], 2),
+     type = 'l',
+     lwd = 3,
+     col = std.colors[4])
+
+lines(x = c(4.65,5.35),
+     y = rep(boutmeans[5], 2),
+     type = 'l',
+     lwd = 3,
+     col = std.colors[5])
+
+lines(x = c(5.65,6.35),
+     y = rep(boutmeans[6], 2),
+     type = 'l',
+     lwd = 3,
+     col = std.colors[6])
+
+lines(x = c(6.65,7.35),
+     y = rep(boutmeans[7], 2),
+     type = 'l',
+     lwd = 3,
+     col = std.colors[1])
+
+lines(x = c(7.65,8.35),
+     y = rep(boutmeans[8], 2),
+     type = 'l',
+     lwd = 3,
+     col = std.colors[2])
+
+lines(x = c(8.65,9.35),
+     y = rep(boutmeans[9], 2),
+     type = 'l',
+     lwd = 3,
+     col = std.colors[1])
+
+lines(x = c(9.65,10.35),
+     y = rep(boutmeans[10], 2),
+     type = 'l',
+     lwd = 3,
+     col = std.colors[2])
+
+lines(x = c(10.65,11.35),
+     y = rep(boutmeans[11], 2),
+     type = 'l',
+     lwd = 3,
+     col = std.colors[3])
+
+lines(x = c(11.65,12.35),
+     y = rep(boutmeans[12], 2),
+     type = 'l',
+     lwd = 3,
+     col = std.colors[4])
+
+lines(x = c(12.65,13.35),
+     y = rep(boutmeans[13], 2),
+     type = 'l',
+     lwd = 3,
+     col = std.colors[5])
+
+lines(x = c(13.65,14.35),
+     y = rep(boutmeans[14], 2),
+     type = 'l',
+     lwd = 3,
+     col = std.colors[6])
+
+lines(x = c(14.65,15.35),
+     y = rep(boutmeans[15], 2),
+     type = 'l',
+     lwd = 3,
+     col = std.colors[1])
+
+lines(x = c(15.65,16.35),
+     y = rep(boutmeans[16], 2),
+     type = 'l',
+     lwd = 3,
+     col = std.colors[2])
+
+
+
+beeswarm(boutdata$Boutons~boutdata$Genotype,
+       pch = 21,
+       method = "center",
+       bg = hex(std.colors[c(1:6, 1:2, 1:6, 1:2)],.5),
+       add = T)
+
+lines(x = c(6.5,6.5),
+      y = c(-2.5,70),
+      lty = 2,
+      xpd = T)
+
+lines(x = c(8.5,8.5),
+      y = c(-2.5,70),
+      lty = 2,
+      xpd = T)
+
+lines(x = c(14.5,14.5),
+      y = c(-2.5,70),
+      lty = 2,
+      xpd = T)
+
+
+axis(side = 1,
+     at = c(3.5, 7.5, 11.5, 15.5),
+     labels = c(3,4,5,6),
+     las = 1,
+     lwd = 0,
+     line = -.75)
+
+axis(side = 1,
+     at = c(8.5),
+     labels = c("Larval Segment"),
+     las = 1,
+     lwd = 0,
+     cex = 2,
+     line = 0.5)
+
+    lines(x = c(-.10, length(na.omit(boutmeans))+.5),
+       y = c(0,0),
+       lwd = 3,
+       xpd = T)
+    
+  y.at = c(0, 10*1:7)
+    
+  axis(side = 2,
+       at = y.at,
+       lwd = 2,
+       line = 0,
+       labels = F,
+       xpd = T,
+       las = 2)
+
+  
+  axis(side = 2,
+       at = y.at,
+       lwd = 3,
+       line = 0,
+       labels = T,
+       xpd = T,
+       las = 2)
+
+  legend('topright',
+       inset=c(-0.14,0),
+       legend = c('WT(cr/LoxP)', 'G85R(cr/hr)', 
+                  "OK371-gbb; WT(cr/LoxP)", "OK371-gbb; G85R(cr/LoxP)",
+                  "OK371-saxA; WT(cr/LoxP)","OK371-saxA; G85R(cr/LoxP)"), 
+       fill = std.colors[1:6],
+       cex = .5,
+       bty = 'n',
+       pt.cex = .4,
+       xpd = T)
+
+```
+
+```{r echo = F}
+
+btd = boutdata
+
+t.data = list("3 WT(cr/LoxP)" = btd$Boutons[btd$Genotype == "3 WT(cr/LoxP)"],
+              "3 G85R(cr/hr)" = btd$Boutons[btd$Genotype == "3 G85R(cr/hr)"],
+              "3 OK371-gbb; WT(cr/LoxP)" = btd$Boutons[btd$Genotype == "3 OK371-gbb; WT(cr/LoxP)"],
+              "3 OK371-gbb; G85R(cr/LoxP)" = btd$Boutons[btd$Genotype == "3 OK371-gbb; G85R(cr/LoxP)"],
+              "3 OK371-saxA; WT(cr/LoxP)" = btd$Boutons[btd$Genotype == "3 OK371-saxA; WT(cr/LoxP)"],
+              "3 OK371-saxA; G85R(cr/LoxP)" = btd$Boutons[btd$Genotype == "3 OK371-saxA; G85R(cr/LoxP)"],
+              "4 WT(cr/LoxP)" = btd$Boutons[btd$Genotype == "4 WT(cr/LoxP)"],
+              "4 G85R(cr/hr)" = btd$Boutons[btd$Genotype == "4 G85R(cr/hr)"],
+              "5 WT(cr/LoxP)" = btd$Boutons[btd$Genotype == "5 WT(cr/LoxP)"],
+              "5 G85R(cr/hr)" = btd$Boutons[btd$Genotype == "5 G85R(cr/hr)"],
+              "5 OK371-gbb; WT(cr/LoxP)" = btd$Boutons[btd$Genotype == "5 OK371-gbb; WT(cr/LoxP)"],
+              "5 OK371-gbb; G85R(cr/LoxP)" = btd$Boutons[btd$Genotype == "5 OK371-gbb; G85R(cr/LoxP)"],
+              "5 OK371-saxA; WT(cr/LoxP)" = btd$Boutons[btd$Genotype == "5 OK371-saxA; WT(cr/LoxP)"],
+              "5 OK371-saxA; G85R(cr/LoxP)" = btd$Boutons[btd$Genotype == "5 OK371-saxA; G85R(cr/LoxP)"],
+              "6 WT(cr/LoxP)" = btd$Boutons[btd$Genotype == "6 WT(cr/LoxP)"],
+              "6 G85R(cr/hr)" = btd$Boutons[btd$Genotype == "6 G85R(cr/hr)"])
+
+t.table = data.frame(Genotype1 = character(),
+                     Genotype2 = character(),
+                     pval = numeric())
+
+i=1
+while(i <= length(t.data)){
+  j = i+1
+  while(j <= length(t.data)){
+    t.temp = data.frame(Genotype1 = geno[i],
+                        Genotype2 = geno[j],
+                        pval = t.test(x = t.data[[i]],
+                                      y = t.data[[j]],
+                                      paired = F)[[3]])
+    t.table = rbind(t.table, t.temp)
+      j = j+1
+  }
+  i = i+1
+}
+
+
+t.stripe = t.table$pval <= .05
+knitr::kable(t.table,
+             caption = 'All t-tests for NMJ 4, all segments Bouton Counts.')  %>%
+kable_styling() %>%
+row_spec(c(1:nrow(t.table))[t.table$pval <= .05], bold = T, color = "black", background = "gold")
+
+```
+
+
 
 ```{r echo = F}
 
@@ -1291,3 +1761,1233 @@ row_spec(c(1:nrow(t.table))[t.table$pval <= .05], bold = T, color = "black", bac
 ```
 
 
+```{r echo = F, include=F}
+library(corrplot)
+cor.table = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/20250701_AllAnaData_CorrelationTable.csv",header = F)
+row.names(cor.table) = paste0(cor.table[,1], ".", cor.table[,2], ".", cor.table[,3])
+colnames(cor.table) = paste0(cor.table[1,], ".", cor.table[2,], ".", cor.table[3,], ".", cor.table[4,])
+
+cor.table= cor.table[,-grep("Raw", colnames(cor.table))]
+
+cor.table[1,grep("Norm", colnames(cor.table))] = substr(cor.table[1,grep("Norm", colnames(cor.table))], 8, nchar(cor.table[1,grep("Norm", colnames(cor.table))]))
+
+cor.matrix = cor.table[5:nrow(cor.table), 4:ncol(cor.table)]
+cor.matrix = cor.matrix[grep("WT", row.names(cor.matrix)), ]
+
+
+i = 1
+while(i<=ncol(cor.matrix)){
+  cor.matrix[,i] = as.numeric(cor.matrix[,i])
+  i = i + 1
+}
+
+cor.data = as.matrix(cor.matrix)
+cor.data[,1:ncol(cor.data)] = 0
+cor.data = cor.data[1:ncol(cor.data),]
+row.names(cor.data) = colnames(cor.data)
+
+cor.data = data.frame(Factor1 = character(),
+                      Factor2 = character(),
+                      Corr = numeric())
+i=1
+while(i<=ncol(cor.matrix)){
+  j=1
+  while(j<=ncol(cor.matrix)){
+    temp = na.omit(cor.matrix[,c(i,j)])
+    #cor.data[j,i] = cor(temp[,1], temp[,2])
+    temp.cor.data = data.frame(Factor1 = colnames(cor.matrix)[i],
+                               Factor2 = colnames(cor.matrix)[j],
+                               Corr = cor(temp[,1], temp[,2]))
+    cor.data = rbind(cor.data, temp.cor.data)
+    j=j+1
+  }
+  i=i+1
+}
+
+cor.data[cor.data$Factor1 == cor.data$Factor2, "Corr"] = NA
+
+cor.data$Factor1 = factor(cor.data$Factor1, levels = unique(cor.data$Factor1))
+cor.data$Factor2 = factor(cor.data$Factor2, levels = unique(cor.data$Factor2))
+
+WT.cor.data = cor.data
+
+cor.matrix = cor.table[5:nrow(cor.table), 4:ncol(cor.table)]
+cor.matrix = cor.matrix[grep("G85R", row.names(cor.matrix)), ]
+
+
+i = 1
+while(i<=ncol(cor.matrix)){
+  cor.matrix[,i] = as.numeric(cor.matrix[,i])
+  i = i + 1
+}
+
+cor.data = as.matrix(cor.matrix)
+cor.data[,1:ncol(cor.data)] = 0
+cor.data = cor.data[1:ncol(cor.data),]
+row.names(cor.data) = colnames(cor.data)
+
+cor.data = data.frame(Factor1 = character(),
+                      Factor2 = character(),
+                      Corr = numeric())
+i=1
+while(i<=ncol(cor.matrix)){
+  j=1
+  while(j<=ncol(cor.matrix)){
+    temp = na.omit(cor.matrix[,c(i,j)])
+    #cor.data[j,i] = cor(temp[,1], temp[,2])
+    temp.cor.data = data.frame(Factor1 = colnames(cor.matrix)[i],
+                               Factor2 = colnames(cor.matrix)[j],
+                               Corr = cor(temp[,1], temp[,2]))
+    cor.data = rbind(cor.data, temp.cor.data)
+    j=j+1
+  }
+  i=i+1
+}
+
+cor.data[cor.data$Factor1 == cor.data$Factor2, "Corr"] = NA
+
+cor.data$Factor1 = factor(cor.data$Factor1, levels = unique(cor.data$Factor1))
+cor.data$Factor2 = factor(cor.data$Factor2, levels = unique(cor.data$Factor2))
+
+GR.cor.data = cor.data
+
+
+WT.cor.data = WT.cor.data[as.numeric(WT.cor.data$Factor1) < as.numeric(WT.cor.data$Factor2),]
+WT.cor.data$Geno = "WT"
+GR.cor.data = GR.cor.data[as.numeric(GR.cor.data$Factor1) > as.numeric(GR.cor.data$Factor2),]
+GR.cor.data$Geno = "G85R"
+
+cor.data = rbind(WT.cor.data, GR.cor.data)
+
+```
+
+
+
+```{r echo = F, fig.height=8, fig.width=8, include=F}
+bg.colors = colorRampPalette(c("royalblue", "deepskyblue", "yellow", "deeppink", "violetred"))(200)
+
+plot.bg = bg.colors[100*(cor.data$Corr + 1)]
+
+
+#plot.bg[cor.data$Corr == 2] = "white"
+
+plot.cex = 2*abs(cor.data$Corr)+.5
+
+#plot.cex[cor.data$Corr == 2] = 2.5
+
+par(mar = c(6,6,4,3))
+
+plot(x = as.numeric(cor.data$Factor1),
+     y = as.numeric(cor.data$Factor2),
+     pch = 21,
+     bg = plot.bg,
+     cex = plot.cex,
+     xaxt = "n",
+     yaxt = "n",
+     ylab = "",
+     xlab = "",
+     bty = "n",
+     main = "")
+
+lines(x = c(.5,23),
+      y = c(.5,23),
+      lty = 2,
+      lwd = 2)
+
+lines(x = c(.5, .5),
+      y = c(.5,21.5),
+      lty = 1,
+      lwd = 1,
+      xpd = T)
+
+lines(x = c(-0.25, -0.25),
+      y = c(-.25,21.5),
+      lty = 2,
+      lwd = .5,
+      xpd = T)
+
+lines(x = c(-1.25, -1.25),
+      y = c(-1.25,21.5),
+      lty = 2,
+      lwd = .5,
+      xpd = T)
+
+lines(x = c(-2, -2),
+      y = c(-2,21.5),
+      lty = 2,
+      lwd = .5,
+      xpd = T)
+
+
+lines(x = c(.5,21.5),
+      y = c(.5, .5),
+      lty = 1,
+      lwd = 1,
+      xpd = T)
+
+lines(y = c(-.25, -.25),
+      x = c(-.25,21.5),
+      lty = 2,
+      lwd = .5,
+      xpd = T)
+
+text(x = 22,
+     y = 0,
+     labels = "Segment",
+     xpd = T,
+     cex = .5)
+
+text(x = 22,
+     y = -.75,
+     labels = "NMJ",
+     xpd = T,
+     cex = .5)
+
+text(x = 22,
+     y = -1.6,
+     labels = "Side",
+     xpd = T,
+     cex = .5)
+
+lines(y = c(-1.25, -1.25),
+      x = c(-1.25,21.5),
+      lty = 2,
+      lwd = .5,
+      xpd = T)
+
+lines(y = c(-2, -2),
+      x = c(-2,21.5),
+      lty = 2,
+      lwd = .5,
+      xpd = T)
+
+axis(side = 1,
+     at = c(8.5, 17, 19.5),
+     lwd = 0,
+     line = 2,
+     labels = c("Boutons", "VNC", "NMJ"),
+     xpd = T,
+     las = 1,
+     cex.axis = .75)
+
+axis(side = 1,
+     at = c(17, 19.5),
+     lwd = 0,
+     line = 3,
+     labels = c("pMad", "pMad"),
+     xpd = T,
+     las = 1,
+     cex.axis = .75)
+
+axis(side = 1,
+     at = c(1:21),
+     lwd = 0,
+     line = 1,
+     labels = cor.table[2, 4:ncol(cor.table)],
+     xpd = T,
+     las = 1,
+     cex.axis = .5)
+
+axis(side = 1,
+     at = c(1:21),
+     lwd = 0,
+     line = -.25,
+     labels = cor.table[3, 4:ncol(cor.table)],
+     xpd = T,
+     las = 1,
+     cex.axis = .5)
+
+axis(side = 1,
+     at = c(1:21),
+     lwd = 0,
+     line = -1.5,
+     labels = cor.table[4, 4:ncol(cor.table)],
+     xpd = T,
+     las = 1,
+     cex.axis = .5)
+
+
+
+axis(side = 2,
+     at = c(8.5, 17, 19.5),
+     lwd = 0,
+     line = 3,
+     labels = c("Boutons", "VNC", "NMJ"),
+     xpd = T,
+     srt = 270,
+     cex.axis = .75)
+
+axis(side = 2,
+     at = c(17, 19.5),
+     lwd = 0,
+     line = 2.5,
+     labels = c("pMad", "pMad"),
+     xpd = T,
+     srt = 270,
+     cex.axis = .75)
+
+axis(side = 2,
+     at = c(1:21),
+     lwd = 0,
+     line = 1.5,
+     labels = cor.table[2, 4:ncol(cor.table)],
+     xpd = T,
+     las = 1,
+     cex.axis = .5)
+
+axis(side = 2,
+     at = c(1:21),
+     lwd = 0,
+     line = 0.25,
+     labels = cor.table[3, 4:ncol(cor.table)],
+     xpd = T,
+     las = 1,
+     cex.axis = .5)
+
+axis(side = 2,
+     at = c(1:21),
+     lwd = 0,
+     line = -1,
+     labels = cor.table[4, 4:ncol(cor.table)],
+     xpd = T,
+     las = 1,
+     cex.axis = .5)
+
+
+
+arrows(x0 = 22,
+       y0 = 21,
+       x1 = 22,
+       y1 = 13,
+       lwd = 2,
+       xpd = T,
+       length = .1)
+
+arrows(x0 = 21,
+       y0 = 22,
+       x1 = 13,
+       y1 = 22,
+       lwd = 2,
+       xpd = T,
+       length = .1)
+
+text(x = 17,
+     y = 22.5,
+     labels = ("Silent"),
+     xpd = T)
+
+text(x = 22.5,
+     y = 17,
+     labels = ("G85R"),
+     srt = 270,
+     xpd = T)
+
+axis(side = 3,
+     label = "Correlation for WT and G85R, All Lines",
+     at = 11,
+     line = 1.5,
+     cex = 1.5,
+     lwd = 0)
+
+```
+
+
+```{r echo = F, include=F}
+
+cor.table = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/20250701_AllAnaData_CorrelationTable.csv",header = F)
+
+
+cor.table= cor.table[,-grep("Raw", cor.table[1,])]
+
+cor.table[1,grep("Norm", cor.table[1,])] = substr(cor.table[1,grep("Norm", cor.table[1,])], 8, nchar(cor.table[1,grep("Norm", cor.table[1,])]))
+
+cor.tablea = cor.table[,cor.table[2,] == "a"]
+cor.tablea = cbind(cor.tablea, cor.table[,20])
+cor.tablea = cbind(cor.tablea, cor.table[,1])
+
+cor.tableb = cor.table[,cor.table[2,] == "b"]
+cor.tableb = cbind(cor.tableb, cor.table[,20])
+cor.tableb = cbind(cor.tableb, cor.table[,1])
+
+colnames(cor.tablea) = paste0(cor.tablea[1,], ".", cor.tablea[3,], ".", cor.tablea[4,])
+colnames(cor.tableb) = paste0(cor.tableb[1,], ".", cor.tableb[3,], ".", cor.tableb[4,])
+
+cor.table = rbind(cor.tablea[c(1,3:nrow(cor.tablea)),],cor.tableb[5:nrow(cor.tableb),])
+
+
+
+
+
+
+cor.matrix = cor.table[grep("WT", cor.table[,ncol(cor.table)]), 1:(ncol(cor.table)-1)]
+
+
+i = 1
+while(i<=ncol(cor.matrix)){
+  cor.matrix[,i] = as.numeric(cor.matrix[,i])
+  i = i + 1
+}
+
+cor.data = as.matrix(cor.matrix)
+cor.data[,1:ncol(cor.data)] = 0
+cor.data = cor.data[1:ncol(cor.data),]
+row.names(cor.data) = colnames(cor.data)
+
+cor.data = data.frame(Factor1 = character(),
+                      Factor2 = character(),
+                      Corr = numeric())
+i=1
+while(i<=ncol(cor.matrix)){
+  j=1
+  while(j<=ncol(cor.matrix)){
+    temp = na.omit(cor.matrix[,c(i,j)])
+    #cor.data[j,i] = cor(temp[,1], temp[,2])
+    temp.cor.data = data.frame(Factor1 = colnames(cor.matrix)[i],
+                               Factor2 = colnames(cor.matrix)[j],
+                               Corr = cor(temp[,1], temp[,2]))
+    cor.data = rbind(cor.data, temp.cor.data)
+    j=j+1
+  }
+  i=i+1
+}
+
+cor.data[cor.data$Factor1 == cor.data$Factor2, "Corr"] = NA
+
+cor.data$Factor1 = factor(cor.data$Factor1, levels = unique(cor.data$Factor1))
+cor.data$Factor2 = factor(cor.data$Factor2, levels = unique(cor.data$Factor2))
+
+WT.cor.data = cor.data
+
+
+cor.matrix = cor.table[grep("G85R", cor.table[,ncol(cor.table)]), 1:(ncol(cor.table)-1)]
+
+i = 1
+while(i<=ncol(cor.matrix)){
+  cor.matrix[,i] = as.numeric(cor.matrix[,i])
+  i = i + 1
+}
+
+cor.data = as.matrix(cor.matrix)
+cor.data[,1:ncol(cor.data)] = 0
+cor.data = cor.data[1:ncol(cor.data),]
+row.names(cor.data) = colnames(cor.data)
+
+cor.data = data.frame(Factor1 = character(),
+                      Factor2 = character(),
+                      Corr = numeric())
+i=1
+while(i<=ncol(cor.matrix)){
+  j=1
+  while(j<=ncol(cor.matrix)){
+    temp = na.omit(cor.matrix[,c(i,j)])
+    #cor.data[j,i] = cor(temp[,1], temp[,2])
+    temp.cor.data = data.frame(Factor1 = colnames(cor.matrix)[i],
+                               Factor2 = colnames(cor.matrix)[j],
+                               Corr = cor(temp[,1], temp[,2]))
+    cor.data = rbind(cor.data, temp.cor.data)
+    j=j+1
+  }
+  i=i+1
+}
+
+cor.data[cor.data$Factor1 == cor.data$Factor2, "Corr"] = NA
+
+cor.data$Factor1 = factor(cor.data$Factor1, levels = unique(cor.data$Factor1))
+cor.data$Factor2 = factor(cor.data$Factor2, levels = unique(cor.data$Factor2))
+
+GR.cor.data = cor.data
+
+
+WT.cor.data = WT.cor.data[as.numeric(WT.cor.data$Factor1) < as.numeric(WT.cor.data$Factor2),]
+WT.cor.data$Geno = "WT"
+GR.cor.data = GR.cor.data[as.numeric(GR.cor.data$Factor1) > as.numeric(GR.cor.data$Factor2),]
+GR.cor.data$Geno = "G85R"
+
+cor.data = rbind(WT.cor.data, GR.cor.data)
+
+```
+
+
+
+
+```{r echo = F, fig.height=8, fig.width=8, include=F}
+bg.colors = colorRampPalette(c("royalblue", "deepskyblue", "yellow", "deeppink", "violetred"))(200)
+
+plot.bg = bg.colors[100*(cor.data$Corr + 1)]
+
+
+#plot.bg[cor.data$Corr == 2] = "white"
+
+plot.cex = 2*abs(cor.data$Corr)+.5
+
+#plot.cex[cor.data$Corr == 2] = 2.5
+
+par(mar = c(8,8,4,3))
+
+plot(x = as.numeric(cor.data$Factor1),
+     y = as.numeric(cor.data$Factor2),
+     pch = 21,
+     bg = plot.bg,
+     cex = plot.cex,
+     xaxt = "n",
+     yaxt = "n",
+     ylab = "",
+     xlab = "",
+     bty = "n",
+     main = "")
+
+lines(x = c(.5,14),
+      y = c(.5,14),
+      lty = 2,
+      lwd = 2)
+
+lines(x = c(.5, .5),
+      y = c(.5,11.5),
+      lty = 1,
+      lwd = 1,
+      xpd = T)
+
+lines(x = c(.5,11.5),
+      y = c(.5, .5),
+      lty = 1,
+      lwd = 1,
+      xpd = T)
+
+
+lines(x = c(-0.25, -0.25),
+      y = c(-.25,11.5),
+      lty = 2,
+      lwd = .5,
+      xpd = T)
+
+lines(x = c(-1, -1),
+      y = c(-1,11.5),
+      lty = 2,
+      lwd = .5,
+      xpd = T)
+
+
+lines(y = c(-.25, -.25),
+      x = c(-.25,11.5),
+      lty = 2,
+      lwd = .5,
+      xpd = T)
+
+lines(y = c(-1, -1),
+      x = c(-1,11.5),
+      lty = 2,
+      lwd = .5,
+      xpd = T)
+
+text(x = 11.8,
+     y = 0,
+     labels = "NMJ",
+     xpd = T,
+     cex = .8)
+
+text(x = 11.8,
+     y = -.5,
+     labels = "Segment",
+     xpd = T,
+     cex = .8)
+
+
+
+
+
+arrows(x0 = 11.5,
+       y0 = 10.5,
+       x1 = 11.5,
+       y1 = 7,
+       lwd = 2,
+       xpd = T,
+       length = .1)
+
+arrows(x0 = 10.5,
+       y0 = 11.5,
+       x1 = 7,
+       y1 = 11.5,
+       lwd = 2,
+       xpd = T,
+       length = .1)
+
+text(x = 10,
+     y = 11.75,
+     labels = ("Silent"),
+     xpd = T)
+
+text(x = 11.75,
+     y = 10,
+     labels = ("G85R"),
+     srt = 270,
+     xpd = T)
+
+axis(side = 1,
+     at = c(4.5, 9.5, 11),
+     lwd = 0,
+     line = 3.5,
+     labels = c("Boutons", "NMJ", "VNC"),
+     xpd = T,
+     las = 1,
+     cex.axis = 1)
+
+axis(side = 1,
+     at = c(9.5, 11),
+     lwd = 0,
+     line = 5,
+     labels = c("pMad", "pMad"),
+     xpd = T,
+     las = 1,
+     cex.axis = 1)
+
+axis(side = 2,
+     at = c(9.5, 11),
+     lwd = 0,
+     line = 5,
+     labels = c("NMJ", "VNC"),
+     xpd = T,
+     srt = 270,
+     cex.axis = 1)
+
+axis(side = 2,
+     at = c(4.5, 9.5, 11),
+     lwd = 0,
+     line = 3.5,
+     labels = c("Boutons", "pMad", "pMad"),
+     xpd = T,
+     srt = 270,
+     cex.axis = 1)
+
+axis(side = 1,
+     at = c(1:11),
+     lwd = 0,
+     line = 0,
+     labels = cor.table[2, 1:11],
+     xpd = T,
+     las = 1,
+     cex.axis = 1)
+
+axis(side = 1,
+     at = c(1:11),
+     lwd = 0,
+     line = 2,
+     labels = cor.table[3, 1:11],
+     xpd = T,
+     las = 1,
+     cex.axis = 1)
+
+axis(side = 2,
+     at = c(1:11),
+     lwd = 0,
+     line = -0.25,
+     labels = cor.table[2, 1:11],
+     xpd = T,
+     las = 1,
+     cex.axis = 1)
+
+axis(side = 2,
+     at = c(1:11),
+     lwd = 0,
+     line = 2,
+     labels = cor.table[3, 1:11],
+     xpd = T,
+     las = 1,
+     cex.axis = 1)
+
+axis(side = 3,
+     label = "Correlation for WT and G85R, All Lines",
+     at = 6,
+     line = 1.5,
+     cex = 1.5,
+     lwd = 0)
+
+```
+
+
+
+```{r echo = F, include=F}
+
+cor.table = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/20250701_AllAnaData_CorrelationTable.csv",header = F)
+
+
+cor.table= cor.table[,-grep("Raw", cor.table[1,])]
+
+cor.table[1,grep("Norm", cor.table[1,])] = substr(cor.table[1,grep("Norm", cor.table[1,])], 8, nchar(cor.table[1,grep("Norm", cor.table[1,])]))
+
+cor.tablea = cor.table[,cor.table[2,] == "a"]
+cor.tablea = cbind(cor.tablea, cor.table[,20])
+cor.tablea = cbind(cor.tablea, cor.table[,1])
+
+cor.tableb = cor.table[,cor.table[2,] == "b"]
+cor.tableb = cbind(cor.tableb, cor.table[,20])
+cor.tableb = cbind(cor.tableb, cor.table[,1])
+
+colnames(cor.tablea) = paste0(cor.tablea[1,], ".", cor.tablea[3,], ".", cor.tablea[4,])
+colnames(cor.tableb) = paste0(cor.tableb[1,], ".", cor.tableb[3,], ".", cor.tableb[4,])
+
+cor.table = rbind(cor.tablea[c(1,3:nrow(cor.tablea)),],cor.tableb[5:nrow(cor.tableb),])
+
+
+
+
+
+
+##cor.matrix = cor.table[grep("WT-cr/LoxP", cor.table[,ncol(cor.table)]), 1:(ncol(cor.table)-1)]
+
+cor.matrix = cor.table[cor.table[,ncol(cor.table)] == "WT-cr/LoxP", 1:(ncol(cor.table)-1)]
+
+
+i = 1
+while(i<=ncol(cor.matrix)){
+  cor.matrix[,i] = as.numeric(cor.matrix[,i])
+  i = i + 1
+}
+
+cor.data = as.matrix(cor.matrix)
+cor.data[,1:ncol(cor.data)] = 0
+cor.data = cor.data[1:ncol(cor.data),]
+row.names(cor.data) = colnames(cor.data)
+
+cor.data = data.frame(Factor1 = character(),
+                      Factor2 = character(),
+                      Corr = numeric())
+i=1
+while(i<=ncol(cor.matrix)){
+  j=1
+  while(j<=ncol(cor.matrix)){
+    temp = na.omit(cor.matrix[,c(i,j)])
+    #cor.data[j,i] = cor(temp[,1], temp[,2])
+    temp.cor.data = data.frame(Factor1 = colnames(cor.matrix)[i],
+                               Factor2 = colnames(cor.matrix)[j],
+                               Corr = cor(temp[,1], temp[,2]))
+    cor.data = rbind(cor.data, temp.cor.data)
+    j=j+1
+  }
+  i=i+1
+}
+
+cor.data[cor.data$Factor1 == cor.data$Factor2, "Corr"] = NA
+
+cor.data$Factor1 = factor(cor.data$Factor1, levels = unique(cor.data$Factor1))
+cor.data$Factor2 = factor(cor.data$Factor2, levels = unique(cor.data$Factor2))
+
+WT.cor.data = cor.data
+
+
+#cor.matrix = cor.table[grep("G85Rcr/G85Rhr", cor.table[,ncol(cor.table)]), 1:(ncol(cor.table)-1)]
+
+cor.matrix = cor.table[cor.table[,ncol(cor.table)] == "G85Rcr/G85Rhr", 1:(ncol(cor.table)-1)]
+
+i = 1
+while(i<=ncol(cor.matrix)){
+  cor.matrix[,i] = as.numeric(cor.matrix[,i])
+  i = i + 1
+}
+
+cor.data = as.matrix(cor.matrix)
+cor.data[,1:ncol(cor.data)] = 0
+cor.data = cor.data[1:ncol(cor.data),]
+row.names(cor.data) = colnames(cor.data)
+
+cor.data = data.frame(Factor1 = character(),
+                      Factor2 = character(),
+                      Corr = numeric())
+i=1
+while(i<=ncol(cor.matrix)){
+  j=1
+  while(j<=ncol(cor.matrix)){
+    temp = na.omit(cor.matrix[,c(i,j)])
+    #cor.data[j,i] = cor(temp[,1], temp[,2])
+    temp.cor.data = data.frame(Factor1 = colnames(cor.matrix)[i],
+                               Factor2 = colnames(cor.matrix)[j],
+                               Corr = cor(temp[,1], temp[,2]))
+    cor.data = rbind(cor.data, temp.cor.data)
+    j=j+1
+  }
+  i=i+1
+}
+
+cor.data[cor.data$Factor1 == cor.data$Factor2, "Corr"] = NA
+
+cor.data$Factor1 = factor(cor.data$Factor1, levels = unique(cor.data$Factor1))
+cor.data$Factor2 = factor(cor.data$Factor2, levels = unique(cor.data$Factor2))
+
+GR.cor.data = cor.data
+
+
+WT.cor.data = WT.cor.data[as.numeric(WT.cor.data$Factor1) < as.numeric(WT.cor.data$Factor2),]
+WT.cor.data$Geno = "WT"
+GR.cor.data = GR.cor.data[as.numeric(GR.cor.data$Factor1) > as.numeric(GR.cor.data$Factor2),]
+GR.cor.data$Geno = "G85R"
+
+cor.data = rbind(WT.cor.data, GR.cor.data)
+
+```
+
+
+```{r echo = F, fig.height=8, fig.width=8, include=F}
+bg.colors = colorRampPalette(c("royalblue", "deepskyblue", "yellow", "deeppink", "violetred"))(200)
+
+plot.bg = bg.colors[100*(cor.data$Corr + 1)]
+
+
+#plot.bg[cor.data$Corr == 2] = "white"
+
+plot.cex = 2*abs(cor.data$Corr)+.5
+
+#plot.cex[cor.data$Corr == 2] = 2.5
+
+par(mar = c(8,8,4,3))
+
+plot(x = as.numeric(cor.data$Factor1),
+     y = as.numeric(cor.data$Factor2),
+     pch = 21,
+     bg = plot.bg,
+     cex = plot.cex,
+     xaxt = "n",
+     yaxt = "n",
+     ylab = "",
+     xlab = "",
+     bty = "n",
+     main = "")
+
+lines(x = c(.5,14),
+      y = c(.5,14),
+      lty = 2,
+      lwd = 2)
+
+lines(x = c(.5, .5),
+      y = c(.5,11.5),
+      lty = 1,
+      lwd = 1,
+      xpd = T)
+
+lines(x = c(.5,11.5),
+      y = c(.5, .5),
+      lty = 1,
+      lwd = 1,
+      xpd = T)
+
+
+lines(x = c(-0.25, -0.25),
+      y = c(-.25,11.5),
+      lty = 2,
+      lwd = .5,
+      xpd = T)
+
+lines(x = c(-1, -1),
+      y = c(-1,11.5),
+      lty = 2,
+      lwd = .5,
+      xpd = T)
+
+
+lines(y = c(-.25, -.25),
+      x = c(-.25,11.5),
+      lty = 2,
+      lwd = .5,
+      xpd = T)
+
+lines(y = c(-1, -1),
+      x = c(-1,11.5),
+      lty = 2,
+      lwd = .5,
+      xpd = T)
+
+text(x = 11.8,
+     y = 0,
+     labels = "NMJ",
+     xpd = T,
+     cex = .8)
+
+text(x = 11.8,
+     y = -.5,
+     labels = "Segment",
+     xpd = T,
+     cex = .8)
+
+
+
+
+
+arrows(x0 = 11.5,
+       y0 = 10.5,
+       x1 = 11.5,
+       y1 = 7,
+       lwd = 2,
+       xpd = T,
+       length = .1)
+
+arrows(x0 = 10.5,
+       y0 = 11.5,
+       x1 = 7,
+       y1 = 11.5,
+       lwd = 2,
+       xpd = T,
+       length = .1)
+
+text(x = 10,
+     y = 11.75,
+     labels = ("Silent"),
+     xpd = T)
+
+text(x = 11.75,
+     y = 10,
+     labels = ("G85R"),
+     srt = 270,
+     xpd = T)
+
+axis(side = 1,
+     at = c(4.5, 9.5, 11),
+     lwd = 0,
+     line = 3.5,
+     labels = c("Boutons", "NMJ", "VNC"),
+     xpd = T,
+     las = 1,
+     cex.axis = 1)
+
+axis(side = 1,
+     at = c(9.5, 11),
+     lwd = 0,
+     line = 5,
+     labels = c("pMad", "pMad"),
+     xpd = T,
+     las = 1,
+     cex.axis = 1)
+
+axis(side = 2,
+     at = c(9.5, 11),
+     lwd = 0,
+     line = 5,
+     labels = c("NMJ", "VNC"),
+     xpd = T,
+     srt = 270,
+     cex.axis = 1)
+
+axis(side = 2,
+     at = c(4.5, 9.5, 11),
+     lwd = 0,
+     line = 3.5,
+     labels = c("Boutons", "pMad", "pMad"),
+     xpd = T,
+     srt = 270,
+     cex.axis = 1)
+
+axis(side = 1,
+     at = c(1:11),
+     lwd = 0,
+     line = 0,
+     labels = cor.table[2, 1:11],
+     xpd = T,
+     las = 1,
+     cex.axis = 1)
+
+axis(side = 1,
+     at = c(1:11),
+     lwd = 0,
+     line = 2,
+     labels = cor.table[3, 1:11],
+     xpd = T,
+     las = 1,
+     cex.axis = 1)
+
+axis(side = 2,
+     at = c(1:11),
+     lwd = 0,
+     line = -0.25,
+     labels = cor.table[2, 1:11],
+     xpd = T,
+     las = 1,
+     cex.axis = 1)
+
+axis(side = 2,
+     at = c(1:11),
+     lwd = 0,
+     line = 2,
+     labels = cor.table[3, 1:11],
+     xpd = T,
+     las = 1,
+     cex.axis = 1)
+
+axis(side = 3,
+     label = "Correlation for WT and G85R, No Rescues",
+     at = 6,
+     line = 1.5,
+     cex = 1.5,
+     lwd = 0)
+
+```
+
+
+
+
+
+```{r echo = F, fig.height= 8, fig.width= 8, include=F}
+
+cor.table = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/20250701_AllAnaData_CorrelationTable.csv",header = F)
+
+
+cor.table= cor.table[,-grep("Raw", cor.table[1,])]
+
+cor.table[1,grep("Norm", cor.table[1,])] = substr(cor.table[1,grep("Norm", cor.table[1,])], 8, nchar(cor.table[1,grep("Norm", cor.table[1,])]))
+
+cor.tablea = cor.table[,cor.table[2,] == "a"]
+cor.tablea = cbind(cor.tablea, cor.table[,20])
+cor.tablea = cbind(cor.tablea, cor.table[,1])
+
+cor.tableb = cor.table[,cor.table[2,] == "b"]
+cor.tableb = cbind(cor.tableb, cor.table[,20])
+cor.tableb = cbind(cor.tableb, cor.table[,1])
+
+colnames(cor.tablea) = paste0(cor.tablea[1,], ".", cor.tablea[3,], ".", cor.tablea[4,])
+colnames(cor.tableb) = paste0(cor.tableb[1,], ".", cor.tableb[3,], ".", cor.tableb[4,])
+
+cor.table = rbind(cor.tablea[c(1,3:nrow(cor.tablea)),],cor.tableb[5:nrow(cor.tableb),])
+
+
+cor.matrix = cor.table[cor.table[,ncol(cor.table)] == "WT-cr/LoxP" |
+                         cor.table[,ncol(cor.table)] == "G85Rcr/G85Rhr",
+                       1:ncol(cor.table)]
+
+
+temp = data.frame(NMJ4 = as.numeric(cor.matrix[cor.matrix[,12] == "WT-cr/LoxP",
+                  c("Boutons.4.3")]),
+                  NMJ67 = as.numeric(cor.matrix[cor.matrix[,12] == "WT-cr/LoxP",
+                  c("Boutons.6-7.3")]))
+
+temp.cor1 = cor(na.omit(temp)[,1], na.omit(temp)[,2])
+
+temp.lm = lm(na.omit(temp)[,1] ~ na.omit(temp)[,2])[[1]]
+
+
+
+#temp[is.na(temp)] = 0
+
+temp = na.omit(temp)
+
+plot(x = temp$NMJ67,
+     y = temp$NMJ4,
+     pch = 21,
+     bg = "deepskyblue",
+     cex = 1,
+     #xaxt = "n",
+     #yaxt = "n",
+     ylab = "",
+     xlab = "",
+     bty = "n",
+     main = "",
+     xlim = c(0, 100),
+     ylim = c(0,50))
+
+abline(a = temp.lm[1],
+       b = temp.lm[2],
+       lwd = 2,
+       col = "royalblue")
+
+temp = data.frame(NMJ4 = as.numeric(cor.matrix[cor.matrix[,12] == "WT-cr/LoxP",
+                  c("Boutons.4.4")]),
+                  NMJ67 = as.numeric(cor.matrix[cor.matrix[,12] == "WT-cr/LoxP",
+                  c("Boutons.6-7.4")]))
+
+temp.cor2 = cor(na.omit(temp)[,1], na.omit(temp)[,2])
+
+temp.lm = lm(na.omit(temp)[,1] ~ na.omit(temp)[,2])[[1]]
+
+points(x = temp$NMJ67,
+       y = temp$NMJ4,
+       pch = 21,
+       bg = "deeppink",
+       cex = 1)
+
+abline(a = temp.lm[1],
+       b = temp.lm[2],
+       lwd = 2,
+       col = "firebrick")
+
+temp = data.frame(NMJ4 = as.numeric(cor.matrix[cor.matrix[,12] == "WT-cr/LoxP",
+                  c("Boutons.4.5")]),
+                  NMJ67 = as.numeric(cor.matrix[cor.matrix[,12] == "WT-cr/LoxP",
+                  c("Boutons.6-7.5")]))
+
+temp.cor3 = cor(na.omit(temp)[,1], na.omit(temp)[,2])
+
+temp.lm = lm(na.omit(temp)[,1] ~ na.omit(temp)[,2])[[1]]
+
+points(x = temp$NMJ67,
+       y = temp$NMJ4,
+       pch = 21,
+       bg = "lightyellow",
+       cex = 1)
+
+abline(a = temp.lm[1],
+       b = temp.lm[2],
+       lwd = 2,
+       col = "gold")
+
+temp = data.frame(NMJ4 = as.numeric(cor.matrix[cor.matrix[,12] == "WT-cr/LoxP",
+                  c("Boutons.4.6")]),
+                  NMJ67 = as.numeric(cor.matrix[cor.matrix[,12] == "WT-cr/LoxP",
+                  c("Boutons.6-7.6")]))
+
+temp.cor4 = cor(na.omit(temp)[,1], na.omit(temp)[,2])
+
+temp.lm = lm(na.omit(temp)[,1] ~ na.omit(temp)[,2])[[1]]
+
+points(x = temp$NMJ67,
+       y = temp$NMJ4,
+       pch = 21,
+       bg = "lightgreen",
+       cex = 1)
+
+abline(a = temp.lm[1],
+       b = temp.lm[2],
+       lwd = 2,
+       col = "darkgreen")
+
+legend("topleft",
+       legend = c(paste0("3 (cor: ", signif(temp.cor1,2),")"), 
+                  paste0("4 (cor: ", signif(temp.cor2,2),")"),
+                  paste0("5 (cor: ", signif(temp.cor3,2),")"),
+                  paste0("6 (cor: ", signif(temp.cor4,2),")")),
+       title = "Segment",
+       pt.bg = c("royalblue", "firebrick", "gold", "darkgreen"),
+       pch = 21)
+
+
+```
+
+
+
+```{r echo = F, fig.height= 8, fig.width= 8, include=F}
+
+cor.table = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/20250701_AllAnaData_CorrelationTable.csv",header = F)
+
+
+cor.table= cor.table[,-grep("Raw", cor.table[1,])]
+
+cor.table[1,grep("Norm", cor.table[1,])] = substr(cor.table[1,grep("Norm", cor.table[1,])], 8, nchar(cor.table[1,grep("Norm", cor.table[1,])]))
+
+cor.tablea = cor.table[,cor.table[2,] == "a"]
+cor.tablea = cbind(cor.tablea, cor.table[,20])
+cor.tablea = cbind(cor.tablea, cor.table[,1])
+
+cor.tableb = cor.table[,cor.table[2,] == "b"]
+cor.tableb = cbind(cor.tableb, cor.table[,20])
+cor.tableb = cbind(cor.tableb, cor.table[,1])
+
+colnames(cor.tablea) = paste0(cor.tablea[1,], ".", cor.tablea[3,], ".", cor.tablea[4,])
+colnames(cor.tableb) = paste0(cor.tableb[1,], ".", cor.tableb[3,], ".", cor.tableb[4,])
+
+cor.table = rbind(cor.tablea[c(1,3:nrow(cor.tablea)),],cor.tableb[5:nrow(cor.tableb),])
+
+
+cor.matrix = cor.table[cor.table[,ncol(cor.table)] == "WT-cr/LoxP" |
+                         cor.table[,ncol(cor.table)] == "G85Rcr/G85Rhr",
+                       1:ncol(cor.table)]
+
+
+temp = data.frame(NMJ4 = as.numeric(cor.matrix[cor.matrix[,12] == "G85Rcr/G85Rhr",
+                  c("Boutons.4.3")]),
+                  NMJ67 = as.numeric(cor.matrix[cor.matrix[,12] == "G85Rcr/G85Rhr",
+                  c("Boutons.6-7.3")]))
+
+temp.cor1 = cor(na.omit(temp)[,1], na.omit(temp)[,2])
+
+temp.lm = lm(na.omit(temp)[,1] ~ na.omit(temp)[,2])[[1]]
+
+
+
+#temp[is.na(temp)] = 0
+
+temp = na.omit(temp)
+
+plot(x = temp$NMJ67,
+     y = temp$NMJ4,
+     pch = 21,
+     bg = "deepskyblue",
+     cex = 1,
+     #xaxt = "n",
+     #yaxt = "n",
+     ylab = "",
+     xlab = "",
+     bty = "n",
+     main = "",
+     xlim = c(0, 100),
+     ylim = c(0,50))
+
+abline(a = temp.lm[1],
+       b = temp.lm[2],
+       lwd = 2,
+       col = "royalblue")
+
+temp = data.frame(NMJ4 = as.numeric(cor.matrix[cor.matrix[,12] == "G85Rcr/G85Rhr",
+                  c("Boutons.4.4")]),
+                  NMJ67 = as.numeric(cor.matrix[cor.matrix[,12] == "G85Rcr/G85Rhr",
+                  c("Boutons.6-7.4")]))
+
+temp.cor2 = cor(na.omit(temp)[,1], na.omit(temp)[,2])
+
+temp.lm = lm(na.omit(temp)[,1] ~ na.omit(temp)[,2])[[1]]
+
+points(x = temp$NMJ67,
+       y = temp$NMJ4,
+       pch = 21,
+       bg = "deeppink",
+       cex = 1)
+
+abline(a = temp.lm[1],
+       b = temp.lm[2],
+       lwd = 2,
+       col = "firebrick")
+
+temp = data.frame(NMJ4 = as.numeric(cor.matrix[cor.matrix[,12] == "G85Rcr/G85Rhr",
+                  c("Boutons.4.5")]),
+                  NMJ67 = as.numeric(cor.matrix[cor.matrix[,12] == "G85Rcr/G85Rhr",
+                  c("Boutons.6-7.5")]))
+
+temp.cor3 = cor(na.omit(temp)[,1], na.omit(temp)[,2])
+
+temp.lm = lm(na.omit(temp)[,1] ~ na.omit(temp)[,2])[[1]]
+
+points(x = temp$NMJ67,
+       y = temp$NMJ4,
+       pch = 21,
+       bg = "lightyellow",
+       cex = 1)
+
+abline(a = temp.lm[1],
+       b = temp.lm[2],
+       lwd = 2,
+       col = "gold")
+
+temp = data.frame(NMJ4 = as.numeric(cor.matrix[cor.matrix[,12] == "G85Rcr/G85Rhr",
+                  c("Boutons.4.6")]),
+                  NMJ67 = as.numeric(cor.matrix[cor.matrix[,12] == "G85Rcr/G85Rhr",
+                  c("Boutons.6-7.6")]))
+
+temp.cor4 = cor(na.omit(temp)[,1], na.omit(temp)[,2])
+
+temp.lm = lm(na.omit(temp)[,1] ~ na.omit(temp)[,2])[[1]]
+
+points(x = temp$NMJ67,
+       y = temp$NMJ4,
+       pch = 21,
+       bg = "lightgreen",
+       cex = 1)
+
+abline(a = temp.lm[1],
+       b = temp.lm[2],
+       lwd = 2,
+       col = "darkgreen")
+
+legend("topleft",
+       legend = c(paste0("3 (cor: ", signif(temp.cor1,2),")"), 
+                  paste0("4 (cor: ", signif(temp.cor2,2),")"),
+                  paste0("5 (cor: ", signif(temp.cor3,2),")"),
+                  paste0("6 (cor: ", signif(temp.cor4,2),")")),
+       title = "Segment",
+       pt.bg = c("royalblue", "firebrick", "gold", "darkgreen"),
+       pch = 21)
+
+
+```
