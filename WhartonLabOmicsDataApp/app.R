@@ -1,89 +1,113 @@
 library(shiny)
 library(gplots)
 library(DT)
-library(gplots)
+library(visNetwork)
+#library(rsconnect)
+#deployApp("/Users/johncsantiago/Documents/GitHub/WhartonLab/WhartonLabOmicsDataApp2/")
 
-source('https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/WhartonLabOmicsDataApp/WhartonLabOmicsDataAppFunctions.R')
+source("https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/WhartonLabOmicsDataApp2/WhartonLabOmicsDataAppFunctions.R")
 
-# UI
+NETWORK_DATASET <- "G85R-TKT Network (Metab + Enzyme)"
+
 ui <- fluidPage(
   titlePanel("Wharton Lab Omics Data Viewer"),
   
-  # Move the input above the main panel
-  fluidRow(
-    column(
-      width = 12,
+  sidebarLayout(
+    sidebarPanel(
+      width = 3,
+      
       selectInput(
         "datasetType",
         "Select Data Type:",
-        choices = c("G85R-TKT Metabolomics", "G85R-TKT Transcriptomics", "A4V Transcriptomics"),
+        choices = c(
+          "G85R-TKT Metabolomics",
+          "G85R-TKT Transcriptomics",
+          "A4V Transcriptomics",
+          NETWORK_DATASET
+        ),
         selected = "G85R-TKT Metabolomics"
       ),
-      uiOutput("dynamicIDSelector")
-    )
-  ),
-  
-  fluidRow(
-    column(
-      width = 8,
-      div(
-        plotOutput("metabPlot", height = "500px"),
-        style = "max-width: 1100px;"  # Example narrower width
-      )),
-    column(
-      width = 4,
-      h4("Fold Change and FDR Summary"),
-      div(
-        DTOutput("metabTable", height = "300px"),
-        style = "max-width: 400px;"  # Example narrower width
+      
+      # Dynamic controls: ID selector for omics, network controls for network
+      uiOutput("dynamicControls"),
+      
+      # A little spacing
+      br()
+    ),
+    
+    mainPanel(
+      width = 9,
+      
+      # Right side: big viz
+      conditionalPanel(
+        condition = sprintf("input.datasetType != '%s'", NETWORK_DATASET),
+        plotOutput("metabPlot", height = "650px", width = "100%")
+      ),
+      
+      conditionalPanel(
+        condition = sprintf("input.datasetType == '%s'", NETWORK_DATASET),
+        visNetworkOutput("network", height = "900px", width = "100%")
+      ),
+      
+      br(),
+      
+      # Table (only for non-network modes)
+      conditionalPanel(
+        condition = sprintf("input.datasetType != '%s'", NETWORK_DATASET),
+        h4("Fold Change and FDR Summary"),
+        DTOutput("metabTable")
       )
     )
   )
 )
 
-
-# Server
 server <- function(input, output, session) {
   
-  output$dynamicIDSelector <- renderUI({
-    selectizeInput(
-      "metabID",
-      "Search and Select ID:",
-      choices = NULL,
-      selected = "",
-      multiple = FALSE,
-      options = list(
-        placeholder = '🔍 Type a gene symbol or FBgn ID...',
-        create = TRUE
+  output$dynamicControls <- renderUI({
+    if (input$datasetType == NETWORK_DATASET) {
+      tagList(
+        h4("Network Controls"),
+        selectInput("enzyme_comp", "Transcriptomics (enzyme) comparison", choices = ENZYME_CHOICES, selected = "GRxWT.FC"),
+        numericInput("fccutoff", "FC cutoff (abs)", value = 1.25, min = 0, step = 0.1),
+        numericInput("meansumcutoff", "Mean CPM sum cutoff", value = 5, min = 0, step = 1)
       )
-    )
+    } else {
+      selectizeInput(
+        "metabID",
+        "Search and Select ID:",
+        choices = NULL,
+        selected = "",
+        multiple = FALSE,
+        options = list(
+          placeholder = "🔍 Type a gene symbol or FBgn ID...",
+          create = TRUE
+        )
+      )
+    }
   })
   
+  # Update ID selector choices when dataset changes (only for non-network modes)
   observeEvent(input$datasetType, {
+    if (input$datasetType == NETWORK_DATASET) return()
+    
     if (input$datasetType == "G85R-TKT Metabolomics") {
       choices <- rownames(norm.data)
+      updateSelectizeInput(session, "metabID", choices = c("", choices), server = TRUE)
     } else {
       symbols <- GeneIDKey$Symbol
-      fbgns <- GeneIDKey$FBgn
+      fbgns   <- GeneIDKey$FBgn
       display <- paste0(symbols, " (", fbgns, ")")
-      choices <- setNames(fbgns, display)
+      choices <- setNames(fbgns, display)  # value=FBgn, label="Symbol (FBgn)"
+      updateSelectizeInput(session, "metabID", choices = c("", choices), server = TRUE)
     }
-    
-    updateSelectizeInput(
-      session,
-      "metabID",
-      choices = c("", choices),
-      server = TRUE
-    )
-  })
+  }, ignoreInit = FALSE)
   
-  
-  
-  
-  
-  # Plot
+  # Plot (non-network)
   output$metabPlot <- renderPlot({
-    req(input$metabID, input$datasetType)
+    req(input$datasetType)
+    validate(need(input$datasetType != NETWORK_DATASET, ""))
+    
+    req(input$metabID)
     id <- input$metabID
     
     if (input$datasetType == "G85R-TKT Metabolomics") {
@@ -95,10 +119,26 @@ server <- function(input, output, session) {
     }
   })
   
+  # Network (bigger)
+  output$network <- renderVisNetwork({
+    req(input$datasetType == NETWORK_DATASET)
+    req(input$enzyme_comp, input$fccutoff, input$meansumcutoff)
+    
+    validate(need(exists("fullnetwork"), "fullnetwork() not found."))
+    
+    fullnetwork(
+      enzyme = input$enzyme_comp,
+      fccutoff = input$fccutoff,
+      meansumcutoff = input$meansumcutoff
+    )
+  })
   
-  # FC/FDR Table
+  # Table (non-network)
   output$metabTable <- renderDT({
-    req(input$metabID, input$datasetType)
+    req(input$datasetType)
+    validate(need(input$datasetType != NETWORK_DATASET, ""))
+    
+    req(input$metabID)
     id <- input$metabID
     
     df <- NULL
@@ -108,21 +148,20 @@ server <- function(input, output, session) {
         df <- data.frame(
           Comparison = colnames(Metab.FC),
           FoldChange = signif(as.numeric(Metab.FC[id, ]), 4),
-          FDR = signif(as.numeric(Metab.FDR[id, ]), 4)
+          FDR        = signif(as.numeric(Metab.FDR[id, ]), 4)
         )
       }
     } else {
-      match_row <- GeneIDKey[GeneIDKey$FBgn == id | GeneIDKey$Symbol == id, ]
-      
-      if (nrow(match_row) == 1) {
-        FBgn <- match_row$FBgn
+      match_row <- GeneIDKey[GeneIDKey$FBgn == id | GeneIDKey$Symbol == id, , drop = FALSE]
+      if (nrow(match_row) >= 1) {
+        FBgn <- match_row$FBgn[1]
         
         if (input$datasetType == "G85R-TKT Transcriptomics") {
           if (FBgn %in% rownames(TKT.FC) && FBgn %in% rownames(TKT.FDR)) {
             df <- data.frame(
               Comparison = colnames(TKT.FC),
               FoldChange = signif(as.numeric(TKT.FC[FBgn, ]), 4),
-              FDR = signif(as.numeric(TKT.FDR[FBgn, ]), 4)
+              FDR        = signif(as.numeric(TKT.FDR[FBgn, ]), 4)
             )
           }
         } else if (input$datasetType == "A4V Transcriptomics") {
@@ -130,39 +169,39 @@ server <- function(input, output, session) {
             df <- data.frame(
               Comparison = colnames(A4V.FC),
               FoldChange = signif(as.numeric(A4V.FC[FBgn, ]), 4),
-              FDR = signif(as.numeric(A4V.FDR[FBgn, ]), 4)
+              FDR        = signif(as.numeric(A4V.FDR[FBgn, ]), 4)
             )
           }
         }
       }
     }
     
-    if (!is.null(df)) {
-      datatable(df, options = list(
+    if (is.null(df)) return(NULL)
+    
+    datatable(
+      df,
+      options = list(
         pageLength = 6,
-        dom = 't',
+        dom = "t",
         paging = FALSE,
         scrollX = TRUE,
         scrollCollapse = TRUE,
-        scrollY = "300px",  # adjust height as needed
+        scrollY = "300px",
         scroller = TRUE,
         rowCallback = JS(
-          'function(row, data) {
-           if (parseFloat(data[2]) < 0.05) {
-             $("td:eq(2)", row).css("background-color", "#ffcccc");
-           }
-         }'
+          "function(row, data) {
+             if (parseFloat(data[2]) < 0.05) {
+               $('td:eq(2)', row).css('background-color', '#ffcccc');
+             }
+           }"
         )
       ),
-      rownames = FALSE,  # 👈 this hides the row numbers
-      class = 'compact stripe hover',
-      selection = 'none',
-      style = 'bootstrap')
-    }
+      rownames = FALSE,
+      class = "compact stripe hover",
+      selection = "none",
+      style = "bootstrap"
+    )
   })
-  
-  
 }
 
-# Run app
 shinyApp(ui = ui, server = server)
