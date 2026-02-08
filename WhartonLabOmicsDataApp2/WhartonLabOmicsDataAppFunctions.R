@@ -37,7 +37,9 @@ Metab.Meta <- read.csv(paste0(git.dir, "MetabolomicMetadata.csv"), row.names = 1
 Metab.FC <- read.csv(paste0(git.dir, "MetaboliteFCs2.csv"), row.names = 1)
 Metab.FDR <- read.csv(paste0(git.dir, "MetaboliteFDRs2.csv"), row.names = 1)
 G85R.metabFDR = Metab.FDR
+G85R.metabFDR$none = 1
 G85R.metabFC = Metab.FC 
+G85R.metabFC$none = 0
 
 Metab.FC = Metab.FC[,-1]
 Metab.FDR = Metab.FDR[,-1]
@@ -72,15 +74,21 @@ colnames(norm.data) <- Metab.Meta[colnames(norm.data), "Genotypes"]
 
 METAB_CHOICES <- c(
   "GRxWT.C","GRxWT.Df","GRxWT.OE","GR.CxDf","WT.CxDf",
-  "GR.CxOE","WT.CxOE","GR.DfxWT.C","GR.OExWT.C"
+  "GR.CxOE","WT.CxOE","GR.DfxWT.C","GR.OExWT.C","none"
 )
 
 ENZYME_CHOICES <- c(
-  "GRF.CxDf","GRF.CxOE","WTF.CxDf","WTF.CxOE","GRxWT.FC","GRxWT.FDf",
-  "GRxWT.FOE","GRDfxWT.F","GROExWT.F","GRM.CxDf","GRM.CxOE","WTM.CxDf",
-  "WTM.CxOE","GRxWT.MC","GRxWT.MDf","GRxWT.MOE","GRDfxWT.M","GROExWT.M",
-  "GR.FxM","WT.FxM"
+  "GRF.CxDf","GRF.CxOE","WTF.CxDf","WTF.CxOE","GRxWT.FC",
+  "GRxWT.FDf","GRxWT.FOE","GRDfxWT.F","GROExWT.F","GRM.CxDf",
+  "GRM.CxOE","WTM.CxDf","WTM.CxOE","GRxWT.MC","GRxWT.MDf",
+  "GRxWT.MOE","GRDfxWT.M","GROExWT.M","GR.FxM","WT.FxM"
 )
+
+metab.choice = setNames( METAB_CHOICES[c(4,6,5,7,1,
+                                         2,3,8,9,4,
+                                         6,5,7,1,2,
+                                         3,8,9,10,10)], 
+                         ENZYME_CHOICES)
 
 ##Function to plot all G85R groups
 plot.G85R = function(ID){
@@ -391,10 +399,10 @@ plot.metab = function(metabID){
 meansumcutoff = 5
 ##genes/metabolites with fold change below the cutoff are not colored red/blue
 
-fullnetwork = function(metab, 
-                       enzyme,
+fullnetwork = function(enzyme,
                        fccutoff = 0, 
                        meansumcutoff = 0){
+  metab = as.character(metab.choice[enzyme])
   nodes = raw.nodes
   edges = raw.edges
   fccutoff = log2(fccutoff)
