@@ -388,12 +388,17 @@ plot.metab = function(metabID){
   }
 }
 
+meansumcutoff = 5
+##genes/metabolites with fold change below the cutoff are not colored red/blue
+
 fullnetwork = function(metab, 
                        enzyme,
                        fccutoff = 0, 
                        meansumcutoff = 0){
   nodes = raw.nodes
   edges = raw.edges
+  fccutoff = log2(fccutoff)
+  
   mean.groups = row.names(G85R.meancpm.meta)[G85R.meancpm.meta[,enzyme]]
   
   nodes[nodes$shape == "dot", "label"] = NA
