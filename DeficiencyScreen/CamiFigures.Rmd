@@ -1,0 +1,1505 @@
+---
+title: "Deficiency Screen Functional Analysis for Camilla"
+author: "John Santiago"
+date: "3/14/2024"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(rgl)
+knitr::opts_chunk$set(echo = FALSE, fig.align="center")
+knitr::knit_hooks$set(webgl = hook_webgl)
+```
+
+```{r echo = F, include=F}
+##Load Libraries
+
+library(org.Dm.eg.db)
+library(goseq)
+library(rrvgo)
+library(plotly)
+library(pathview)
+library(rstudioapi)
+
+```
+
+```{r echo = F, include =F}
+##load all files from github
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"
+GeneIDKey = read.csv(paste0(git.dir,"GeneralDataFiles/GeneIDKey.csv"),row.names = 1)
+Df.data = read.csv(paste0(git.dir,"DeficiencyScreen/DataFiles/DeficiencyModifierGenes.csv"),row.names = 1)
+##kegg = readRDS(gzcon(url(paste0(git.dir,"DeficiencyScreen/DataFiles/kegg.symbol2path.RData"))))
+##kegg.names = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/KEGG.names.csv"), row.names = 1)
+
+kegg = readRDS(gzcon(url(paste0(git.dir,"GeneralDataFiles/kegg.symbol2path.RData"))))
+kegg.names = read.csv(paste0(git.dir, "GeneralDataFiles/KEGG.names.csv"), row.names = 1)
+
+Moderate.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/ModerateGOAnalysis.csv"), row.names = 1)
+Strong.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/StrongGOAnalysis.csv"), row.names = 1)
+Repress.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/RepressorGOAnalysis.csv"), row.names = 1)
+Lethal.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/LethalGOAnalysis.csv"), row.names = 1)
+Enhancer.GO = read.csv(paste0(git.dir, "DeficiencyScreen/DataFiles/EnhancerGOAnalysis.csv"), row.names = 1)
+
+genesingo=as.list(org.Dm.egGO2ALLEGS)
+
+```
+
+```{r echo = F, include = F}
+
+Enrichment = function(sigs, bg){
+  sigsKEY = GeneIDKey[sigs,]
+  sigs = na.omit(sigsKEY$Symbol)
+  bgKEY = GeneIDKey[bg,]
+  bg = na.omit(bgKEY$Symbol)
+
+  genes = setNames(rep(0, length(bg)), bg)
+  genes[sigs] = 1
+  pwf=nullp(genes,"dm3","geneSymbol")
+  GO.wall=goseq(pwf,"dm3","geneSymbol")
+  GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+  row.names(GO.wall) = GO.wall$category
+  KEGG=goseq(pwf,gene2cat=kegg)
+  KEGG$adjp=p.adjust(KEGG$over_represented_pvalue,method="BH")
+  row.names(KEGG)=substr(as.character(KEGG[,1]),6,13)
+  KEGG$Name=kegg.names[row.names(KEGG),1]
+
+  enrichment.data = list(GO.wall, KEGG)
+  names(enrichment.data) = c("GO", "KEGG")
+  return(enrichment.data)
+}
+
+```
+
+```{r echo = F, include = F}
+
+GO.Sim.PCA = function(use.data){
+    pca <- prcomp(t(use.data), scale.=TRUE) 
+    pc1=scale(pca$x[,1])
+    pc2=scale(pca$x[,2])
+    eigs <- pca$sdev^2
+    ve=signif(((eigs / sum(eigs))*100)[1:3],4)
+
+    pca.data=data.frame(PC1=pc1,
+                        PC2=pc2,
+                        sdev=pca$sdev,
+                        Percent1=ve[1],
+                        Percent2=ve[2],
+                        Group = use.data[row.names(use.data), "parentTerm"],
+                        Score = use.data[row.names(use.data), "score"],
+                        Term = use.data[row.names(use.data), "term"],
+                        TotalDE = GO.data[row.names(use.data), "numDEInCat"],
+                        Total = GO.data[row.names(use.data), "numInCat"],
+                        SigVal = signif(GO.data[row.names(use.data), "adjp"],3))
+
+    pca.data$Group = factor(pca.data$Group, levels = unique(pca.data$Group))
+    pca.data$Score = 20*(1+pca.data$Score/mean(pca.data$Score))
+    
+  fig  = plot_ly(data = pca.data, 
+                 x = ~PC1, 
+                 y = ~PC2,
+                 name = ~Group,
+                 type = 'scatter',
+                 mode = 'markers',
+                 showlegend = T,
+                 color = ~Group,
+                 ##symbol = ~Group,
+                 ##symbols = as.character(seq_along(unique(point.data$Set))),
+                 ##colors = c("firebrick","gold","deepskyblue"),
+                 marker = list(size = pca.data$Score,
+                               line = list(color = "black", width = 1.5)),
+                 hoverinfo = "text",
+                 hovertext = paste("Parent Group: ", pca.data$Group,
+                                   "\nSample: ", pca.data$Term, 
+                                   "\nTotal DE: ", pca.data$TotalDE, 
+                                   "\nTotal in Cat.: ", pca.data$Total, 
+                                   "\nFDR: ", pca.data$SigVal)) %>%
+    layout(xaxis = list(title = paste0("PC1", "(", ve[1], "%)")),
+           yaxis = list(title = paste0("PC2", "(", ve[2], "%)")),
+           title = "Enriched GO term similarity")
+           
+  return(fig)
+}
+
+```
+
+
+
+```{r include = F, echo = F}
+
+sigs = row.names(Df.data)[Df.data$Moderate == "1"]
+bg = row.names(Df.data)
+
+sig.cats = Enrichment(sigs, bg)
+Moderate.cats = sig.cats
+
+```
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "CC"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+CC.simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+CC.reducedTerms <- reduceSimMatrix(CC.simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "BP"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+BP.simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+BP.reducedTerms <- reduceSimMatrix(BP.simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "MF"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+MF.simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+MF.reducedTerms <- reduceSimMatrix(MF.simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+```{r echo = F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "BP"
+
+GO.data = GO.data[GO.data$ontology == GO.ontology,
+                  c("category", "term","adjp", "numDEInCat", "numInCat")]
+
+data = GO.data[20:1,c("term","adjp","numDEInCat", "numInCat", "category")]
+data$Score = -log10(data$adjp)
+
+temp = nchar(data$term)
+data$label = data$term
+data$label[temp > 40] = paste0(substr(data$term[temp>40], 1 ,35), "...")
+data$label = factor(data$label, levels = c(data$label))
+
+##data = data[data$adjp < .05,]
+
+data$term = factor(data$term, levels = c(unique(data$term)))
+
+
+m <- list(
+  l = 50,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 4
+)
+
+
+
+fig <- plot_ly(data, 
+               x = ~numInCat, y = ~label, 
+               type = 'bar',
+               name = "All in Cat.",
+               marker = list(color = 'grey',
+                             line = list(color = "black", width = 1.5)),
+    hoverinfo = "text",
+    hovertext = paste("Sample:", data$term,
+                      "\nGO ID: ", data$category,
+                      "\nTotal DE: ", data$numDEInCat,
+                      "\nTotal in Cat.: ", data$numInCat,
+                      "\nFDR: ", signif(data$adjp, 3))) %>%
+    add_trace(x = ~numDEInCat, 
+              y ~term, 
+              marker = list(color = 'brown', 
+                            line = list(color = "black", width = 1.5)),
+              name = "Repressors in Cat.")%>%
+   
+    layout(xaxis = list(title = "Number of Genes"),##, range = c(0,500)),
+           yaxis = list(title = ""),
+           title = "Enriched Biological Process GO Terms in Moderate Repressor Genes",
+           margin = m, barmode = 'overlay')
+
+BP.GO.fig = fig
+
+```
+
+```{r, echo = F,  fig.width= 10}
+
+BP.GO.fig
+
+```
+
+```{r  echo = F, fig.align='left'}
+
+treemapPlot(BP.reducedTerms)
+
+```
+
+```{r echo = F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "CC"
+
+GO.data = GO.data[GO.data$ontology == GO.ontology,
+                  c("category", "term","adjp", "numDEInCat", "numInCat")]
+
+data = GO.data[20:1,c("term","adjp","numDEInCat", "numInCat", "category")]
+data$Score = -log10(data$adjp)
+
+temp = nchar(data$term)
+data$label = data$term
+data$label[temp > 40] = paste0(substr(data$term[temp>40], 1 ,35), "...")
+data$label = factor(data$label, levels = c(data$label))
+
+##data = data[data$adjp < .05,]
+
+data$term = factor(data$term, levels = c(unique(data$term)))
+
+
+m <- list(
+  l = 50,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 4
+)
+
+
+
+fig <- plot_ly(data, 
+               x = ~numInCat, y = ~label, 
+               type = 'bar',
+               name = "All in Cat.",
+               marker = list(color = 'grey',
+                             line = list(color = "black", width = 1.5)),
+    hoverinfo = "text",
+    hovertext = paste("Sample:", data$term,
+                      "\nGO ID: ", data$category,
+                      "\nTotal DE: ", data$numDEInCat,
+                      "\nTotal in Cat.: ", data$numInCat,
+                      "\nFDR: ", signif(data$adjp, 3))) %>%
+    add_trace(x = ~numDEInCat, 
+              y ~term, 
+              marker = list(color = 'gold', 
+                            line = list(color = "black", width = 1.5)),
+              name = "Repressors in Cat.")%>%
+   
+    layout(xaxis = list(title = "Number of Genes"),##, range = c(0,500)),
+           yaxis = list(title = ""),
+           title = "Enriched Cellular Component GO Terms in Moderate Repressor Genes",
+           margin = m, barmode = 'overlay')
+
+CC.GO.fig = fig
+
+```
+
+```{r, echo = F,  fig.width= 10}
+
+CC.GO.fig
+
+```
+
+```{r  echo = F, fig.align='left'}
+
+treemapPlot(CC.reducedTerms)
+
+```
+
+```{r echo = F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "MF"
+
+GO.data = GO.data[GO.data$ontology == GO.ontology,
+                  c("category", "term","adjp", "numDEInCat", "numInCat")]
+
+data = GO.data[20:1,c("term","adjp","numDEInCat", "numInCat", "category")]
+data$Score = -log10(data$adjp)
+
+temp = nchar(data$term)
+data$label = data$term
+data$label[temp > 40] = paste0(substr(data$term[temp>40], 1 ,35), "...")
+data$label = factor(data$label, levels = c(data$label))
+
+##data = data[data$adjp < .05,]
+
+data$term = factor(data$term, levels = c(unique(data$term)))
+
+
+m <- list(
+  l = 50,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 4
+)
+
+
+
+fig <- plot_ly(data, 
+               x = ~numInCat, y = ~label, 
+               type = 'bar',
+               name = "All in Cat.",
+               marker = list(color = 'grey',
+                             line = list(color = "black", width = 1.5)),
+    hoverinfo = "text",
+    hovertext = paste("Sample:", data$term,
+                      "\nGO ID: ", data$category,
+                      "\nTotal DE: ", data$numDEInCat,
+                      "\nTotal in Cat.: ", data$numInCat,
+                      "\nFDR: ", signif(data$adjp, 3))) %>%
+    add_trace(x = ~numDEInCat, 
+              y ~term, 
+              marker = list(color = 'steelblue', 
+                            line = list(color = "black", width = 1.5)),
+              name = "Repressors in Cat.")%>%
+   
+    layout(xaxis = list(title = "Number of Genes"),##, range = c(0,500)),
+           yaxis = list(title = ""),
+           title = "Enriched Molecular Function GO Terms in Moderate Repressor Genes",
+           margin = m, barmode = 'overlay')
+
+MF.GO.fig = fig
+
+```
+
+```{r, echo = F,  fig.width= 10}
+
+MF.GO.fig
+
+```
+
+```{r  echo = F, fig.align='left'}
+
+treemapPlot(MF.reducedTerms)
+
+```
+
+```{r echo = F}
+
+KEGG.data = sig.cats$KEGG
+data = KEGG.data[, c("category", "Name","adjp", "numDEInCat", "numInCat")]
+  
+data$term = data$Name
+if(length(unique(data$term)) < length(data$term)){
+  data$term[duplicated(data$term)] = paste(data$term[duplicated(data$term)], "2")
+}  
+data = na.omit(data[data$Name != 'Metabolic pathways',])
+data = data[20:1,]
+data$Score = -log10(data$adjp)
+
+##data = data[data$adjp<.05,]
+data$term = factor(data$term, levels = c(data$term))
+
+m <- list(
+  l = 50,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 4
+)
+
+fig <- plot_ly(data, 
+               x = ~numInCat, y = ~term, 
+               type = 'bar',
+               name = "Total in Cat.",
+               marker = list(color = 'grey',
+                             line = list(color = "black", width = 1.5)),
+    hoverinfo = "text",
+    hovertext = paste("Sample:", data$term,
+                      "\nGO ID: ", data$category,
+                      "\nTotal DE: ", data$numDEInCat,
+                      "\nTotal in Cat.: ", data$numInCat)) %>%
+    add_trace(x = ~numDEInCat, 
+              y ~term, 
+              marker = list(color = 'darkgreen', 
+                            line = list(color = "black", width = 1.5)),
+              name = "Sig. Decreased FC")%>%
+    layout(xaxis = list(title = "Number of Genes"),
+           yaxis = list(title = ""),
+           title = paste0("Top 20 Most Enriched KEGG terms in Moderate Repressor Genes (nothing significant)"),
+           margin = m, barmode = 'overlay')
+
+KEGG.fig = fig
+
+```
+
+```{r, echo = F,  fig.width= 10}
+
+KEGG.fig
+
+```
+
+
+
+```{r include = F, echo = F}
+
+sigs = row.names(Df.data)[Df.data$Strong == "1"]
+bg = row.names(Df.data)
+
+sig.cats = Enrichment(sigs, bg)
+Strong.cats = sig.cats
+
+```
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "CC"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+CC.simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+CC.reducedTerms <- reduceSimMatrix(CC.simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "BP"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+BP.simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+BP.reducedTerms <- reduceSimMatrix(BP.simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "MF"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+MF.simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+MF.reducedTerms <- reduceSimMatrix(MF.simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+```{r echo = F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "BP"
+
+GO.data = GO.data[GO.data$ontology == GO.ontology,
+                  c("category", "term","adjp", "numDEInCat", "numInCat")]
+
+data = GO.data[20:1,c("term","adjp","numDEInCat", "numInCat", "category")]
+data$Score = -log10(data$adjp)
+
+temp = nchar(data$term)
+data$label = data$term
+data$label[temp > 40] = paste0(substr(data$term[temp>40], 1 ,35), "...")
+data$label = factor(data$label, levels = c(data$label))
+
+##data = data[data$adjp < .05,]
+
+data$term = factor(data$term, levels = c(unique(data$term)))
+
+
+m <- list(
+  l = 50,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 4
+)
+
+
+
+fig <- plot_ly(data, 
+               x = ~numInCat, y = ~label, 
+               type = 'bar',
+               name = "All in Cat.",
+               marker = list(color = 'grey',
+                             line = list(color = "black", width = 1.5)),
+    hoverinfo = "text",
+    hovertext = paste("Sample:", data$term,
+                      "\nGO ID: ", data$category,
+                      "\nTotal DE: ", data$numDEInCat,
+                      "\nTotal in Cat.: ", data$numInCat,
+                      "\nFDR: ", signif(data$adjp, 3))) %>%
+    add_trace(x = ~numDEInCat, 
+              y ~term, 
+              marker = list(color = 'brown', 
+                            line = list(color = "black", width = 1.5)),
+              name = "Repressors in Cat.")%>%
+   
+    layout(xaxis = list(title = "Number of Genes"),##, range = c(0,500)),
+           yaxis = list(title = ""),
+           title = "Enriched Biological Process GO Terms in Strong Repressor Genes",
+           margin = m, barmode = 'overlay')
+
+BP.GO.fig = fig
+
+```
+
+```{r, echo = F,  fig.width= 10}
+
+BP.GO.fig
+
+```
+
+```{r  echo = F, fig.align='left'}
+
+treemapPlot(BP.reducedTerms)
+
+```
+
+```{r echo = F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "CC"
+
+GO.data = GO.data[GO.data$ontology == GO.ontology,
+                  c("category", "term","adjp", "numDEInCat", "numInCat")]
+
+data = GO.data[20:1,c("term","adjp","numDEInCat", "numInCat", "category")]
+data$Score = -log10(data$adjp)
+
+temp = nchar(data$term)
+data$label = data$term
+data$label[temp > 40] = paste0(substr(data$term[temp>40], 1 ,35), "...")
+data$label = factor(data$label, levels = c(data$label))
+
+##data = data[data$adjp < .05,]
+
+data$term = factor(data$term, levels = c(unique(data$term)))
+
+
+m <- list(
+  l = 50,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 4
+)
+
+
+
+fig <- plot_ly(data, 
+               x = ~numInCat, y = ~label, 
+               type = 'bar',
+               name = "All in Cat.",
+               marker = list(color = 'grey',
+                             line = list(color = "black", width = 1.5)),
+    hoverinfo = "text",
+    hovertext = paste("Sample:", data$term,
+                      "\nGO ID: ", data$category,
+                      "\nTotal DE: ", data$numDEInCat,
+                      "\nTotal in Cat.: ", data$numInCat,
+                      "\nFDR: ", signif(data$adjp, 3))) %>%
+    add_trace(x = ~numDEInCat, 
+              y ~term, 
+              marker = list(color = 'gold', 
+                            line = list(color = "black", width = 1.5)),
+              name = "Repressors in Cat.")%>%
+   
+    layout(xaxis = list(title = "Number of Genes"),##, range = c(0,500)),
+           yaxis = list(title = ""),
+           title = "Enriched Cellular Component GO Terms in Strong Repressor Genes",
+           margin = m, barmode = 'overlay')
+
+CC.GO.fig = fig
+
+```
+
+```{r, echo = F,  fig.width= 10}
+
+CC.GO.fig
+
+```
+
+```{r  echo = F, fig.align='left'}
+
+treemapPlot(CC.reducedTerms)
+
+```
+
+```{r echo = F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "MF"
+
+GO.data = GO.data[GO.data$ontology == GO.ontology,
+                  c("category", "term","adjp", "numDEInCat", "numInCat")]
+
+data = GO.data[20:1,c("term","adjp","numDEInCat", "numInCat", "category")]
+data$Score = -log10(data$adjp)
+
+temp = nchar(data$term)
+data$label = data$term
+data$label[temp > 40] = paste0(substr(data$term[temp>40], 1 ,35), "...")
+data$label = factor(data$label, levels = c(data$label))
+
+##data = data[data$adjp < .05,]
+
+data$term = factor(data$term, levels = c(unique(data$term)))
+
+
+m <- list(
+  l = 50,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 4
+)
+
+
+
+fig <- plot_ly(data, 
+               x = ~numInCat, y = ~label, 
+               type = 'bar',
+               name = "All in Cat.",
+               marker = list(color = 'grey',
+                             line = list(color = "black", width = 1.5)),
+    hoverinfo = "text",
+    hovertext = paste("Sample:", data$term,
+                      "\nGO ID: ", data$category,
+                      "\nTotal DE: ", data$numDEInCat,
+                      "\nTotal in Cat.: ", data$numInCat,
+                      "\nFDR: ", signif(data$adjp, 3))) %>%
+    add_trace(x = ~numDEInCat, 
+              y ~term, 
+              marker = list(color = 'steelblue', 
+                            line = list(color = "black", width = 1.5)),
+              name = "Repressors in Cat.")%>%
+   
+    layout(xaxis = list(title = "Number of Genes"),##, range = c(0,500)),
+           yaxis = list(title = ""),
+           title = "Enriched Molecular Function GO Terms in Strong Repressor Genes",
+           margin = m, barmode = 'overlay')
+
+MF.GO.fig = fig
+
+```
+
+```{r, echo = F,  fig.width= 10}
+
+MF.GO.fig
+
+```
+
+```{r  echo = F, fig.align='left'}
+
+treemapPlot(MF.reducedTerms)
+
+```
+
+```{r echo = F}
+
+KEGG.data = sig.cats$KEGG
+data = KEGG.data[, c("category", "Name","adjp", "numDEInCat", "numInCat")]
+  
+data$term = data$Name
+if(length(unique(data$term)) < length(data$term)){
+  data$term[duplicated(data$term)] = paste(data$term[duplicated(data$term)], "2")
+}  
+data = na.omit(data[data$Name != 'Metabolic pathways',])
+data = data[20:1,]
+data$Score = -log10(data$adjp)
+
+##data = data[data$adjp<.05,]
+data$term = factor(data$term, levels = c(data$term))
+
+m <- list(
+  l = 50,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 4
+)
+
+fig <- plot_ly(data, 
+               x = ~numInCat, y = ~term, 
+               type = 'bar',
+               name = "Total in Cat.",
+               marker = list(color = 'grey',
+                             line = list(color = "black", width = 1.5)),
+    hoverinfo = "text",
+    hovertext = paste("Sample:", data$term,
+                      "\nGO ID: ", data$category,
+                      "\nTotal DE: ", data$numDEInCat,
+                      "\nTotal in Cat.: ", data$numInCat)) %>%
+    add_trace(x = ~numDEInCat, 
+              y ~term, 
+              marker = list(color = 'darkgreen', 
+                            line = list(color = "black", width = 1.5)),
+              name = "Sig. Decreased FC")%>%
+    layout(xaxis = list(title = "Number of Genes"),
+           yaxis = list(title = ""),
+           title = paste0("Top 20 Most Enriched KEGG terms in Strong Repressor Genes (only 1 significant)"),
+           margin = m, barmode = 'overlay')
+
+KEGG.fig = fig
+
+```
+
+```{r, echo = F,  fig.width= 10}
+
+KEGG.fig
+
+```
+
+
+
+
+```{r include = F, echo = F}
+
+sigs = row.names(Df.data)[Df.data$Repress == "1"]
+bg = row.names(Df.data)
+
+sig.cats = Enrichment(sigs, bg)
+Repress.cats = sig.cats
+
+```
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "CC"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+CC.simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+CC.reducedTerms <- reduceSimMatrix(CC.simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "BP"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+BP.simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+BP.reducedTerms <- reduceSimMatrix(BP.simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "MF"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+MF.simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+MF.reducedTerms <- reduceSimMatrix(MF.simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+```{r echo = F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "BP"
+
+GO.data = GO.data[GO.data$ontology == GO.ontology,
+                  c("category", "term","adjp", "numDEInCat", "numInCat")]
+
+data = GO.data[20:1,c("term","adjp","numDEInCat", "numInCat", "category")]
+data$Score = -log10(data$adjp)
+
+temp = nchar(data$term)
+data$label = data$term
+data$label[temp > 40] = paste0(substr(data$term[temp>40], 1 ,35), "...")
+data$label = factor(data$label, levels = c(data$label))
+
+##data = data[data$adjp < .05,]
+
+data$term = factor(data$term, levels = c(unique(data$term)))
+
+
+m <- list(
+  l = 50,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 4
+)
+
+
+
+fig <- plot_ly(data, 
+               x = ~numInCat, y = ~label, 
+               type = 'bar',
+               name = "All in Cat.",
+               marker = list(color = 'grey',
+                             line = list(color = "black", width = 1.5)),
+    hoverinfo = "text",
+    hovertext = paste("Sample:", data$term,
+                      "\nGO ID: ", data$category,
+                      "\nTotal DE: ", data$numDEInCat,
+                      "\nTotal in Cat.: ", data$numInCat,
+                      "\nFDR: ", signif(data$adjp, 3))) %>%
+    add_trace(x = ~numDEInCat, 
+              y ~term, 
+              marker = list(color = 'brown', 
+                            line = list(color = "black", width = 1.5)),
+              name = "Repressors in Cat.")%>%
+   
+    layout(xaxis = list(title = "Number of Genes"),##, range = c(0,500)),
+           yaxis = list(title = ""),
+           title = "Enriched Biological Process GO Terms in All Repressor Genes",
+           margin = m, barmode = 'overlay')
+
+BP.GO.fig = fig
+
+```
+
+```{r, echo = F,  fig.width= 10}
+
+BP.GO.fig
+
+```
+
+```{r  echo = F, fig.align='left'}
+
+treemapPlot(BP.reducedTerms)
+
+```
+
+```{r echo = F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "CC"
+
+GO.data = GO.data[GO.data$ontology == GO.ontology,
+                  c("category", "term","adjp", "numDEInCat", "numInCat")]
+
+data = GO.data[20:1,c("term","adjp","numDEInCat", "numInCat", "category")]
+data$Score = -log10(data$adjp)
+
+temp = nchar(data$term)
+data$label = data$term
+data$label[temp > 40] = paste0(substr(data$term[temp>40], 1 ,35), "...")
+data$label = factor(data$label, levels = c(data$label))
+
+##data = data[data$adjp < .05,]
+
+data$term = factor(data$term, levels = c(unique(data$term)))
+
+
+m <- list(
+  l = 50,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 4
+)
+
+
+
+fig <- plot_ly(data, 
+               x = ~numInCat, y = ~label, 
+               type = 'bar',
+               name = "All in Cat.",
+               marker = list(color = 'grey',
+                             line = list(color = "black", width = 1.5)),
+    hoverinfo = "text",
+    hovertext = paste("Sample:", data$term,
+                      "\nGO ID: ", data$category,
+                      "\nTotal DE: ", data$numDEInCat,
+                      "\nTotal in Cat.: ", data$numInCat,
+                      "\nFDR: ", signif(data$adjp, 3))) %>%
+    add_trace(x = ~numDEInCat, 
+              y ~term, 
+              marker = list(color = 'gold', 
+                            line = list(color = "black", width = 1.5)),
+              name = "Repressors in Cat.")%>%
+   
+    layout(xaxis = list(title = "Number of Genes"),##, range = c(0,500)),
+           yaxis = list(title = ""),
+           title = "Enriched Cellular Component GO Terms in All Repressor Genes",
+           margin = m, barmode = 'overlay')
+
+CC.GO.fig = fig
+
+```
+
+```{r, echo = F,  fig.width= 10}
+
+CC.GO.fig
+
+```
+
+```{r  echo = F, fig.align='left'}
+
+treemapPlot(CC.reducedTerms)
+
+```
+
+```{r echo = F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "MF"
+
+GO.data = GO.data[GO.data$ontology == GO.ontology,
+                  c("category", "term","adjp", "numDEInCat", "numInCat")]
+
+data = GO.data[20:1,c("term","adjp","numDEInCat", "numInCat", "category")]
+data$Score = -log10(data$adjp)
+
+temp = nchar(data$term)
+data$label = data$term
+data$label[temp > 40] = paste0(substr(data$term[temp>40], 1 ,35), "...")
+data$label = factor(data$label, levels = c(data$label))
+
+##data = data[data$adjp < .05,]
+
+data$term = factor(data$term, levels = c(unique(data$term)))
+
+
+m <- list(
+  l = 50,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 4
+)
+
+
+
+fig <- plot_ly(data, 
+               x = ~numInCat, y = ~label, 
+               type = 'bar',
+               name = "All in Cat.",
+               marker = list(color = 'grey',
+                             line = list(color = "black", width = 1.5)),
+    hoverinfo = "text",
+    hovertext = paste("Sample:", data$term,
+                      "\nGO ID: ", data$category,
+                      "\nTotal DE: ", data$numDEInCat,
+                      "\nTotal in Cat.: ", data$numInCat,
+                      "\nFDR: ", signif(data$adjp, 3))) %>%
+    add_trace(x = ~numDEInCat, 
+              y ~term, 
+              marker = list(color = 'steelblue', 
+                            line = list(color = "black", width = 1.5)),
+              name = "Repressors in Cat.")%>%
+   
+    layout(xaxis = list(title = "Number of Genes"),##, range = c(0,500)),
+           yaxis = list(title = ""),
+           title = "Enriched Molecular Function GO Terms in All Repressor Genes",
+           margin = m, barmode = 'overlay')
+
+MF.GO.fig = fig
+
+```
+
+```{r, echo = F,  fig.width= 10}
+
+MF.GO.fig
+
+```
+
+```{r  echo = F, fig.align='left'}
+
+treemapPlot(MF.reducedTerms)
+
+```
+
+```{r echo = F}
+
+KEGG.data = sig.cats$KEGG
+data = KEGG.data[, c("category", "Name","adjp", "numDEInCat", "numInCat")]
+  
+data$term = data$Name
+if(length(unique(data$term)) < length(data$term)){
+  data$term[duplicated(data$term)] = paste(data$term[duplicated(data$term)], "2")
+}  
+data = na.omit(data[data$Name != 'Metabolic pathways',])
+data = data[20:1,]
+data$Score = -log10(data$adjp)
+
+##data = data[data$adjp<.05,]
+data$term = factor(data$term, levels = c(data$term))
+
+m <- list(
+  l = 50,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 4
+)
+
+fig <- plot_ly(data, 
+               x = ~numInCat, y = ~term, 
+               type = 'bar',
+               name = "Total in Cat.",
+               marker = list(color = 'grey',
+                             line = list(color = "black", width = 1.5)),
+    hoverinfo = "text",
+    hovertext = paste("Sample:", data$term,
+                      "\nGO ID: ", data$category,
+                      "\nTotal DE: ", data$numDEInCat,
+                      "\nTotal in Cat.: ", data$numInCat)) %>%
+    add_trace(x = ~numDEInCat, 
+              y ~term, 
+              marker = list(color = 'darkgreen', 
+                            line = list(color = "black", width = 1.5)),
+              name = "Sig. Decreased FC")%>%
+    layout(xaxis = list(title = "Number of Genes"),
+           yaxis = list(title = ""),
+           title = paste0("Top 20 Most Enriched KEGG terms in All Repressor Genes (nothing significant)"),
+           margin = m, barmode = 'overlay')
+
+KEGG.fig = fig
+
+```
+
+```{r, echo = F,  fig.width= 10}
+
+KEGG.fig
+
+```
+
+
+```{r include = F, echo = F}
+
+sigs = row.names(Df.data)[Df.data$Enhancer == "1"]
+bg = row.names(Df.data)
+
+sig.cats = Enrichment(sigs, bg)
+Enhancer.cats = sig.cats
+
+```
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "CC"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+CC.simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+CC.reducedTerms <- reduceSimMatrix(CC.simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "BP"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+BP.simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+BP.reducedTerms <- reduceSimMatrix(BP.simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+```{r echo =F, include =F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "MF"
+go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & GO.data$ontology == GO.ontology]
+scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+
+MF.simMatrix <- calculateSimMatrix(go_analysis,
+                                orgdb="org.Dm.eg.db",
+                                ont=GO.ontology,
+                                method="Rel")
+
+MF.reducedTerms <- reduceSimMatrix(MF.simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Dm.eg.db")
+
+```
+
+```{r echo = F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "BP"
+
+GO.data = GO.data[GO.data$ontology == GO.ontology,
+                  c("category", "term","adjp", "numDEInCat", "numInCat")]
+
+data = GO.data[20:1,c("term","adjp","numDEInCat", "numInCat", "category")]
+data$Score = -log10(data$adjp)
+
+temp = nchar(data$term)
+data$label = data$term
+data$label[temp > 40] = paste0(substr(data$term[temp>40], 1 ,35), "...")
+data$label = factor(data$label, levels = c(data$label))
+
+##data = data[data$adjp < .05,]
+
+data$term = factor(data$term, levels = c(unique(data$term)))
+
+
+m <- list(
+  l = 50,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 4
+)
+
+
+
+fig <- plot_ly(data, 
+               x = ~numInCat, y = ~label, 
+               type = 'bar',
+               name = "All in Cat.",
+               marker = list(color = 'grey',
+                             line = list(color = "black", width = 1.5)),
+    hoverinfo = "text",
+    hovertext = paste("Sample:", data$term,
+                      "\nGO ID: ", data$category,
+                      "\nTotal DE: ", data$numDEInCat,
+                      "\nTotal in Cat.: ", data$numInCat,
+                      "\nFDR: ", signif(data$adjp, 3))) %>%
+    add_trace(x = ~numDEInCat, 
+              y ~term, 
+              marker = list(color = 'brown', 
+                            line = list(color = "black", width = 1.5)),
+              name = "Repressors in Cat.")%>%
+   
+    layout(xaxis = list(title = "Number of Genes"),##, range = c(0,500)),
+           yaxis = list(title = ""),
+           title = "Enriched Biological Process GO Terms in Enhancer Genes",
+           margin = m, barmode = 'overlay')
+
+BP.GO.fig = fig
+
+```
+
+```{r, echo = F,  fig.width= 10}
+
+BP.GO.fig
+
+```
+
+```{r  echo = F, fig.align='left'}
+
+treemapPlot(BP.reducedTerms)
+
+```
+
+```{r echo = F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "CC"
+
+GO.data = GO.data[GO.data$ontology == GO.ontology,
+                  c("category", "term","adjp", "numDEInCat", "numInCat")]
+
+data = GO.data[20:1,c("term","adjp","numDEInCat", "numInCat", "category")]
+data$Score = -log10(data$adjp)
+
+temp = nchar(data$term)
+data$label = data$term
+data$label[temp > 40] = paste0(substr(data$term[temp>40], 1 ,35), "...")
+data$label = factor(data$label, levels = c(data$label))
+
+##data = data[data$adjp < .05,]
+
+data$term = factor(data$term, levels = c(unique(data$term)))
+
+
+m <- list(
+  l = 50,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 4
+)
+
+
+
+fig <- plot_ly(data, 
+               x = ~numInCat, y = ~label, 
+               type = 'bar',
+               name = "All in Cat.",
+               marker = list(color = 'grey',
+                             line = list(color = "black", width = 1.5)),
+    hoverinfo = "text",
+    hovertext = paste("Sample:", data$term,
+                      "\nGO ID: ", data$category,
+                      "\nTotal DE: ", data$numDEInCat,
+                      "\nTotal in Cat.: ", data$numInCat,
+                      "\nFDR: ", signif(data$adjp, 3))) %>%
+    add_trace(x = ~numDEInCat, 
+              y ~term, 
+              marker = list(color = 'gold', 
+                            line = list(color = "black", width = 1.5)),
+              name = "Repressors in Cat.")%>%
+   
+    layout(xaxis = list(title = "Number of Genes"),##, range = c(0,500)),
+           yaxis = list(title = ""),
+           title = "Enriched Cellular Component GO Terms in Enhancer Genes",
+           margin = m, barmode = 'overlay')
+
+CC.GO.fig = fig
+
+```
+
+```{r, echo = F,  fig.width= 10}
+
+CC.GO.fig
+
+```
+
+```{r  echo = F, fig.align='left'}
+
+treemapPlot(CC.reducedTerms)
+
+```
+
+```{r echo = F}
+
+GO.data = sig.cats[["GO"]]
+GO.ontology = "MF"
+
+GO.data = GO.data[GO.data$ontology == GO.ontology,
+                  c("category", "term","adjp", "numDEInCat", "numInCat")]
+
+data = GO.data[20:1,c("term","adjp","numDEInCat", "numInCat", "category")]
+data$Score = -log10(data$adjp)
+
+temp = nchar(data$term)
+data$label = data$term
+##data$label[temp > 40] = paste0(substr(data$term[temp>40], 1 ,30), "...", substr(data$term[temp>40], nchar(data$term[temp>40])-5, nchar(data$term[temp>40])))
+data$label = factor(data$label, levels = c(data$label))
+
+##data = data[data$adjp < .05,]
+
+data$term = factor(data$term, levels = c(unique(data$term)))
+
+
+m <- list(
+  l = 50,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 4
+)
+
+
+
+fig <- plot_ly(data, 
+               x = ~numInCat, y = ~label, 
+               type = 'bar',
+               name = "All in Cat.",
+               marker = list(color = 'grey',
+                             line = list(color = "black", width = 1.5)),
+    hoverinfo = "text",
+    hovertext = paste("Sample:", data$term,
+                      "\nGO ID: ", data$category,
+                      "\nTotal DE: ", data$numDEInCat,
+                      "\nTotal in Cat.: ", data$numInCat,
+                      "\nFDR: ", signif(data$adjp, 3))) %>%
+    add_trace(x = ~numDEInCat, 
+              y ~term, 
+              marker = list(color = 'steelblue', 
+                            line = list(color = "black", width = 1.5)),
+              name = "Repressors in Cat.")%>%
+   
+    layout(xaxis = list(title = "Number of Genes"),##, range = c(0,500)),
+           yaxis = list(title = ""),
+           title = "Enriched Molecular Function GO Terms in Enhancer Genes",
+           margin = m, barmode = 'overlay')
+
+MF.GO.fig = fig
+
+```
+
+```{r, echo = F,  fig.width= 10}
+
+MF.GO.fig
+
+```
+
+```{r  echo = F, fig.align='left'}
+
+treemapPlot(MF.reducedTerms)
+
+```
+
+```{r echo = F}
+
+KEGG.data = sig.cats$KEGG
+data = KEGG.data[, c("category", "Name","adjp", "numDEInCat", "numInCat")]
+  
+data$term = data$Name
+if(length(unique(data$term)) < length(data$term)){
+  data$term[duplicated(data$term)] = paste(data$term[duplicated(data$term)], "2")
+}  
+data = na.omit(data[data$Name != 'Metabolic pathways',])
+data = data[20:1,]
+data$Score = -log10(data$adjp)
+
+##data = data[data$adjp<.05,]
+data$term = factor(data$term, levels = c(data$term))
+
+m <- list(
+  l = 50,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 4
+)
+
+fig <- plot_ly(data, 
+               x = ~numInCat, y = ~term, 
+               type = 'bar',
+               name = "Total in Cat.",
+               marker = list(color = 'grey',
+                             line = list(color = "black", width = 1.5)),
+    hoverinfo = "text",
+    hovertext = paste("Sample:", data$term,
+                      "\nGO ID: ", data$category,
+                      "\nTotal DE: ", data$numDEInCat,
+                      "\nTotal in Cat.: ", data$numInCat)) %>%
+    add_trace(x = ~numDEInCat, 
+              y ~term, 
+              marker = list(color = 'darkgreen', 
+                            line = list(color = "black", width = 1.5)),
+              name = "Sig. Decreased FC")%>%
+    layout(xaxis = list(title = "Number of Genes"),
+           yaxis = list(title = ""),
+           title = paste0("Top 20 Most Enriched KEGG terms in Enhancer Genes (nothing significant)"),
+           margin = m, barmode = 'overlay')
+
+KEGG.fig = fig
+
+```
+
+```{r, echo = F,  fig.width= 10}
+
+KEGG.fig
+
+```
+
+####
+#Lethal genes were not enriched
+####
+
+
+
+
+```{r echo = F, include=T, message = F, fig.align='center'}
+
+PathwayID = "04141"
+out.id = 'alldataER'
+
+  ##KEGG Mapping Function
+  if(length(intersect(list.files(), "KEGG_Image_Files")) == 0){
+    dir.create(paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/KEGG_Image_Files/"))
+    }
+  Home = dirname(rstudioapi::getSourceEditorContext()$path)
+  OutputDir = paste0(Home, "/KEGG_Image_Files/")
+  setwd(OutputDir)
+  
+  Df = setNames(rep(0, nrow(Df.data)), row.names(Df.data))
+  Df = Df - Df.data$Moderate
+  Df = Df - (2*Df.data$Strong)
+  Df = Df + Df.data$Enhancer
+  Df = Df + (2*Df.data$Lethal)
+
+  deg.data=setNames(Df,GeneIDKey[names(Df), "ensembl"])
+  
+  pv.out <- pathview(gene.data =  deg.data,
+                   pathway.id = PathwayID,
+                   species = "dme",
+                   kegg.native = T,
+                   limit=list(gene=c(-2,2)),
+                   node.sum="max.abs",
+                   low="royalblue",mid = "grey",high="firebrick",
+                   out.suffix = out.id,
+                   bins=list(genes=30))
+  setwd(Home)
+  knitr::include_graphics(paste0(OutputDir, "dme",PathwayID, ".", out.id, ".png"))
+
+
+```
+#All genes in ER KEGG pathway
+#Repressors are blue; Enhancers are red
+

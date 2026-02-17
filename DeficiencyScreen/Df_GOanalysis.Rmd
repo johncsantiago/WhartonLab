@@ -1,0 +1,651 @@
+---
+title: "Defficiency Screen Functional Analysis"
+author: "John Santiago"
+date: "11/28/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(rgl)
+knitr::opts_chunk$set(echo = FALSE, fig.align="center")
+knitr::knit_hooks$set(webgl = hook_webgl)
+```
+
+```{r echo = F, include=F}
+##Load Libraries
+
+library(org.Dm.eg.db)
+library(goseq)
+library(topGO)
+library(rrvgo)
+library(plotly)
+library(VennDiagram)
+genesingo=as.list(org.Dm.egGO2ALLEGS)
+gig2 = genesingo
+temp = unlist(genesingo)
+goingenes = data.frame(gene = as.character(temp),
+                       GO = substr(names(temp),1,10))
+goingenes = unique(goingenes)
+
+
+hex = function(color, alpha){
+  rgb2hex = color
+  i = 1
+  while(i <= length(color)){
+    rgbvals = col2rgb(color[i])
+    rgb2hex[i] = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+    i = i+1
+  }
+  return(rgb2hex)
+}
+
+```
+
+
+
+```{r echo = F, include = F}
+
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/master/"
+GeneIDKey = read.csv(paste0(git.dir,"GeneralDataFiles/GeneIDKey.csv"),row.names = 1)
+
+
+##This is the data that will be used in the analyses
+#all the current Df data after Jonah omissions
+fullDfKey = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/20250726_fullDfKey.csv", row.names = 1)
+
+
+##genes in the current Df data
+genesindf = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/20250726_genesindf.csv", row.names = 1)
+
+#trimmed = fullDfKey[fullDfKey$Omit == "FALSE",] 
+#GOinDf = as.list(rep(NA, length(trimmed$Deficiency)))
+#names(GOinDf) = trimmed$Deficiency
+
+#i=1
+#while(i <=length(names(GOinDf))){
+#  GOgenes = genesindf[genesindf$Df == names(GOinDf)[i],]
+#  GOgenes = GeneIDKey[GOgenes$FBgn, "ensembl"]
+#  j=1
+#  while(j<= length(GOgenes)){
+#    GOinDf[[i]] = c(GOinDf[[i]],goingenes[goingenes$gene == as.character(GOgenes[j]), "GO"])
+#    j=j+1
+#  }
+#  i=i+1
+#}
+
+#saveRDS(GOinDf, "/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/GOinDf.rds")
+
+GOinDf = readRDS("/Users/johncsantiago/Documents/GitHub/WhartonLab/DeficiencyScreen/DataFiles/GOinDf.rds")
+
+genesingo=as.data.frame(org.Dm.egGO2ALLEGS)
+genesingo$FBgn = setNames(GeneIDKey$FBgn, GeneIDKey$ensembl)[genesingo$gene_id]
+genesingo$Symbol = setNames(GeneIDKey$Symbol, GeneIDKey$ensembl)[genesingo$gene_id]
+
+```
+
+
+```{r echo = F, warning = F}
+
+trimmed = fullDfKey#[fullDfKey$Omit == "FALSE",] ##removes omitted Dfs,] 
+
+trimmed.genes = genesindf[genesindf$Df %in% trimmed$Deficiency,]
+
+
+trimmed.sup = fullDfKey[(fullDfKey$Omit == "FALSE" & ##removes omitted Dfs
+                         fullDfKey$MLE >= 2) ##selects Dfs with MLE of 2 or more
+                        ,] 
+
+trimmed.supgenes = genesindf[genesindf$Df %in% trimmed.sup$Deficiency,]
+
+MLE2plus.sig.data = trimmed.supgenes
+bg.data = trimmed.genes
+
+sigs = unique(MLE2plus.sig.data$Symbol)
+genes = setNames(rep(0, length(unique(bg.data$Symbol))), unique(bg.data$Symbol))
+
+#randoms = sample(1:length(genes), 6061)
+
+genes[sigs] = 1
+#genes[randoms] = 1
+pwf=nullp(genes,"dm3","geneSymbol", plot.fit = F)
+GO.wall=goseq(pwf,"dm3","geneSymbol")
+
+GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+row.names(GO.wall) = GO.wall$category
+
+MLE2plus = GO.wall
+
+
+```
+
+
+```{r echo = F}
+
+
+sig.GO.terms = MLE2plus[MLE2plus$adjp<=0.05,]
+#[MLE2plus$numDEInCat > 0 & MLE2plus$numInCat>2,]#[MLE2plus$adjp <= 0.05,]
+sig.genes = unique(MLE2plus.sig.data$FBgn)
+notsig.genes = setdiff(trimmed.genes$FBgn, sig.genes)
+
+
+plot.godf = data.frame(GO = character(),
+                       GOid = character(),
+                       sig = numeric(),
+                       ont = character(),
+                       totalsigs = numeric(),
+                       total = numeric(),
+                       gene.ratio = numeric(),
+                       sig.Dfs.inCat = numeric(),
+                       all.Dfs.inCat = numeric(),
+                       Df.ratio = numeric(),
+                       sig.Df.meanlength = numeric(),
+                       all.Df.meanlength = numeric(),
+                       meanMLE = numeric(),
+                       maxMLE = numeric())
+
+tempfdk = fullDfKey
+row.names(tempfdk) = tempfdk$Deficiency
+tempfdk$length = abs(tempfdk$End - tempfdk$Start)
+
+i=1
+while(i <= nrow(sig.GO.terms)){
+  
+
+  fbgninterm = as.character(genesingo[genesingo$go_id == sig.GO.terms$category[i], "FBgn"])
+  all.df.data = genesindf[genesindf$FBgn %in% fbgninterm,]
+
+  sigfbgninterm = intersect(sig.genes, all.df.data$FBgn)
+  notsigfbgninterm = intersect(notsig.genes, all.df.data$FBgn)
+  sig.df.data = genesindf[genesindf$FBgn %in% sigfbgninterm,]
+  notsig.df.data = genesindf[genesindf$FBgn %in% notsigfbgninterm,]
+  
+  sig.df.data = sig.df.data[sig.df.data$Df %in% tempfdk[tempfdk$MLE >= 2, "Deficiency"],]
+  
+  notsig.df.data = sig.df.data[sig.df.data$Df %in% tempfdk[tempfdk$MLE < 2, "Deficiency"],]
+  
+  temp.plot.godf = data.frame(GO = sig.GO.terms$term[i],
+                              GOid = sig.GO.terms$category[i],
+                              sig = signif(-log2(sig.GO.terms$adjp[i]),3),
+                              ont = sig.GO.terms$ontology[i],
+                              totalsigs = length(unique(sig.df.data$FBgn)),
+                              total = length(unique(all.df.data$FBgn)),
+                              gene.ratio = length(unique(sig.df.data$FBgn))/
+                                length(unique(all.df.data$FBgn)),
+                              sig.Dfs.inCat = length(unique(sig.df.data$Df)),
+                              all.Dfs.inCat = length(unique(notsig.df.data$Df)),
+                              Df.ratio = length(unique(sig.df.data$Df))/
+                                length(unique(notsig.df.data$Df)),
+                              sig.Df.length = sum(tempfdk[unique(sig.df.data$Df),"length"]),
+                              all.Df.length = sum(tempfdk[unique(all.df.data$Df),"length"]),
+                              meanMLE = signif(mean(na.omit(tempfdk[sig.df.data$Df,"MLE"])),3),
+                              #incorporates MLE for each gene
+                              maxMLE = max(na.omit(tempfdk[sig.df.data$Df,"MLE"])))
+  plot.godf = rbind(plot.godf, temp.plot.godf)
+  i=i+1
+}
+
+plot.godf$sigGenetoDf.ratio = signif(plot.godf$totalsigs/plot.godf$sig.Dfs,3)
+plot.godf$notsigGenetoDf.ratio = signif((plot.godf$total - plot.godf$totalsigs)
+                                     /(plot.godf$all.Dfs - plot.godf$sig.Dfs),3)
+ 
+
+plot.godf$sigsperkb = signif(plot.godf$totalsigs/plot.godf$sig.Df.length,3)
+plot.godfgenesperkb = signif(plot.godf$total/plot.godf$all.Df.length ,3)
+
+```
+
+
+```{r echo=F}
+
+plot.godf$size = 10*log10(plot.godf$sig.Dfs)
+
+plot.godf$log.totalsigs = log10(plot.godf$totalsigs)
+
+fig  = plot_ly(data = plot.godf, 
+               x = ~log.totalsigs, 
+               #y = ~sig,
+               y = ~sig.Dfs.inCat,
+               name = ~GO,
+               type = 'scatter',
+               mode = 'markers',
+               showlegend = F,
+               color = ~meanMLE,
+               symbol = ~ont,
+               ##symbols = as.character(seq_along(unique(point.data$Set))),
+               ##colors = c("firebrick","gold","deepskyblue"),
+               #marker = list(size = 3*(-log(plot.godf$sig.Dfs)-min(-log(plot.godf$sig.Dfs))+1),
+               #marker = list(size = 5*(log(plot.godf$sigsperkb)+abs(min(log(plot.godf$sigsperkb)))+1),
+               marker = list(size = 10,
+                             line = list(color = "black", width = 1.5)),
+               hoverinfo = "text",
+               hovertext = paste("Term:", plot.godf$GO, 
+                                 "\nGO ID: ", plot.godf$GOid, 
+                                 "Ontology:", plot.godf$ont, 
+                                 "\nadj. p-value (-log2): ", plot.godf$sig,
+                                 "\ngenes in suppressors: ", plot.godf$totalsigs,
+                                 "\ngenes in cat: ", plot.godf$total,
+                                 "\nsuppressor Dfs: ", plot.godf$sig.Dfs.inCat,
+                                 "\nTotal Dfs in term: ", plot.godf$notsig.Dfs.inCat,
+                                 "\nsuppressors/kb Df: ", plot.godf$sigsperkb,
+                                 "\nmean MLE: ", plot.godf$meanMLE,
+                                 "\nmax MLE: ", plot.godf$maxMLE)) %>%
+  layout(xaxis = list(title = "Total Genes (log10)"),
+         yaxis = list(title = "sig.Dfs"),
+         title = "Enriched GO terms")
+         
+fig
+
+```
+
+
+
+
+
+```{r echo=F}
+  
+plotly.godf = plot.godf
+
+plotly.godf$GO = factor(plot.godf$GO,
+                     levels = plot.godf$GO[order(plot.godf$sig)])
+
+temp.color = colorRampPalette(c("steelblue", "gold", "deeppink"))(100)
+
+fig2 <- plot_ly(data = plotly.godf,
+               x = ~gene.ratio,
+               y = ~GO, 
+               type = 'bar',
+               #color = ~meanMLE,
+               #name = ~GO,
+               marker = list(color = ~meanMLE,
+                             colorscale = temp.color,
+                             line = list(color = "black", 
+                                         width = 1.5),
+                             showscale = TRUE,
+                             colorbar = list(title = "Heat Key"))),
+               hoverinfo = "text",
+               hovertext = paste("Sample:", plotly.godf$GO,
+                                 "\nGO ID: ", plotly.godf$GOid,
+                                 "\nTotal DE genes: ", plotly.godf$totalsigs,
+                                 "\nTotal genes in Cat.: ", plotly.godf$total,
+                                 "\nTotal sig Df: ", plotly.godf$sig.Dfs,
+                                 "\nmean MLE: ", plotly.godf$meanMLE,
+                                 "\n-log2(FDR): ", signif(plotly.godf$sig, 3))) %>%
+  layout(xaxis = list(title = "DEG ratio"),
+         yaxis = list(title = ""),
+         title = paste0("Top 20 Most Enriched GO Terms"))
+           
+fig2
+
+```
+
+
+
+
+
+```{r echo = F, warning = F}
+
+trimmed = fullDfKey#[fullDfKey$Omit == "FALSE",] ##removes omitted Dfs,] 
+
+trimmed.genes = genesindf[genesindf$Df %in% trimmed$Deficiency,]
+
+
+trimmed.sup = fullDfKey[(fullDfKey$Omit == "FALSE" & ##removes omitted Dfs
+                         fullDfKey$MLE >= 2.5) ##selects Dfs with MLE of 2 or more
+                        ,] 
+
+trimmed.supgenes = genesindf[genesindf$Df %in% trimmed.sup$Deficiency,]
+
+trimmed.sig.data = trimmed.supgenes
+bg.data = trimmed.genes
+
+sigs = unique(trimmed.sig.data$Symbol)
+genes = setNames(rep(0, length(unique(bg.data$Symbol))), unique(bg.data$Symbol))
+
+#randoms = sample(1:length(genes), 6061)
+
+genes[sigs] = 1
+#genes[randoms] = 1
+pwf=nullp(genes,"dm3","geneSymbol", plot.fit = F)
+GO.wall=goseq(pwf,"dm3","geneSymbol")
+
+GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+row.names(GO.wall) = GO.wall$category
+
+MLE2.5plus = GO.wall
+
+
+```
+
+
+```{r echo = F}
+
+
+sig.GO.terms = GO.wall[GO.wall$adjp<=0.05,]
+#[MLE2plus$numDEInCat > 0 & MLE2plus$numInCat>2,]#[MLE2plus$adjp <= 0.05,]
+sig.genes = unique(trimmed.sig.data$FBgn)
+
+
+
+plot.godf = data.frame(GO = character(),
+                       GOid = character(),
+                       sig = numeric(),
+                       ont = character(),
+                       totalsigs = numeric(),
+                       total = numeric(),
+                       gene.ratio = numeric(),
+                       sig.Dfs = numeric(),
+                       all.Dfs = numeric(),
+                       Df.ratio = numeric(),
+                       sig.Df.meanlength = numeric(),
+                       all.Df.meanlength = numeric(),
+                       meanMLE = numeric(),
+                       maxMLE = numeric())
+
+tempfdk = fullDfKey
+row.names(tempfdk) = tempfdk$Deficiency
+tempfdk$length = abs(tempfdk$End - tempfdk$Start)
+
+i=1
+while(i <= nrow(sig.GO.terms)){
+  
+
+  fbgninterm = as.character(genesingo[genesingo$go_id == sig.GO.terms$category[i], "FBgn"])
+  all.df.data = genesindf[genesindf$FBgn %in% fbgninterm,]
+
+  sigfbgninterm = intersect(sig.genes, all.df.data$FBgn)
+  sig.df.data = genesindf[genesindf$FBgn %in% sigfbgninterm,]
+  sig.df.data = sig.df.data[sig.df.data$Df %in% tempfdk[tempfdk$MLE >= 2, "Deficiency"],]
+  
+  temp.plot.godf = data.frame(GO = sig.GO.terms$term[i],
+                              GOid = sig.GO.terms$category[i],
+                              sig = signif(-log2(sig.GO.terms$adjp[i]),3),
+                              ont = sig.GO.terms$ontology[i],
+                              totalsigs = length(unique(sig.df.data$FBgn)),
+                              total = length(unique(all.df.data$FBgn)),
+                              gene.ratio = length(unique(sig.df.data$FBgn))/
+                                length(unique(all.df.data$FBgn)),
+                              sig.Dfs = length(unique(sig.df.data$Df)),
+                              all.Dfs = length(unique(all.df.data$Df)),
+                              Df.ratio = length(unique(sig.df.data$Df))/
+                                length(unique(all.df.data$Df)),
+                              sig.Df.length = sum(tempfdk[unique(sig.df.data$Df),"length"]),
+                              all.Df.length = sum(tempfdk[unique(all.df.data$Df),"length"]),
+                              meanMLE = signif(mean(na.omit(tempfdk[sig.df.data$Df,"MLE"])),3),
+                              #incorporates MLE for each gene
+                              maxMLE = max(na.omit(tempfdk[sig.df.data$Df,"MLE"])))
+  plot.godf = rbind(plot.godf, temp.plot.godf)
+  i=i+1
+}
+ 
+
+plot.godf$sigsperkb = signif(plot.godf$totalsigs/plot.godf$sig.Df.length,3)
+plot.godfgenesperkb = signif(plot.godf$total/plot.godf$all.Df.length ,3)
+
+```
+
+
+```{r echo=F}
+
+plot.godf$log.totalsigs = log10(plot.godf$totalsigs)
+
+fig  = plot_ly(data = plot.godf, 
+               x = ~log.totalsigs, 
+               #y = ~sig,
+               y = ~sig.Dfs,
+               name = ~GO,
+               type = 'scatter',
+               mode = 'markers',
+               showlegend = F,
+               color = ~meanMLE,
+               symbol = ~ont,
+               ##symbols = as.character(seq_along(unique(point.data$Set))),
+               ##colors = c("firebrick","gold","deepskyblue"),
+               #marker = list(size = 3*(-log(plot.godf$sig.Dfs)-min(-log(plot.godf$sig.Dfs))+1),
+               #marker = list(size = 5*(log(plot.godf$sigsperkb)+abs(min(log(plot.godf$sigsperkb)))+1),
+               marker = list(size = 10*log10(plot.godf$sig.Dfs),
+                             line = list(color = "black", width = 1.5)),
+               hoverinfo = "text",
+               hovertext = paste("Term:", plot.godf$GO, 
+                                 "\nGO ID: ", plot.godf$GOid, 
+                                 "Ontology:", plot.godf$ont, 
+                                 "\nadj. p-value (-log2): ", plot.godf$sig,
+                                 "\ngenes in suppressors: ", plot.godf$totalsigs,
+                                 "\ngenes in cat: ", plot.godf$total,
+                                 "\nsuppressor Dfs: ", plot.godf$sig.Dfs,
+                                 "\nTotal Dfs in term: ", plot.godf$all.Dfs,
+                                 "\nsuppressors/kb Df: ", plot.godf$sigsperkb,
+                                 "\nmean MLE: ", plot.godf$meanMLE,
+                                 "\nmax MLE: ", plot.godf$maxMLE)) %>%
+  layout(xaxis = list(title = "Total Genes (log10)"),
+         yaxis = list(title = "sig.Dfs"),
+         title = "Enriched GO terms")
+         
+fig
+
+```
+
+
+
+
+```{r echo = F, warning = F}
+
+trimmed = fullDfKey#[fullDfKey$Omit == "FALSE",] ##removes omitted Dfs,] 
+
+trimmed.genes = genesindf[genesindf$Df %in% trimmed$Deficiency,]
+
+
+trimmed.sup = fullDfKey[(fullDfKey$Omit == "FALSE" & ##removes omitted Dfs
+                         fullDfKey$MLE >= 3) ##selects Dfs with MLE of 2 or more
+                        ,] 
+
+trimmed.supgenes = genesindf[genesindf$Df %in% trimmed.sup$Deficiency,]
+
+trimmed.sig.data = trimmed.supgenes
+bg.data = trimmed.genes
+
+sigs = unique(trimmed.sig.data$Symbol)
+genes = setNames(rep(0, length(unique(bg.data$Symbol))), unique(bg.data$Symbol))
+
+#randoms = sample(1:length(genes), 6061)
+
+genes[sigs] = 1
+#genes[randoms] = 1
+pwf=nullp(genes,"dm3","geneSymbol", plot.fit = F)
+GO.wall=goseq(pwf,"dm3","geneSymbol")
+
+GO.wall$adjp=p.adjust(GO.wall$over_represented_pvalue,method="BH")
+row.names(GO.wall) = GO.wall$category
+
+MLE3plus = GO.wall
+
+
+```
+
+
+```{r echo = F}
+
+
+sig.GO.terms = GO.wall[GO.wall$adjp<=0.05,]
+#[MLE2plus$numDEInCat > 0 & MLE2plus$numInCat>2,]#[MLE2plus$adjp <= 0.05,]
+sig.genes = unique(trimmed.sig.data$FBgn)
+
+
+
+plot.godf = data.frame(GO = character(),
+                       GOid = character(),
+                       sig = numeric(),
+                       ont = character(),
+                       totalsigs = numeric(),
+                       total = numeric(),
+                       gene.ratio = numeric(),
+                       sig.Dfs = numeric(),
+                       all.Dfs = numeric(),
+                       Df.ratio = numeric(),
+                       sig.Df.meanlength = numeric(),
+                       all.Df.meanlength = numeric(),
+                       meanMLE = numeric(),
+                       maxMLE = numeric())
+
+tempfdk = fullDfKey
+row.names(tempfdk) = tempfdk$Deficiency
+tempfdk$length = abs(tempfdk$End - tempfdk$Start)
+
+i=1
+while(i <= nrow(sig.GO.terms)){
+  
+
+  fbgninterm = as.character(genesingo[genesingo$go_id == sig.GO.terms$category[i], "FBgn"])
+  all.df.data = genesindf[genesindf$FBgn %in% fbgninterm,]
+
+  sigfbgninterm = intersect(sig.genes, all.df.data$FBgn)
+  sig.df.data = genesindf[genesindf$FBgn %in% sigfbgninterm,]
+  sig.df.data = sig.df.data[sig.df.data$Df %in% tempfdk[tempfdk$MLE >= 2, "Deficiency"],]
+  
+  temp.plot.godf = data.frame(GO = sig.GO.terms$term[i],
+                              GOid = sig.GO.terms$category[i],
+                              sig = signif(-log2(sig.GO.terms$adjp[i]),3),
+                              ont = sig.GO.terms$ontology[i],
+                              totalsigs = length(unique(sig.df.data$FBgn)),
+                              total = length(unique(all.df.data$FBgn)),
+                              gene.ratio = length(unique(sig.df.data$FBgn))/
+                                length(unique(all.df.data$FBgn)),
+                              sig.Dfs = length(unique(sig.df.data$Df)),
+                              all.Dfs = length(unique(all.df.data$Df)),
+                              Df.ratio = length(unique(sig.df.data$Df))/
+                                length(unique(all.df.data$Df)),
+                              sig.Df.length = sum(tempfdk[unique(sig.df.data$Df),"length"]),
+                              all.Df.length = sum(tempfdk[unique(all.df.data$Df),"length"]),
+                              meanMLE = signif(mean(na.omit(tempfdk[sig.df.data$Df,"MLE"])),3),
+                              #incorporates MLE for each gene
+                              maxMLE = max(na.omit(tempfdk[sig.df.data$Df,"MLE"])))
+  plot.godf = rbind(plot.godf, temp.plot.godf)
+  i=i+1
+}
+ 
+
+plot.godf$sigsperkb = signif(plot.godf$totalsigs/plot.godf$sig.Df.length,3)
+plot.godfgenesperkb = signif(plot.godf$total/plot.godf$all.Df.length ,3)
+
+```
+
+
+```{r echo=F}
+
+plot.godf$log.totalsigs = log10(plot.godf$totalsigs)
+
+fig  = plot_ly(data = plot.godf, 
+               x = ~log.totalsigs, 
+               #y = ~sig,
+               y = ~sig.Dfs,
+               name = ~GO,
+               type = 'scatter',
+               mode = 'markers',
+               showlegend = F,
+               color = ~meanMLE,
+               symbol = ~ont,
+               ##symbols = as.character(seq_along(unique(point.data$Set))),
+               ##colors = c("firebrick","gold","deepskyblue"),
+               #marker = list(size = 3*(-log(plot.godf$sig.Dfs)-min(-log(plot.godf$sig.Dfs))+1),
+               #marker = list(size = 5*(log(plot.godf$sigsperkb)+abs(min(log(plot.godf$sigsperkb)))+1),
+               marker = list(size = 10*log10(plot.godf$sig.Dfs),
+                             line = list(color = "black", width = 1.5)),
+               hoverinfo = "text",
+               hovertext = paste("Term:", plot.godf$GO, 
+                                 "\nGO ID: ", plot.godf$GOid, 
+                                 "Ontology:", plot.godf$ont, 
+                                 "\nadj. p-value (-log2): ", plot.godf$sig,
+                                 "\ngenes in suppressors: ", plot.godf$totalsigs,
+                                 "\ngenes in cat: ", plot.godf$total,
+                                 "\nsuppressor Dfs: ", plot.godf$sig.Dfs,
+                                 "\nTotal Dfs in term: ", plot.godf$all.Dfs,
+                                 "\nsuppressors/kb Df: ", plot.godf$sigsperkb,
+                                 "\nmean MLE: ", plot.godf$meanMLE,
+                                 "\nmax MLE: ", plot.godf$maxMLE)) %>%
+  layout(xaxis = list(title = "Total Genes (log10)"),
+         yaxis = list(title = "sig.Dfs"),
+         title = "Enriched GO terms")
+         
+fig
+
+```
+
+
+```{r echo = F}
+
+Df.plotgo.genes = function(plot.godf, plot.data){
+  
+  genesingo
+  
+  FC.data = setNames(plot.data[,grep("lFC1", colnames(plot.data))], 
+                     row.names(plot.data))
+  FDR.data = setNames(plot.data[,grep("FDR1", colnames(plot.data))], 
+                      row.names(plot.data))
+  
+  mean.data = plot.data[,grep("mean", colnames(plot.data))]
+  colnames(mean.data) = substr(colnames(mean.data), 1, (nchar(colnames(mean.data)) - 6))
+  
+
+  ##select T if you only want the genes in category to show
+  catgenes.only = T
+  
+  volcano.data = data.frame(Symbol = GeneIDKey[names(FDR.data), "Symbol"], 
+                            FBgn = names(FDR.data),
+                            FDR = -log2(FDR.data),
+                            FC = FC.data,
+                            Color = 'grey',
+                            size = 5*log(mean.data[,1]),
+                            Variable.cpm = mean.data[,1],
+                            Control.cpm = mean.data[,2])
+  
+  if(set.size == T){
+    volcano.data$size = 15
+    volcano.data$size[volcano.data$FDR <= -log2(.05)] = 5
+  }
+  
+  
+  go.id = row.names(GO.Names)[c(grep(specific.go, GO.Names$category),
+                                grep(specific.go, GO.Names$term))]
+  go.genes = genesingo$Gene[genesingo$GO == go.id]
+  go.genes = GeneIDKey[GeneIDKey$ensembl %in% go.genes, 'Symbol']
+  volcano.data$Color = 'honeydew'
+  #row.names(volcano.data) = volcano.data$Symbol
+  volcano.data[volcano.data$Symbol %in% go.genes, 'Color'] = 'deeppink'
+  volcano.data = volcano.data[order(volcano.data$Color, decreasing = T),]
+  main.title = GO.Names[go.id, 'term']
+  
+  if(catgenes.only == T){
+    volcano.data = volcano.data[volcano.data$Color == 'deeppink',]
+    volcano.data$Color[volcano.data$FDR < -log2(.05)] = 'honeydew'
+  }
+  
+  
+  fig = plot_ly(data = volcano.data,
+                x = ~FC,
+                y = ~FDR,
+                type = 'scatter',
+                mode = 'markers',
+                marker = list(color = ~Color, colors = ~Color, size = volcano.data$size,
+                              line = list(color = 'black', width = .5)),
+                hoverinfo = "text",
+                hovertext = paste("Gene:", volcano.data$Symbol,
+                                  "\nFBgn:", volcano.data$FBgn,
+                                  "\n-log2(FDR): ", round(volcano.data$FDR,2),
+                                  "\nFC: ", round(volcano.data$FC,2),
+                                  "\n ", colnames(mean.data)[1], "mean cpm: ",
+                                  round(volcano.data$Variable.cpm, 1),
+                                  "\n ", colnames(mean.data)[2], "mean cpm: ",
+                                  round(volcano.data$Control.cpm, 1)))
+  fig = fig %>% layout(title = main.title)
+  
+  
+  return(fig)
+}
+
+```
+
+
+
+
+
+
+
