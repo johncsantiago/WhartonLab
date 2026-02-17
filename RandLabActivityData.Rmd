@@ -1,0 +1,1578 @@
+---
+title: "mt:nuc Tau activity assay"
+author: "John Santiago"
+date: "2025-09-09"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+library(kableExtra)
+library(beeswarm)
+
+
+plot.allflies = function(data,title){
+  colnames(data)[2:4] = c("ObjectID", "X", "Y")
+  data = data[,1:4]
+  
+  mm.per.pix = 146/900
+  
+  fps = 30
+  
+  speed.conversion = mm.per.pix*fps
+  
+  flyID = unique(data$ObjectID)
+  
+  max.frame = setNames(rep(0, length(flyID)), flyID)
+  
+  i=1
+  while(i<=length(flyID)){
+    max.frame[i] = max(data$Frame[data$ObjectID == flyID[i]])
+    i=i+1
+  }
+  
+  temp = data.frame(Frame = numeric(),
+                    ObjectID = character(),
+                    X = numeric(),
+                    Y = numeric())
+  i=1
+  while(i<=length(flyID)){
+    temp = rbind(temp, data[data$ObjectID == flyID[i] & 
+                              data$Frame <= max.frame[i],])
+    i=i+1
+  }
+  
+  
+  distance = setNames(rep(0, length(flyID)), flyID)
+  
+  temp$Y = 800 - temp$Y
+  
+  x = temp$X
+  y = temp$Y
+  
+  i=1
+  while(i<=length(flyID)){
+    j = 101
+    while(j < max.frame[i]){
+      x1 = temp[temp$Frame == j-100 & temp$ObjectID == names(distance)[i], "X"]
+      x2 = temp[temp$Frame == j & temp$ObjectID == names(distance)[i], "X"]
+      y1 = temp[temp$Frame == j-100 & temp$ObjectID == names(distance)[i], "Y"]
+      y2 = temp[temp$Frame == j & temp$ObjectID == names(distance)[i], "Y"]
+      distance[i] = distance[i] + sqrt((x2-x1)^2 + (y2-y1)^2)
+      j=j+100
+    }
+    i=i+1
+  }
+  
+  speed = distance/max.frame*speed.conversion
+  distance = distance*mm.per.pix
+  
+  fly.data = data.frame(flyID = flyID,
+                        distance = distance,
+                        speed = speed)
+  
+  par(mar = c(5.35,5.35,5.35,5.35))
+  
+  plot(NA, 
+       type ="n",
+       main = title,
+       ylim = c(min(temp$Y)-50, max(temp$Y)+50), 
+       xlim = c(min(temp$X)-50, max(temp$X)+50),
+       xlab = "",
+       ylab = "",
+       xaxt = 'n',
+       yaxt = 'n',
+       frame.plot = F)
+  
+  flycolors = c("darkorange", "royalblue", "firebrick", 
+                "darkgreen", "violetred", "navy", "gray40")
+  
+  i=1
+  while(i<=length(flyID)){
+    lines(x = temp$X[temp$ObjectID ==flyID[i]],
+       y = temp$Y[temp$ObjectID ==flyID[i]],
+       lwd = 1,
+       col = flycolors[i])
+    i=i+1
+  }
+  
+  legend(x = max(temp$X)+100,
+         y = max(temp$Y)+50,
+         legend = c(signif(speed,3)), 
+         fill = flycolors[flyID],
+         cex = 1,
+         bty = 'n',
+         pt.cex = .5,
+         xpd = T,
+         title = "mm/s")
+  return(fly.data)
+}
+
+plot.singleflies = function(data,title){
+  colnames(data)[2:4] = c("ObjectID", "X", "Y")
+  data = data[,1:4]
+  
+  mm.per.pix = 146/900
+  
+  fps = 30
+  
+  speed.conversion = mm.per.pix*fps
+  
+  flyID = unique(data$ObjectID)
+  
+  max.frame = setNames(rep(0, length(flyID)), flyID)
+  
+  i=1
+  while(i<=length(flyID)){
+    max.frame[i] = max(data$Frame[data$ObjectID == flyID[i]])
+    i=i+1
+  }
+  
+  temp = data.frame(Frame = numeric(),
+                    ObjectID = character(),
+                    X = numeric(),
+                    Y = numeric())
+  i=1
+  while(i<=length(flyID)){
+    temp = rbind(temp, data[data$ObjectID == flyID[i] & 
+                              data$Frame <= max.frame[i],])
+    i=i+1
+  }
+  
+  
+  distance = setNames(rep(0, length(flyID)), flyID)
+  
+  temp$Y = 800 - temp$Y
+  
+  x = temp$X
+  y = temp$Y
+  
+  i=1
+  while(i<=length(flyID)){
+    j = 101
+    while(j < max.frame[i]){
+      x1 = temp[temp$Frame == j-100 & temp$ObjectID == names(distance)[i], "X"]
+      x2 = temp[temp$Frame == j & temp$ObjectID == names(distance)[i], "X"]
+      y1 = temp[temp$Frame == j-100 & temp$ObjectID == names(distance)[i], "Y"]
+      y2 = temp[temp$Frame == j & temp$ObjectID == names(distance)[i], "Y"]
+      distance[i] = distance[i] + sqrt((x2-x1)^2 + (y2-y1)^2)
+      j=j+100
+    }
+    i=i+1
+  }
+  
+  speed = distance/max.frame*speed.conversion
+  distance = distance*mm.per.pix
+  
+  dims = data.frame(y = c(1, 1, 2, 2, 2, 2, 2, 2),
+                    x = c(1, 2, 2, 2, 3, 3, 4, 4))
+  x.start = data.frame(x1.start = c(0, 0, 0, 0, 0, 0, 0, 0),
+                       x2.start = c(0, 0,.5, 0,.5, 0,.5, 0))
+  top.row = c(0, 0, 2, 2, 3, 3, 4, 4)
+  
+  x.width = (max(temp$X)+50) - (min(temp$X)-50)
+  y.height = (max(temp$Y)+50) - (min(temp$Y)-50)  
+  
+  plot.xpos = matrix(nrow = dims$x[length(flyID)],
+                     ncol = dims$y[length(flyID)])
+  
+  i=1
+  while(i<=dims$y[length(flyID)]){
+      plot.xpos[,i]=(0:(dims$x[length(flyID)]-1)*x.width) +
+        (x.start[length(flyID), i]*x.width)
+      i=i+1
+  }
+  plot.xpos = as.numeric(plot.xpos)
+  
+  
+  plot.ypos = rep(0, length(flyID))
+  plot.ypos[1:top.row[length(flyID)]] = y.height
+
+  par(mar = c(5.35,5.35,5.35,5.35))
+  
+  plot(NA, 
+       type ="n",
+       main = title,
+       ylim = c(0, x.width*dims$y[length(flyID)]), 
+       xlim = c(0, y.height*dims$x[length(flyID)]),
+       xlab = "",
+       ylab = "",
+       xaxt = 'n',
+       yaxt = 'n',
+       frame.plot = F)
+  
+  flycolors = c("darkorange", "royalblue", "firebrick", 
+                "darkgreen", "violetred", "navy", "gray40")
+  
+  i=1
+  while(i<=length(flyID)){
+    lines(x = temp$X[temp$ObjectID ==flyID[i]] - (min(temp$X)-50) + 
+            plot.xpos[i],
+          y = temp$Y[temp$ObjectID ==flyID[i]] - (min(temp$Y)) + 
+            plot.ypos[i],
+          lwd = 1,
+          col = flycolors[i])
+    i=i+1
+  }
+  
+  legend(x = x.width*dims$x[length(flyID)] + 100,
+         y = y.height*dims$y[length(flyID)] + 50,
+         legend = c(signif(speed,3)), 
+         fill = flycolors[flyID],
+         cex = 1,
+         bty = 'n',
+         pt.cex = .5,
+         xpd = T,
+         title = "mm/s")
+}
+
+plot.alldist = function(data, title){
+  
+  colnames(data)[2:4] = c("ObjectID", "X", "Y")
+  data = data[,1:4]
+  
+  mm.per.pix = 146/900
+  
+  fps = 30
+  
+  speed.conversion = mm.per.pix*fps
+  
+  flyID = unique(data$ObjectID)
+  
+  max.frame = setNames(rep(0, length(flyID)), flyID)
+  
+  i=1
+  while(i<=length(flyID)){
+    max.frame[i] = max(data$Frame[data$ObjectID == flyID[i]])
+    i=i+1
+  }
+  
+  temp = data.frame(Frame = numeric(),
+                    ObjectID = character(),
+                    X = numeric(),
+                    Y = numeric())
+  i=1
+  while(i<=length(flyID)){
+    temp = rbind(temp, data[data$ObjectID == flyID[i] & 
+                              data$Frame <= max.frame[i],])
+    i=i+1
+  }
+  
+  
+  distance = setNames(rep(0, length(flyID)), flyID)
+  
+  temp$Y = 800 - temp$Y
+  
+  x = temp$X
+  y = temp$Y
+  
+  i=1
+  while(i<=length(flyID)){
+    j = 101
+    while(j < max.frame[i]){
+      x1 = temp[temp$Frame == j-100 & temp$ObjectID == names(distance)[i], "X"]
+      x2 = temp[temp$Frame == j & temp$ObjectID == names(distance)[i], "X"]
+      y1 = temp[temp$Frame == j-100 & temp$ObjectID == names(distance)[i], "Y"]
+      y2 = temp[temp$Frame == j & temp$ObjectID == names(distance)[i], "Y"]
+      distance[i] = distance[i] + sqrt((x2-x1)^2 + (y2-y1)^2)
+      j=j+100
+    }
+    i=i+1
+  }
+  
+  speed = distance/max.frame*speed.conversion
+  frame.distance = data.frame(Rep = character(),
+                              frame = numeric(),
+                              distance = numeric())
+  i = 1
+  while(i<= length(flyID)){
+    temp.dist = data.frame(Rep = c(rep(flyID[i], floor(max.frame[i]/100))),
+                      frame = c(100*(1:floor(max.frame[i]/100)-1)),
+                      distance = 0)
+    frame.distance = rbind(frame.distance, temp.dist)
+    i = i+1
+  }
+
+  
+  
+  i=1
+  while(i<=length(flyID)){
+    temp.distance = 0
+    j = 200
+    while(j-100 < max.frame[i]){
+      x1 = temp[temp$Frame == j-100 & temp$ObjectID == names(distance)[i], "X"]
+      x2 = temp[temp$Frame == j & temp$ObjectID == names(distance)[i], "X"]
+      y1 = temp[temp$Frame == j-100 & temp$ObjectID == names(distance)[i], "Y"]
+      y2 = temp[temp$Frame == j & temp$ObjectID == names(distance)[i], "Y"]
+      temp.distance = temp.distance + sqrt((x2-x1)^2 + (y2-y1)^2)
+      frame.distance[frame.distance$Rep == names(distance)[i] &
+                       frame.distance$frame == j-100, "distance"]= temp.distance
+      j=j+100
+    }
+    i=i+1
+  }
+  
+  frame.distance$distance = frame.distance$distance*mm.per.pix
+  
+  par(mar = c(5.35,5.35,5.35,5.35))
+  
+  plot(NA, 
+       type ="n",
+       main = title,
+       ylim = c(0,max(frame.distance$distance)), 
+       xlim = c(0,max(frame.distance$frame)),
+       xlab = "Frame",
+       ylab = "Distance (mm)")
+  
+    flycolors = c("darkorange", "royalblue", "firebrick", 
+                "darkgreen", "violetred", "navy", "gray40")
+    
+    i=1
+    while(i<=length(flyID)){
+        lines(x = frame.distance$frame[frame.distance$Rep ==flyID[i]],
+              y = frame.distance$distance[frame.distance$Rep ==flyID[i]],
+              lwd = 1,
+              col = flycolors[i])
+      i=i+1
+    }
+    
+  legend(x = max(frame.distance$frame)*1.04,
+         y = max(frame.distance$distance),
+         legend = signif(speed,3), 
+         fill = flycolors[flyID],
+         cex = 1,
+         bty = 'n',
+         pt.cex = .5,
+         xpd = T,
+         title = "mm")
+
+}
+
+plot.alldirection = function(data, title){
+  
+  colnames(data)[2:4] = c("ObjectID", "X", "Y")
+  data = data[,1:4]
+  
+  mm.per.pix = 146/900
+  
+  fps = 30
+  
+  speed.conversion = mm.per.pix*fps
+  
+  flyID = unique(data$ObjectID)
+  
+  max.frame = setNames(rep(0, length(flyID)), flyID)
+  
+  i=1
+  while(i<=length(flyID)){
+    max.frame[i] = max(data$Frame[data$ObjectID == flyID[i]])
+    i=i+1
+  }
+  
+  temp = data.frame(Frame = numeric(),
+                    ObjectID = character(),
+                    X = numeric(),
+                    Y = numeric())
+  i=1
+  while(i<=length(flyID)){
+    temp = rbind(temp, data[data$ObjectID == flyID[i] & 
+                              data$Frame <= max.frame[i],])
+    i=i+1
+  }
+  
+  
+  distance = setNames(rep(0, length(flyID)), flyID)
+  
+  temp$Y = 800 - temp$Y
+  
+  x = temp$X
+  y = temp$Y
+  
+  i=1
+  while(i<=length(flyID)){
+    j = 101
+    while(j < max.frame[i]){
+      x1 = temp[temp$Frame == j-100 & temp$ObjectID == names(distance)[i], "X"]
+      x2 = temp[temp$Frame == j & temp$ObjectID == names(distance)[i], "X"]
+      y1 = temp[temp$Frame == j-100 & temp$ObjectID == names(distance)[i], "Y"]
+      y2 = temp[temp$Frame == j & temp$ObjectID == names(distance)[i], "Y"]
+      distance[i] = distance[i] + sqrt((x2-x1)^2 + (y2-y1)^2)
+      j=j+100
+    }
+    i=i+1
+  }
+  
+  speed = distance/max.frame*speed.conversion
+  frame.direction = data.frame(Rep = character(),
+                              frame = numeric(),
+                              direction = numeric())
+  i = 1
+  while(i<= length(flyID)){
+    temp.dist = data.frame(Rep = c(rep(flyID[i], floor(max.frame[i]/100))),
+                      frame = c(100*(1:floor(max.frame[i]/100)-1)),
+                      direction = 0)
+    frame.direction = rbind(frame.direction, temp.dist)
+    i = i+1
+  }
+
+  
+  
+  i=1
+  while(i<=length(flyID)){
+    temp.direction = 0
+    j = 200
+    while(j-100 < max.frame[i]){
+      x1 = temp[temp$Frame == j-100 & temp$ObjectID == flyID[i], "X"]
+      x2 = temp[temp$Frame == j & temp$ObjectID == flyID[i], "X"]
+      y1 = temp[temp$Frame == j-100 & temp$ObjectID == flyID[i], "Y"]
+      y2 = temp[temp$Frame == j & temp$ObjectID == flyID[i], "Y"]
+      deltax = x2-x1
+      deltay = y2-y1
+
+      temp.direction = atan2(deltay, deltax)*180/pi
+      
+      if(j > 200){
+      frame.direction[frame.direction$Rep == flyID[i] &
+                       frame.direction$frame == j-100, "direction"]= temp.direction
+      }
+      j=j+100
+    }
+    i=i+1
+  }
+  
+  frame.direction$direction[frame.direction$direction < 0] = frame.direction$direction[frame.direction$direction < 0] + 360
+  
+  par(mar = c(5.35,5.35,5.35,5.35))
+  
+  plot(NA, 
+       type ="n",
+       main = title,
+       ylim = c(0,max(frame.direction$direction)), 
+       xlim = c(0,max(frame.direction$frame)),
+       xlab = "Frame",
+       ylab = "Direction (degrees)")
+  
+    flycolors = c("darkorange", "royalblue", "firebrick", 
+                "darkgreen", "violetred", "navy", "gray40")
+    
+    i=1
+    while(i<=length(flyID)){
+        lines(x = frame.direction$frame[frame.direction$Rep ==flyID[i]],
+              y = frame.direction$direction[frame.direction$Rep ==flyID[i]],
+              lwd = 1,
+              col = flycolors[i])
+      i=i+1
+    }
+    
+  legend(x = max(frame.direction$frame)*1.04,
+         y = max(frame.direction$direction),
+         legend = signif(speed,3), 
+         fill = flycolors[flyID],
+         cex = 1,
+         bty = 'n',
+         pt.cex = .5,
+         xpd = T,
+         title = "mm")
+
+}
+
+```
+
+
+##Elav
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_tau_f_1.csv")
+title = "Control tau-wt female 1"
+
+ewf1 = plot.allflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_tau_f_2.csv")
+title = "Control tau-wt female 2"
+
+ewf2 = plot.allflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_tau_f_3.csv")
+title = "Control tau-wt female 3"
+
+ewf3 = plot.allflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_taur406w_f_1.csv")
+title = "Control tau-R406W female 1"
+
+emf1 = plot.allflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_taur406w_f_2.csv")
+title = "Control tau-R406W female 2"
+
+emf2 = plot.allflies(data,title)
+
+```
+
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_taur406w_f_3.csv")
+title = "Control tau-R406W female 3"
+
+emf3 = plot.allflies(data,title)
+
+```
+
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+##OreR
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_tau_oref_1.csv")
+title = "OreR tau-wt female 1"
+
+owf1 = plot.allflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_tau_oref_2.csv")
+title = "OreR tau-wt female 2"
+
+owf2 = plot.allflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_tau_oref_3.csv")
+title = "OreR tau-wt female 3"
+
+owf3 = plot.allflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_taur406w_oref_1.csv")
+title = "OreR tau-R406W female 1"
+
+omf1 = plot.allflies(data,title)
+
+```
+
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_taur406w_oref_2.csv")
+title = "OreR tau-R406W female 2"
+
+omf2 = plot.allflies(data,title)
+
+```
+
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_taur406w_oref_3.csv")
+title = "OreR tau-R406W female 3"
+
+omf3 = plot.allflies(data,title)
+
+```
+
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+##sim
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_tau_simf_1.csv")
+title = "sim tau-wt female 1"
+
+swf1 = plot.allflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_tau_simf_2.csv")
+title = "sim tau-wt female 2"
+
+swf2 = plot.allflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_tau_simf_3.csv")
+title = "sim tau-wt female 3"
+
+swf3 = plot.allflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_taur406w_simf_1.csv")
+title = "sim tau-R406W female 1"
+
+smf1 = plot.allflies(data,title)
+
+```
+
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_taur406w_simf_2.csv")
+title = "sim tau-R406W female 2"
+
+smf2 = plot.allflies(data,title)
+
+```
+
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_taur406w_simf_3.csv")
+title = "sim tau-R406W female 3"
+
+smf3 = plot.allflies(data,title)
+
+```
+
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+##yak
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_tau_yakf_1.csv")
+title = "yak tau-wt female 1"
+
+ywf1 = plot.allflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_tau_yakf_2.csv")
+title = "yak tau-wt female 2"
+
+ywf2 = plot.allflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_tau_yakf_3.csv")
+title = "yak tau-wt female 3"
+
+ywf3 = plot.allflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_taur406w_yakf_1.csv")
+title = "yak tau-R406W female 1"
+
+ymf1 = plot.allflies(data,title)
+
+```
+
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_taur406w_yakf_2.csv")
+title = "yak tau-R406W female 2"
+
+ymf2 = plot.allflies(data,title)
+
+```
+
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_taur406w_yakf_3.csv")
+title = "yak tau-R406W female 3"
+
+ymf3 = plot.allflies(data,title)
+
+```
+
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+#Males
+##Elav
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_tau_m_1.csv")
+title = "Control tau-wt male 1"
+
+ewm1 = plot.allflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_tau_m_2.csv")
+title = "Control tau-wt male 2"
+
+ewm2 = plot.allflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_taur406w_m_1.csv")
+title = "Control tau-R406W male 1"
+
+emm1 = plot.allflies(data,title)
+
+```
+
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_taur406w_m_2.csv")
+title = "Control tau-R406W male 2"
+
+emm2 = plot.allflies(data,title)
+
+```
+
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+
+##OreR
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_tau_orem_1.csv")
+title = "OreR tau-wt male 1"
+
+owm1 = plot.allflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_tau_orem_2.csv")
+title = "OreR tau-wt male 2"
+
+owm2 = plot.allflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_taur406w_orem_1.csv")
+title = "OreR tau-R406W male 1"
+
+omm1 = plot.allflies(data,title)
+
+```
+
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_taur406w_orem_2.csv")
+title = "OreR tau-R406W male 2"
+
+omm2 = plot.allflies(data,title)
+
+```
+
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+
+##sim
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_tau_simm_1.csv")
+title = "sim tau-wt male 1"
+
+swm1 = plot.allflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_tau_simm_2.csv")
+title = "sim tau-wt male 2"
+
+swm2 = plot.allflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_taur406w_simm_1.csv")
+title = "sim tau-R406W male 1"
+
+smm1 = plot.allflies(data,title)
+
+```
+
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_taur406w_simm_2.csv")
+title = "sim tau-R406W male 2"
+
+smm2 = plot.allflies(data,title)
+
+```
+
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+##yak
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_tau_yakm_1.csv")
+title = "yak tau-wt male 1"
+
+ywm1 = plot.allflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_tau_yakm_2.csv")
+title = "yak tau-wt male 2"
+
+ywm2 = plot.allflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_taur406w_yakm_1.csv")
+title = "yak tau-R406W male 1"
+
+ymm1 = plot.allflies(data,title)
+
+```
+
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/20250904_Elav_taur406w_yakm_2.csv")
+title = "yak tau-R406W male 2"
+
+ymm2 = plot.allflies(data,title)
+
+```
+
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.singleflies(data,title)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=8}
+
+plot.alldist(data,title)
+
+```
+
+
+
+```{r echo = F, fig.width= 10, fig.height= 7}
+
+ewf=rbind(ewf1, rbind(ewf2, ewf3))
+emf=rbind(emf1, rbind(emf2, emf3))
+
+owf=rbind(owf1, rbind(owf2, owf3))
+omf=rbind(omf1, rbind(omf2, omf3))
+
+swf=rbind(swf1, rbind(swf2, swf3))
+smf=rbind(smf1, rbind(smf2, smf3))
+
+ywf=rbind(ywf1, rbind(ywf2, ywf3))
+ymf=rbind(ymf1, rbind(ymf2, ymf3))
+
+ewm=rbind(ewm1, ewm2)
+emm=rbind(emm1, emm2)
+
+owm=rbind(owm1, owm2)
+omm=rbind(omm1, omm2)
+
+swm=rbind(swm1, swm2)
+smm=rbind(smm1, smm2)
+
+ywm=rbind(ywm1, ywm2)
+ymm=rbind(ymm1, ymm2)
+
+all.tau.data = data.frame(Genotype = c(rep("Elav Tau-WT F", nrow(ewf)),
+                                       rep("Elav Tau-R406W F", nrow(emf)),
+                                       rep("OreR Tau-WT F", nrow(owf)),
+                                       rep("OreR Tau-R406W F", nrow(omf)),
+                                       rep("sim Tau-WT F", nrow(swf)),
+                                       rep("sim Tau-R406W F", nrow(smf)),
+                                       rep("yak Tau-WT F", nrow(ywf)),
+                                       rep("yak Tau-R406W F", nrow(ymf)),
+                                       rep("Elav Tau-WT M", nrow(ewm)),
+                                       rep("Elav Tau-R406W M", nrow(emm)),
+                                       rep("OreR Tau-WT M", nrow(owm)),
+                                       rep("OreR Tau-R406W M", nrow(omm)),
+                                       rep("sim Tau-WT M", nrow(swm)),
+                                       rep("sim Tau-R406W M", nrow(smm)),
+                                       rep("yak Tau-WT M", nrow(ywm)),
+                                       rep("yak Tau-R406W M", nrow(ymm))),
+                          Speed = c(ewf$speed, emf$speed,
+                                    owf$speed, omf$speed,
+                                    swf$speed, smf$speed,
+                                    ywf$speed, ymf$speed,
+                                    ewm$speed, emm$speed,
+                                    owm$speed, omm$speed,
+                                    swm$speed, smm$speed,
+                                    ywm$speed, ymm$speed),
+                          Distance = c(ewf$distance, emf$distance,
+                                       owf$distance, omf$distance,
+                                       swf$distance, smf$distance,
+                                       ywf$distance, ymf$distance,
+                                       ewm$distance, emm$distance,
+                                       owm$distance, omm$distance,
+                                       swm$distance, smm$distance,
+                                       ywm$distance, ymm$distance))
+
+all.tau.data$Genotype = factor(all.tau.data$Genotype, 
+                               levels = c("Elav Tau-WT F", "Elav Tau-R406W F",
+                                          "OreR Tau-WT F", "OreR Tau-R406W F",
+                                          "sim Tau-WT F", "sim Tau-R406W F",
+                                          "yak Tau-WT F", "yak Tau-R406W F",
+                                          "Elav Tau-WT M", "Elav Tau-R406W M",
+                                          "OreR Tau-WT M", "OreR Tau-R406W M",
+                                          "sim Tau-WT M", "sim Tau-R406W M",
+                                          "yak Tau-WT M", "yak Tau-R406W M"))
+
+hex = function(color, alpha){
+  rgb2hex = color
+  i = 1
+  while(i <= length(color)){
+    rgbvals = col2rgb(color[i])
+    rgb2hex[i] = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+    i = i+1
+  }
+  return(rgb2hex)
+}
+
+par(mar = c(10.1, 4.1, 4.1, 2))
+
+boxplot(all.tau.data$Speed~all.tau.data$Genotype,
+        col = hex(c("navy", "navy", "firebrick","firebrick", "darkgreen","darkgreen", "gold", "gold", "navy", "navy", "firebrick","firebrick", "darkgreen","darkgreen", "gold", "gold")[unique(as.numeric(all.tau.data$Genotype))],.5), xlab = "", ylab = "Speed (mm/s)",
+        ylim = c(0, 10),
+        las = 2)
+
+beeswarm(all.tau.data$Speed~all.tau.data$Genotype,
+       pch = c(21,23),
+       cex = 1.5,
+       method = "center",
+       bg = hex(c("dodgerblue", "dodgerblue", "brown","brown", "green","green", "yellow", "yellow", "dodgerblue", "dodgerblue", "brown","brown", "green","green", "yellow", "yellow")[unique(as.numeric(all.tau.data$Genotype))],1),
+       add = T)
+
+abline(v = 8.5, lty = 2, lwd = 2)
+axis(side = 3, labels = c("Female", "Male"), at = c(4.5, 12.5)) 
+```
+
+```{r echo = F}
+
+t.data = list("ElavWTF" = ewf$speed,
+              "ElavRWF" = emf$speed, 
+              "OreRWTF" = owf$speed, 
+              "OreRRWF" = omf$speed,
+              "simWTF" = swf$speed, 
+              "simRWF" = smf$speed,
+              "yakWTF" = ywf$speed, 
+              "yakRWf" = ymf$speed,
+              "ElavWTM" = ewm$speed, 
+              "ElavRWM" = emm$speed,
+              "OreRWTM" = owm$speed, 
+              "OreRRWM" = omm$speed,
+              "simWTM" = swm$speed, 
+              "simRWM" = smm$speed,
+              "yakWTM" = ywm$speed, 
+              "yakRWM" = ymm$speed)
+
+t.table = data.frame(Genotype1 = character(),
+                     Genotype2 = character(),
+                     pval = numeric())
+
+i=1
+while(i <= length(t.data)){
+  j = i+1
+  while(j <= length(t.data)){
+    t.temp = data.frame(Genotype1 = names(t.data)[i],
+                        Genotype2 = names(t.data)[j],
+                        pval = t.test(x = t.data[[i]],
+                                      y = t.data[[j]],
+                                      paired = F)[[3]])
+    t.table = rbind(t.table, t.temp)
+      j = j+1
+  }
+  i = i+1
+}
+
+
+t.stripe = t.table$pval <= .05
+knitr::kable(t.table,
+             caption = 'All t-tests Rand Activity')  %>%
+kable_styling() %>%
+row_spec(c(1:nrow(t.table))[t.table$pval <= .05], bold = T, color = "black", background = "gold")
+```

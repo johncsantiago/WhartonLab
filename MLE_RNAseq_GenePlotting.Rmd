@@ -1,0 +1,393 @@
+---
+title: "DomData"
+author: "John Santiago"
+date: "2026-01-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r echo = F}
+
+library(edgeR)
+library(plotly)
+
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/GeneralDataFiles/"
+
+GeneIDKey = read.csv(paste0(git.dir, "GeneIDKey.csv"), row.names = 1)
+counttable=read.csv(paste0(git.dir, "Dom_Count_Tables.csv"),row.names=1)
+metadata=read.csv(paste0(git.dir, "Dom_MetaData.csv"),row.names=1)
+
+#metadata$ID = paste0(metadata$)
+metadata$ID = paste0(metadata$Genotype, "_", metadata$Sex, metadata$Biological.Replicate)
+metadata$Group = (paste0(metadata$Genotype, "_", metadata$Sex))
+
+metadata$Group = factor(paste0(metadata$Genotype, "_", metadata$Sex),
+                        c("WT_F", "WT_M", "GBM_F", "GBM_M",
+                          "GBMLE_F", "GBMLE_M", "MLE_F", "MLE_M"))
+
+
+counttable=counttable[,row.names(metadata)]
+colnames(counttable) = metadata$ID
+#colnames(counttable) = metad
+x = counttable
+gr = factor(metadata$Group)
+y <- DGEList(counts = x, group=gr)
+keep <- filterByExpr(y)
+y <- y[keep,, keep.lib.sizes=FALSE]
+z <- calcNormFactors(y, method = "TMM")
+cpmdata = cpm(z)
+
+meancpm = cpmdata[,1:8]
+colnames(meancpm) = unique(metadata$Group)
+i=1
+while(i<=8){
+  temp = cpmdata[,metadata$ID[metadata$Group == colnames(meancpm)[i]]]
+  meancpm[,i] = (temp[,1] + temp[,2] + temp[,3] + temp[,4])/4
+  i=i+1
+}
+
+meancpm.meta = data.frame(MLExWT_F = c("MLE_F", "WT_F"), 
+                          GBMLExGBM_F = c("GBMLE_F", "GBM_F"), 
+                          MLExWT_M = c("MLE_M", "WT_M"), 
+                          GBMLExGBM_M = c("GBMLE_M", "GBM_M"),
+                          WT_MxF = c("WT_M", "WT_F"), 
+                          MLE_MxF = c("MLE_M", "MLE_F"),
+                          MLExWT_F = c("MLE_F", "WT_F"), 
+                          sGBMLExGBM_F = c("GBMLE_F", "GBM_F"), 
+                          sMLExWT_M = c("MLE_M", "WT_M"), 
+                          sGBMLExGBM_M = c("GBMLE_M", "GBM_M"),
+                          sWT_MxF = c("WT_M", "WT_F"), 
+                          sMLE_MxF = c("MLE_M", "MLE_F"))
+
+
+
+
+
+design <- model.matrix(~0+gr)
+colnames(design) = unique(gr)
+z = estimateDisp(z, design, robust = T)
+fit <- glmQLFit(z, design)
+
+##DEG comparisons
+#############################################################################
+
+compare = makeContrasts(MLE_F-WT_F, levels = design)
+lrt = glmQLFTest(fit, contrast = as.vector(compare))
+G_X_E <- topTags(lrt,adjust.method = "BH", n = nrow(z$counts), sort.by = "PValue")
+DEout = G_X_E$table
+MLExWT_F=DEout
+sMLExWT_F=DEout[DEout$FDR<0.05,]
+
+compare = makeContrasts(GBMLE_F-GBM_F, levels = design)
+lrt = glmQLFTest(fit, contrast = as.vector(compare))
+G_X_E <- topTags(lrt,adjust.method = "BH", n = nrow(z$counts), sort.by = "PValue")
+DEout = G_X_E$table
+GBMLExGBM_F=DEout
+sGBMLExGBM_F=DEout[DEout$FDR<0.05,]
+
+compare = makeContrasts(MLE_M-WT_M, levels = design)
+lrt = glmQLFTest(fit, contrast = as.vector(compare))
+G_X_E <- topTags(lrt,adjust.method = "BH", n = nrow(z$counts), sort.by = "PValue")
+DEout = G_X_E$table
+MLExWT_M=DEout
+sMLExWT_M=DEout[DEout$FDR<0.05,]
+
+compare = makeContrasts(GBMLE_M-GBM_M, levels = design)
+lrt = glmQLFTest(fit, contrast = as.vector(compare))
+G_X_E <- topTags(lrt,adjust.method = "BH", n = nrow(z$counts), sort.by = "PValue")
+DEout = G_X_E$table
+GBMLExGBM_M=DEout
+sGBMLExGBM_M=DEout[DEout$FDR<0.05,]
+
+compare = makeContrasts(WT_M-WT_F, levels = design)
+lrt = glmQLFTest(fit, contrast = as.vector(compare))
+G_X_E <- topTags(lrt,adjust.method = "BH", n = nrow(z$counts), sort.by = "PValue")
+DEout = G_X_E$table
+WT_MxF=DEout
+sWT_MxF=DEout[DEout$FDR<0.05,]
+
+compare = makeContrasts(MLE_M-MLE_F, levels = design)
+lrt = glmQLFTest(fit, contrast = as.vector(compare))
+G_X_E <- topTags(lrt,adjust.method = "BH", n = nrow(z$counts), sort.by = "PValue")
+DEout = G_X_E$table
+MLE_MxF=DEout
+sMLE_MxF=DEout[DEout$FDR<0.05,]
+
+
+all.comparisons = list(MLExWT_F = MLExWT_F, 
+                        GBMLExGBM_F = GBMLExGBM_F, 
+                        MLExWT_M = MLExWT_M, 
+                        GBMLExGBM_M = GBMLExGBM_M,
+                        WT_MxF = WT_MxF, 
+                        MLE_MxF = MLE_MxF,
+                        MLExWT_F = MLExWT_F, 
+                        sGBMLExGBM_F = sGBMLExGBM_F, 
+                        sMLExWT_M = sMLExWT_M, 
+                        sGBMLExGBM_M = sGBMLExGBM_M,
+                        sWT_MxF = sWT_MxF, 
+                        sMLE_MxF = sMLE_MxF)
+
+##Functions
+#############################################################################
+
+plot.MLE = function(ID){
+  ID.row = GeneIDKey[c(grep(ID, GeneIDKey$FBgn),
+                       grep(ID, GeneIDKey$Symbol)),]
+  
+  if(nrow(ID.row) < 500){
+    if(nrow(ID.row) == 1){
+      FBgn = ID.row$FBgn
+      name = ID.row$Symbol
+      
+      
+      gene = data.frame(cpm = as.numeric(cpmdata[FBgn,]), condition = metadata$Group, group = metadata$Genotype)
+      
+      gene$group = factor(gene$group, levels = c(unique(gene$group)))
+      gene$condition = factor(gene$condition, levels = c("WT_F", "MLE_F", 
+                                                         "GBM_F", "GBMLE_F",
+                                                         "WT_M", "MLE_M",
+                                                         "GBM_M", "GBMLE_M"))
+      par(mar = c(5,7,5,2))
+      plot(x = NA,
+           y = NA,
+           type = 'n',
+           ylim = c(min(gene$cpm), max(gene$cpm)),
+           xlim = c(.5, 8.5),
+           xaxt = "n",
+           ylab="",
+           yaxt = "n",
+           xlab = NA)
+      
+      rect(0, 0-(1.5*max(gene$cpm)), 9, 1.5*max(gene$cpm), col = 'gray95')
+      
+      boxplot(gene$cpm~gene$condition, 
+              xlab="",
+              las = 2, 
+              cex.axis = .8,
+              #xaxt = 'none',
+              yaxt = 'none',
+              boxwex = .75,
+              boxlwd = 2,
+              lwd = 2,
+              cex.ticks = 2,
+              add = T,
+              col = c(rep("honeydew", 2),
+                      rep("thistle1", 2),
+                      rep("lightcyan", 2),
+                      rep("lightyellow", 2)))
+      
+      box(lwd = 2)
+      
+      points(x=as.numeric(factor(gene$condition)),
+             y=gene$cpm,
+             cex=1,
+             pch=21,
+             bg=c("darkgreen", "darkgreen",
+                  'firebrick', 'firebrick',
+                  "dodgerblue", "dodgerblue",
+                  "gold", "gold")[as.numeric(factor(gene$condition))])
+               
+
+     # axis(side = 1,
+      #     at = 1:12,
+       #    labels = rep(c("Control", "Df", "OE"), 4),
+        #   line = 0,
+         #  cex.axis = .75,
+          # lwd.ticks = 2)
+      
+      axis(side = 2,
+           line = 0,
+           cex.axis = 1,
+           lwd.ticks = 2,
+           las = 2)
+      
+      axis(side = 2,
+           at = .5*(max(gene$cpm) + min(gene$cpm)),
+           label = "Counts per million reads",
+           tick = F,
+           padj = -3,
+           cex.axis = 1.25)
+      
+      #axis(side = 1,
+       #    at = c(2, 5, 8, 11),
+        #   labels = c("Silent", "G85R","Silent", "G85R"),
+         #  tick = F,
+          # padj = 2,
+           #cex.axis = 1)
+      axis(side = 3,
+           at = c(2.5, 6.5),
+           labels = c("Female", "Male"),
+           tick = F,
+           padj = .5,
+           cex.axis = 1.5)
+      
+      axis(side = 3,
+           at = 4.5,
+           labels = name,
+           tick = F,
+           padj = -1.5,
+           cex.axis = 2)
+      
+      axis(side = 3,
+           at = c(3.5,6.5),
+           tick = T,
+           outer = T,
+           labels = F,
+           line = -2.25,
+           lwd.ticks = 0)
+      
+      #xline1 = min(gene$cpm) - (max(gene$cpm)-min(gene$cpm))*.04
+      #xline2 = min(gene$cpm) - (max(gene$cpm)-min(gene$cpm))*.19
+      #lines(x=c(3.5,3.5), y = c(xline1, xline2), lty = 1, lwd = 2, xpd = T)
+      #lines(x=c(6.5,6.5), y = c(xline1, xline2), lty = 1, lwd = 2, xpd = T)
+      #lines(x=c(9.5,9.5), y = c(xline1, xline2), lty = 1, lwd = 2, xpd = T)
+      abline(v = 4.5, lty = 2, lwd = 2)
+    }
+    
+    if(nrow(ID.row) != 1){
+      ID.row
+    }
+  }
+}
+
+
+
+MLE.volcano = function(MLEcomparison, main.title = "", top = 20000){
+  
+  MLEdata = all.comparisons[[MLEcomparison]]
+  
+  FC.data = setNames(MLEdata$logFC, row.names(MLEdata))
+  FDR.data = setNames(MLEdata$FDR, row.names(MLEdata))
+  
+  ##select F if you want point size to scale with mean cpm of variable data
+  set.size = F
+  ##select T if you only want the genes in category to show
+  catgenes.only = T
+  
+  volcano.data = data.frame(Symbol = GeneIDKey[names(FDR.data), "Symbol"], 
+                            FDR = -log2(FDR.data),
+                            FC = FC.data,
+                            Color = 'grey',
+                            size = 5)
+  
+  if(set.size == T){
+    volcano.data$size = 15
+    volcano.data$size[volcano.data$FDR <= -log2(.05)] = 5
+  }
+  
+  volcano.data$Color[volcano.data$FDR >= -log2(.05) & volcano.data$FC < 0] = 'lightblue'
+  volcano.data$Color[volcano.data$FDR >= -log2(.0001) & volcano.data$FC < 0] = 'steelblue'
+  volcano.data$Color[volcano.data$FDR >= -log2(.000001) & volcano.data$FC < 0] = 'dodgerblue'
+  
+  volcano.data$Color[volcano.data$FDR >= -log2(.05) & volcano.data$FC > 0] = 'lightcoral'
+  volcano.data$Color[volcano.data$FDR >= -log2(.0001) & volcano.data$FC > 0] = 'tomato'
+  volcano.data$Color[volcano.data$FDR >= -log2(.000001) & volcano.data$FC > 0] = 'firebrick'
+  
+  volcano.data$size[volcano.data$FDR <= -log2(.05)] = 3
+
+  if(set.size == T){
+    volcano.data$size = 15
+    volcano.data$size[volcano.data$FDR <= -log2(.05)] = 5
+  }
+  
+  if(top < nrow(volcano.data)){
+    volcano.data = volcano.data[1:top,]
+  }
+  
+  volcano.data[is.na(volcano.data$Symbol), "Symbol"] = row.names(volcano.data)[is.na(volcano.data$Symbol)]
+  
+  fig = plot_ly(data = volcano.data,
+                x = ~FC,
+                y = ~FDR,
+                type = 'scatter',
+                mode = 'markers',
+                marker = list(color = ~Color, colors = ~Color, size = volcano.data$size,
+                              line = list(color = 'black', width = .5)),
+                hoverinfo = "text",
+                hovertext = paste("Gene:", volcano.data$Symbol,
+                                  "\n-log2(FDR): ", round(volcano.data$FDR,2),
+                                  "\nFC: ", round(volcano.data$FC,2),
+                                  "\n", meancpm.meta[1,MLEcomparison],": ", signif(meancpm[row.names(volcano.data),meancpm.meta[1,MLEcomparison]],3),
+                                  "\n", meancpm.meta[2,MLEcomparison],": ", signif(meancpm[row.names(volcano.data),meancpm.meta[2,MLEcomparison]],3)))
+  fig = fig %>% layout(title = main.title)
+  
+  fig
+  
+}
+
+
+```
+
+
+```{r echo = F}
+
+plot.MLE("FBgn0003996")
+
+```
+
+
+
+```{r echo = F}
+##choose an option (input in quotes so it is a string and not a variable)
+options = c("MLExWT_F",     #[1]
+            "GBMLExGBM_F",  #[2]
+            "MLExWT_M",     #[3]
+            "GBMLExGBM_M",  #[4]
+            "WT_MxF",       #[5]
+            "MLE_MxF",      #[6]
+            "MLExWT_F",     #[7]
+            "sGBMLExGBM_F", #[8]
+            "sMLExWT_M",    #[9]
+            "sGBMLExGBM_M", #[10]
+            "sWT_MxF",      #[11]
+            "sMLE_MxF")     #[12]
+
+##can set the option "top" to limit the number of plotted genes to the top number of hits
+
+MLEcomparison = "WT_MxF"
+MLEcomparison = options[1]
+
+MLE.volcano(MLEcomparison, top = 500)
+
+```
+
+
+```{r echo = F, fig.width=10, fig.height=5}
+
+library(UpSetR)
+
+all.sig.genes = list(MLExWT_F = row.names(sMLExWT_F),
+                     GBMLExGBM_F = row.names(sGBMLExGBM_F),
+                     MLExWT_M = row.names(sMLExWT_M),
+                     GBMLExGBM_M = row.names(sGBMLExGBM_M),
+                     WT_MxF = row.names(sWT_MxF),
+                     MLE_MxF = row.names(sMLE_MxF))
+
+
+upset(fromList(all.sig.genes), 
+      order.by = "freq", 
+      nsets = 6,
+      nintersects = 10,
+      matrix.color = "red",
+      queries = list(
+  list(query = intersects, 
+       params = list("MLExWT_F", "MLExWT_M"), 
+       color = "orange", 
+       active = TRUE)
+))
+
+```
+
+
+
+
+
+
+
+
+
+

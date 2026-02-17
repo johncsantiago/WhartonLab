@@ -1,0 +1,75 @@
+---
+title: "Anton Analysis"
+author: "John Santiago"
+date: "2026-01-30"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r echo = F, fig.height=6, fig.width=6}
+
+
+data = read.csv("/Users/johncsantiago/Downloads/IMG_6218.csv")
+
+raw.data.dir = "/Users/johncsantiago/Documents/GitHub/WhartonLab/Activity Tracking Data/WTA4V_TKTDf/TrackingData/"
+
+all.files = list.files(raw.data.dir)
+
+data = read.csv(paste0(raw.data.dir, all.files[160]))
+
+# steps
+df <- data[order(data$Arena, data$TrackID, data$Frame), ]
+use.frames = c(1,c(1:(max(df$Frame)/10)*10))
+df = df[df$Frame %in% use.frames,]
+key <- paste(df$Arena, df$TrackID, sep = "_")
+spl <- split(df, key)
+
+i = 1
+while(i<=length(spl)){
+  spl[[i]] = data.frame(Frame = spl[[i]]$Frame,
+               TrackID = spl[[i]]$TrackID,
+               Arena = spl[[i]]$Arena,
+               CX = spl[[i]]$CX,
+               CY = spl[[i]]$CY,
+               dx = c(NA, diff(spl[[i]]$CX)),
+               dy = c(NA, diff(spl[[i]]$CY)))
+  spl[[i]]$step_px = sqrt(spl[[i]]$dx^2 + spl[[i]]$dy^2)
+  spl[[i]]$totaldistance = c(NA, cumsum(spl[[i]]$step_px[-1]))
+  i=i+1
+}
+
+##distance traveled
+dt = do.call(rbind, spl)
+row.names(dt) = 1:nrow(dt)
+
+
+plot(x = NA,
+     y = NA,
+     xlim = c(0, max(dt$Frame)),
+     ylim = c(0, max(na.omit(dt$totaldistance))),
+     xlab = "Frame",
+     ylab = "Total distance traveled")
+
+dt$color = "royalblue"
+dt$color[dt$Arena == 1] = "firebrick"
+
+i=1
+while(i <+ length(unique(dt$TrackID))){
+  temp.dt = dt[dt$TrackID == unique(dt$TrackID)[i],]
+  lines(x = temp.dt$Frame,
+        y = temp.dt$totaldistance,
+        col = temp.dt$color[1],
+        lwd = .5)
+  i = i + 1
+}
+
+
+
+```
+
+
+

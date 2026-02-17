@@ -48,7 +48,7 @@ colnames(design) = unique(gr)
 z = estimateDisp(z, design, robust = T)
 fit <- glmQLFit(z, design)
 
-compare = makeContrasts(TktDfGR.F-WT.F, levels=design)
+compare = makeContrasts(GR.F-WT.F, levels=design)
 lrt = glmQLFTest(fit,contrast=as.vector(compare))
 G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
 DEout=G_X_E$table

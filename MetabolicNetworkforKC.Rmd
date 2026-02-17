@@ -1,0 +1,317 @@
+---
+title: "Full Metabolic Network"
+author: "John Santiago"
+date: "2025-03-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo = F}
+
+library(dendextend)
+library(visNetwork)
+library(heatmaply)
+
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/GeneralDataFiles/"
+
+GeneIDKey = read.csv(paste0(git.dir, "GeneIDKey.csv"), row.names = 1)
+
+G85R.geneFDR = read.csv(paste0(git.dir, "TKT.EdgeR.FDRTable2.csv"), row.names = 1)
+
+G85R.geneFC = read.csv(paste0(git.dir, "TKT.EdgeR.FCTable2.csv"), row.names = 1)
+
+G85R.metabFDR = read.csv(paste0(git.dir, "MetaboliteFDRs2.csv"), row.names = 1)
+G85R.metabFC = read.csv(paste0(git.dir, "MetaboliteFCs2.csv"), row.names = 1)
+
+G85R.meancpm = read.csv(paste0(git.dir, "TKT_meancpmdata.csv"), row.names = 1)
+G85R.meancpm.meta = read.csv(paste0(git.dir, "TKT_meancpmdatameta.csv"), row.names = 1)
+
+raw.nodes = read.csv(paste0(git.dir, "combined.nodes.csv"), row.names = 1)
+raw.nodes$x = raw.nodes$x*1
+raw.nodes$y = raw.nodes$y*1
+
+raw.edges = read.csv(paste0(git.dir, "combined.edges.csv"))
+
+temp = colorRampPalette(c("navy", "royalblue","white", "red", "firebrick"))(401)
+
+temp2 = colorRampPalette(c("navy", "royalblue","grey80", "red", "firebrick"))(401)
+
+hex = function(color, alpha){
+  rgb2hex = color
+  i = 1
+  while(i <= length(color)){
+    rgbvals = col2rgb(color[i])
+    rgb2hex[i] = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+    i = i+1
+  }
+  return(rgb2hex)
+}
+
+```
+
+
+
+```{r echo = F, warning=F, fig.height=10, fig.width=10}
+
+##metab (metabolomics) Choices
+#"GRxWT.C"  "GRxWT.Df" "GRxWT.OE" "GR.CxDf" "WT.CxDf"
+#"GR.CxOE"  "WT.CxOE" "GR.DfxWT.C" "GR.OExWT.C"
+##enzyme (transcriptome) choices
+#"GRF.CxDf"  "GRF.CxOE"  "WTF.CxDf"  "WTF.CxOE" "GRxWT.FC"  "GRxWT.FDf" 
+#"GRxWT.FOE" "GRDfxWT.F" "GROExWT.F" "GRM.CxDf"  "GRM.CxOE"  "WTM.CxDf" 
+#"WTM.CxOE"  "GRxWT.MC"  "GRxWT.MDf" "GRxWT.MOE" "GRDfxWT.M" "GROExWT.M" 
+#"GR.FxM"    "WT.FxM"
+
+
+
+fullnetwork = function(metab, 
+                       enzyme,
+                       fccutoff = 0, 
+                       meansumcutoff = 0){
+  nodes = raw.nodes
+  edges = raw.edges
+  mean.groups = row.names(G85R.meancpm.meta)[G85R.meancpm.meta[,enzyme]]
+  
+  nodes[nodes$shape == "dot", "label"] = NA
+  
+  nodes.color = G85R.metabFC[nodes[nodes$shape == "circle", "data.id"], metab]
+  
+  nodes$FC[nodes$shape == "circle"]= G85R.metabFC[nodes[nodes$shape == "circle", "data.id"], metab]
+  nodes$FDR[nodes$shape == "circle"]= G85R.metabFDR[nodes[nodes$shape == "circle", "data.id"], metab]
+  
+  node.size = G85R.metabFC[nodes[nodes$shape == "circle", "data.id"], metab]
+  node.size[na.action(na.exclude(node.size))] = 0
+  node.size = ((abs(node.size)/11)*80)+10
+  node.size[node.size>100] = 100
+  nodes[nodes$shape == "circle", "size"] = node.size
+  
+  nodes$color.background[nodes$shape == "circle"] = "white"
+  nodes$color.background[nodes$shape == "circle" &
+                           nodes$FC > 0] = "lightpink"
+  nodes$color.background[nodes$shape == "circle" &
+                           nodes$FC < 0] = "lightblue"
+  nodes$color.background[nodes$shape == "circle" &
+                           nodes$FDR <= 0.05 &
+                           nodes$FC > 0] = "firebrick"
+  nodes$color.background[nodes$shape == "circle" &
+                           nodes$FDR <= 0.05 &
+                           nodes$FC < 0] = "royalblue"
+  
+  nodes$color.background[nodes$shape == "circle" &
+                           abs(nodes$FC) <= fccutoff] = "grey"
+  
+  nodes$color.border = "black"
+  nodes$borderWidth = 1
+  nodes$shape = 'dot'
+  nodes$font.background = "white"
+  
+  nodes$title = paste0(nodes$id,
+                       "<br>-log2(FC): ", 
+                       signif((G85R.metabFC[nodes$data.id, metab]), 3),
+                       "<br>FDR: ", 
+                       signif((G85R.metabFDR[nodes$data.id, metab]), 3))
+  
+  
+  edges$title = paste0(GeneIDKey[edges$FBgn, "Symbol"],
+                       "<br>-log2(FC): ", 
+                       signif(G85R.geneFC[edges$FBgn,
+                                   enzyme],3),
+                       "<br>FDR: ", 
+                       signif(G85R.geneFDR[edges$FBgn,
+                                   enzyme],3),
+                       "<br>", mean.groups[1]," mean cpm: ", 
+                       signif(G85R.meancpm[edges$FBgn,
+                                   mean.groups[1]],3),
+                       "<br>", mean.groups[2]," mean cpm: ", 
+                       signif(G85R.meancpm[edges$FBgn,
+                                   mean.groups[2]],3))
+  edges.meansum = G85R.meancpm[edges$FBgn,mean.groups]
+  edges.meansum=apply(edges.meansum, 1, sum)
+  
+  edges.FC = G85R.geneFC[edges$FBgn, enzyme]
+  
+  edges.width = G85R.geneFC[edges$FBgn, enzyme]
+  edges.width[na.action(na.exclude(edges.width))] = 0
+  edges.width[apply(G85R.meancpm[edges$FBgn, row.names(G85R.meancpm.meta)[G85R.meancpm.meta[,enzyme]]], 1, sum) < 5] = 0
+  edges.width = (2^abs(edges.width))-.5
+  edges.width[edges.width>8] = 8
+  edges$width = edges.width
+  
+  edges.sig = G85R.geneFDR[edges$FBgn, enzyme]
+  edges.direction = G85R.geneFC[edges$FBgn, enzyme]
+  edges.color = "black"
+  edges.color[edges.sig <= .05 &
+                edges.direction > 0] = "firebrick"
+  edges.color[edges.sig > .05 &
+                edges.direction > 0] = "lightpink"
+  edges.color[edges.sig > .05 &
+                edges.direction < 0] = "lightblue"
+  edges.color[edges.sig <= .05 &
+                edges.direction < 0] = "royalblue"
+  edges$color = edges.color
+
+  edges$color[abs(edges.FC) < fccutoff] = "grey"
+  edges$color[edges.meansum < meansumcutoff] = "white"
+  edges$color[na.action(na.exclude(edges.meansum))] = "black"
+  edges = edges[edges$color != "white",]
+  
+  if(length(unique(G85R.meancpm.meta[mean.groups,"Sex"])) == "2"){
+    sex.specific = G85R.meancpm[,mean.groups]
+    sex.specific$sex.specific = F
+    sex.specific[sex.specific[,1]<meansumcutoff/2 &
+                   sex.specific[,2]>=meansumcutoff/2, "sex.specific"] = T
+        sex.specific[sex.specific[,1]>=meansumcutoff/2 &
+                   sex.specific[,2]<meansumcutoff/2, "sex.specific"] = T
+    sex.specific = sex.specific[edges$FBgn,]
+    edges$color[sex.specific$sex.specific] = "green"
+  }
+  
+  
+  
+  
+  visNetwork(nodes, edges, background = "white", main = enzyme)%>%
+    visNodes(physics = F)%>%
+    #visLayout(hierarchical=F, improvedLayout=T)%>%
+    visOptions(highlightNearest = TRUE, nodesIdSelection = list(enabled = T, values = nodes[nodes$size > 0, "label"]))%>%
+    visNodes(font = list(color = "black", size = 10, background = "white"))%>%
+    
+    visEdges(arrows = edges$arrows, physics = T)
+}
+
+```
+
+```{r echo = F, warning=F, fig.height=10, fig.width=10}
+
+##metab (metabolomics) Choices
+#"GRxWT.C"  "GRxWT.Df" "GRxWT.OE" "GR.CxDf" "WT.CxDf"
+#"GR.CxOE"  "WT.CxOE" "GR.DfxWT.C" "GR.OExWT.C"
+##enzyme (transcriptome) choices
+#"GRF.CxDf"  "GRF.CxOE"  "WTF.CxDf"  "WTF.CxOE" "GRxWT.FC"  "GRxWT.FDf" 
+#"GRxWT.FOE" "GRDfxWT.F" "GROExWT.F" "GRM.CxDf"  "GRM.CxOE"  "WTM.CxDf" 
+#"WTM.CxOE"  "GRxWT.MC"  "GRxWT.MDf" "GRxWT.MOE" "GRDfxWT.M" "GROExWT.M" 
+#"GR.FxM"    "WT.FxM"
+
+metab = "GR.CxDf"
+enzyme = "GRF.CxDf"
+##wont include edges for genes with average expression across all libraries in the comparison below the cutoff
+meansumcutoff = 5
+##genes/metabolites with fold change below the cutoff are not colored red/blue
+fccutoff = log2(1.25)
+
+fullnetwork(metab, enzyme, fccutoff, meansumcutoff)
+fullnetwork(enzyme, fccutoff, meansumcutoff)
+
+```
+
+
+
+
+
+```{r echo = F}
+
+
+nodes = raw.nodes
+  edges = raw.edges
+  mean.groups = row.names(G85R.meancpm.meta)[G85R.meancpm.meta[,enzyme]]
+  
+  nodes[nodes$shape == "dot", "label"] = NA
+  
+  nodes.color = G85R.metabFC[nodes[nodes$shape == "circle", "data.id"], metab]
+  
+  nodes$FC[nodes$shape == "circle"]= G85R.metabFC[nodes[nodes$shape == "circle", "data.id"], metab]
+  nodes$FDR[nodes$shape == "circle"]= G85R.metabFDR[nodes[nodes$shape == "circle", "data.id"], metab]
+  
+  nodes$size = 20
+  nodes$size[nodes$shape == "dot"] = 0
+  
+  nodes$color.background[nodes$shape == "circle"] = "grey"
+ 
+  nodes$color.border = "black"
+  nodes$borderWidth = 1
+  nodes$shape = 'dot'
+  nodes$font.background = "white"
+  
+  nodes$title = paste0(nodes$id,
+                       "<br>-log2(FC): ", 
+                       signif((G85R.metabFC[nodes$data.id, metab]), 3),
+                       "<br>FDR: ", 
+                       signif((G85R.metabFDR[nodes$data.id, metab]), 3))
+  
+  
+  edges$title = paste0(GeneIDKey[edges$FBgn, "Symbol"],
+                       "<br>-log2(FC): ", 
+                       signif(G85R.geneFC[edges$FBgn,
+                                   enzyme],3),
+                       "<br>FDR: ", 
+                       signif(G85R.geneFDR[edges$FBgn,
+                                   enzyme],3),
+                       "<br>", mean.groups[1]," mean cpm: ", 
+                       signif(G85R.meancpm[edges$FBgn,
+                                   mean.groups[1]],3),
+                       "<br>", mean.groups[2]," mean cpm: ", 
+                       signif(G85R.meancpm[edges$FBgn,
+                                   mean.groups[2]],3))
+
+  
+  edges.width = 2
+  
+  edges.direction = G85R.geneFC[edges$FBgn, enzyme]
+  edges.color = "black"
+
+  highlightPPP = F
+  if(highlightPPP ==T){
+  PPP.nodes = unique(edges[edges$Pathway == "PPP", "from"],
+                     edges[edges$Pathway == "PPP", "to"])
+  PPP.nodes = nodes[nodes$id %in% PPP.nodes,]
+  PPP.nodes = PPP.nodes[PPP.nodes$shape == "circle",]
+  
+  nodes$color.background[nodes$Pathway == "PPP" & nodes$connector == "metabolite"] = "darkorange"
+  
+  edges[edges$Pathway == "PPP", "color"] = "goldenrod"
+    edges[edges$Pathway == "PPP", "width"] = 1
+  edges[grep("CG8036", edges$title), "color"] = "firebrick"
+    edges[grep("CG8036", edges$title), "width"] = 3
+  }
+  
+  edges$color[edges$FBgn == "FBgn0039254"] = "deeppink"
+  edges$width[edges$FBgn == "FBgn0039254"] = 3
+  
+  edges$color[edges$FBgn == "FBgn0036030"] = "deeppink"
+  edges$width[edges$FBgn == "FBgn0036030"] = 3
+  
+  edges$color[edges$FBgn == "FBgn0020513"] = "deeppink"
+  edges$width[edges$FBgn == "FBgn0020513"] = 3
+  
+  edges$color[edges$FBgn == "FBgn0037607"] = "deeppink"
+  edges$width[edges$FBgn == "FBgn0037607"] = 3
+  
+  edges$color[edges$FBgn == "FBgn0050499"] = "deeppink"
+  edges$width[edges$FBgn == "FBgn0050499"] = 3
+  
+  edges$color[edges$FBgn == "FBgn0050410"] = "deeppink"
+  edges$width[edges$FBgn == "FBgn0050410"] = 3
+  
+  edges$color[edges$FBgn == "FBgn0033853"] = "deeppink"
+  edges$width[edges$FBgn == "FBgn0033853"] = 3
+  
+  
+  
+  
+  
+  visNetwork(nodes, edges, background = "white", main = enzyme)%>%
+    visNodes(physics = F)%>%
+    #visLayout(hierarchical=F, improvedLayout=T)%>%
+    visOptions(highlightNearest = TRUE, nodesIdSelection = list(enabled = T, values = nodes[nodes$size > 0, "label"]))%>%
+    visNodes(font = list(color = "black", size = 10, background = "white"))%>%
+    
+    visEdges(arrows = edges$arrows, physics = T)
+  
+  
+```
+  
+  
+  
+  

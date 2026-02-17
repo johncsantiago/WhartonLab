@@ -1070,11 +1070,12 @@ compare.genes = function(FC, FDR, mean.data){
   
   data$Color[(data$FC1 - 1) > data$FC2] = 'royalblue'
   data$Color[(data$FC2 - 1) > data$FC1] = 'firebrick' 
-  data$size = apply(data[,c('Variable1.cpm', 'Control1.cpm',
-                            'Variable2.cpm', 'Control2.cpm')], max)
+  #data$size = apply(data[,c('Variable1.cpm', 'Control1.cpm',
+  #                          'Variable2.cpm', 'Control2.cpm')],MARGIN = 1, max)
   
-  #data$size = 2.5*apply(data[,c('FDR1', 'FDR2')], MARGIN = 1, max)
-  #data$size[data$size < -2.5*log2(.05)] = 5
+  data$size = 2.5*apply(data[,c('FDR1', 'FDR2')], MARGIN = 1, max)
+  data$size[data$size > 20] = 20
+  data$size[data$size < -2.5*log2(.05)] = 5
   data = na.omit(data)
   
 data = data[(data$FDR1 >= -log2(.05) | data$FDR2 >= -log2(.05)),]

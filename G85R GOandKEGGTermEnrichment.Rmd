@@ -110,7 +110,7 @@ G85R.KEGG20(cat.data, plot.data, usecats)
 ```{r echo = F, include = T}
 
 ##can be the exact name or 5 digit code in quotes
-specific.kegg = "00230"
+specific.kegg = "04146"
 
 G85R.plotkegg.genes(specific.kegg, plot.data)
 
@@ -155,7 +155,7 @@ G85R.comparekegg.genes(specific.kegg, plot.data)
 GO.ontology = 'BP'
 
 ##can select which categories ot include or say 'sigs.only'
-usecats=c(1:20)
+usecats=c(1:30)
 #usecats = 'sigs.only'
 
 G85R.GO20(cat.data, GO.ontology, plot.data, usecats)
@@ -166,7 +166,7 @@ G85R.GO20(cat.data, GO.ontology, plot.data, usecats)
 ```{r echo = F}
 
 ##the 7 digits of a GOterm id or the exact term name
-specific.go = '0022008'
+specific.go = '0004601'
 
 G85R.plotgo.genes(specific.go, plot.data)
 
@@ -176,7 +176,7 @@ G85R.plotgo.genes(specific.go, plot.data)
 ```{r echo = F, warning = F}
 
 ##the 7 digits of a GOterm id or the exact term name
-specific.go = '0022008'
+specific.go = '0004601'
 
 G85R.comparego.genes(specific.go, plot.data)
 
@@ -190,6 +190,22 @@ G85R.comparego.genes(specific.go, plot.data)
 GO.ontology = 'BP'
 
 rt = tree(cat.data, GO.ontology)
+  
+treemapPlot(rt)
+
+```
+
+
+```{r echo = F, warning = F, message = F}
+
+##This function is very slow
+## BP, CC, or MF
+GO.ontology = 'BP'
+
+MLE.catdata = list(GO = MLE2plus,
+                   KEGG = NA)
+
+rt = tree(MLE.catdata, GO.ontology)
   
 treemapPlot(rt)
 

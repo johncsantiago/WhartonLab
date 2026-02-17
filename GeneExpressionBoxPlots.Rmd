@@ -137,6 +137,8 @@ metadata = data.frame(Sample = colnames(rawdata),
                       TIC = as.numeric(rawdata[2,]), 
                       Genotypes = genotypes[as.character(rawdata[1,])])
 
+metadata$ID = paste0(metadata$Genotypes, substr(metadata$Sample, 2,2))
+
 row.names(metadata) = metadata$Sample
 
 norm.func = function(data){
@@ -169,8 +171,8 @@ compare.conditions = function(condition1, condition2){
   p=setNames(rep(NA, nrow(norm.data)), row.names(norm.data))
   i=1
   while(i<=length(p)){
-    if(length(na.omit(norm.data[i,columns1]))>2 & 
-       length(na.omit(norm.data[i,columns2]))>2){
+    if(length(na.omit(norm.data[i,columns1]))>=2 & 
+       length(na.omit(norm.data[i,columns2]))>=2){
       temp = t.test(na.omit(norm.data[i,columns1]),
                     na.omit(norm.data[i,columns2]), paired = F, var.equal = T)
       p[i] = temp[[3]]
@@ -223,19 +225,22 @@ comparison.means = list(GRF.CxDf = c("TktDfGR.F","GR.F"),
                  WT.FxM = c("WT.F","WT.M"))
 
 
-metab.FC = data.frame('GRxWT.C' = GRxWT.C$FC,
-                      'GRxWT.Df' = GRxWT.Df$FC,
-                      'GRxWT.OE' = GRxWT.OE$FC,
-                      'GR.CxDf' = GR.CxDf$FC,
-                      'WT.CxDf' = WT.CxDf$FC,
-                      'GR.CxOE' = GR.CxOE$FC,
-                      'WT.CxOE' = WT.CxOE$FC,
-                      'GR.DfxWT.C' = GR.DfxWT.C$FC,
-                      'GR.OExWT.C' = GR.OExWT.C$FC)
+metab.FC = data.frame(KEGG = KEGG.Key[row.names(GRxWT.C)],
+                      'GRxWT.C' = log2(GRxWT.C$FC),
+                      'GRxWT.Df' = log2(GRxWT.Df$FC),
+                      'GRxWT.OE' = log2(GRxWT.OE$FC),
+                      'GR.CxDf' = log2(GR.CxDf$FC),
+                      'WT.CxDf' = log2(WT.CxDf$FC),
+                      'GR.CxOE' = log2(GR.CxOE$FC),
+                      'WT.CxOE' = log2(WT.CxOE$FC),
+                      'GR.DfxWT.C' = log2(GR.DfxWT.C$FC),
+                      'GR.OExWT.C' = log2(GR.OExWT.C$FC))
 row.names(metab.FC) = row.names(GRxWT.C)
-metab.FC = log2(metab.FC)
 
-metab.FDR = data.frame(GRxWT.C = GRxWT.C$p,
+
+
+metab.FDR = data.frame(KEGG = KEGG.Key[row.names(GRxWT.C)],
+                       GRxWT.C = GRxWT.C$p,
                        GRxWT.Df = GRxWT.Df$p,
                        GRxWT.OE = GRxWT.OE$p,
                        GR.CxDf = GR.CxDf$p,
@@ -249,6 +254,10 @@ row.names(metab.FDR) = row.names(GRxWT.C)
 colnames(mean.metab) = as.character(genotypes[colnames(mean.metab)])
 
 colnames(norm.data) = as.character(genotypes[substr(colnames(norm.data),1,1)])
+
+#write.csv(metab.FC, "/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/MetaboliteFCs2.csv")
+#write.csv(metab.FDR, "/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/MetaboliteFDRs2.csv")
+#write.csv(norm.data, "/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/NormMetaboliteData.csv")
 
 SCdata = read.csv(paste0(git.dir, "Nguyen%20Serpe%202024%20scRNA-seq%20VNC.csv"), row.names = 1)
 
@@ -427,9 +436,9 @@ if(nrow(ID.row) != 1){
 ##Plot levels of a specific metabolite
 plot.metab = function(metabID){
 
-ID.row = row.names(norm.data)[grep(ID, row.names(norm.data))]
+ID.row = row.names(norm.data)[grep(metabID, row.names(norm.data))]
 
-if(nrow(ID.row) < 500){
+if(length(ID.row) < 500){
 if(length(ID.row) == 1){
 metab = ID.row
 name = ID.row
@@ -518,6 +527,7 @@ if(length(ID.row) != 1){
 
 ##Function to plot a specific gene expression levels in all cell types for the SCdata
 plot.SC = function(gene.name){
+  SCdata$Gene.name = row.names(SCdata)
 ID.row = SCdata[grep(gene.name, SCdata$Gene.name),]
 
 if(nrow(ID.row) < 500){
@@ -555,7 +565,7 @@ if(nrow(ID.row) == 1){
       y = NA,
      type = 'n',
      ylim = c(.95, 21),
-     xlim = c(0, xmax),
+     xlim = c(0, 1000),
      xaxt = "n",
      ylab="",
      yaxt = "n",
@@ -622,7 +632,7 @@ if(nrow(ID.row) != 1){
 ## Plot gene expression from G85R TKT RNAseq experiment
 ## ID needs to be the full or partial gene symbol or FBgn (case sensitive)
 
-ID = "Arc1"
+ID = "FBgn0288846"
 
 plot.G85R(ID)
 
@@ -634,7 +644,7 @@ plot.G85R(ID)
 ## Plot gene expression from A4V RNAseq experiment
 ## ID needs to be the full or partial gene symbol or FBgn (case sensitive)
 
-ID = "0000018"
+ID = "FBgn0288846"
   
 plot.A4V(ID)
 ```
@@ -645,7 +655,7 @@ plot.A4V(ID)
 ## Plot metabolite levels from the G85R TKT metabolomics experiment
 ## metabID needs to be the full or partial metabolite name as listed in the table (case sensitive)
 
-metabID = 'NADP'
+metabID = 'uric'
 
 plot.metab(metabID)
 
@@ -657,11 +667,23 @@ plot.metab(metabID)
 ## Plot gene expression from Single Cell RNAseq experiment
 ## gene name needs to be the full or partial gene symbol as listed in the table (case sensitive)
 
-gene.name = 'gbb'
+gene.name = 'RapGAP1'
+gene.name = 'VGlut'
 
 plot.SC(gene.name)
 
 ```
+```{r echo = F}
+
+## Plot gene expression from Single Cell RNAseq experiment
+## gene name needs to be the full or partial gene symbol as listed in the table (case sensitive)
+
+gene.name = 'RapGAP1'
+
+plot.SC(gene.name)
+
+```
+
 
 ```{r echo = F}
 ## Plot a subset of groups in the TKT dataset
@@ -703,8 +725,7 @@ if(nrow(ID.row) != 1){
 
 ```{r echo = F}
 ##Plot expression levels for a specific gene in the gbbOE dataset
-
-##ID = "0000018"
+ID = "FBgn0003023"
   
 ID.row = GeneIDKey[grep(ID, GeneIDKey$FBgn),]
 

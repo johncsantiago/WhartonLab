@@ -214,15 +214,16 @@ return(fig)
 
 
 ```{r echo = F}
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/GeneralDataFiles/"
 
 sigsA3FvMT = row.names(FDR)[FDR[,'A3FvMT']<.05]
 sigsS3FvMT = row.names(FDR)[FDR[,'S3FvMT']<.05]
 sigsA9FvMT = row.names(FDR)[FDR[,'A9FvMT']<.05]
 sigsS9FvMT = row.names(FDR)[FDR[,'S9FvMT']<.05]
 
-GR.cpm = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT_cpmdata.csv"),row.names = 1)
-GR.meta  = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.metadata.csv"),row.names = 1)
-GR.FDR = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FDRTable.csv"),row.names = 1)
+GR.cpm = read.csv(paste0(git.dir,"TKT_cpmdata.csv"),row.names = 1)
+GR.meta  = read.csv(paste0(git.dir,"TKT.metadata.csv"),row.names = 1)
+GR.FDR = read.csv(paste0(git.dir,"TKT.EdgeR.FDRTable.csv"),row.names = 1)
 
 sigsGR.FxM = row.names(GR.FDR)[GR.FDR$GR.FxM <.05]
 sigsWT.FxM = row.names(GR.FDR)[GR.FDR$WT.FxM <.05]
@@ -249,7 +250,7 @@ T9 = A9
 ```
 
 ```{r}
-
+library(VennDiagram)
 ##Triple Venn
 grid.newpage()
 draw.triple.venn(area1=length(s1),area2=length(s2),area3=length(s3),n12=length(intersect(s1,s2)),n23 = length(intersect(s2,s3)),n13 = length(intersect(s1,s3)),n123 = length(intersect(intersect(s1,s2),s3)),category=c(set1,set2,set3),fill = c("green", "blue","red"),cex=1.5,cat.cex = 1)
@@ -266,9 +267,7 @@ sigsS3FvMH = row.names(FDR)[FDR[,'S3FvMH']<.05]
 sigsA9FvMH = row.names(FDR)[FDR[,'A9FvMH']<.05]
 sigsS9FvMH = row.names(FDR)[FDR[,'S9FvMH']<.05]
 
-GR.cpm = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT_cpmdata.csv"),row.names = 1)
-GR.meta  = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.metadata.csv"),row.names = 1)
-GR.FDR = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FDRTable.csv"),row.names = 1)
+
 
 sigsGR.FxM = row.names(GR.FDR)[GR.FDR$GR.FxM <.05]
 sigsWT.FxM = row.names(GR.FDR)[GR.FDR$WT.FxM <.05]
@@ -313,9 +312,6 @@ sigsS3FvMA = row.names(FDR)[FDR[,'S3FvMA']<.05]
 sigsA9FvMA = row.names(FDR)[FDR[,'A9FvMA']<.05]
 sigsS9FvMA = row.names(FDR)[FDR[,'S9FvMA']<.05]
 
-GR.cpm = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT_cpmdata.csv"),row.names = 1)
-GR.meta  = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.metadata.csv"),row.names = 1)
-GR.FDR = read.csv(paste0(git.dir,"TKT_RNAseq/CountTables/TKT.EdgeR.FDRTable.csv"),row.names = 1)
 
 sigsGR.FxM = row.names(GR.FDR)[GR.FDR$GR.FxM <.05]
 sigsWT.FxM = row.names(GR.FDR)[GR.FDR$WT.FxM <.05]
@@ -352,7 +348,7 @@ draw.triple.venn(area1=length(s1),area2=length(s2),area3=length(s3),n12=length(i
 
 
 ```{r echo = F, include = F}
-
+library(goseq)
 sigs = setdiff(setdiff(T9,T3),GR)
 bg = row.names(FDR)
 

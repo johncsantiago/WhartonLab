@@ -29,10 +29,10 @@ source('/Users/johncsantiago/Documents/GitHub/WhartonLab/GOandKEGGPlottingFuncti
 #                                   M or F for sex
 #                                   C, Df or OE for TKT modulation
 #                                   example: GRMOE
-Variable.Condition = "GRFC" 
-Control.Condition = "WTFC"
-secondary.Variable.Condition = "GRMC"
-secondary.Control.Condition = "WTMC"
+Variable.Condition = "A9MT" 
+Control.Condition = "S9MT"
+secondary.Variable.Condition = "A9MH"
+secondary.Control.Condition = "S9MH"
 
 
 
@@ -148,10 +148,48 @@ plotkegg.genes(specific.kegg, FC, FDR, mean.data)
 ```
 
 
+
+
+```{r echo = F, include = F}
+
+####Uses sigDEGs from primary comparison
+cat.data = Enrichment(FDR)
+
+cat.data = Subset.Enrichment(row.names(FDR), row.names(FDR)[FDR[,2]<=0.05])
+
+
+
+```
+
+
+```{r echo = F}
+
+
+##which ranks of categories to use
+##a vector of numbers specifying which ranks to use
+##eg. c(1, 5:6) will use the first, fifth and sixth most sig. cats.
+##can also just type 'sigs.only' 
+usecats=c(1:20)
+#usecats = 'sigs.only'  
+
+KEGG20(cat.data, FC[2:1], FDR[2:1], usecats)
+
+```
+
+
+```{r echo = F, include = T}
+
+##can be the exact name or 5 digit code in quotes
+specific.kegg = "04146"
+
+plotkegg.genes(specific.kegg, FC[,2:1], FDR[,2:1], mean.data[,c(3,4,1,2)])
+
+```
+
 ```{r echo = F, message=F, fig.width=7}
 
 ##5 digits from KEGG ID
-PathwayID = "03050"
+PathwayID = "04146"
 
 #options include 'primary' or 'both'
 use = 'both'
@@ -164,7 +202,7 @@ KEGG.diagram(PathwayID, FC, use, metab.data)
 ```{r echo = F, include = T, warnings = F}
 
 ##can be the exact name or 5 digit code in quotes
-specific.kegg = "03050"
+specific.kegg = "04146"
 
 comparekegg.genes(specific.kegg, FC, FDR, mean.data)
 
