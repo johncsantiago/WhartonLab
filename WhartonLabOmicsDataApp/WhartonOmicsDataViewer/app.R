@@ -3,9 +3,9 @@ library(gplots)
 library(DT)
 library(visNetwork)
 #library(rsconnect)
-#deployApp("/Users/johncsantiago/Documents/GitHub/WhartonLab/WhartonLabOmicsDataApp2/")
+#deployApp("/Users/johncsantiago/Documents/GitHub/WhartonLab/WhartonLabOmicsDataApp/WhartonOmicsDataViewer")
 
-source("https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/WhartonLabOmicsDataApp2/WhartonLabOmicsDataAppFunctions.R")
+source("https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/WhartonLabOmicsDataApp/WhartonLabOmicsDataAppFunctions.R")
 
 NETWORK_DATASET <- "G85R-TKT Network (Metab + Enzyme)"
 
