@@ -1,295 +1,295 @@
-from,to,arrows,color,width,title,FBgn,physics
-xanthine,uric acid,to,black,0,NA,FBgn0003308,T
-hypoxanthine,xanthine,to,black,0,NA,FBgn0003308,T
-xanthosine,xanthine,to,black,0,NA,FBgn0034898,T
-xanthosine,xanthine,to,black,0,NA,FBgn0035348,T
-guanine,xanthine,to,black,0,NA,FBgn0261436,T
-XMP,xanthosine,to,black,0,NA,FBgn0033538,T
-XMP,xanthosine,to,black,0,NA,FBgn0050104,T
-XMP,xanthosine,to,black,0,NA,FBgn0052549,T
-XMP,xanthosine,to,black,0,NA,FBgn0259101,T
-XMP,xanthosine,to,black,0,NA,FBgn0034225,T
-IMP,XMP,to,black,0,NA,FBgn0003204,T
-IDP,IMP,to,black,0,NA,FBgn0037900,T
-AMP,IMP,to,black,0,NA,FBgn0052626,T
-IMP,adenylosuccinate,to,black,0,NA,FBgn0027493,T
-hypoxanthine,inosine,to;from,black,0,NA,FBgn0034898,T
-hypoxanthine,inosine,to;from,black,0,NA,FBgn0035348,T
-adenosine,inosine,to,black,0,NA,FBgn0033952,T
-adenosine,inosine,to,black,0,NA,FBgn0036751,T
-adenosine,inosine,to,black,0,NA,FBgn0036752,T
-adenosine,inosine,to,black,0,NA,FBgn0037661,T
-adenosine,inosine,to,black,0,NA,FBgn0038172,T
-IMP,inosine,to,black,0,NA,FBgn0033538,T
-IMP,inosine,to,black,0,NA,FBgn0050104,T
-IMP,inosine,to,black,0,NA,FBgn0052549,T
-IMP,inosine,to,black,0,NA,FBgn0259101,T
-IMP,inosine,to,black,0,NA,FBgn0034225,T
-hypoxanthine,deoxyinosine,to;from,black,0,NA,FBgn0034898,T
-hypoxanthine,deoxyinosine,to;from,black,0,NA,FBgn0035348,T
-deoxyadenosine,deoxyinosine,to,black,0,NA,FBgn0033952,T
-deoxyadenosine,deoxyinosine,to,black,0,NA,FBgn0036751,T
-deoxyadenosine,deoxyinosine,to,black,0,NA,FBgn0036752,T
-deoxyadenosine,deoxyinosine,to,black,0,NA,FBgn0037661,T
-deoxyadenosine,deoxyinosine,to,black,0,NA,FBgn0038172,T
-AMP,adenosine,to,black,0,NA,FBgn0033538,T
-AMP,adenosine,to,black,0,NA,FBgn0050104,T
-AMP,adenosine,to,black,0,NA,FBgn0052549,T
-AMP,adenosine,to,black,0,NA,FBgn0259101,T
-AMP,adenosine,to,black,0,NA,FBgn0034225,T
-adenylosuccinate,AMP,to,black,0,NA,FBgn0038467,T
-adenosine,AMP,to;from,black,0,NA,FBgn0026602,T
-adenosine,AMP,to;from,black,0,NA,FBgn0036337,T
-adenosine,AMP,to;from,black,0,NA,FBgn0037995,T
-cAMP,AMP,to,black,0,NA,FBgn0000479,T
-cAMP,AMP,to,black,0,NA,FBgn0085370,T
-cAMP,AMP,to,black,0,NA,FBgn0266377,T
-adenosine,adenine,to;from,black,0,NA,FBgn0034898,T
-adenosine,adenine,to;from,black,0,NA,FBgn0035348,T
-AMP,adenine,to;from,black,0,NA,FBgn0000109,T
-AMP,ADP,to;from,black,0,NA,FBgn0022709,T
-AMP,ADP,to;from,black,0,NA,FBgn0033754,T
-AMP,ADP,to;from,black,0,NA,FBgn0042094,T
-ATP,ADP,to;from,black,0,NA,FBgn0000150,T
-ATP,ADP,to;from,black,0,NA,FBgn0028997,T
-ATP,ADP,to;from,black,0,NA,FBgn0030573,T
-ATP,ADP,to;from,black,0,NA,FBgn0039809,T
-ATP,ADP,to,black,0,NA,FBgn0037046,T
-ADP,dADP,to,black,0,NA,FBgn0011703,T
-ADP,dADP,to,black,0,NA,FBgn0011704,T
-dATP,dADP,to;from,black,0,NA,FBgn0000150,T
-dATP,dADP,to;from,black,0,NA,FBgn0028997,T
-dATP,dADP,to;from,black,0,NA,FBgn0030573,T
-dATP,dADP,to;from,black,0,NA,FBgn0039809,T
-deoxyadenosine,dAMP,to,black,0,NA,FBgn0022338,T
-dADP,dAMP,to;from,black,0,NA,FBgn0022709,T
-dADP,dAMP,to;from,black,0,NA,FBgn0033754,T
-adenine,deoxyadenosine,to;from,black,0,NA,FBgn0034898,T
-adenine,deoxyadenosine,to;from,black,0,NA,FBgn0035348,T
-dAMP,deoxyadenosine,to,black,0,NA,FBgn0033538,T
-dAMP,deoxyadenosine,to,black,0,NA,FBgn0050104,T
-dAMP,deoxyadenosine,to,black,0,NA,FBgn0052549,T
-dAMP,deoxyadenosine,to,black,0,NA,FBgn0259101,T
-dAMP,deoxyadenosine,to,black,0,NA,FBgn0034225,T
-dAMP,deoxyadenosine,to,black,0,NA,FBgn0031836,T
-deoxyguanosine,guanine,to,black,0,NA,FBgn0034898,T
-deoxyguanosine,guanine,to,black,0,NA,FBgn0035348,T
-dGTP,dGDP,to;from,black,0,NA,FBgn0000150,T
-dGTP,dGDP,to;from,black,0,NA,FBgn0028997,T
-dGTP,dGDP,to;from,black,0,NA,FBgn0030573,T
-dGTP,dGDP,to;from,black,0,NA,FBgn0039809,T
-GDP,dGDP,to,black,0,NA,FBgn0011703,T
-GDP,dGDP,to,black,0,NA,FBgn0011704,T
-guanine,guanosine,to;from,black,0,NA,FBgn0034898,T
-guanine,guanosine,to;from,black,0,NA,FBgn0035348,T
-GMP,guanosine,to,black,0,NA,FBgn0033538,T
-GMP,guanosine,to,black,0,NA,FBgn0050104,T
-GMP,guanosine,to,black,0,NA,FBgn0052549,T
-GMP,guanosine,to,black,0,NA,FBgn0259101,T
-GMP,guanosine,to,black,0,NA,FBgn0034225,T
-GTP,GDP,to;from,black,0,NA,FBgn0000150,T
-GTP,GDP,to;from,black,0,NA,FBgn0028997,T
-GTP,GDP,to;from,black,0,NA,FBgn0030573,T
-GTP,GDP,to;from,black,0,NA,FBgn0039809,T
-XMP,GMP,to,black,0,NA,FBgn0000239,T
-GDP,GMP,to,black,0,NA,FBgn0037900,T
-GDP,GMP,to;from,black,0,NA,FBgn0036099,T
-dGDP,dGMP,to;from,black,0,NA,FBgn0036099,T
-deoxyguanosine,dGMP,to,black,0,NA,FBgn0022338,T
-ATP,cAMP,to,black,0,NA,FBgn0003301,T
-ATP,cAMP,to,black,0,NA,FBgn0004852,T
-ATP,cAMP,to,black,0,NA,FBgn0022710,T
-ATP,cAMP,to,black,0,NA,FBgn0023416,T
-ATP,cAMP,to,black,0,NA,FBgn0024150,T
-ATP,cAMP,to,black,0,NA,FBgn0033984,T
-ATP,cAMP,to,black,0,NA,FBgn0040507,T
-ATP,cAMP,to,black,0,NA,FBgn0040508,T
-ATP,cAMP,to,black,0,NA,FBgn0040509,T
-ATP,cAMP,to,black,0,NA,FBgn0040510,T
-ATP,cAMP,to,black,0,NA,FBgn0052301,T
-ATP,cAMP,to,black,0,NA,FBgn0052305,T
-uric acid,Excretion,to,black,0,NA,NA,T
-dATP,DNA.A,to,black,0,NA,NA,T
-dGTP,DNA.G,to,black,0,NA,NA,T
-ATP,RNA.A,to,black,0,NA,NA,T
-GTP,RNA.G,to,black,0,NA,NA,T
-GTP,Riboflavin.Metabolism,to,black,0,NA,NA,T
-GTP,Folate.Biosynthesis,to,black,0,NA,NA,T
-FAICAR,IMP,to;from,black,0,NA,FBgn0039241,T
-AICA ribonucleotide,FAICAR,to,black,0,NA,FBgn0039241,T
-SAICAR,AICA ribonucleotide,to;from,black,0,NA,FBgn0038467,T
-CAIR,SAICAR,to;from,black,0,NA,FBgn0020513,T
-AIR,CAIR,to;from,black,0,NA,FBgn0020513,T
-FGAM,AIR,to,black,0,NA,FBgn0000053,T
-FGAR,FGAM,to,black,0,NA,FBgn0000052,T
-GAR,FGAR,to,black,0,NA,FBgn0000053,T
-Ribosylamine-5p,GAR,to,black,0,NA,FBgn0000053,T
-PRPP,Ribosylamine-5p,to,black,0,NA,FBgn0004901,T
-PRPP,Ribosylamine-5p,to,black,0,NA,FBgn0041194,T
-D-Ribose-5P,PRPP,to;from,black,0,NA,FBgn0036030,T
-D-Ribulose 5P,D-Ribose-5P,to;from,black,0,NA,FBgn0050410,T
-6-phosphogluconic acid,D-Ribulose 5P,to,black,0,NA,FBgn0004654,T
-6-phosphoglucono-D-lactone,6-phosphogluconic acid,to,black,0,NA,FBgn0030239,T
-beta-D-Glucose 6P,6-phosphoglucono-D-lactone,to,black,0,NA,FBgn0004057,T
-beta-D-Glucose 6P,6-phosphoglucono-D-lactone,to,black,0,NA,FBgn0037147,T
-D-Ribulose 5P,D-Xylulose 5-phosphate,to;from,black,0,NA,FBgn0050499,T
-D-Fructose 6-phosphate,"D-Fructose-1,6P",to,black,0,NA,FBgn0003071,T
-D-Fructose 6-phosphate,"D-Fructose-1,6P",to;from,black,0,NA,FBgn0032820,T
-"D-Fructose-1,6P",D-Glyceraldehyde 3-phosphate,to;from,black,0,NA,FBgn0039425,T
-"D-Fructose-1,6P",D-Glyceraldehyde 3-phosphate,to;from,black,0,NA,FBgn0000064,T
-NC1,D-erythrose-4-phosphate,to,black,0,NA,FBgn0023477,F
-NC1,D-Fructose 6-phosphate,to,black,0,NA,FBgn0023477,F
-NC32,D-Glyceraldehyde 3-phosphate,to,black,0,NA,FBgn0023477,F
-NC1,D-sedoheptulose-7-phosphate,to,black,0,NA,FBgn0023477,F
-NC2,NC10,to,black,0,NA,FBgn0037607,F
-NC3,NC15,to,black,0,NA,FBgn0036784,F
-NC2,NC11,to,black,0,NA,FBgn0037607,F
-NC3,NC16,to,black,0,NA,FBgn0036784,F
-NC2,NC34,to,black,0,NA,FBgn0037607,F
-NC3,NC35,to,black,0,NA,FBgn0036784,F
-NC4,NC22,to,black,0,NA,FBgn0036784,F
-NC6,NC23,to,black,0,NA,FBgn0037607,F
-NC12,NC14,to,black,0,NA,FBgn0036784,F
-NC33,NC19,to,black,0,NA,FBgn0037607,F
-NC4,NC20,to,black,0,NA,FBgn0036784,F
-NC6,NC21,to,black,0,NA,FBgn0037607,F
-NC27,NC26,to,black,0,NA,FBgn0037607,F
-NC29,NC24,to,black,0,NA,FBgn0036784,F
-NC25,NC28,to,black,0,NA,FBgn0036784,F
-NC30,NC31,to,black,0,NA,FBgn0037607,F
-nicotinamide riboside+,nicotinamide,to;from,black,0,NA,FBgn0034898,T
-nicotinamide riboside+,nicotinamide,to;from,black,0,NA,FBgn0035348,T
-nicotinamide riboside+,NMN,to,black,0,NA,FBgn0033538,T
-nicotinamide riboside+,NMN,to,black,0,NA,FBgn0050104,T
-nicotinamide riboside+,NMN,to,black,0,NA,FBgn0052549,T
-nicotinamide riboside+,NMN,to,black,0,NA,FBgn0259101,T
-nicotinamide riboside+,NMN,to,black,0,NA,FBgn0034225,T
-nicotinamide,NMN,to,black,0,NA,,T
-NMN,NAD+,to,black,0,NA,FBgn0039254,T
-NAD+,NADP+,to,black,0,NA,FBgn0026619,T
-NAD+,NADP+,to,black,0,NA,FBgn0027330,T
-NAD+,NADP+,to,black,0,NA,FBgn0031815,T
-NAD+,NADP+,to,black,0,NA,FBgn0036662,T
-NAD+,NADP+,to,black,0,NA,FBgn0053156,T
-NAD+,NADP+,to,black,0,NA,FBgn0053337,T
-NAD+,NADH,to;from,black,0,NA,,T
-NADP+,NADPH,to;from,black,0,NA,,T
-nicotinic acid,NAMN,to,black,0,NA,,T
-NAMN,NAAD,to,black,0,NA,FBgn0039254,T
-NAAD,NAD+,to,black,0,NA,FBgn0030512,T
-tryptophan,N-Formylkynurenine,to,black,0,NA,FBgn0003965,T
-N-Formylkynurenine,kynurenine,to,black,0,NA,FBgn0031821,T
-kynurenine,3-hydroxykynurenine,to,black,0,NA,FBgn0000337,T
-kynurenine,kynurenic acid,to,black,0,NA,FBgn0037955,T
-3-hydroxykynurenine,NAMN,to,black,0,NA,,T
-D-Glucose 1P,alpha-D-Glucose 6-phosphate,to,black,0,NA,FBgn0033377,T
-D-Glucose 1P,alpha-D-Glucose 6-phosphate,to,black,0,NA,FBgn0003076,T
-D-Glucose 1P,alpha-D-Glucose 6-phosphate,to,black,0,NA,FBgn0033969,T
-Glucose,alpha-D-Glucose 6-phosphate,to,black,0,NA,FBgn0001186,T
-Glucose,alpha-D-Glucose 6-phosphate,to,black,0,NA,FBgn0042710,T
-Glucose,alpha-D-Glucose 6-phosphate,to,black,0,NA,FBgn0042711,T
-Glucose,alpha-D-Glucose 6-phosphate,to,black,0,NA,FBgn0001187,T
-Glucose,alpha-D-Glucose 6-phosphate,to,black,0,NA,FBgn0036402,T
-alpha-D-Glucose 6-phosphate,Glucose,to,black,0,NA,FBgn0031463,T
-beta-D-Glucose,Glucose,to,black,0,NA,FBgn0035679,T
-beta-D-Glucose,Glucose,to,black,0,NA,FBgn0030525,T
-beta-D-Glucose,Glucose,to,black,0,NA,FBgn0043783,T
-beta-D-Glucose,Glucose,to,black,0,NA,FBgn0052445,T
-beta-D-Glucose,Glucose,to,black,0,NA,FBgn0032372,T
-beta-D-Glucose,beta-D-Glucose 6P,to,black,0,NA,FBgn0001186,T
-beta-D-Glucose,beta-D-Glucose 6P,to,black,0,NA,FBgn0042710,T
-beta-D-Glucose,beta-D-Glucose 6P,to,black,0,NA,FBgn0042711,T
-beta-D-Glucose,beta-D-Glucose 6P,to,black,0,NA,FBgn0001187,T
-beta-D-Glucose,beta-D-Glucose 6P,to,black,0,NA,FBgn0036402,T
-alpha-D-Glucose 6-phosphate,beta-D-Glucose 6P,to;from,black,0,NA,FBgn0028540,T
-alpha-D-Glucose 6-phosphate,beta-D-Glucose 6P,to;from,black,0,NA,FBgn0003074,T
-alpha-D-Glucose 6-phosphate,D-Fructose 6-phosphate,to;from,black,0,NA,FBgn0003074,T
-D-Fructose 6-phosphate,"D-Fructose-1,6P",to,black,0,NA,FBgn0003071,T
-D-Fructose 6-phosphate,"D-Fructose-1,6P",from,black,0,NA,FBgn0032820,T
-"D-Fructose-1,6P",D-Glyceraldehyde 3-phosphate,to;from,black,0,NA,FBgn0039425,T
-"D-Fructose-1,6P",D-Glyceraldehyde 3-phosphate,to;from,black,0,NA,FBgn0000064,T
-NC36,Glycerone-P,to,black,0,NA,FBgn0039425,F
-NC36,Glycerone-P,to,black,0,NA,FBgn0000064,F
-Glycerone-P,D-Glyceraldehyde 3-phosphate,to;from,black,0,NA,FBgn0086355,T
-D-Glyceraldehyde 3-phosphate,"Glycerate-1,3P",to;from,black,0,NA,FBgn0001091,T
-D-Glyceraldehyde 3-phosphate,"Glycerate-1,3P",to;from,black,0,NA,FBgn0001092,T
-D-Glyceraldehyde 3-phosphate,"Glycerate-1,3P",to;from,black,0,NA,FBgn0034173,T
-"Glycerate-1,3P",Glycerate-3P,to;from,black,0,NA,FBgn0250906,T
-"Glycerate-1,3P",Glycerate-3P,to;from,black,0,NA,FBgn0031451,T
-Glycerate-3P,Glycerate-2P,to;from,black,0,NA,FBgn0014869,T
-Glycerate-3P,Glycerate-2P,to;from,black,0,NA,FBgn0011270,T
-Glycerate-3P,Glycerate-2P,to;from,black,0,NA,FBgn0038957,T
-"Glycerate-2,3P",Glycerate-2P,to,black,0,NA,FBgn0026061,T
-"Glycerate-2,3P",Glycerate-2P,to,black,0,NA,FBgn0026060,T
-Glycerate-2P,phosphoenolpyruvate,to;from,black,0,NA,FBgn0000579,T
-phosphoenolpyruvate,Pyruvate,to,black,0,NA,FBgn0037115,T
-phosphoenolpyruvate,Pyruvate,to,black,0,NA,FBgn0036723,T
-phosphoenolpyruvate,Pyruvate,to,black,0,NA,FBgn0031462,T
-phosphoenolpyruvate,Pyruvate,to,black,0,NA,FBgn0038952,T
-phosphoenolpyruvate,Pyruvate,to,black,0,NA,FBgn0267385,T
-phosphoenolpyruvate,Pyruvate,to,black,0,NA,FBgn0038258,T
-Pyruvate,Acetyl-CoA,to,black,0,NA,FBgn0283658,T
-Pyruvate,Acetyl-CoA,to,black,0,NA,FBgn0036762,T
-Pyruvate,Acetyl-CoA,to,black,0,NA,FBgn0039635,T
-Pyruvate,Acetyl-CoA,to,black,0,NA,FBgn0028325,T
-Pyruvate,Acetyl-CoA,to,black,0,NA,FBgn0029722,T
-Citrate,cis-Aconitate,to;from,black,0,NA,FBgn0037862,T
-Citrate,cis-Aconitate,to;from,black,0,NA,FBgn0024958,T
-Citrate,cis-Aconitate,to;from,black,0,NA,FBgn0024957,T
-Citrate,cis-Aconitate,to;from,black,0,NA,FBgn0010100,T
-cis-Aconitate,Isocitrate,to;from,black,0,NA,FBgn0037862,T
-cis-Aconitate,Isocitrate,to;from,black,0,NA,FBgn0024958,T
-cis-Aconitate,Isocitrate,to;from,black,0,NA,FBgn0024957,T
-cis-Aconitate,Isocitrate,to;from,black,0,NA,FBgn0010100,T
-Isocitrate,Oxalosuccinate,to;from,black,0,NA,FBgn0001248,T
-Oxalosuccinate,alpha-Ketoglutarate,to;from,black,0,NA,FBgn0001248,T
-alpha-Ketoglutarate,Succinyl-CoA,to,black,0,NA,FBgn001097629,T
-alpha-Ketoglutarate,Succinyl-CoA,to,black,0,NA,FBgn0035240,T
-alpha-Ketoglutarate,Succinyl-CoA,to,black,0,NA,FBgn0037891,T
-alpha-Ketoglutarate,Succinyl-CoA,to,black,0,NA,FBgn0036762,T
-Succinyl-CoA,Succinate,to;from,black,0,NA,FBgn0029118,T
-Succinyl-CoA,Succinate,to;from,black,0,NA,FBgn0004888,T
-Succinyl-CoA,Succinate,to;from,black,0,NA,FBgn0037643,T
-Succinyl-CoA,Succinate,to;from,black,0,NA,FBgn0038708,T
-Succinate,Fumarate,to;from,black,0,NA,FBgn0039112,T
-Succinate,Fumarate,to;from,black,0,NA,FBgn0261439,T
-Succinate,Fumarate,to;from,black,0,NA,FBgn0014028,T
-Succinate,Fumarate,to;from,black,0,NA,FBgn0036222,T
-Succinate,Fumarate,to;from,black,0,NA,FBgn0037860,T
-Succinate,Fumarate,to;from,black,0,NA,FBgn0037873,T
-Succinate,Fumarate,to;from,black,0,NA,FBgn0030975,T
-Fumarate,Malate,to;from,black,0,NA,FBgn0051874,T
-Fumarate,Malate,to;from,black,0,NA,FBgn0286222,T
-Fumarate,Malate,to;from,black,0,NA,FBgn0029890,T
-Fumarate,Malate,to;from,black,0,NA,FBgn0036162,T
-Malate,Oxaloacetate,to;from,black,0,NA,FBgn0036327,T
-Malate,Oxaloacetate,to;from,black,0,NA,FBgn0036328,T
-Malate,Oxaloacetate,to;from,black,0,NA,FBgn0262782,T
-Malate,Oxaloacetate,to;from,black,0,NA,FBgn0262559,T
-NC45,NC46,to;from,black,0,NA,FBgn0037988,F
-NC47,NC48,to;from,black,0,NA,FBgn0261955,F
-NC49,NC50,to;from,black,0,NA,FBgn0020236,F
-Pyruvate,NC37,none,black,0,NA,FBgn0027580,F
-NC37,NC38,to,black,0,NA,FBgn0027580,F
-NC39,NC41,none,black,0,NA,FBgn0034356,F
-NC40,NC42,none,black,0,NA,FBgn0003067,F
-NC41,NC43,to,black,0,NA,FBgn0034356,F
-NC42,NC44,to,black,0,NA,FBgn0003067,F
-NC52,NC51,to,black,0,NA,FBgn0037988,F
-NC54,NC53,to,black,0,NA,FBgn0261955,F
-NC56,NC55,to,black,0,NA,FBgn0020236,F
-NC57,NC58,from,black,0,NA,FBgn0027291,F
-NC58,NC59,none,black,0,NA,FBgn0027291,F
-NC59,NC60,to,black,0,NA,FBgn0027291,F
-NC61,NC62,from,black,0,NA,FBgn0052026,F
-NC62,NC63,none,black,0,NA,FBgn0052026,F
-NC63,NC64,to,black,0,NA,FBgn0052026,F
-NC65,NC66,from,black,0,NA,FBgn0035005,F
-NC66,NC67,none,black,0,NA,FBgn0035005,F
-NC67,NC68,to,black,0,NA,FBgn0035005,F
-NC69,NC70,from,black,0,NA,FBgn0039358,F
-NC70,NC71,none,black,0,NA,FBgn0039358,F
-NC71,NC72,to,black,0,NA,FBgn0039358,F
-NC73,NC74,from,black,0,NA,FBgn0038922,F
-NC74,NC75,none,black,0,NA,FBgn0038922,F
-NC75,NC76,to,black,0,NA,FBgn0038922,F
+from,to,arrows,color,width,title,FBgn,physics,Pathway
+xanthine,uric acid,to,black,0,NA,FBgn0003308,T,
+hypoxanthine,xanthine,to,black,0,NA,FBgn0003308,T,
+xanthosine,xanthine,to,black,0,NA,FBgn0034898,T,
+xanthosine,xanthine,to,black,0,NA,FBgn0035348,T,
+guanine,xanthine,to,black,0,NA,FBgn0261436,T,
+XMP,xanthosine,to,black,0,NA,FBgn0033538,T,
+XMP,xanthosine,to,black,0,NA,FBgn0050104,T,
+XMP,xanthosine,to,black,0,NA,FBgn0052549,T,
+XMP,xanthosine,to,black,0,NA,FBgn0259101,T,
+XMP,xanthosine,to,black,0,NA,FBgn0034225,T,
+IMP,XMP,to,black,0,NA,FBgn0003204,T,
+IDP,IMP,to,black,0,NA,FBgn0037900,T,
+AMP,IMP,to,black,0,NA,FBgn0052626,T,
+IMP,adenylosuccinate,to,black,0,NA,FBgn0027493,T,
+hypoxanthine,inosine,to;from,black,0,NA,FBgn0034898,T,
+hypoxanthine,inosine,to;from,black,0,NA,FBgn0035348,T,
+adenosine,inosine,to,black,0,NA,FBgn0033952,T,
+adenosine,inosine,to,black,0,NA,FBgn0036751,T,
+adenosine,inosine,to,black,0,NA,FBgn0036752,T,
+adenosine,inosine,to,black,0,NA,FBgn0037661,T,
+adenosine,inosine,to,black,0,NA,FBgn0038172,T,
+IMP,inosine,to,black,0,NA,FBgn0033538,T,
+IMP,inosine,to,black,0,NA,FBgn0050104,T,
+IMP,inosine,to,black,0,NA,FBgn0052549,T,
+IMP,inosine,to,black,0,NA,FBgn0259101,T,
+IMP,inosine,to,black,0,NA,FBgn0034225,T,
+hypoxanthine,deoxyinosine,to;from,black,0,NA,FBgn0034898,T,
+hypoxanthine,deoxyinosine,to;from,black,0,NA,FBgn0035348,T,
+deoxyadenosine,deoxyinosine,to,black,0,NA,FBgn0033952,T,
+deoxyadenosine,deoxyinosine,to,black,0,NA,FBgn0036751,T,
+deoxyadenosine,deoxyinosine,to,black,0,NA,FBgn0036752,T,
+deoxyadenosine,deoxyinosine,to,black,0,NA,FBgn0037661,T,
+deoxyadenosine,deoxyinosine,to,black,0,NA,FBgn0038172,T,
+AMP,adenosine,to,black,0,NA,FBgn0033538,T,
+AMP,adenosine,to,black,0,NA,FBgn0050104,T,
+AMP,adenosine,to,black,0,NA,FBgn0052549,T,
+AMP,adenosine,to,black,0,NA,FBgn0259101,T,
+AMP,adenosine,to,black,0,NA,FBgn0034225,T,
+adenylosuccinate,AMP,to,black,0,NA,FBgn0038467,T,
+adenosine,AMP,to;from,black,0,NA,FBgn0026602,T,
+adenosine,AMP,to;from,black,0,NA,FBgn0036337,T,
+adenosine,AMP,to;from,black,0,NA,FBgn0037995,T,
+cAMP,AMP,to,black,0,NA,FBgn0000479,T,
+cAMP,AMP,to,black,0,NA,FBgn0085370,T,
+cAMP,AMP,to,black,0,NA,FBgn0266377,T,
+adenosine,adenine,to;from,black,0,NA,FBgn0034898,T,
+adenosine,adenine,to;from,black,0,NA,FBgn0035348,T,
+AMP,adenine,to;from,black,0,NA,FBgn0000109,T,
+AMP,ADP,to;from,black,0,NA,FBgn0022709,T,
+AMP,ADP,to;from,black,0,NA,FBgn0033754,T,
+AMP,ADP,to;from,black,0,NA,FBgn0042094,T,
+ATP,ADP,to;from,black,0,NA,FBgn0000150,T,
+ATP,ADP,to;from,black,0,NA,FBgn0028997,T,
+ATP,ADP,to;from,black,0,NA,FBgn0030573,T,
+ATP,ADP,to;from,black,0,NA,FBgn0039809,T,
+ATP,ADP,to,black,0,NA,FBgn0037046,T,
+ADP,dADP,to,black,0,NA,FBgn0011703,T,
+ADP,dADP,to,black,0,NA,FBgn0011704,T,
+dATP,dADP,to;from,black,0,NA,FBgn0000150,T,
+dATP,dADP,to;from,black,0,NA,FBgn0028997,T,
+dATP,dADP,to;from,black,0,NA,FBgn0030573,T,
+dATP,dADP,to;from,black,0,NA,FBgn0039809,T,
+deoxyadenosine,dAMP,to,black,0,NA,FBgn0022338,T,
+dADP,dAMP,to;from,black,0,NA,FBgn0022709,T,
+dADP,dAMP,to;from,black,0,NA,FBgn0033754,T,
+adenine,deoxyadenosine,to;from,black,0,NA,FBgn0034898,T,
+adenine,deoxyadenosine,to;from,black,0,NA,FBgn0035348,T,
+dAMP,deoxyadenosine,to,black,0,NA,FBgn0033538,T,
+dAMP,deoxyadenosine,to,black,0,NA,FBgn0050104,T,
+dAMP,deoxyadenosine,to,black,0,NA,FBgn0052549,T,
+dAMP,deoxyadenosine,to,black,0,NA,FBgn0259101,T,
+dAMP,deoxyadenosine,to,black,0,NA,FBgn0034225,T,
+dAMP,deoxyadenosine,to,black,0,NA,FBgn0031836,T,
+deoxyguanosine,guanine,to,black,0,NA,FBgn0034898,T,
+deoxyguanosine,guanine,to,black,0,NA,FBgn0035348,T,
+dGTP,dGDP,to;from,black,0,NA,FBgn0000150,T,
+dGTP,dGDP,to;from,black,0,NA,FBgn0028997,T,
+dGTP,dGDP,to;from,black,0,NA,FBgn0030573,T,
+dGTP,dGDP,to;from,black,0,NA,FBgn0039809,T,
+GDP,dGDP,to,black,0,NA,FBgn0011703,T,
+GDP,dGDP,to,black,0,NA,FBgn0011704,T,
+guanine,guanosine,to;from,black,0,NA,FBgn0034898,T,
+guanine,guanosine,to;from,black,0,NA,FBgn0035348,T,
+GMP,guanosine,to,black,0,NA,FBgn0033538,T,
+GMP,guanosine,to,black,0,NA,FBgn0050104,T,
+GMP,guanosine,to,black,0,NA,FBgn0052549,T,
+GMP,guanosine,to,black,0,NA,FBgn0259101,T,
+GMP,guanosine,to,black,0,NA,FBgn0034225,T,
+GTP,GDP,to;from,black,0,NA,FBgn0000150,T,
+GTP,GDP,to;from,black,0,NA,FBgn0028997,T,
+GTP,GDP,to;from,black,0,NA,FBgn0030573,T,
+GTP,GDP,to;from,black,0,NA,FBgn0039809,T,
+XMP,GMP,to,black,0,NA,FBgn0000239,T,
+GDP,GMP,to,black,0,NA,FBgn0037900,T,
+GDP,GMP,to;from,black,0,NA,FBgn0036099,T,
+dGDP,dGMP,to;from,black,0,NA,FBgn0036099,T,
+deoxyguanosine,dGMP,to,black,0,NA,FBgn0022338,T,
+ATP,cAMP,to,black,0,NA,FBgn0003301,T,
+ATP,cAMP,to,black,0,NA,FBgn0004852,T,
+ATP,cAMP,to,black,0,NA,FBgn0022710,T,
+ATP,cAMP,to,black,0,NA,FBgn0023416,T,
+ATP,cAMP,to,black,0,NA,FBgn0024150,T,
+ATP,cAMP,to,black,0,NA,FBgn0033984,T,
+ATP,cAMP,to,black,0,NA,FBgn0040507,T,
+ATP,cAMP,to,black,0,NA,FBgn0040508,T,
+ATP,cAMP,to,black,0,NA,FBgn0040509,T,
+ATP,cAMP,to,black,0,NA,FBgn0040510,T,
+ATP,cAMP,to,black,0,NA,FBgn0052301,T,
+ATP,cAMP,to,black,0,NA,FBgn0052305,T,
+uric acid,Excretion,to,black,0,NA,NA,T,
+dATP,DNA.A,to,black,0,NA,NA,T,
+dGTP,DNA.G,to,black,0,NA,NA,T,
+ATP,RNA.A,to,black,0,NA,NA,T,
+GTP,RNA.G,to,black,0,NA,NA,T,
+GTP,Riboflavin.Metabolism,to,black,0,NA,NA,T,
+GTP,Folate.Biosynthesis,to,black,0,NA,NA,T,
+FAICAR,IMP,to;from,black,0,NA,FBgn0039241,T,
+AICA ribonucleotide,FAICAR,to,black,0,NA,FBgn0039241,T,
+SAICAR,AICA ribonucleotide,to;from,black,0,NA,FBgn0038467,T,
+CAIR,SAICAR,to;from,black,0,NA,FBgn0020513,T,
+AIR,CAIR,to;from,black,0,NA,FBgn0020513,T,
+FGAM,AIR,to,black,0,NA,FBgn0000053,T,
+FGAR,FGAM,to,black,0,NA,FBgn0000052,T,
+GAR,FGAR,to,black,0,NA,FBgn0000053,T,
+Ribosylamine-5p,GAR,to,black,0,NA,FBgn0000053,T,
+PRPP,Ribosylamine-5p,to,black,0,NA,FBgn0004901,T,
+PRPP,Ribosylamine-5p,to,black,0,NA,FBgn0041194,T,
+D-Ribose-5P,PRPP,to;from,black,0,NA,FBgn0036030,T,
+D-Ribulose 5P,D-Ribose-5P,to;from,black,0,NA,FBgn0050410,T,PPP
+6-phosphogluconic acid,D-Ribulose 5P,to,black,0,NA,FBgn0004654,T,PPP
+6-phosphoglucono-D-lactone,6-phosphogluconic acid,to,black,0,NA,FBgn0030239,T,PPP
+beta-D-Glucose 6P,6-phosphoglucono-D-lactone,to,black,0,NA,FBgn0004057,T,PPP
+beta-D-Glucose 6P,6-phosphoglucono-D-lactone,to,black,0,NA,FBgn0037147,T,PPP
+D-Ribulose 5P,D-Xylulose 5-phosphate,to;from,black,0,NA,FBgn0050499,T,PPP
+D-Fructose 6-phosphate,"D-Fructose-1,6P",to,black,0,NA,FBgn0003071,T,
+D-Fructose 6-phosphate,"D-Fructose-1,6P",to;from,black,0,NA,FBgn0032820,T,
+"D-Fructose-1,6P",D-Glyceraldehyde 3-phosphate,to;from,black,0,NA,FBgn0039425,T,
+"D-Fructose-1,6P",D-Glyceraldehyde 3-phosphate,to;from,black,0,NA,FBgn0000064,T,
+NC1,D-erythrose-4-phosphate,to,black,0,NA,FBgn0023477,F,PPP
+NC1,D-Fructose 6-phosphate,to,black,0,NA,FBgn0023477,F,PPP
+NC32,D-Glyceraldehyde 3-phosphate,to,black,0,NA,FBgn0023477,F,PPP
+NC1,D-sedoheptulose-7-phosphate,to,black,0,NA,FBgn0023477,F,PPP
+NC2,NC10,to,black,0,NA,FBgn0037607,F,PPP
+NC3,NC15,to,black,0,NA,FBgn0036784,F,PPP
+NC2,NC11,to,black,0,NA,FBgn0037607,F,PPP
+NC3,NC16,to,black,0,NA,FBgn0036784,F,PPP
+NC2,NC34,to,black,0,NA,FBgn0037607,F,PPP
+NC3,NC35,to,black,0,NA,FBgn0036784,F,PPP
+NC4,NC22,to,black,0,NA,FBgn0036784,F,PPP
+NC6,NC23,to,black,0,NA,FBgn0037607,F,PPP
+NC12,NC14,to,black,0,NA,FBgn0037607,F,PPP
+NC33,NC19,to,black,0,NA,FBgn0036784,F,PPP
+NC4,NC20,to,black,0,NA,FBgn0036784,F,PPP
+NC6,NC21,to,black,0,NA,FBgn0037607,F,PPP
+NC27,NC26,to,black,0,NA,FBgn0036784,F,PPP
+NC29,NC24,to,black,0,NA,FBgn0036784,F,PPP
+NC25,NC28,to,black,0,NA,FBgn0037607,F,PPP
+NC30,NC31,to,black,0,NA,FBgn0037607,F,PPP
+nicotinamide riboside+,nicotinamide,to;from,black,0,NA,FBgn0034898,T,
+nicotinamide riboside+,nicotinamide,to;from,black,0,NA,FBgn0035348,T,
+nicotinamide riboside+,NMN,to,black,0,NA,FBgn0033538,T,
+nicotinamide riboside+,NMN,to,black,0,NA,FBgn0050104,T,
+nicotinamide riboside+,NMN,to,black,0,NA,FBgn0052549,T,
+nicotinamide riboside+,NMN,to,black,0,NA,FBgn0259101,T,
+nicotinamide riboside+,NMN,to,black,0,NA,FBgn0034225,T,
+nicotinamide,NMN,to,black,0,NA,,T,
+NMN,NAD+,to,black,0,NA,FBgn0039254,T,
+NAD+,NADP+,to,black,0,NA,FBgn0026619,T,
+NAD+,NADP+,to,black,0,NA,FBgn0027330,T,
+NAD+,NADP+,to,black,0,NA,FBgn0031815,T,
+NAD+,NADP+,to,black,0,NA,FBgn0036662,T,
+NAD+,NADP+,to,black,0,NA,FBgn0053156,T,
+NAD+,NADP+,to,black,0,NA,FBgn0053337,T,
+NAD+,NADH,to;from,black,0,NA,,T,
+NADP+,NADPH,to;from,black,0,NA,,T,
+nicotinic acid,NAMN,to,black,0,NA,,T,
+NAMN,NAAD,to,black,0,NA,FBgn0039254,T,
+NAAD,NAD+,to,black,0,NA,FBgn0030512,T,
+tryptophan,N-Formylkynurenine,to,black,0,NA,FBgn0003965,T,
+N-Formylkynurenine,kynurenine,to,black,0,NA,FBgn0031821,T,
+kynurenine,3-hydroxykynurenine,to,black,0,NA,FBgn0000337,T,
+kynurenine,kynurenic acid,to,black,0,NA,FBgn0037955,T,
+3-hydroxykynurenine,NAMN,to,black,0,NA,,T,
+D-Glucose 1P,alpha-D-Glucose 6-phosphate,to,black,0,NA,FBgn0033377,T,
+D-Glucose 1P,alpha-D-Glucose 6-phosphate,to,black,0,NA,FBgn0003076,T,
+D-Glucose 1P,alpha-D-Glucose 6-phosphate,to,black,0,NA,FBgn0033969,T,
+Glucose,alpha-D-Glucose 6-phosphate,to,black,0,NA,FBgn0001186,T,
+Glucose,alpha-D-Glucose 6-phosphate,to,black,0,NA,FBgn0042710,T,
+Glucose,alpha-D-Glucose 6-phosphate,to,black,0,NA,FBgn0042711,T,
+Glucose,alpha-D-Glucose 6-phosphate,to,black,0,NA,FBgn0001187,T,
+Glucose,alpha-D-Glucose 6-phosphate,to,black,0,NA,FBgn0036402,T,
+alpha-D-Glucose 6-phosphate,Glucose,to,black,0,NA,FBgn0031463,T,
+beta-D-Glucose,Glucose,to,black,0,NA,FBgn0035679,T,
+beta-D-Glucose,Glucose,to,black,0,NA,FBgn0030525,T,
+beta-D-Glucose,Glucose,to,black,0,NA,FBgn0043783,T,
+beta-D-Glucose,Glucose,to,black,0,NA,FBgn0052445,T,
+beta-D-Glucose,Glucose,to,black,0,NA,FBgn0032372,T,
+beta-D-Glucose,beta-D-Glucose 6P,to,black,0,NA,FBgn0001186,T,
+beta-D-Glucose,beta-D-Glucose 6P,to,black,0,NA,FBgn0042710,T,
+beta-D-Glucose,beta-D-Glucose 6P,to,black,0,NA,FBgn0042711,T,
+beta-D-Glucose,beta-D-Glucose 6P,to,black,0,NA,FBgn0001187,T,
+beta-D-Glucose,beta-D-Glucose 6P,to,black,0,NA,FBgn0036402,T,
+alpha-D-Glucose 6-phosphate,beta-D-Glucose 6P,to;from,black,0,NA,FBgn0028540,T,
+alpha-D-Glucose 6-phosphate,beta-D-Glucose 6P,to;from,black,0,NA,FBgn0003074,T,
+alpha-D-Glucose 6-phosphate,D-Fructose 6-phosphate,to;from,black,0,NA,FBgn0003074,T,
+D-Fructose 6-phosphate,"D-Fructose-1,6P",to,black,0,NA,FBgn0003071,T,
+D-Fructose 6-phosphate,"D-Fructose-1,6P",from,black,0,NA,FBgn0032820,T,
+"D-Fructose-1,6P",D-Glyceraldehyde 3-phosphate,to;from,black,0,NA,FBgn0039425,T,
+"D-Fructose-1,6P",D-Glyceraldehyde 3-phosphate,to;from,black,0,NA,FBgn0000064,T,
+NC36,Glycerone-P,to,black,0,NA,FBgn0039425,F,
+NC36,Glycerone-P,to,black,0,NA,FBgn0000064,F,
+Glycerone-P,D-Glyceraldehyde 3-phosphate,to;from,black,0,NA,FBgn0086355,T,
+D-Glyceraldehyde 3-phosphate,"Glycerate-1,3P",to;from,black,0,NA,FBgn0001091,T,
+D-Glyceraldehyde 3-phosphate,"Glycerate-1,3P",to;from,black,0,NA,FBgn0001092,T,
+D-Glyceraldehyde 3-phosphate,"Glycerate-1,3P",to;from,black,0,NA,FBgn0034173,T,
+"Glycerate-1,3P",Glycerate-3P,to;from,black,0,NA,FBgn0250906,T,
+"Glycerate-1,3P",Glycerate-3P,to;from,black,0,NA,FBgn0031451,T,
+Glycerate-3P,Glycerate-2P,to;from,black,0,NA,FBgn0014869,T,
+Glycerate-3P,Glycerate-2P,to;from,black,0,NA,FBgn0011270,T,
+Glycerate-3P,Glycerate-2P,to;from,black,0,NA,FBgn0038957,T,
+"Glycerate-2,3P",Glycerate-2P,to,black,0,NA,FBgn0026061,T,
+"Glycerate-2,3P",Glycerate-2P,to,black,0,NA,FBgn0026060,T,
+Glycerate-2P,phosphoenolpyruvate,to;from,black,0,NA,FBgn0000579,T,
+phosphoenolpyruvate,Pyruvate,to,black,0,NA,FBgn0037115,T,
+phosphoenolpyruvate,Pyruvate,to,black,0,NA,FBgn0036723,T,
+phosphoenolpyruvate,Pyruvate,to,black,0,NA,FBgn0031462,T,
+phosphoenolpyruvate,Pyruvate,to,black,0,NA,FBgn0038952,T,
+phosphoenolpyruvate,Pyruvate,to,black,0,NA,FBgn0267385,T,
+phosphoenolpyruvate,Pyruvate,to,black,0,NA,FBgn0038258,T,
+Pyruvate,Acetyl-CoA,to,black,0,NA,FBgn0283658,T,
+Pyruvate,Acetyl-CoA,to,black,0,NA,FBgn0036762,T,
+Pyruvate,Acetyl-CoA,to,black,0,NA,FBgn0039635,T,
+Pyruvate,Acetyl-CoA,to,black,0,NA,FBgn0028325,T,
+Pyruvate,Acetyl-CoA,to,black,0,NA,FBgn0029722,T,
+Citrate,cis-Aconitate,to;from,black,0,NA,FBgn0037862,T,
+Citrate,cis-Aconitate,to;from,black,0,NA,FBgn0024958,T,
+Citrate,cis-Aconitate,to;from,black,0,NA,FBgn0024957,T,
+Citrate,cis-Aconitate,to;from,black,0,NA,FBgn0010100,T,
+cis-Aconitate,Isocitrate,to;from,black,0,NA,FBgn0037862,T,
+cis-Aconitate,Isocitrate,to;from,black,0,NA,FBgn0024958,T,
+cis-Aconitate,Isocitrate,to;from,black,0,NA,FBgn0024957,T,
+cis-Aconitate,Isocitrate,to;from,black,0,NA,FBgn0010100,T,
+Isocitrate,Oxalosuccinate,to;from,black,0,NA,FBgn0001248,T,
+Oxalosuccinate,alpha-Ketoglutarate,to;from,black,0,NA,FBgn0001248,T,
+alpha-Ketoglutarate,Succinyl-CoA,to,black,0,NA,FBgn001097629,T,
+alpha-Ketoglutarate,Succinyl-CoA,to,black,0,NA,FBgn0035240,T,
+alpha-Ketoglutarate,Succinyl-CoA,to,black,0,NA,FBgn0037891,T,
+alpha-Ketoglutarate,Succinyl-CoA,to,black,0,NA,FBgn0036762,T,
+Succinyl-CoA,Succinate,to;from,black,0,NA,FBgn0029118,T,
+Succinyl-CoA,Succinate,to;from,black,0,NA,FBgn0004888,T,
+Succinyl-CoA,Succinate,to;from,black,0,NA,FBgn0037643,T,
+Succinyl-CoA,Succinate,to;from,black,0,NA,FBgn0038708,T,
+Succinate,Fumarate,to;from,black,0,NA,FBgn0039112,T,
+Succinate,Fumarate,to;from,black,0,NA,FBgn0261439,T,
+Succinate,Fumarate,to;from,black,0,NA,FBgn0014028,T,
+Succinate,Fumarate,to;from,black,0,NA,FBgn0036222,T,
+Succinate,Fumarate,to;from,black,0,NA,FBgn0037860,T,
+Succinate,Fumarate,to;from,black,0,NA,FBgn0037873,T,
+Succinate,Fumarate,to;from,black,0,NA,FBgn0030975,T,
+Fumarate,Malate,to;from,black,0,NA,FBgn0051874,T,
+Fumarate,Malate,to;from,black,0,NA,FBgn0286222,T,
+Fumarate,Malate,to;from,black,0,NA,FBgn0029890,T,
+Fumarate,Malate,to;from,black,0,NA,FBgn0036162,T,
+Malate,Oxaloacetate,to;from,black,0,NA,FBgn0036327,T,
+Malate,Oxaloacetate,to;from,black,0,NA,FBgn0036328,T,
+Malate,Oxaloacetate,to;from,black,0,NA,FBgn0262782,T,
+Malate,Oxaloacetate,to;from,black,0,NA,FBgn0262559,T,
+NC45,NC46,to;from,black,0,NA,FBgn0037988,F,
+NC47,NC48,to;from,black,0,NA,FBgn0261955,F,
+NC49,NC50,to;from,black,0,NA,FBgn0020236,F,
+Pyruvate,NC37,none,black,0,NA,FBgn0027580,F,
+NC37,NC38,to,black,0,NA,FBgn0027580,F,
+NC39,NC41,none,black,0,NA,FBgn0034356,F,
+NC40,NC42,none,black,0,NA,FBgn0003067,F,
+NC41,NC43,to,black,0,NA,FBgn0034356,F,
+NC42,NC44,to,black,0,NA,FBgn0003067,F,
+NC52,NC51,to,black,0,NA,FBgn0037988,F,
+NC54,NC53,to,black,0,NA,FBgn0261955,F,
+NC56,NC55,to,black,0,NA,FBgn0020236,F,
+NC57,NC58,from,black,0,NA,FBgn0027291,F,
+NC58,NC59,none,black,0,NA,FBgn0027291,F,
+NC59,NC60,to,black,0,NA,FBgn0027291,F,
+NC61,NC62,from,black,0,NA,FBgn0052026,F,
+NC62,NC63,none,black,0,NA,FBgn0052026,F,
+NC63,NC64,to,black,0,NA,FBgn0052026,F,
+NC65,NC66,from,black,0,NA,FBgn0035005,F,
+NC66,NC67,none,black,0,NA,FBgn0035005,F,
+NC67,NC68,to,black,0,NA,FBgn0035005,F,
+NC69,NC70,from,black,0,NA,FBgn0039358,F,
+NC70,NC71,none,black,0,NA,FBgn0039358,F,
+NC71,NC72,to,black,0,NA,FBgn0039358,F,
+NC73,NC74,from,black,0,NA,FBgn0038922,F,
+NC74,NC75,none,black,0,NA,FBgn0038922,F,
+NC75,NC76,to,black,0,NA,FBgn0038922,F,
