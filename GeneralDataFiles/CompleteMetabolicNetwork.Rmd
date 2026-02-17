@@ -1,0 +1,2054 @@
+---
+title: "Full Metabolic Network"
+author: "John Santiago"
+date: "2025-03-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo = F}
+
+library(dendextend)
+library(visNetwork)
+library(heatmaply)
+
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/GeneralDataFiles/"
+
+GeneIDKey = read.csv(paste0(git.dir, "GeneIDKey.csv"), row.names = 1)
+#G85R.geneFDR = read.csv(paste0(git.dir, "TKT.EdgeR.FDRTable.csv"), row.names = 1)
+#G85R.geneFC = read.csv(paste0(git.dir, "TKT.EdgeR.FCTable.csv"), row.names = 1)
+#G85R.metabFC = read.csv(paste0(git.dir, "MetaboliteFCs.csv"), row.names = 1)
+#G85R.metabFC[,2:ncol(G85R.metabFC)] = log2(G85R.metabFC[,2:ncol(G85R.metabFC)])
+#G85R.metabFDR = read.csv(paste0(git.dir, "MetaboliteFDRs.csv"), row.names = 1)
+
+G85R.geneFDR = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/TKT.EdgeR.FDRTable2.csv", row.names = 1)
+G85R.geneFC = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/TKT.EdgeR.FCTable2.csv", row.names = 1)
+
+G85R.metabFDR = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/MetaboliteFDRs2.csv", row.names = 1)
+G85R.metabFC = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/MetaboliteFCs2.csv", row.names = 1)
+
+G85R.meancpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/TKT_meancpmdata.csv", row.names = 1)
+G85R.meancpm.meta = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/TKT_meancpmdatameta.csv", row.names = 1)
+
+raw.nodes = read.csv(paste0(git.dir, "combined.nodes.csv"), row.names = 1)
+raw.nodes$x = raw.nodes$x*1
+raw.nodes$y = raw.nodes$y*1
+
+raw.edges = read.csv(paste0(git.dir, "combined.edges.csv"))
+
+temp = colorRampPalette(c("navy", "royalblue","white", "red", "firebrick"))(401)
+
+temp2 = colorRampPalette(c("navy", "royalblue","grey80", "red", "firebrick"))(401)
+
+hex = function(color, alpha){
+  rgb2hex = color
+  i = 1
+  while(i <= length(color)){
+    rgbvals = col2rgb(color[i])
+    rgb2hex[i] = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+    i = i+1
+  }
+  return(rgb2hex)
+}
+
+```
+
+
+```{r echo = F}
+library('igraph')
+
+i.edges = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/igraph.edges.csv")
+i.nodes = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/igraph.nodes.csv")
+
+metab = "GRxWT.C"
+enzyme = "GRxWT.FC"
+
+i.edges$width = 1
+
+i.edges$FC = 0
+i.edges$FC = G85R.geneFC[i.edges$FBgn, enzyme]
+i.edges$FC[is.na(i.edges$FC)] = 0
+i.edges$color = "gray50"
+i.edges$color[i.edges$FC > 0] = "tomato"
+i.edges$color[i.edges$FC < 0] = "steelblue"
+
+i.nodes$FC = 0
+
+
+use.FC = i.nodes[i.nodes$data.id %in% row.names(G85R.metabFC),c("id", "data.id", "FC")]
+use.FC$FC = G85R.metabFC[use.FC$data.id, metab]
+use.FC = na.omit(use.FC)
+
+i.nodes[i.nodes$id %in% use.FC$id, "FC"] = use.FC$FC
+i.nodes$size = (abs(i.nodes$FC)+1.5)*2
+
+colrs = hex(c("brown", "gold", "royalblue", "darkgreen", "violet"), .1)
+i.nodes$color = "gray50"
+i.nodes[i.nodes$FC > 0, "color"] = "brown"
+i.nodes[i.nodes$FC < 0, "color"] = "steelblue"
+
+#i.nodes$x = -i.nodes$x
+i.nodes$y = -i.nodes$y
+
+#clp = cluster_optimal(net)
+
+net = graph_from_data_frame(d = i.edges, vertices = i.nodes, directed = T)
+par(mar = c(0,0,0,0))
+plot(net, edge.arrow.size = .05, vertex.label.cex = .3, 
+     vertex.label.dist = .5 + abs(i.nodes$FC)/10, vertex.label.degree = 1.5,
+     vertex.label.color = "black",#vertex.label = NA, 
+mark.groups = list(c(1:nrow(i.nodes))[i.nodes$Pathway == "Purine"],
+                   c(1:nrow(i.nodes))[i.nodes$Pathway == "PPP"],
+                   c(1:nrow(i.nodes))[i.nodes$Pathway == "Glycolysis"],
+                   c(1:nrow(i.nodes))[i.nodes$Pathway == "NAD"],
+                   c(1:nrow(i.nodes))[i.nodes$Pathway == "TCA"]),
+mark.col = colrs, mark.border = NA)
+
+
+```
+
+
+```{r echo = F}
+
+library(threejs)
+
+net.js <- net
+graph_attr(net.js, "layout") <- NULL 
+
+gjs <- graphjs(net.js, main="", bg="gray10", showLabels=F, stroke=F, 
+               curvature=0.1, attraction=0.9, repulsion=0.8, opacity=0.9)
+print(gjs)
+
+
+```
+
+
+
+```{r echo = F}
+library('igraph')
+
+i.edges = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/igraph.edges.csv")
+i.nodes = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/igraph.nodes.csv")
+
+metab = "GRxWT.C"
+enzyme = "GRxWT.FC"
+
+i.edges$width = 1
+
+i.edges$FC = 0
+i.edges$FC = G85R.geneFC[i.edges$FBgn, enzyme]
+i.edges$FC[is.na(i.edges$FC)] = 0
+i.edges$FDR = 1
+i.edges$FDR = G85R.geneFDR[i.edges$FBgn, enzyme]
+i.edges$FDR[is.na(i.edges$FC)] = 1
+i.edges$color = "gray50"
+i.edges$color[i.edges$FC > 0] = "firebrick"
+i.edges$color[i.edges$FC > 0 & i.edges$FDR > .05] = "pink"
+i.edges$color[i.edges$FC < 0] = "royalblue"
+i.edges$color[i.edges$FC < 0 & i.edges$FDR > .05] = "lightblue"
+i.nodes$FC = 0
+
+
+use.FC = i.nodes[i.nodes$data.id %in% row.names(G85R.metabFC),c("id", "data.id", "pval")]
+use.FC$FC = G85R.metabFC[use.FC$data.id, metab]
+use.FC = na.omit(use.FC)
+i.nodes[i.nodes$id %in% use.FC$id, "FC"] = use.FC$FC
+i.nodes$size = (abs(i.nodes$FC)+1.5)*2
+
+use.FDR = i.nodes[i.nodes$data.id %in% row.names(G85R.metabFDR),c("id", "data.id")]
+use.FDR$FDR = G85R.metabFDR[use.FDR$data.id, metab]
+use.FDR = na.omit(use.FDR)
+
+i.nodes$FDR = 1
+i.nodes[i.nodes$id %in% use.FDR$id, "FDR"] = use.FDR$FDR
+
+
+colrs = hex(c("red", "gold", "cyan", "darkgreen", "violet"), .1)
+i.nodes$color = "gray50"
+i.nodes[i.nodes$FC > 0, "color"] = "firebrick"
+i.nodes[i.nodes$FC < 0, "color"] = "royalblue"
+i.nodes[i.nodes$FC > 0 & i.nodes$FDR > 0.05, "color"] = "pink"
+i.nodes[i.nodes$FC < 0 & i.nodes$FDR > 0.05, "color"] = "lightblue"
+
+#i.nodes$x = -i.nodes$x
+i.nodes$y = -i.nodes$y
+
+#clp = cluster_optimal(net)
+
+net = graph_from_data_frame(d = i.edges, vertices = i.nodes, directed = T)
+par(mar = c(0,0,0,0))
+plot(net, edge.arrow.size = .05, vertex.label.cex = .3, 
+     vertex.label.dist = .5 + abs(i.nodes$FC)/10, vertex.label.degree = 1.5,
+     vertex.label.color = "black",#vertex.label = NA, 
+mark.groups = list(c(1:nrow(i.nodes))[i.nodes$Pathway == "Purine"],
+                   c(1:nrow(i.nodes))[i.nodes$Pathway == "PPP"],
+                   c(1:nrow(i.nodes))[i.nodes$Pathway == "Glycolysis"],
+                   c(1:nrow(i.nodes))[i.nodes$Pathway == "NAD"],
+                   c(1:nrow(i.nodes))[i.nodes$Pathway == "TCA"]),
+mark.col = colrs, mark.border = NA)
+
+
+```
+
+```{r echo = F}
+
+library(threejs)
+
+net.js <- net
+graph_attr(net.js, "layout") <- NULL 
+
+gjs <- graphjs(net.js, main="", bg="gray10", showLabels=F, stroke=F, 
+               curvature=0.1, attraction=0.9, repulsion=0.8, opacity=0.9)
+print(gjs)
+
+
+```
+
+
+```{r echo = F, warning=F, fig.height=10, fig.width=10}
+
+##metab (metabolomics) Choices
+#"GRxWT.C"  "GRxWT.Df" "GRxWT.OE" "GR.CxDf" "WT.CxDf"
+#"GR.CxOE"  "WT.CxOE" "GR.DfxWT.C" "GR.OExWT.C"
+##enzyme (transcriptome) choices
+#"GRF.CxDf"  "GRF.CxOE"  "WTF.CxDf"  "WTF.CxOE" "GRxWT.FC"  "GRxWT.FDf" 
+#"GRxWT.FOE" "GRDfxWT.F" "GROExWT.F" "GRM.CxDf"  "GRM.CxOE"  "WTM.CxDf" 
+#"WTM.CxOE"  "GRxWT.MC"  "GRxWT.MDf" "GRxWT.MOE" "GRDfxWT.M" "GROExWT.M" 
+#"GR.FxM"    "WT.FxM"
+
+metab = "GRxWT.C"
+enzyme = "GRxWT.FC"
+title = "GRxWT.FC"
+
+
+fullnetwork = function(metab, 
+                       enzyme, 
+                       title, 
+                       fccutoff = 0, 
+                       meansumcutoff = 0){
+  nodes = raw.nodes
+  edges = raw.edges
+  mean.groups = row.names(G85R.meancpm.meta)[G85R.meancpm.meta[,enzyme]]
+  
+  nodes[nodes$shape == "dot", "label"] = NA
+  
+  nodes.color = G85R.metabFC[nodes[nodes$shape == "circle", "data.id"], metab]
+  
+  nodes$FC[nodes$shape == "circle"]= G85R.metabFC[nodes[nodes$shape == "circle", "data.id"], metab]
+  nodes$FDR[nodes$shape == "circle"]= G85R.metabFDR[nodes[nodes$shape == "circle", "data.id"], metab]
+  
+  node.size = G85R.metabFC[nodes[nodes$shape == "circle", "data.id"], metab]
+  node.size[na.action(na.exclude(node.size))] = 0
+  node.size = ((abs(node.size)/11)*80)+10
+  node.size[node.size>100] = 100
+  nodes[nodes$shape == "circle", "size"] = node.size
+  
+  nodes$color.background[nodes$shape == "circle"] = "white"
+  nodes$color.background[nodes$shape == "circle" &
+                           nodes$FC > 0] = "lightpink"
+  nodes$color.background[nodes$shape == "circle" &
+                           nodes$FC < 0] = "lightblue"
+  nodes$color.background[nodes$shape == "circle" &
+                           nodes$FDR <= 0.05 &
+                           nodes$FC > 0] = "firebrick"
+  nodes$color.background[nodes$shape == "circle" &
+                           nodes$FDR <= 0.05 &
+                           nodes$FC < 0] = "royalblue"
+  
+  nodes$color.background[nodes$shape == "circle" &
+                           abs(nodes$FC) <= fccutoff] = "grey"
+  
+  nodes$color.border = "black"
+  nodes$borderWidth = 1
+  nodes$shape = 'dot'
+  nodes$font.background = "white"
+  
+  nodes$title = paste0(nodes$id,
+                       "<br>-log2(FC): ", 
+                       signif((G85R.metabFC[nodes$data.id, metab]), 3),
+                       "<br>FDR: ", 
+                       signif((G85R.metabFDR[nodes$data.id, metab]), 3))
+  
+  
+  edges$title = paste0(GeneIDKey[edges$FBgn, "Symbol"],
+                       "<br>-log2(FC): ", 
+                       signif(G85R.geneFC[edges$FBgn,
+                                   enzyme],3),
+                       "<br>FDR: ", 
+                       signif(G85R.geneFDR[edges$FBgn,
+                                   enzyme],3),
+                       "<br>", mean.groups[1]," mean cpm: ", 
+                       signif(G85R.meancpm[edges$FBgn,
+                                   mean.groups[1]],3),
+                       "<br>", mean.groups[2]," mean cpm: ", 
+                       signif(G85R.meancpm[edges$FBgn,
+                                   mean.groups[2]],3))
+  edges.meansum = G85R.meancpm[edges$FBgn,mean.groups]
+  edges.meansum=apply(edges.meansum, 1, sum)
+  
+  edges.FC = G85R.geneFC[edges$FBgn, enzyme]
+  
+  edges.width = G85R.geneFC[edges$FBgn, enzyme]
+  edges.width[na.action(na.exclude(edges.width))] = 0
+  edges.width[apply(G85R.meancpm[edges$FBgn, row.names(G85R.meancpm.meta)[G85R.meancpm.meta[,enzyme]]], 1, sum) < 5] = 0
+  edges.width = (2^abs(edges.width))-.5
+  edges.width[edges.width>8] = 8
+  edges$width = edges.width
+  
+  edges.sig = G85R.geneFDR[edges$FBgn, enzyme]
+  edges.direction = G85R.geneFC[edges$FBgn, enzyme]
+  edges.color = "black"
+  edges.color[edges.sig <= .05 &
+                edges.direction > 0] = "firebrick"
+  edges.color[edges.sig > .05 &
+                edges.direction > 0] = "lightpink"
+  edges.color[edges.sig > .05 &
+                edges.direction < 0] = "lightblue"
+  edges.color[edges.sig <= .05 &
+                edges.direction < 0] = "royalblue"
+  edges$color = edges.color
+
+  edges$color[abs(edges.FC) < fccutoff] = "grey"
+  edges$color[edges.meansum < meansumcutoff] = "white"
+  edges$color[na.action(na.exclude(edges.meansum))] = "black"
+  edges = edges[edges$color != "white",]
+  
+  if(length(unique(G85R.meancpm.meta[mean.groups,"Sex"])) == "2"){
+    sex.specific = G85R.meancpm[,mean.groups]
+    sex.specific$sex.specific = F
+    sex.specific[sex.specific[,1]<meansumcutoff/2 &
+                   sex.specific[,2]>=meansumcutoff/2, "sex.specific"] = T
+        sex.specific[sex.specific[,1]>=meansumcutoff/2 &
+                   sex.specific[,2]<meansumcutoff/2, "sex.specific"] = T
+    sex.specific = sex.specific[edges$FBgn,]
+    edges$color[sex.specific$sex.specific] = "green"
+  }
+  
+  
+  
+  
+  visNetwork(nodes, edges, background = "white", main = title)%>%
+    visNodes(physics = F)%>%
+    #visLayout(hierarchical=F, improvedLayout=T)%>%
+    visOptions(highlightNearest = TRUE, nodesIdSelection = list(enabled = T, values = nodes[nodes$size > 0, "label"]))%>%
+    visNodes(font = list(color = "black", size = 10, background = "white"))%>%
+    
+    visEdges(arrows = edges$arrows, physics = T)
+}
+
+```
+
+```{r echo = F, warning=F, fig.height=10, fig.width=10}
+
+##metab (metabolomics) Choices
+#"GRxWT.C"  "GRxWT.Df" "GRxWT.OE" "GR.CxDf" "WT.CxDf"
+#"GR.CxOE"  "WT.CxOE" "GR.DfxWT.C" "GR.OExWT.C"
+##enzyme (transcriptome) choices
+#"GRF.CxDf"  "GRF.CxOE"  "WTF.CxDf"  "WTF.CxOE" "GRxWT.FC"  "GRxWT.FDf" 
+#"GRxWT.FOE" "GRDfxWT.F" "GROExWT.F" "GRM.CxDf"  "GRM.CxOE"  "WTM.CxDf" 
+#"WTM.CxOE"  "GRxWT.MC"  "GRxWT.MDf" "GRxWT.MOE" "GRDfxWT.M" "GROExWT.M" 
+#"GR.FxM"    "WT.FxM"
+
+metab = "GRxWT.C"
+enzyme = "GRxWT.FC"
+title = "GRxWT.FC"
+##wont include edges for genes with average expression across all libraries in the comparison below the cutoff
+meansumcutoff = 5
+##genes/metabolites with fold change below the cutoff are not colored red/blue
+fccutoff = log2(1.25)
+
+fullnetwork(metab, enzyme, title, meansumcutoff, fccutoff)
+
+```
+
+
+
+```{r echo = F, warning=F, fig.height=10, fig.width=10}
+
+##metab (metabolomics) Choices
+#"GRxWT.C"  "GRxWT.Df" "GRxWT.OE" "GR.CxDf" "WT.CxDf"
+#"GR.CxOE"  "WT.CxOE" "GR.DfxWT.C" "GR.OExWT.C"
+##enzyme (transcriptome) choices
+#"GRF.CxDf"  "GRF.CxOE"  "WTF.CxDf"  "WTF.CxOE" "GRxWT.FC"  "GRxWT.FDf" 
+#"GRxWT.FOE" "GRDfxWT.F" "GROExWT.F" "GRM.CxDf"  "GRM.CxOE"  "WTM.CxDf" 
+#"WTM.CxOE"  "GRxWT.MC"  "GRxWT.MDf" "GRxWT.MOE" "GRDfxWT.M" "GROExWT.M" 
+#"GR.FxM"    "WT.FxM"
+
+metab = "GRxWT.C"
+enzyme = "GRxWT.MC"
+title = "GRxWT.MC"
+meansumcutoff = 5
+
+fullnetwork(metab, enzyme, title, meansumcutoff, fccutoff = log2(1.25))
+  
+```
+
+
+
+```{r echo = F, warning=F, fig.height=10, fig.width=10}
+
+##metab (metabolomics) Choices
+#"GRxWT.C"  "GRxWT.Df" "GRxWT.OE" "GR.CxDf" "WT.CxDf"
+#"GR.CxOE"  "WT.CxOE" "GR.DfxWT.C" "GR.OExWT.C"
+##enzyme (transcriptome) choices
+#"GRF.CxDf"  "GRF.CxOE"  "WTF.CxDf"  "WTF.CxOE" "GRxWT.FC"  "GRxWT.FDf" 
+#"GRxWT.FOE" "GRDfxWT.F" "GROExWT.F" "GRM.CxDf"  "GRM.CxOE"  "WTM.CxDf" 
+#"WTM.CxOE"  "GRxWT.MC"  "GRxWT.MDf" "GRxWT.MOE" "GRDfxWT.M" "GROExWT.M" 
+#"GR.FxM"    "WT.FxM"
+
+metab = "GR.DfxWT.C"
+enzyme = "GRDfxWT.F"
+title = "GRDfxWT.F"
+
+
+fullnetwork(metab, enzyme, title)
+  
+```
+
+
+```{r echo = F, warning=F, fig.height=10, fig.width=10}
+
+##metab (metabolomics) Choices
+#"GRxWT.C"  "GRxWT.Df" "GRxWT.OE" "GR.CxDf" "WT.CxDf"
+#"GR.CxOE"  "WT.CxOE" "GR.DfxWT.C" "GR.OExWT.C"
+##enzyme (transcriptome) choices
+#"GRF.CxDf"  "GRF.CxOE"  "WTF.CxDf"  "WTF.CxOE" "GRxWT.FC"  "GRxWT.FDf" 
+#"GRxWT.FOE" "GRDfxWT.F" "GROExWT.F" "GRM.CxDf"  "GRM.CxOE"  "WTM.CxDf" 
+#"WTM.CxOE"  "GRxWT.MC"  "GRxWT.MDf" "GRxWT.MOE" "GRDfxWT.M" "GROExWT.M" 
+#"GR.FxM"    "WT.FxM"
+
+metab = "GR.DfxWT.C"
+enzyme = "GRDfxWT.F"
+title = "GRDfxWT.F"
+meansumcutoff = 5
+
+fullnetwork(metab, enzyme, title, meansumcutoff, fccutoff = log2(1.25))
+  
+```
+
+
+```{r echo = F, warning=F, fig.height=10, fig.width=10}
+
+##metab (metabolomics) Choices
+#"GRxWT.C"  "GRxWT.Df" "GRxWT.OE" "GR.CxDf" "WT.CxDf"
+#"GR.CxOE"  "WT.CxOE" "GR.DfxWT.C" "GR.OExWT.C"
+##enzyme (transcriptome) choices
+#"GRF.CxDf"  "GRF.CxOE"  "WTF.CxDf"  "WTF.CxOE" "GRxWT.FC"  "GRxWT.FDf" 
+#"GRxWT.FOE" "GRDfxWT.F" "GROExWT.F" "GRM.CxDf"  "GRM.CxOE"  "WTM.CxDf" 
+#"WTM.CxOE"  "GRxWT.MC"  "GRxWT.MDf" "GRxWT.MOE" "GRDfxWT.M" "GROExWT.M" 
+#"GR.FxM"    "WT.FxM"
+
+metab = "GR.DfxWT.C"
+enzyme = "GRDfxWT.M"
+title = "GRDfxWT.M"
+meansumcutoff = 5
+
+fullnetwork(metab, enzyme, title, meansumcutoff, fccutoff = log2(1.25))
+  
+```
+
+
+```{r echo = F, warning=F, fig.height=10, fig.width=10}
+
+##metab (metabolomics) Choices
+#"GRxWT.C"  "GRxWT.Df" "GRxWT.OE" "GR.CxDf" "WT.CxDf"
+#"GR.CxOE"  "WT.CxOE" "GR.DfxWT.C" "GR.OExWT.C"
+##enzyme (transcriptome) choices
+#"GRF.CxDf"  "GRF.CxOE"  "WTF.CxDf"  "WTF.CxOE" "GRxWT.FC"  "GRxWT.FDf" 
+#"GRxWT.FOE" "GRDfxWT.F" "GROExWT.F" "GRM.CxDf"  "GRM.CxOE"  "WTM.CxDf" 
+#"WTM.CxOE"  "GRxWT.MC"  "GRxWT.MDf" "GRxWT.MOE" "GRDfxWT.M" "GROExWT.M" 
+#"GR.FxM"    "WT.FxM"
+
+metab = "GR.CxDf"
+enzyme = "GRF.CxDf"
+title = "GRF.CxDf"
+meansumcutoff = 5
+
+fullnetwork(metab, enzyme, title, meansumcutoff, fccutoff = log2(1.25))
+  
+```
+
+```{r echo = F, warning=F, fig.height=10, fig.width=10}
+
+##metab (metabolomics) Choices
+#"GRxWT.C"  "GRxWT.Df" "GRxWT.OE" "GR.CxDf" "WT.CxDf"
+#"GR.CxOE"  "WT.CxOE" "GR.DfxWT.C" "GR.OExWT.C"
+##enzyme (transcriptome) choices
+#"GRF.CxDf"  "GRF.CxOE"  "WTF.CxDf"  "WTF.CxOE" "GRxWT.FC"  "GRxWT.FDf" 
+#"GRxWT.FOE" "GRDfxWT.F" "GROExWT.F" "GRM.CxDf"  "GRM.CxOE"  "WTM.CxDf" 
+#"WTM.CxOE"  "GRxWT.MC"  "GRxWT.MDf" "GRxWT.MOE" "GRDfxWT.M" "GROExWT.M" 
+#"GR.FxM"    "WT.FxM"
+
+metab = "GR.CxDf"
+enzyme = "GRM.CxDf"
+title = "GRM.CxDf"
+meansumcutoff = 5
+
+fullnetwork(metab, enzyme, title, meansumcutoff, fccutoff = log2(1.25))
+  
+```
+
+
+```{r echo = F, warning=F, fig.height=10, fig.width=10}
+
+##metab (metabolomics) Choices
+#"GRxWT.C"  "GRxWT.Df" "GRxWT.OE" "GR.CxDf" "WT.CxDf"
+#"GR.CxOE"  "WT.CxOE" "GR.DfxWT.C" "GR.OExWT.C"
+##enzyme (transcriptome) choices
+#"GRF.CxDf"  "GRF.CxOE"  "WTF.CxDf"  "WTF.CxOE" "GRxWT.FC"  "GRxWT.FDf" 
+#"GRxWT.FOE" "GRDfxWT.F" "GROExWT.F" "GRM.CxDf"  "GRM.CxOE"  "WTM.CxDf" 
+#"WTM.CxOE"  "GRxWT.MC"  "GRxWT.MDf" "GRxWT.MOE" "GRDfxWT.M" "GROExWT.M" 
+#"GR.FxM"    "WT.FxM"
+
+metab = "WT.CxDf"
+enzyme = "WTF.CxDf"
+title = "WTF.CxDf"
+meansumcutoff = 5
+
+fullnetwork(metab, enzyme, title, meansumcutoff, fccutoff = log2(1.25))
+  
+```
+
+```{r echo = F, warning=F, fig.height=10, fig.width=10}
+
+##metab (metabolomics) Choices
+#"GRxWT.C"  "GRxWT.Df" "GRxWT.OE" "GR.CxDf" "WT.CxDf"
+#"GR.CxOE"  "WT.CxOE" "GR.DfxWT.C" "GR.OExWT.C"
+##enzyme (transcriptome) choices
+#"GRF.CxDf"  "GRF.CxOE"  "WTF.CxDf"  "WTF.CxOE" "GRxWT.FC"  "GRxWT.FDf" 
+#"GRxWT.FOE" "GRDfxWT.F" "GROExWT.F" "GRM.CxDf"  "GRM.CxOE"  "WTM.CxDf" 
+#"WTM.CxOE"  "GRxWT.MC"  "GRxWT.MDf" "GRxWT.MOE" "GRDfxWT.M" "GROExWT.M" 
+#"GR.FxM"    "WT.FxM"
+
+metab = "WT.CxDf"
+enzyme = "WTM.CxDf"
+title = "WTM.CxDf"
+meansumcutoff = 5
+
+fullnetwork(metab, enzyme, title, meansumcutoff, fccutoff = log2(1.25))
+  
+```
+
+```{r echo = F, warning=F, fig.height=10, fig.width=10}
+
+##metab (metabolomics) Choices
+#"GRxWT.C"  "GRxWT.Df" "GRxWT.OE" "GR.CxDf" "WT.CxDf"
+#"GR.CxOE"  "WT.CxOE" "GR.DfxWT.C" "GR.OExWT.C"
+##enzyme (transcriptome) choices
+#"GRF.CxDf"  "GRF.CxOE"  "WTF.CxDf"  "WTF.CxOE" "GRxWT.FC"  "GRxWT.FDf" 
+#"GRxWT.FOE" "GRDfxWT.F" "GROExWT.F" "GRM.CxDf"  "GRM.CxOE"  "WTM.CxDf" 
+#"WTM.CxOE"  "GRxWT.MC"  "GRxWT.MDf" "GRxWT.MOE" "GRDfxWT.M" "GROExWT.M" 
+#"GR.FxM"    "WT.FxM"
+
+metab = "GRxWT.Df"
+enzyme = "GRxWT.FDf"
+title = "GRxWT.FDf"
+meansumcutoff = 5
+
+fullnetwork(metab, enzyme, title, meansumcutoff, fccutoff = log2(1.25))
+  
+```
+
+
+```{r echo = F, warning=F, fig.height=10, fig.width=10}
+
+##metab (metabolomics) Choices
+#"GRxWT.C"  "GRxWT.Df" "GRxWT.OE" "GR.CxDf" "WT.CxDf"
+#"GR.CxOE"  "WT.CxOE" "GR.DfxWT.C" "GR.OExWT.C"
+##enzyme (transcriptome) choices
+#"GRF.CxDf"  "GRF.CxOE"  "WTF.CxDf"  "WTF.CxOE" "GRxWT.FC"  "GRxWT.FDf" 
+#"GRxWT.FOE" "GRDfxWT.F" "GROExWT.F" "GRM.CxDf"  "GRM.CxOE"  "WTM.CxDf" 
+#"WTM.CxOE"  "GRxWT.MC"  "GRxWT.MDf" "GRxWT.MOE" "GRDfxWT.M" "GROExWT.M" 
+#"GR.FxM"    "WT.FxM"
+
+metab = "GRxWT.Df"
+enzyme = "GRxWT.MDf"
+title = "GRxWT.MDf"
+meansumcutoff = 5
+
+fullnetwork(metab, enzyme, title, meansumcutoff, fccutoff = log2(1.25))
+  
+```
+
+```{r echo = F, warning=F, fig.height=10, fig.width=10}
+
+##metab (metabolomics) Choices
+#"GRxWT.C"  "GRxWT.Df" "GRxWT.OE" "GR.CxDf" "WT.CxDf"
+#"GR.CxOE"  "WT.CxOE" "GR.DfxWT.C" "GR.OExWT.C"
+##enzyme (transcriptome) choices
+#"GRF.CxDf"  "GRF.CxOE"  "WTF.CxDf"  "WTF.CxOE" "GRxWT.FC"  "GRxWT.FDf" 
+#"GRxWT.FOE" "GRDfxWT.F" "GROExWT.F" "GRM.CxDf"  "GRM.CxOE"  "WTM.CxDf" 
+#"WTM.CxOE"  "GRxWT.MC"  "GRxWT.MDf" "GRxWT.MOE" "GRDfxWT.M" "GROExWT.M" 
+#"GR.FxM"    "WT.FxM"
+
+metab = "GRxWT.C"
+enzyme = "GR.FxM"
+title = "GR.FxM"
+
+
+fullnetwork(metab, enzyme, title, meansumcutoff, fccutoff = log2(1.25))
+  
+```
+
+
+```{r echo = F}
+
+combined.edges = raw.edges
+
+
+
+```
+
+
+```{r echo = F, warning=F, fig.height=10, fig.width=10}
+
+##metab (metabolomics) Choices
+#"GRxWT.C"  "GRxWT.Df" "GRxWT.OE" "GR.CxDf" "WT.CxDf"
+#"GR.CxOE"  "WT.CxOE" "GR.DfxWT.C" "GR.OExWT.C"
+##enzyme (transcriptome) choices
+#"GRF.CxDf"  "GRF.CxOE"  "WTF.CxDf"  "WTF.CxOE" "GRxWT.FC"  "GRxWT.FDf" 
+#"GRxWT.FOE" "GRDfxWT.F" "GROExWT.F" "GRM.CxDf"  "GRM.CxOE"  "WTM.CxDf" 
+#"WTM.CxOE"  "GRxWT.MC"  "GRxWT.MDf" "GRxWT.MOE" "GRDfxWT.M" "GROExWT.M" 
+#"GR.FxM"    "WT.FxM"
+
+metab = "GR.OExWT.C"
+enzyme = "GROExWT.F"
+title = "GROExWT.F"
+
+
+fullnetwork(metab, enzyme, title)
+  
+```
+
+
+
+
+```{r echo = F, warning=F, fig.height=10, fig.width=10}
+
+
+metab = "GR.OExWT.C"
+enzyme = "GROExWT.F"
+title = "GROExWT.F"
+
+
+fullnetwork(metab, enzyme, title)
+  
+```
+
+
+```{r echo = F, warning=F, fig.height=10, fig.width=10}
+
+##metab (metabolomics) Choices
+#"GRxWT.C"  "GRxWT.Df" "GRxWT.OE" "GR.CxDf" "WT.CxDf"
+#"GR.CxOE"  "WT.CxOE" "GR.DfxWT.C" "GR.OExWT.C"
+##enzyme (transcriptome) choices
+#"GRF.CxDf"  "GRF.CxOE"  "WTF.CxDf"  "WTF.CxOE" "GRxWT.FC"  "GRxWT.FDf" 
+#"GRxWT.FOE" "GRDfxWT.F" "GROExWT.F" "GRM.CxDf"  "GRM.CxOE"  "WTM.CxDf" 
+#"WTM.CxOE"  "GRxWT.MC"  "GRxWT.MDf" "GRxWT.MOE" "GRDfxWT.M" "GROExWT.M" 
+#"GR.FxM"    "WT.FxM"
+
+metab = "GR.CxOE"
+enzyme = "GRF.CxOE"
+title = "GRF CxOE"
+
+
+fullnetwork(metab, enzyme, title)
+  
+```
+
+
+```{r echo = F}
+
+##metabolomics Choices
+##"GRxWT.C"  "GRxWT.Df" "GRxWT.OE" "GR.CxDf" "WT.CxDf"  "GR.CxOE"  "WT.CxOE"
+metab = "GR.DfxWT.C"
+
+
+
+##Transcriptome choices
+##"GRF.CxDf" "GRF.CxOE"  "WTF.CxDf" "WTF.CxOE"  "GRxWT.FC" "GRxWT.FDf"
+##"GRxWT.FOE" "GRM.CxDf"  "GRM.CxOE" "WTM.CxDf"  "WTM.CxOE"  "GRxWT.MC"
+##"GRxWT.MDf" "GRxWT.MOE" "GR.FxM" "WT.FxM" 
+enzyme = "GRDfxWT.F"
+
+nodes = raw.nodes
+edges = raw.edges
+
+nodes[nodes$shape == "dot", "label"] = NA
+
+nodes.color = G85R.metabFC[nodes[nodes$shape == "circle", "data.id"], metab]
+#max(abs(na.omit(nodes.color)))
+
+#changing to match WT and GR plots
+nodes.color = temp[((nodes.color/max(abs(na.omit(nodes.color))))*200)+201]
+#nodes.color = temp[((nodes.color/2.7)*200)+201]
+
+nodes[nodes$shape == "circle", "color.background"] = nodes.color
+nodes$color.background[na.action(na.exclude(nodes$color.background))] = "white"
+
+node.size = G85R.metabFDR[nodes[nodes$shape == "circle", "data.id"], metab]
+node.size[na.action(na.exclude(node.size))] = 1
+node.size = -log10(node.size)+1
+node.size = node.size*10
+node.size[node.size>80] = 50
+node.size[node.size < (-log10(.2)+1)*10] =10
+nodes[nodes$shape == "circle", "size"] = node.size
+
+nodes$shape = 'dot'
+
+
+nodes$title = paste0(nodes$id,
+                     "<br>-log2(FC): ", 
+                     signif((G85R.metabFC[nodes$data.id, metab]), 3),
+                     "<br>FDR: ", 
+                     signif((G85R.metabFDR[nodes$data.id, metab]), 3))
+
+
+edges$title = paste0(GeneIDKey[edges$FBgn, "Symbol"],
+                     "<br>-log2(FC): ", 
+                     signif(G85R.geneFC[edges$FBgn,
+                                 enzyme],3),
+                     "<br>FDR: ", 
+                     signif(G85R.geneFDR[edges$FBgn,
+                                 enzyme],3))
+
+edges.width = G85R.geneFDR[edges$FBgn, enzyme]
+edges.width[na.action(na.exclude(edges.width))] = 1
+edges.width = (-log10(edges.width))+1
+edges.width = edges.width * 2
+
+edges.width[edges.width>6] = 6
+edges.width[edges.width < (-log10(.2)+1)*2] =1
+
+edges$width = edges.width
+
+
+
+edges.colors = G85R.geneFC[edges$FBgn, enzyme]
+edges.colors = temp[((edges.colors/max(abs(na.omit(edges.colors))))*200)+201]
+edges.colors[na.action(na.exclude(edges.colors))] = "black"
+
+edges$color = edges.colors
+
+
+
+
+visNetwork(nodes, edges, background = "white", main = "GRDfxWTC.F")%>%
+  visNodes(physics = F)%>%
+  #visLayout(hierarchical=F, improvedLayout=T)%>%
+  visOptions(highlightNearest = TRUE, nodesIdSelection = list(enabled = T, values = nodes[nodes$size > 0, "label"]))%>%
+  visNodes(color = list(border = "black"), font = list(color = "black", size = 10, background = "white"))%>%
+  visEdges(arrows = edges$arrows, physics = T)
+
+```
+
+
+
+```{r echo = F}
+
+##metabolomics Choices
+##"GRxWT.C"  "GRxWT.Df" "GRxWT.OE" "GR.CxDf" "WT.CxDf"  "GR.CxOE"  "WT.CxOE"
+metab = "GR.CxDf"
+
+
+##Transcriptome choices
+##"GRF.CxDf" "GRF.CxOE"  "WTF.CxDf" "WTF.CxOE"  "GRxWT.FC" "GRxWT.FDf"
+##"GRxWT.FOE" "GRM.CxDf"  "GRM.CxOE" "WTM.CxDf"  "WTM.CxOE"  "GRxWT.MC"
+##"GRxWT.MDf" "GRxWT.MOE" "GR.FxM" "WT.FxM" 
+enzyme = "GRF.CxDf"
+
+nodes = raw.nodes
+edges = raw.edges
+
+nodes[nodes$shape == "dot", "label"] = NA
+
+nodes.color = G85R.metabFC[nodes[nodes$shape == "circle", "data.id"], metab]
+max(abs(na.omit(nodes.color)))
+
+#changing to match WT and GR plots
+#nodes.color = temp[((nodes.color/max(abs(na.omit(nodes.color))))*200)+201]
+nodes.color = temp[((nodes.color/2.7)*200)+201]
+
+nodes[nodes$shape == "circle", "color.background"] = nodes.color
+nodes$color.background[na.action(na.exclude(nodes$color.background))] = "white"
+
+node.size = G85R.metabFDR[nodes[nodes$shape == "circle", "data.id"], metab]
+node.size[na.action(na.exclude(node.size))] = 1
+node.size = -log10(node.size)+1
+node.size = node.size*10
+node.size[node.size>80] = 50
+node.size[node.size < (-log10(.2)+1)*10] =10
+nodes[nodes$shape == "circle", "size"] = node.size
+
+nodes$shape = 'dot'
+
+
+nodes$title = paste0(nodes$id,
+                     "<br>-log2(FC): ", 
+                     signif((G85R.metabFC[nodes$data.id, metab]), 3),
+                     "<br>FDR: ", 
+                     signif((G85R.metabFDR[nodes$data.id, metab]), 3))
+
+
+edges$title = paste0(GeneIDKey[edges$FBgn, "Symbol"],
+                     "<br>-log2(FC): ", 
+                     signif(G85R.geneFC[edges$FBgn,
+                                 enzyme],3),
+                     "<br>FDR: ", 
+                     signif(G85R.geneFDR[edges$FBgn,
+                                 enzyme],3))
+
+edges.width = G85R.geneFDR[edges$FBgn, enzyme]
+edges.width[na.action(na.exclude(edges.width))] = 1
+edges.width = (-log10(edges.width))+1
+edges.width = edges.width * 2
+
+edges.width[edges.width>6] = 6
+edges.width[edges.width < (-log10(.2)+1)*2] =1
+
+edges$width = edges.width
+
+
+
+edges.colors = G85R.geneFC[edges$FBgn, enzyme]
+edges.colors = temp[((edges.colors/max(abs(na.omit(edges.colors))))*200)+201]
+edges.colors[na.action(na.exclude(edges.colors))] = "black"
+
+edges$color = edges.colors
+
+
+
+
+visNetwork(nodes, edges, background = "white", main = "GRF.CxDf")%>%
+  visNodes(physics = F)%>%
+  #visLayout(hierarchical=F, improvedLayout=T)%>%
+  visOptions(highlightNearest = TRUE, nodesIdSelection = list(enabled = T, values = nodes[nodes$size > 0, "label"]))%>%
+  visNodes(color = list(border = "black"), font = list(color = "black", size = 10, background = "white"))%>%
+  visEdges(arrows = edges$arrows, physics = T)
+
+```
+
+
+
+```{r echo = F}
+
+##metabolomics Choices
+##"GRxWT.C"  "GRxWT.Df" "GRxWT.OE" "GR.CxDf" "WT.CxDf"  "GR.CxOE"  "WT.CxOE"
+metab = "WT.CxDf"
+
+
+##Transcriptome choices
+##"GRF.CxDf" "GRF.CxOE"  "WTF.CxDf" "WTF.CxOE"  "GRxWT.FC" "GRxWT.FDf"
+##"GRxWT.FOE" "GRM.CxDf"  "GRM.CxOE" "WTM.CxDf"  "WTM.CxOE"  "GRxWT.MC"
+##"GRxWT.MDf" "GRxWT.MOE" "GR.FxM" "WT.FxM" 
+enzyme = "WTF.CxDf"
+
+nodes = raw.nodes
+edges = raw.edges
+
+nodes[nodes$shape == "dot", "label"] = NA
+
+nodes.color = G85R.metabFC[nodes[nodes$shape == "circle", "data.id"], metab]
+max(abs(na.omit(nodes.color)))
+
+#changing to match WT and GR plots
+#nodes.color = temp[((nodes.color/max(abs(na.omit(nodes.color))))*200)+201]
+nodes.color = temp[((nodes.color/2.7)*200)+201]
+
+nodes[nodes$shape == "circle", "color.background"] = nodes.color
+nodes$color.background[na.action(na.exclude(nodes$color.background))] = "white"
+
+node.size = G85R.metabFDR[nodes[nodes$shape == "circle", "data.id"], metab]
+node.size[na.action(na.exclude(node.size))] = 1
+node.size = -log10(node.size)+1
+node.size = node.size*10
+node.size[node.size>80] = 50
+node.size[node.size < (-log10(.2)+1)*10] =10
+nodes[nodes$shape == "circle", "size"] = node.size
+
+nodes$shape = 'dot'
+
+
+nodes$title = paste0(nodes$id,
+                     "<br>-log2(FC): ", 
+                     signif((G85R.metabFC[nodes$data.id, metab]), 3),
+                     "<br>FDR: ", 
+                     signif((G85R.metabFDR[nodes$data.id, metab]), 3))
+
+
+edges$title = paste0(GeneIDKey[edges$FBgn, "Symbol"],
+                     "<br>-log2(FC): ", 
+                     signif(G85R.geneFC[edges$FBgn,
+                                 enzyme],3),
+                     "<br>FDR: ", 
+                     signif(G85R.geneFDR[edges$FBgn,
+                                 enzyme],3))
+
+edges.width = G85R.geneFDR[edges$FBgn, enzyme]
+edges.width[na.action(na.exclude(edges.width))] = 1
+edges.width = (-log10(edges.width))+1
+edges.width = edges.width * 2
+
+edges.width[edges.width>6] = 6
+edges.width[edges.width < (-log10(.2)+1)*2] =1
+
+edges$width = edges.width
+
+
+
+edges.colors = G85R.geneFC[edges$FBgn, enzyme]
+edges.colors = temp[((edges.colors/max(abs(na.omit(edges.colors))))*200)+201]
+edges.colors[na.action(na.exclude(edges.colors))] = "black"
+
+edges$color = edges.colors
+
+
+
+
+visNetwork(nodes, edges, background = "white", main = "WTF.CxDf")%>%
+  visNodes(physics = F)%>%
+  #visLayout(hierarchical=F, improvedLayout=T)%>%
+  visOptions(highlightNearest = TRUE, nodesIdSelection = list(enabled = T, values = nodes[nodes$size > 0, "label"]))%>%
+  visNodes(color = list(border = "black"), font = list(color = "black", size = 10, background = "white"))%>%
+  visEdges(arrows = edges$arrows, physics = T)
+
+```
+
+```{r echo = F}
+
+##metabolomics Choices
+##"GRxWT.C"  "GRxWT.Df" "GRxWT.OE" "GR.CxDf" "WT.CxDf"  "GR.CxOE"  "WT.CxOE"
+metab = "GRxWT.Df"
+
+
+##Transcriptome choices
+##"GRF.CxDf" "GRF.CxOE"  "WTF.CxDf" "WTF.CxOE"  "GRxWT.FC" "GRxWT.FDf"
+##"GRxWT.FOE" "GRM.CxDf"  "GRM.CxOE" "WTM.CxDf"  "WTM.CxOE"  "GRxWT.MC"
+##"GRxWT.MDf" "GRxWT.MOE" "GR.FxM" "WT.FxM" 
+enzyme = "GRxWT.FDf"
+
+nodes = raw.nodes
+edges = raw.edges
+
+nodes[nodes$shape == "dot", "label"] = NA
+
+nodes.color = G85R.metabFC[nodes[nodes$shape == "circle", "data.id"], metab]
+max(abs(na.omit(nodes.color)))
+
+
+nodes.color = temp[((nodes.color/max(abs(na.omit(nodes.color))))*200)+201]
+
+
+nodes[nodes$shape == "circle", "color.background"] = nodes.color
+nodes$color.background[na.action(na.exclude(nodes$color.background))] = "white"
+
+node.size = G85R.metabFDR[nodes[nodes$shape == "circle", "data.id"], metab]
+node.size[na.action(na.exclude(node.size))] = 1
+node.size = -log10(node.size)+1
+node.size = node.size*10
+node.size[node.size>80] = 50
+node.size[node.size < (-log10(.2)+1)*10] =10
+nodes[nodes$shape == "circle", "size"] = node.size
+
+nodes$shape = 'dot'
+
+
+nodes$title = paste0(nodes$id,
+                     "<br>-log2(FC): ", 
+                     signif((G85R.metabFC[nodes$data.id, metab]), 3),
+                     "<br>FDR: ", 
+                     signif((G85R.metabFDR[nodes$data.id, metab]), 3))
+
+
+edges$title = paste0(GeneIDKey[edges$FBgn, "Symbol"],
+                     "<br>-log2(FC): ", 
+                     signif(G85R.geneFC[edges$FBgn,
+                                 enzyme],3),
+                     "<br>FDR: ", 
+                     signif(G85R.geneFDR[edges$FBgn,
+                                 enzyme],3))
+
+edges.width = G85R.geneFDR[edges$FBgn, enzyme]
+edges.width[na.action(na.exclude(edges.width))] = 1
+edges.width = (-log10(edges.width))+1
+edges.width = edges.width * 2
+
+edges.width[edges.width>6] = 6
+edges.width[edges.width < (-log10(.2)+1)*2] =1
+
+edges$width = edges.width
+
+
+
+edges.colors = G85R.geneFC[edges$FBgn, enzyme]
+edges.colors = temp[((edges.colors/max(abs(na.omit(edges.colors))))*200)+201]
+edges.colors[na.action(na.exclude(edges.colors))] = "black"
+
+edges$color = edges.colors
+
+
+
+
+visNetwork(nodes, edges, background = "white", main = "GRxWTF.FDf")%>%
+  visNodes(physics = F)%>%
+  #visLayout(hierarchical=F, improvedLayout=T)%>%
+  visOptions(highlightNearest = TRUE, nodesIdSelection = list(enabled = T, values = nodes[nodes$size > 0, "label"]))%>%
+  visNodes(color = list(border = "black"), font = list(color = "black", size = 10, background = "white"))%>%
+  visEdges(arrows = edges$arrows, physics = T)
+
+```
+
+
+```{r echo = F}
+
+##metabolomics Choices
+##"GRxWT.C"  "GRxWT.Df" "GRxWT.OE" "GR.CxDf" "WT.CxDf"  "GR.CxOE"  "WT.CxOE"
+metab = "GRxWT.OE"
+
+
+##Transcriptome choices
+##"GRF.CxDf" "GRF.CxOE"  "WTF.CxDf" "WTF.CxOE"  "GRxWT.FC" "GRxWT.FDf"
+##"GRxWT.FOE" "GRM.CxDf"  "GRM.CxOE" "WTM.CxDf"  "WTM.CxOE"  "GRxWT.MC"
+##"GRxWT.MDf" "GRxWT.MOE" "GR.FxM" "WT.FxM" 
+enzyme = "GRxWT.FOE"
+
+nodes = raw.nodes
+edges = raw.edges
+
+nodes[nodes$shape == "dot", "label"] = NA
+
+nodes.color = G85R.metabFC[nodes[nodes$shape == "circle", "data.id"], metab]
+max(abs(na.omit(nodes.color)))
+
+
+nodes.color = temp[((nodes.color/max(abs(na.omit(nodes.color))))*200)+201]
+
+
+nodes[nodes$shape == "circle", "color.background"] = nodes.color
+nodes$color.background[na.action(na.exclude(nodes$color.background))] = "white"
+
+node.size = G85R.metabFDR[nodes[nodes$shape == "circle", "data.id"], metab]
+node.size[na.action(na.exclude(node.size))] = 1
+node.size = -log10(node.size)+1
+node.size = node.size*10
+node.size[node.size>80] = 50
+node.size[node.size < (-log10(.2)+1)*10] =10
+nodes[nodes$shape == "circle", "size"] = node.size
+
+nodes$shape = 'dot'
+
+
+nodes$title = paste0(nodes$id,
+                     "<br>-log2(FC): ", 
+                     signif((G85R.metabFC[nodes$data.id, metab]), 3),
+                     "<br>FDR: ", 
+                     signif((G85R.metabFDR[nodes$data.id, metab]), 3))
+
+
+edges$title = paste0(GeneIDKey[edges$FBgn, "Symbol"],
+                     "<br>-log2(FC): ", 
+                     signif(G85R.geneFC[edges$FBgn,
+                                 enzyme],3),
+                     "<br>FDR: ", 
+                     signif(G85R.geneFDR[edges$FBgn,
+                                 enzyme],3))
+
+edges.width = G85R.geneFDR[edges$FBgn, enzyme]
+edges.width[na.action(na.exclude(edges.width))] = 1
+edges.width = (-log10(edges.width))+1
+edges.width = edges.width * 2
+
+edges.width[edges.width>6] = 6
+edges.width[edges.width < (-log10(.2)+1)*2] =1
+
+edges$width = edges.width
+
+
+
+edges.colors = G85R.geneFC[edges$FBgn, enzyme]
+edges.colors = temp[((edges.colors/max(abs(na.omit(edges.colors))))*200)+201]
+edges.colors[na.action(na.exclude(edges.colors))] = "black"
+
+edges$color = edges.colors
+
+
+
+
+visNetwork(nodes, edges, background = "white", main = "GRxWTF.FOE")%>%
+  visNodes(physics = F)%>%
+  #visLayout(hierarchical=F, improvedLayout=T)%>%
+  visOptions(highlightNearest = TRUE, nodesIdSelection = list(enabled = T, values = nodes[nodes$size > 0, "label"]))%>%
+  visNodes(color = list(border = "black"), font = list(color = "black", size = 10, background = "white"))%>%
+  visEdges(arrows = edges$arrows, physics = T)
+
+```
+
+```{r echo = F, warning = F}
+
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/GeneralDataFiles/"
+
+cpm = read.csv(paste0(git.dir, "TKT_cpmdata.csv"), row.names = 1)
+meta = read.csv(paste0(git.dir, "TKT.metadata.csv"), row.names = 1)
+
+cpm = read.csv(paste0(git.dir, "A4V.cpmdata.csv"), row.names = 1)
+#meta = read.csv(paste0(git.dir, "TKT.metadata.csv"), row.names = 1)
+a4vmeta = data.frame(colnames = colnames(cpm),
+                     Geno = substr(colnames(cpm),1,1),
+                     Sex = substr(colnames(cpm),
+                                  nchar(colnames(cpm))-2,
+                                  nchar(colnames(cpm))-2),
+                     Time = substr(colnames(cpm), 2, nchar(colnames(cpm))-3),
+                     rep = substr(colnames(cpm),
+                                  nchar(colnames(cpm)),
+                                  nchar(colnames(cpm))),
+                     segment = substr(colnames(cpm),
+                                  nchar(colnames(cpm))-1,
+                                  nchar(colnames(cpm))-1))
+a4vmeta$segment = factor(a4vmeta$segment, levels = c("H", "T", "A"))
+a4vmeta = a4vmeta[order(as.numeric(a4vmeta$Time)),]
+a4vmeta = a4vmeta[order(a4vmeta$segment),]
+a4vmeta = a4vmeta[order(a4vmeta$Geno, decreasing = T),]
+a4vmeta = a4vmeta[order(a4vmeta$Sex),]
+
+
+
+
+
+all.edges = na.omit(intersect(unique(edges$FBgn), row.names(GeneIDKey)))
+
+hmdata = cpm[intersect(all.edges, row.names(cpm)),]
+row.names(hmdata)= GeneIDKey[row.names(hmdata),"Symbol"]
+
+hmdata=t(scale(t(hmdata)))
+
+hmdata = hmdata[,a4vmeta$colnames]
+
+SampleGroup = setNames(meta$Group, row.names(meta))
+SampleGroup = SampleGroup[colnames(hmdata)]
+
+#SampleGroup = setNames(meta$Group, row.names(meta))
+SampleGroup = paste0(substr(colnames(hmdata),1,1),
+                     substr(colnames(hmdata),
+                            nchar(colnames(hmdata))-2,
+                            nchar(colnames(hmdata))-1))
+
+
+
+
+
+#row.names(sidecols)=colnames(hmdata)
+
+sidecols=data.frame("Group" = paste0(a4vmeta$Geno, a4vmeta$Sex, a4vmeta$segment))
+sidecolorpallete = c("AFA"="gold",  "AFH"="lightyellow",  "AFT" ="orange3",
+                     "AMA"="limegreen", "AMH"="lightgreen", "AMT" ="darkgreen",
+                     "SFA"="red", "SFH"="pink", "SFT"="firebrick",
+                     "SMA"="royalblue", "SMH"="skyblue", "SMT"="navy")
+  
+  
+  #WT.M="royalblue", TktDfWT.M="skyblue", TktOEWT.M ="navy", 
+  #                             WT.F="red", TktDfWT.F="pink", TktOEWT.F ="firebrick",
+  #                             GR.M="limegreen", TktDfGR.M="lightgreen", TktOEGR.M ="darkgreen",
+  #                             GR.F="gold", TktDfGR.F="lightyellow", TktOEGR.F ="orange3")
+
+#row.names(sidecols)=colnames(hmdata)
+
+heatmaply(hmdata,
+          trace="none",
+          col=RdYlBu(100)[100:1], 
+          scale="none",
+          dendrogram = "row",
+          Rowv=T,
+          Colv=F,
+          cexRow = .75, 
+          na.value="black",
+          #labRow = row.names(hmdata))#,
+          col_side_colors = sidecols,
+          col_side_palette = sidecolorpallete)
+
+
+```
+
+
+```{r echo = F, warning = F}
+
+
+temp.meta = meta[meta$Sex == "F",]
+temp.meta= temp.meta[temp.meta$TKT != "OE",]
+
+hmdata = cpm[intersect(all.edges, row.names(cpm)),]
+hmdata = hmdata[,row.names(temp.meta)]
+row.names(hmdata)= GeneIDKey[row.names(hmdata),"Symbol"]
+
+hmdata=t(scale(t(hmdata)))
+
+SampleGroup = setNames(meta$Group, row.names(meta))
+SampleGroup = SampleGroup[colnames(hmdata)]
+
+sidecols = data.frame(TKT = temp.meta$TKT,
+                      Geno = temp.meta$Genotype,
+                      Sex = temp.meta$Sex)
+sidecolorpallete = c(WT="darkgreen", GR="gold", 
+                     "F" = "deeppink", "M", "deepskyblue",
+                     Control = "grey40", DF = "grey90", OE = "grey10")
+
+
+#row.names(sidecols)=colnames(hmdata)
+
+
+heatmaply(hmdata,
+          trace="none",
+          col=RdYlBu(100)[100:1], 
+          scale="none",
+          dendrogram = "row",
+          Rowv=T,
+          Colv=F,
+          cexRow = .75, 
+          na.value="black",
+          #labRow = row.names(hmdata))#,
+          col_side_colors = sidecols,
+          col_side_palette = sidecolorpallete)
+
+
+```
+
+
+```{r echo = F, warning = F}
+
+
+temp.meta = meta[meta$Sex == "M",]
+
+hmdata = cpm[intersect(all.edges, row.names(cpm)),]
+hmdata = hmdata[,row.names(temp.meta)]
+row.names(hmdata)= GeneIDKey[row.names(hmdata),"Symbol"]
+
+hmdata=t(scale(t(hmdata)))
+
+SampleGroup = setNames(meta$Group, row.names(meta))
+SampleGroup = SampleGroup[colnames(hmdata)]
+
+sidecols=data.frame("Group" = SampleGroup)
+
+
+#row.names(sidecols)=colnames(hmdata)
+
+sidecols = data.frame(TKT = temp.meta$TKT,
+                      Geno = temp.meta$Genotype,
+                      Sex = temp.meta$Sex)
+sidecolorpallete = c(WT="darkgreen", GR="gold", 
+                     "F" = "deeppink", "M" = "deepskyblue",
+                     Control = "grey40", DF = "grey90", OE = "grey10")
+
+
+#row.names(sidecols)=colnames(hmdata)
+
+heatmaply(hmdata,
+          trace="none",
+          col=RdYlBu(100)[100:1], 
+          scale="none",
+          dendrogram = "both",
+          Rowv=T,
+          Colv=T,
+          cexRow = .75, 
+          na.value="black",
+          #labRow = row.names(hmdata))#,
+          col_side_colors = sidecols,
+          col_side_palette = sidecolorpallete)
+
+
+```
+
+
+```{r echo = F, warning = F}
+
+normmetab.data = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/NormMetaboliteData.csv", row.names = 1)
+
+normmetab.meta = data.frame(Sample = colnames(normmetab.data),
+                            TKT = rep("Control", ncol(normmetab.data)),
+                            Geno = rep("WT", ncol(normmetab.data)))
+normmetab.meta$TKT[grep("TktOE", colnames(normmetab.data))] = "OE"
+normmetab.meta$TKT[grep("TktDf", colnames(normmetab.data))] = "DF"
+normmetab.meta$Geno[grep("GR", colnames(normmetab.data))] = "GR"
+
+normmetab.meta$Order = paste(normmetab.meta$TKT, normmetab.meta$Geno, normmetab.meta$Sample)
+
+sampleorder = order(normmetab.meta$Order)
+
+normmetab.data = normmetab.data[,sampleorder]
+normmetab.meta = normmetab.meta[sampleorder,]
+
+
+hmdata = normmetab.data
+temp = hmdata
+temp = t(!apply(temp, 1, is.na))
+temp = apply(temp, 1, sum)
+hmdata = hmdata[temp>2,]
+
+hmdata=t(scale(t(hmdata)))
+hmdata = hmdata[intersect(raw.nodes$data.id, row.names(hmdata)),]
+hmdata = hmdata[intersect(raw.nodes$data.id[raw.nodes$Pathway == "Glycolysis"], row.names(hmdata)),]
+#hmdata = hmdata[intersect(raw.nodes$data.id[raw.nodes$Pathway == "NAD"], #row.names(hmdata)),]
+#hmdata = hmdata[intersect(raw.nodes$data.id[raw.nodes$Pathway == "TCA"], #row.names(hmdata)),]
+#hmdata = hmdata[intersect(raw.nodes$data.id[raw.nodes$Pathway == "PPP"], #row.names(hmdata)),]
+#hmdata = hmdata[intersect(raw.nodes$data.id[raw.nodes$Pathway == "Purine"], row.names(hmdata)),]
+
+
+
+sidecols = data.frame(TKT = normmetab.meta$TKT,
+                      Geno = normmetab.meta$Geno)
+
+
+sidecolorpallete = c(WT="royalblue", GR="firebrick",
+                     Control = "grey40", DF = "grey90", OE = "grey10")
+
+
+heatmaply(hmdata,
+          trace="none",
+          col=RdYlBu(100)[100:1], 
+          scale="none",
+          dendrogram = "none",
+          Rowv=T,
+          Colv=F,
+          cexRow = .75, 
+          na.value="white",
+          #labRow = row.names(hmdata))#,
+          col_side_colors = sidecols,
+          col_side_palette = sidecolorpallete)
+
+
+```
+
+
+```{r echo = F}
+library(org.Dm.eg.db)
+
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/GeneralDataFiles/"
+
+cpm = read.csv(paste0(git.dir, "TKT_cpmdata.csv"), row.names = 1)
+meta = read.csv(paste0(git.dir, "TKT.metadata.csv"), row.names = 1)
+
+genesingo = read.csv(paste0(git.dir, "genesingo.csv"), row.names = 1)
+
+GO.Names = read.csv(paste0(git.dir, "GO.names.csv"), row.names = 1)
+
+genesingo=as.data.frame(org.Dm.egGO2ALLEGS)
+genesingo$FBgn = setNames(GeneIDKey$FBgn, GeneIDKey$ensembl)[genesingo$gene_id]
+genesingo$Symbol = setNames(GeneIDKey$Symbol, GeneIDKey$ensembl)[genesingo$gene_id]
+
+go.term = "(GO:0006096)"
+
+subset.genes = genesingo$FBgn[genesingo$go_id == go.term]
+subset.genes = unique(subset.genes)
+subset.genes = na.omit(subset.genes)
+subset.genes = intersect(subset.genes, row.names(cpm))
+subset.genes = cpm[subset.genes,]
+
+```
+
+
+```{r echo = F}
+
+subset.meta = meta[meta$Sex == "F",]
+go.term = "GO:0006486"
+
+
+subset.genes = genesingo$FBgn[genesingo$go_id == go.term]
+subset.genes = unique(subset.genes)
+subset.genes = na.omit(subset.genes)
+subset.genes = intersect(subset.genes, row.names(cpm))
+subset.genes = cpm[subset.genes,]
+
+data_scaled <- (scale(t(subset.genes[,row.names(subset.meta)])))
+#distance_matrix <- dist(data_scaled, method = "euclidean")
+#hc_result <- hclust(distance_matrix, method = "complete")
+#clusters <- cutree(hc_result, k = 3)
+
+
+branches = 4
+allcolors=c('brown', 'gold3', 'darkgreen', 'cornflowerblue', 'mediumorchid', 'orangered')
+
+colors = allcolors[1:branches]
+
+hc <- hclust(dist(data_scaled), "complete")
+heights=sort(hc$height,decreasing = T)
+
+if(branches>1){
+  cutheight=heights[branches]
+}
+
+if(branches==1){
+  cutheight=max(heights)+1
+}
+
+dnd=cut(as.dendrogram(hc),h=cutheight)
+
+if(branches>1){
+  branchcolors=colors[1:length(dnd$lower)]
+}
+if(branches==1){
+  branchcolors="black"
+}
+
+colordend=(color_branches(hc, h=cutheight, col=branchcolors))
+
+plot(colordend)
+
+
+heatmaply(data_scaled,
+          trace="none",
+          col=RdYlBu(100)[100:1],
+          dendrogram = "row",
+          Rowv=colordend,
+          Colv="NA",
+          cexRow = 1,
+          main = go.term) 
+
+```
+
+
+```{r echo = F}
+
+subset.meta = meta[meta$Sex == "M",]
+subset.meta = subset.meta[subset.meta$SampleID != 'TktDfWT.M1', ]
+go.term = "GO:0006096"
+
+subset.genes = genesingo$FBgn[genesingo$go_id == go.term]
+subset.genes = unique(subset.genes)
+subset.genes = na.omit(subset.genes)
+subset.genes = intersect(subset.genes, row.names(cpm))
+subset.genes = cpm[subset.genes,]
+
+
+use.data = subset.genes[,row.names(subset.meta)]
+
+
+pca <- prcomp(t(use.data), scale.=TRUE) 
+    pc1=scale(pca$x[,1])
+    pc2=scale(pca$x[,2])
+    eigs <- pca$sdev^2
+    ve=signif(((eigs / sum(eigs))*100)[1:3],4)
+
+    pca.data=data.frame(PC1=pc1,
+                        PC2=pc2,
+                        sdev=pca$sdev,
+                        Percent1=ve[1],
+                        Percent2=ve[2],
+                        Group = subset.meta[colnames(use.data), "Group"],
+                        Genotype = factor(subset.meta[colnames(use.data), "Genotype"]),
+                        TKT = factor(subset.meta[colnames(use.data), "TKT"]),
+                        #Score = reducedTerms[row.names(use.data), "score"],
+                        Term = GO.Names[go.term, "term"])#,
+                        #TotalDE = GO.data[row.names(use.data), "numDEInCat"],
+                        #Total = GO.data[row.names(use.data), "numInCat"],
+                        #SigVal = signif(GO.data[row.names(use.data), "adjp"],3))
+
+    #pca.data$Group = factor(pca.data$Group, levels = unique(pca.data$Group))
+    #pca.data$Score = 20*(1+pca.data$Score/mean(pca.data$Score))
+    
+  fig  = plot_ly(data = pca.data, 
+                 x = ~PC1, 
+                 y = ~PC2,
+                 name = ~Group,
+                 type = 'scatter',
+                 mode = 'markers',
+                 showlegend = T,
+                 color = ~Genotype,
+                 symbol = ~TKT,
+                 ##symbols = as.character(seq_along(unique(point.data$Set))),
+                 ##colors = c("firebrick","gold","deepskyblue"),
+                 marker = list(size = 15,
+                               line = list(color = "black", width = 1.5)),
+                 hoverinfo = "text",
+                 hovertext = paste("Group: ", pca.data$Group)) %>%#,
+                                   #"\nSample: ", pca.data$Termd, 
+                                   #"\nTotal DE: ", pca.data$TotalDE, 
+                                   #"\nTotal in Cat.: ", pca.data$Total, 
+                                   #"\nFDR: ", pca.data$SigVal)) %>%
+    layout(xaxis = list(title = paste0("PC1", "(", ve[1], "%)")),
+           yaxis = list(title = paste0("PC2", "(", ve[2], "%)")),
+           title = GO.Names[go.term, "term"])
+
+fig
+
+
+
+```
+
+
+```{r echo = F}
+
+go.term = "GO:0006096"
+
+subset.genes = genesingo$FBgn[genesingo$go_id == go.term]
+subset.genes = unique(subset.genes)
+subset.genes = na.omit(subset.genes)
+subset.genes = intersect(subset.genes, row.names(cpm))
+subset.genes = cpm[subset.genes,]
+
+hmdata=t(scale(t(subset.genes)))
+temp.meta = meta
+
+row.names(hmdata)= GeneIDKey[row.names(hmdata),"Symbol"]
+
+
+SampleGroup = setNames(meta$Group, row.names(meta))
+SampleGroup = SampleGroup[colnames(hmdata)]
+
+sidecols = data.frame(TKT = temp.meta$TKT,
+                      Geno = temp.meta$Genotype,
+                      Sex = temp.meta$Sex)
+sidecolorpallete = c(WT="darkgreen", GR="gold", 
+                     "F" = "deeppink", "M"= "deepskyblue",
+                     Control = "grey40", DF = "grey90", OE = "grey10")
+
+
+heatmaply(hmdata,
+          trace="none",
+          col=RdYlBu(100)[100:1], 
+          scale="none",
+          dendrogram = "both",
+          Rowv=T,
+          Colv=T,
+          cexRow = .75, 
+          na.value="black",
+          #labRow = row.names(hmdata))#,
+          col_side_colors = sidecols,
+          col_side_palette = sidecolorpallete,
+          main = GO.Names[go.term,"term"])
+
+
+
+```
+
+
+```{r echo = F}
+
+go.term = "GO:0072521"
+
+subset.genes = genesingo$FBgn[genesingo$go_id == go.term]
+subset.genes = unique(subset.genes)
+subset.genes = na.omit(subset.genes)
+subset.genes = intersect(subset.genes, row.names(cpm))
+subset.genes = cpm[subset.genes,]
+
+hmdata=t(scale(t(subset.genes)))
+temp.meta = meta
+
+row.names(hmdata)= GeneIDKey[row.names(hmdata),"Symbol"]
+
+
+SampleGroup = setNames(meta$Group, row.names(meta))
+SampleGroup = SampleGroup[colnames(hmdata)]
+
+sidecols = data.frame(TKT = temp.meta$TKT,
+                      Geno = temp.meta$Genotype,
+                      Sex = temp.meta$Sex)
+sidecolorpallete = c(WT="darkgreen", GR="gold", 
+                     "F" = "deeppink", "M"= "deepskyblue",
+                     Control = "grey40", DF = "grey90", OE = "grey10")
+
+
+heatmaply(hmdata,
+          trace="none",
+          col=RdYlBu(100)[100:1], 
+          scale="none",
+          dendrogram = "both",
+          Rowv=T,
+          Colv=T,
+          cexRow = .75, 
+          na.value="black",
+          #labRow = row.names(hmdata))#,
+          col_side_colors = sidecols,
+          col_side_palette = sidecolorpallete,
+          main = GO.Names[go.term,"term"])
+
+
+
+```
+
+
+```{r echo = F}
+
+use.groups = c("WT.M", "WT.F",
+               "GR.M", "GR.F")
+
+library(heatmaply)
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/GeneralDataFiles/"
+
+cpm = read.csv(paste0(git.dir, "TKT_cpmdata.csv"), row.names = 1)
+meta = read.csv(paste0(git.dir, "TKT.metadata.csv"), row.names = 1)
+
+all.edges = na.omit(intersect(unique(edges$FBgn), row.names(GeneIDKey)))
+
+hmdata = cpm[intersect(all.edges, row.names(cpm)),]
+row.names(hmdata)= GeneIDKey[row.names(hmdata),"Symbol"]
+
+hmdata=t(scale(t(hmdata)))
+
+SampleGroup = setNames(meta$Group, row.names(meta))
+SampleGroup = SampleGroup[colnames(hmdata)]
+
+sidecols=data.frame("Group" = SampleGroup)
+sidecolorpallete = c(WT.M="royalblue", TktDfWT.M="skyblue", TktOEWT.M ="navy", 
+                               WT.F="red", TktDfWT.F="pink", TktOEWT.F ="firebrick",
+                               GR.M="limegreen", TktDfGR.M="lightgreen", TktOEGR.M ="darkgreen",
+                               GR.F="gold", TktDfGR.F="lightyellow", TktOEGR.F ="orange3")
+
+
+heatmaply(hmdata,
+          trace="none",
+          col=RdYlBu(100)[100:1], 
+          scale="none",
+          dendrogram = "both",
+          Rowv=T,
+          Colv=T,
+          cexRow = .75, 
+          na.value="black",
+          #labRow = row.names(hmdata))#,
+          col_side_colors = sidecols,
+          col_side_palette = sidecolorpallete)
+
+
+```
+
+
+```{r echo = F}
+
+##metabolomics Choices
+##"GRxWT.C"  "GRxWT.Df" "GRxWT.OE" "GR.CxDf" "WT.CxDf"  "GR.CxOE"  "WT.CxOE"
+metab = "GR.CxDf"
+
+
+##Transcriptome choices
+##"GRF.CxDf" "GRF.CxOE"  "WTF.CxDf" "WTF.CxOE"  "GRxWT.FC" "GRxWT.FDf"
+##"GRxWT.FOE" "GRM.CxDf"  "GRM.CxOE" "WTM.CxDf"  "WTM.CxOE"  "GRxWT.MC"
+##"GRxWT.MDf" "GRxWT.MOE" "GR.FxM" "WT.FxM" 
+enzyme = "GRM.CxDf"
+
+nodes = raw.nodes
+edges = raw.edges
+
+nodes[nodes$shape == "dot", "label"] = NA
+
+nodes.color = G85R.metabFC[nodes[nodes$shape == "circle", "data.id"], metab]
+nodes.color = temp[((nodes.color/max(abs(na.omit(nodes.color))))*200)+201]
+nodes[nodes$shape == "circle", "color.background"] = nodes.color
+nodes$color.background[na.action(na.exclude(nodes$color.background))] = "white"
+
+node.size = G85R.metabFDR[nodes[nodes$shape == "circle", "data.id"], metab]
+node.size[na.action(na.exclude(node.size))] = 1
+node.size = -log10(node.size)+1
+node.size = node.size*10
+node.size[node.size>80] = 50
+node.size[node.size < (-log10(.2)+1)*10] =10
+nodes[nodes$shape == "circle", "size"] = node.size
+
+nodes$shape = 'dot'
+
+
+nodes$title = paste0(nodes$id,
+                     "<br>-log2(FC): ", 
+                     signif((G85R.metabFC[nodes$data.id, metab]), 3),
+                     "<br>FDR: ", 
+                     signif((G85R.metabFDR[nodes$data.id, metab]), 3))
+
+
+edges$title = paste0(GeneIDKey[edges$FBgn, "Symbol"],
+                     "<br>-log2(FC): ", 
+                     signif(G85R.geneFC[edges$FBgn,
+                                 enzyme],3),
+                     "<br>FDR: ", 
+                     signif(G85R.geneFDR[edges$FBgn,
+                                 enzyme],3))
+
+edges.width = G85R.geneFDR[edges$FBgn, enzyme]
+edges.width[na.action(na.exclude(edges.width))] = 1
+edges.width = (-log10(edges.width))+1
+edges.width = edges.width * 2
+
+edges.width[edges.width>6] = 6
+edges.width[edges.width < (-log10(.2)+1)*2] =1
+
+edges$width = edges.width
+
+
+
+edges.colors = G85R.geneFC[edges$FBgn, enzyme]
+edges.colors = temp[((edges.colors/max(abs(na.omit(edges.colors))))*200)+201]
+edges.colors[na.action(na.exclude(edges.colors))] = "black"
+
+edges$color = edges.colors
+
+
+
+
+visNetwork(nodes, edges, background = "white")%>%
+  visNodes(physics = F)%>%
+  #visLayout(hierarchical=F, improvedLayout=T)%>%
+  visOptions(highlightNearest = TRUE, nodesIdSelection = list(enabled = T, values = nodes[nodes$size > 0, "label"]))%>%
+  visNodes(color = list(border = "black"), font = list(color = "black", size = 10, background = "white"))%>%
+  visEdges(arrows = edges$arrows, physics = T)
+
+```
+
+
+
+```{r echo = F}
+
+##metabolomics Choices
+##"GRxWT.C"  "GRxWT.Df" "GRxWT.OE" "GR.CxDf" "WT.CxDf"  "GR.CxOE"  "WT.CxOE"
+metab = "WT.CxDf"
+
+
+##Transcriptome choices
+##"GRF.CxDf" "GRF.CxOE"  "WTF.CxDf" "WTF.CxOE"  "GRxWT.FC" "GRxWT.FDf"
+##"GRxWT.FOE" "GRM.CxDf"  "GRM.CxOE" "WTM.CxDf"  "WTM.CxOE"  "GRxWT.MC"
+##"GRxWT.MDf" "GRxWT.MOE" "GR.FxM" "WT.FxM" 
+enzyme = "WTF.CxDf"
+
+nodes = raw.nodes
+edges = raw.edges
+
+nodes[nodes$shape == "dot", "label"] = NA
+
+nodes.color = G85R.metabFC[nodes[nodes$shape == "circle", "data.id"], metab]
+nodes.color = temp[((nodes.color/max(abs(na.omit(nodes.color))))*200)+201]
+nodes[nodes$shape == "circle", "color.background"] = nodes.color
+nodes$color.background[na.action(na.exclude(nodes$color.background))] = "white"
+
+node.size = G85R.metabFDR[nodes[nodes$shape == "circle", "data.id"], metab]
+node.size[na.action(na.exclude(node.size))] = 1
+node.size = -log10(node.size)+1
+node.size = node.size*10
+node.size[node.size>80] = 50
+node.size[node.size < (-log10(.2)+1)*10] =10
+nodes[nodes$shape == "circle", "size"] = node.size
+
+nodes$shape = 'dot'
+
+
+nodes$title = paste0(nodes$id,
+                     "<br>-log2(FC): ", 
+                     signif((G85R.metabFC[nodes$data.id, metab]), 3),
+                     "<br>FDR: ", 
+                     signif((G85R.metabFDR[nodes$data.id, metab]), 3))
+
+
+edges$title = paste0(GeneIDKey[edges$FBgn, "Symbol"],
+                     "<br>-log2(FC): ", 
+                     signif(G85R.geneFC[edges$FBgn,
+                                 enzyme],3),
+                     "<br>FDR: ", 
+                     signif(G85R.geneFDR[edges$FBgn,
+                                 enzyme],3))
+
+edges.width = G85R.geneFDR[edges$FBgn, enzyme]
+edges.width[na.action(na.exclude(edges.width))] = 1
+edges.width = (-log10(edges.width))+1
+edges.width = edges.width * 2
+
+edges.width[edges.width>6] = 6
+edges.width[edges.width < (-log10(.2)+1)*2] =1
+
+edges$width = edges.width
+
+
+
+edges.colors = G85R.geneFC[edges$FBgn, enzyme]
+edges.colors = temp[((edges.colors/max(abs(na.omit(edges.colors))))*200)+201]
+edges.colors[na.action(na.exclude(edges.colors))] = "black"
+
+edges$color = edges.colors
+
+
+
+
+visNetwork(nodes, edges, background = "white", main = "WTF.CxDf")%>%
+  visNodes(physics = F)%>%
+  #visLayout(hierarchical=F, improvedLayout=T)%>%
+  visOptions(highlightNearest = TRUE, nodesIdSelection = list(enabled = T, values = nodes[nodes$size > 0, "label"]))%>%
+  visNodes(color = list(border = "black"), font = list(color = "black", size = 10, background = "white"))%>%
+  visEdges(arrows = edges$arrows, physics = T)
+
+```
+
+
+
+```{r echo = F}
+
+##metabolomics Choices
+##"GRxWT.C"  "GRxWT.Df" "GRxWT.OE" "GR.CxDf" "WT.CxDf"  "GR.CxOE"  "WT.CxOE"
+metab = "WT.CxDf"
+
+
+##Transcriptome choices
+##"GRF.CxDf" "GRF.CxOE"  "WTF.CxDf" "WTF.CxOE"  "GRxWT.FC" "GRxWT.FDf"
+##"GRxWT.FOE" "GRM.CxDf"  "GRM.CxOE" "WTM.CxDf"  "WTM.CxOE"  "GRxWT.MC"
+##"GRxWT.MDf" "GRxWT.MOE" "GR.FxM" "WT.FxM" 
+enzyme = "WTM.CxDf"
+
+nodes = raw.nodes
+edges = raw.edges
+
+nodes[nodes$shape == "dot", "label"] = NA
+
+nodes.color = G85R.metabFC[nodes[nodes$shape == "circle", "data.id"], metab]
+nodes.color = temp[((nodes.color/max(abs(na.omit(nodes.color))))*200)+201]
+nodes[nodes$shape == "circle", "color.background"] = nodes.color
+nodes$color.background[na.action(na.exclude(nodes$color.background))] = "white"
+
+node.size = G85R.metabFDR[nodes[nodes$shape == "circle", "data.id"], metab]
+node.size[na.action(na.exclude(node.size))] = 1
+node.size = -log10(node.size)+1
+node.size = node.size*10
+node.size[node.size>80] = 50
+node.size[node.size < (-log10(.2)+1)*10] =10
+nodes[nodes$shape == "circle", "size"] = node.size
+
+nodes$shape = 'dot'
+
+
+nodes$title = paste0(nodes$id,
+                     "<br>-log2(FC): ", 
+                     signif((G85R.metabFC[nodes$data.id, metab]), 3),
+                     "<br>FDR: ", 
+                     signif((G85R.metabFDR[nodes$data.id, metab]), 3))
+
+
+edges$title = paste0(GeneIDKey[edges$FBgn, "Symbol"],
+                     "<br>-log2(FC): ", 
+                     signif(G85R.geneFC[edges$FBgn,
+                                 enzyme],3),
+                     "<br>FDR: ", 
+                     signif(G85R.geneFDR[edges$FBgn,
+                                 enzyme],3))
+
+edges.width = G85R.geneFDR[edges$FBgn, enzyme]
+edges.width[na.action(na.exclude(edges.width))] = 1
+edges.width = (-log10(edges.width))+1
+edges.width = edges.width * 2
+
+edges.width[edges.width>6] = 6
+edges.width[edges.width < (-log10(.2)+1)*2] =1
+
+edges$width = edges.width
+
+
+
+edges.colors = G85R.geneFC[edges$FBgn, enzyme]
+edges.colors = temp[((edges.colors/max(abs(na.omit(edges.colors))))*200)+201]
+edges.colors[na.action(na.exclude(edges.colors))] = "black"
+
+edges$color = edges.colors
+
+
+
+
+visNetwork(nodes, edges, background = "white")%>%
+  visNodes(physics = F)%>%
+  #visLayout(hierarchical=F, improvedLayout=T)%>%
+  visOptions(highlightNearest = TRUE, nodesIdSelection = list(enabled = T, values = nodes[nodes$size > 0, "label"]))%>%
+  visNodes(color = list(border = "black"), font = list(color = "black", size = 10, background = "white"))%>%
+  visEdges(arrows = edges$arrows, physics = T)
+
+```
+
+
+
+```{r echo = F}
+
+##metabolomics Choices
+##"GRxWT.C"  "GRxWT.Df" "GRxWT.OE" "GR.CxDf" "WT.CxDf"  "GR.CxOE"  "WT.CxOE"
+metab = "GRxWT.C"
+
+
+##Transcriptome choices
+##"GRF.CxDf" "GRF.CxOE"  "WTF.CxDf" "WTF.CxOE"  "GRxWT.FC" "GRxWT.FDf"
+##"GRxWT.FOE" "GRM.CxDf"  "GRM.CxOE" "WTM.CxDf"  "WTM.CxOE"  "GRxWT.MC"
+##"GRxWT.MDf" "GRxWT.MOE" "GR.FxM" "WT.FxM" 
+enzyme = "GRxWT.MC"
+
+nodes = raw.nodes
+edges = raw.edges
+
+nodes[nodes$shape == "dot", "label"] = NA
+
+nodes.color = G85R.metabFC[nodes[nodes$shape == "circle", "data.id"], metab]
+nodes.color = temp[((nodes.color/max(abs(na.omit(nodes.color))))*200)+201]
+nodes[nodes$shape == "circle", "color.background"] = nodes.color
+nodes$color.background[na.action(na.exclude(nodes$color.background))] = "white"
+
+node.size = G85R.metabFDR[nodes[nodes$shape == "circle", "data.id"], metab]
+node.size[na.action(na.exclude(node.size))] = 1
+node.size = -log10(node.size)+1
+node.size = node.size*10
+node.size[node.size>80] = 50
+node.size[node.size < (-log10(.2)+1)*10] =10
+nodes[nodes$shape == "circle", "size"] = node.size
+
+nodes$shape = 'dot'
+
+
+nodes$title = paste0(nodes$id,
+                     "<br>-log2(FC): ", 
+                     signif((G85R.metabFC[nodes$data.id, metab]), 3),
+                     "<br>FDR: ", 
+                     signif((G85R.metabFDR[nodes$data.id, metab]), 3))
+
+
+edges$title = paste0(GeneIDKey[edges$FBgn, "Symbol"],
+                     "<br>-log2(FC): ", 
+                     signif(G85R.geneFC[edges$FBgn,
+                                 enzyme],3),
+                     "<br>FDR: ", 
+                     signif(G85R.geneFDR[edges$FBgn,
+                                 enzyme],3))
+
+edges.width = G85R.geneFDR[edges$FBgn, enzyme]
+edges.width[na.action(na.exclude(edges.width))] = 1
+edges.width = (-log10(edges.width))+1
+edges.width = edges.width * 2
+
+edges.width[edges.width>6] = 6
+edges.width[edges.width < (-log10(.2)+1)*2] =1
+
+edges$width = edges.width
+
+
+
+edges.colors = G85R.geneFC[edges$FBgn, enzyme]
+edges.colors = temp[((edges.colors/max(abs(na.omit(edges.colors))))*200)+201]
+edges.colors[na.action(na.exclude(edges.colors))] = "black"
+
+edges$color = edges.colors
+
+
+
+
+visNetwork(nodes, edges, background = "white")%>%
+  visNodes(physics = F)%>%
+  #visLayout(hierarchical=F, improvedLayout=T)%>%
+  visOptions(highlightNearest = TRUE, nodesIdSelection = list(enabled = T, values = nodes[nodes$size > 0, "label"]))%>%
+  visNodes(color = list(border = "black"), font = list(color = "black", size = 10, background = "white"))%>%
+  visEdges(arrows = edges$arrows, physics = T)
+
+```
+
+
+
+```{r echo = F}
+
+targetGO = GenesInKegg[GenesInKegg$KEGG == "path:dme04146","Gene"]
+targetGO = GeneIDKey[GeneIDKey$Symbol %in% targetGO, "FBgn"]
+
+nodes = raw.nodes
+edges = raw.edges
+
+nodes[nodes$shape == "dot", "label"] = NA
+
+nodes.color = G85R.metabFC[nodes[nodes$shape == "circle", "data.id"], metab]
+nodes.color = temp[((nodes.color/max(abs(na.omit(nodes.color))))*200)+201]
+nodes[nodes$shape == "circle", "color.background"] = nodes.color
+nodes$color.background[na.action(na.exclude(nodes$color.background))] = "white"
+
+node.size = G85R.metabFDR[nodes[nodes$shape == "circle", "data.id"], metab]
+node.size[na.action(na.exclude(node.size))] = 1
+node.size = -log10(node.size)+1
+node.size = node.size*10
+node.size[node.size>80] = 50
+node.size[node.size < (-log10(.2)+1)*10] =10
+nodes[nodes$shape == "circle", "size"] = node.size
+
+nodes$shape = 'dot'
+
+
+nodes$title = paste0(nodes$id,
+                     "<br>-log2(FC): ", 
+                     signif((G85R.metabFC[nodes$data.id, metab]), 3),
+                     "<br>FDR: ", 
+                     signif((G85R.metabFDR[nodes$data.id, metab]), 3))
+
+
+edges$title = paste0(GeneIDKey[edges$FBgn, "Symbol"],
+                     "<br>-log2(FC): ", 
+                     signif(G85R.geneFC[edges$FBgn,
+                                 enzyme],3),
+                     "<br>FDR: ", 
+                     signif(G85R.geneFDR[edges$FBgn,
+                                 enzyme],3))
+
+edges.width = G85R.geneFDR[edges$FBgn, enzyme]
+edges.width[na.action(na.exclude(edges.width))] = 1
+edges.width = (-log10(edges.width))+1
+edges.width = edges.width * 2
+
+edges.width[edges.width>6] = 6
+edges.width[edges.width < (-log10(.2)+1)*2] =1
+
+edges$width = edges.width
+
+
+
+edges.colors = G85R.geneFC[edges$FBgn, enzyme]
+edges.colors = temp[((edges.colors/max(abs(na.omit(edges.colors))))*200)+201]
+edges.colors[na.action(na.exclude(edges.colors))] = "black"
+
+edges$color = edges.colors
+
+edges$color[!(edges$FBgn %in% targetGO)] = "white"
+
+
+
+
+visNetwork(nodes, edges, background = "white")%>%
+  visNodes(physics = F)%>%
+  #visLayout(hierarchical=F, improvedLayout=T)%>%
+  visOptions(highlightNearest = TRUE, nodesIdSelection = list(enabled = T, values = nodes[nodes$size > 0, "label"]))%>%
+  visNodes(color = list(border = "black"), font = list(color = "black", size = 10, background = "white"))%>%
+  visEdges(arrows = edges$arrows, physics = T)
+
+```
+
+
+```{r echo = F}
+
+nodes = raw.nodes
+edges = raw.edges
+
+nodes[nodes$shape == "dot", "label"] = NA
+nodes[nodes$shape == "circle", "size"] = 20
+nodes.color = G85R.metabFC[nodes[nodes$shape == "circle", "data.id"], metab]
+nodes.color = temp[((nodes.color/max(abs(na.omit(nodes.color))))*200)+201]
+nodes[nodes$shape == "circle", "color.background"] = nodes.color
+nodes$color.background[na.action(na.exclude(nodes$color.background))] = "ghostwhite"
+nodes[nodes$shape == "circle", "size"] = 20
+nodes$shape = "dot"
+
+edges$color = "black"
+
+PPP.genes = c("FBgn0023477",
+              "FBgn0050499",
+              "FBgn0050410",
+              "FBgn0004654",
+              "FBgn0030239",
+              "FBgn0037147",
+              "FBgn0004057",
+              "FBgn0037607",
+              "FBgn0036784")
+
+edges[edges$FBgn %in% c(PPP.genes), "color"] = "black"
+edges[edges$FBgn %in% c(PPP.genes), "width"] = 2.5
+#edges[ grep("FBgn0036784", edges$FBgn), "color"] = "darkgreen"
+#edges[ grep("FBgn0037607", edges$FBgn), "color"] = "darkorange"
+
+visNetwork(nodes, edges)%>%
+  visNodes(physics = F, font = list(size = 18, background = hex("white", .6)))
+
+#edges[grep('red', edges$color),]
+
+```
+
+
+

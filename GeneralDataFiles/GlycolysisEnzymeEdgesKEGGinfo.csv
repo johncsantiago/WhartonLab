@@ -1,0 +1,45 @@
+from,from.name,arrow,enzyme,to,to.name
+C00186,(S)-Lactate,to;from',1.1.1.27,C00022,Pyruvate
+C05125,2-Hydroxyethyl-ThPP,to;from',1.2.4.1,C00068,Thiamin diphosphate
+C00022,Pyruvate,to',1.2.4.1,C05125,2-Hydroxyethyl-ThPP
+C05125,2-Hydroxyethyl-ThPP,to',1.2.4.1,C16255,S-Acetyldihydrolipoamide-E
+C00631,2-Phospho-D-glycerate,to;from',4.2.1.11,C00074,Phosphoenolpyruvate
+C00631,2-Phospho-D-glycerate,to;from',5.4.2.11,C00197,3-Phospho-D-glycerate
+Pentose Phosphate Pathway,Pentose Phosphate Pathway,to',Outside Path,C00631,2-Phospho-D-glycerate
+C01159,"2,3-Bisphospho-D-glycerate",to',3.1.3.80,C00631,2-Phospho-D-glycerate
+C00197,3-Phospho-D-glycerate,to;from',2.7.2.3,C00236,3-Phospho-D-glyceroyl phosphate
+C00118,D-Glyceraldehyde 3-phosphate,to;from',5.3.1.1,C00111,Glycerone phosphate
+Pentose Phosphate Pathway,Pentose Phosphate Pathway,to',Outside Path,C00118,D-Glyceraldehyde 3-phosphate
+C00084,Acetaldehyde,to;from',1.2.1.3,C00033,Acetate
+C00084,Acetaldehyde,to;from',1.2.1.5,C00033,Acetate
+C00084,Acetaldehyde,to;from',1.1.1.1,C00469,Ethanol
+C00084,Acetaldehyde,to;from',1.1.1.2,C00469,Ethanol
+C00033,Acetate,to',6.2.1.1,C00024,Acetyl-CoA
+C00024,Acetyl-CoA,to',Outside Path,Citrate Cycle,Citrate Cycle
+C00024,Acetyl-CoA,to;from',2.3.1.12,C16255,S-Acetyldihydrolipoamide-E
+C00267,alpha-D-Glucose,to;from',5.1.3.3,C00221,beta-D-Glucose
+C00267,alpha-D-Glucose,to',2.7.1.1,C00668,alpha-D-Glucose 6-phosphate
+C00267,alpha-D-Glucose,to',2.7.1.147,C00668,alpha-D-Glucose 6-phosphate
+C00668,alpha-D-Glucose 6-phosphate,to',3.1.3.9,C00267,alpha-D-Glucose
+C00668,alpha-D-Glucose 6-phosphate,to;from',5.4.2.2,C00103,D-Glucose 1-phosphate
+C00668,alpha-D-Glucose 6-phosphate,to;from',5.3.1.9,C00085,D-Fructose 6-phosphate
+C00668,alpha-D-Glucose 6-phosphate,to',Outside Path,Pentose Phosphate Pathway,Pentose Phosphate Pathway
+C00668,alpha-D-Glucose 6-phosphate,to;from',5.1.3.15,C01172,beta-D-Glucose 6-phosphate
+C00668,alpha-D-Glucose 6-phosphate,to;from',5.3.1.9,C01172,beta-D-Glucose 6-phosphate
+C00221,beta-D-Glucose,to',2.7.1.1,C01172,beta-D-Glucose 6-phosphate
+C00221,beta-D-Glucose,to',2.7.1.147,C01172,beta-D-Glucose 6-phosphate
+C01172,beta-D-Glucose 6-phosphate,to;from',5.3.1.9,C00085,D-Fructose 6-phosphate
+C00354,"D-Fructose 1,6-bisphosphate",to;from',4.1.2.13,C00118,D-Glyceraldehyde 3-phosphate
+C00354,"D-Fructose 1,6-bisphosphate",to',4.1.2.13,C00111,Glycerone phosphate
+C00354,"D-Fructose 1,6-bisphosphate",to',3.1.3.11,C00085,D-Fructose 6-phosphate
+C00085,D-Fructose 6-phosphate,to',2.7.1.11,C00354,"D-Fructose 1,6-bisphosphate"
+C00103,D-Glucose 1-phosphate,to;from',Outside Path,Starch and Sucrose Metabolism,Starch and Sucrose Metabolism
+C00236,3-Phospho-D-glyceroyl phosphate,to;from',1.2.1.12,C00118,D-Glyceraldehyde 3-phosphate
+C15973,Dihydrolipoamide-E,to;from',1.8.1.4,C15972,Lipoamide-E
+C16255,S-Acetyldihydrolipoamide-E,to',2.3.1.12,C15973,Dihydrolipoamide-E
+C00186,(S)-Lactate,to',Outside Path,Propanoate Metabolism,Propanoate Metabolism
+C15972,Lipoamide-E,to',1.2.4.1,C16255,S-Acetyldihydrolipoamide-E
+Citrate Cycle,Citrate Cycle,to',Outside Path,C00036,Oxaloacetate
+C00074,Phosphoenolpyruvate,to',2.7.1.40,C00022,Pyruvate
+C00036,Oxaloacetate,to',4.1.1.32,C00074,Phosphoenolpyruvate
+Pentose Phosphate Pathway,Pentose Phosphate Pathway,to',Outside Path,C00022,Pyruvate

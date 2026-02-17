@@ -1,0 +1,95 @@
+id,connector,color.background,color.border,x,y,size,FC,pval,title,label,KEGG,Pathway,data.id,data.KEGG,shape
+xanthine,metabolite,white,black,-75,750,0,NA,NA,,xanthine,C00385,Purine,xanthine,C00385,circle
+hypoxanthine,metabolite,white,black,75,750,0,NA,NA,,hypoxanthine,C00262,Purine,hypoxanthine,C00262,circle
+xanthosine,metabolite,white,black,-75,600,0,NA,NA,,xanthosine,C01762,Purine,xanthosine,C01762,circle
+guanine,metabolite,white,black,-225,675,0,NA,NA,,guanine,C00242,Purine,guanine,C00242,circle
+XMP,metabolite,white,black,-75,450,0,NA,NA,,XMP,C00655,Purine,XMP,C00655,circle
+IMP,metabolite,white,black,75,450,0,NA,NA,,IMP,C00130,Purine,IMP,C00130,circle
+IDP,metabolite,white,black,-75,337.5,0,NA,NA,,IDP,C00104,Purine,IDP,C00104,circle
+AMP,metabolite,white,black,375,450,0,NA,NA,,AMP,C00020,Purine,AMP,C00020 / C00362,circle
+adenosine,metabolite,white,black,225,525,0,NA,NA,,adenosine,C00212,Purine,adenosine,C00212,circle
+deoxyadenosine,metabolite,white,black,375,750,0,NA,NA,,deoxyadenosine,C00559,Purine,deoxyadenosine,C00559,circle
+adenylosuccinate,metabolite,white,black,225,337.5,0,NA,NA,,adenylosuccinate,C03794,Purine,adenylosuccinate,C03794,circle
+cAMP,metabolite,white,black,487.5,337.5,0,NA,NA,,cAMP,C00575,Purine,cAMP,C02353 / C00575,circle
+ATP,metabolite,white,black,600,423.75,0,NA,NA,,ATP,C00002,Purine,ATP,C00002 / C00286,circle
+ADP,metabolite,white,black,487.5,525,0,NA,NA,,ADP,C00008,Purine,NA,NA,circle
+dATP,metabolite,white,black,637.5,675,0,NA,NA,,dATP,C00131,Purine,dATP,C00131,circle
+dADP,metabolite,white,black,525,600,0,NA,NA,,dADP,C00206,Purine,dADP,C00206,circle
+adenine,metabolite,white,black,375,600,0,NA,NA,,adenine,C00147,Purine,adenine,C00147,circle
+dAMP,metabolite,white,black,525,750,0,NA,NA,,dAMP,C00360,Purine,dAMP,C00360,circle
+deoxyguanosine,metabolite,white,black,-337.5,787.5,0,NA,NA,,deoxyguanosine,C00330,Purine,deoxyguanosine,C00330,circle
+dGTP,metabolite,white,black,-637.5,712.5,0,NA,NA,,dGTP,C00286,Purine,NA,NA,circle
+GDP,metabolite,white,black,-487.5,487.5,0,NA,NA,,GDP,C00035,Purine,GDP,C00035,circle
+GMP,metabolite,white,black,-337.5,412.5,0,NA,NA,,GMP,C00144,Purine,GMP,C00144,circle
+GTP,metabolite,white,black,-637.5,375,0,NA,NA,,GTP,C00044,Purine,GTP,C00044,circle
+dGDP,metabolite,white,black,-525,600,0,NA,NA,,dGDP,C00361,Purine,NA,NA,circle
+uric acid,metabolite,white,black,-75,900,0,NA,NA,,uric acid,C00366,Purine,uric acid,C00366,circle
+inosine,metabolite,white,black,75,600,0,NA,NA,,inosine,C00294,Purine,inosine,C00294,circle
+deoxyinosine,metabolite,white,black,225,825,0,NA,NA,,deoxyinosine,C05512,Purine,deoxyinosine,C05512,circle
+guanosine,metabolite,white,black,-225,525,0,NA,NA,,guanosine,C00387,Purine,guanosine,C00387,circle
+dGMP,metabolite,white,black,-487.5,712.5,0,NA,NA,,dGMP,C00362,Purine,NA,NA,circle
+Excretion,Outside Path,white,black,-75,1050,0,NA,NA,,Excretion,NA,Purine,NA,NA,circle
+DNA.A,Outside Path,white,black,750,750,0,NA,NA,,DNA.A,NA,Purine,NA,NA,circle
+DNA.G,Outside Path,white,black,-750,825,0,NA,NA,,DNA.G,NA,Purine,NA,NA,circle
+RNA.A,Outside Path,white,black,750,375,0,NA,NA,,RNA.A,NA,Purine,NA,NA,circle
+RNA.G,Outside Path,white,black,-787.5,285,0,NA,NA,,RNA.G,NA,Purine,NA,NA,circle
+Riboflavin.Metabolism,Outside Path,white,black,-787.5,465,0,NA,NA,,Riboflavin.Metabolism,NA,Purine,NA,NA,circle
+Folate.Biosynthesis,Outside Path,white,black,-787.5,375,0,NA,NA,,Folate.Biosynthesis,NA,Purine,NA,NA,circle
+FAICAR,metabolite,white,black,75,300,0,NA,NA,,FAICAR,C04734,Purine,NA,NA,circle
+AICA ribonucleotide,metabolite,white,black,75,150,0,NA,NA,,AICA ribonucleotide,C04677,Purine,AICA ribonucleotide,C04677,circle
+SAICAR,metabolite,white,black,225,150,0,NA,NA,,SAICAR,C04823,Purine,SAICAR,C04823,circle
+CAIR,metabolite,white,black,375,150,0,NA,NA,,CAIR,C04751,Purine,NA,NA,circle
+AIR,metabolite,white,black,375,0,0,NA,NA,,AIR,C03373,Purine,NA,NA,circle
+FGAM,metabolite,white,black,225,0,0,NA,NA,,FGAM,C04640,Purine,2-(Formamido)-N1-(5-phospho-D-ribosyl)acetamidine,C04640,circle
+FGAR,metabolite,white,black,75,0,0,NA,NA,,FGAR,C04376,Purine,NA,NA,circle
+GAR,metabolite,white,black,-75,0,0,NA,NA,,GAR,C03838,Purine,NA,NA,circle
+Ribosylamine-5p,metabolite,white,black,-225,0,0,NA,NA,,Ribosylamine-5p,C03090,Purine,NA,NA,circle
+PRPP,metabolite,white,black,-375,0,0,NA,NA,,PRPP,C00119,Purine,PRPP,C00119,circle
+D-Ribose-5P,metabolite,white,black,-525,0,0,NA,NA,,D-Ribose-5P,C00117,Purine,D-ribose-1/5-phosphate / D-ribulose 5-phosphate,C00620 / C00117 / C00199,circle
+D-Ribulose 5P,metabolite,white,black,-525,-150,0,NA,NA,,D-Ribulose 5P,C00199,PPP,D-ribose-1/5-phosphate / D-ribulose 5-phosphate,C00620 / C00117 / C00199,circle
+D-Xylulose 5-phosphate,metabolite,white,black,-675,-150,0,NA,NA,,D-Xylulose 5-phosphate,C00231,PPP,NA,NA,circle
+D-erythrose-4-phosphate,metabolite,white,black,-800,-75,0,NA,NA,,D-erythrose-4-phosphate,C00279,PPP,D-erythrose-4-phosphate,C00279,circle
+D-sedoheptulose-7-phosphate,metabolite,white,black,-800,75,0,NA,NA,,D-sedoheptulose-7-phosphate,C05382,PPP,D-sedoheptulose-7-phosphate,C05382,circle
+6-phosphogluconic acid,metabolite,white,black,-525,-450,0,NA,NA,,6-phosphogluconic acid,C00345,PPP,6-phosphogluconic acid,C00345,circle
+6-phosphoglucono-D-lactone,metabolite,white,black,-675,-450,0,NA,NA,,6-phosphoglucono-D-lactone,C01236,PPP,6-phosphoglucono-D-lactone,C01236,circle
+beta-D-Glucose 6P,metabolite,white,black,-850,-450,0,NA,NA,,beta-D-Glucose 6P,C01172,Glycolysis,NA,NA,circle
+alpha-D-Glucose 6-phosphate,metabolite,white,black,-950,-300,0,NA,NA,,alpha-D-Glucose 6-phosphate,C00668,Glycolysis,NA,NA,circle
+D-Fructose 6-phosphate,metabolite,white,black,-950,-150,0,NA,NA,,D-Fructose 6-phosphate,C00085,Glycolysis,F6P / G1P / G6P,C00085,circle
+D-Glyceraldehyde 3-phosphate,metabolite,white,black,-950,150,0,NA,NA,,D-Glyceraldehyde 3-phosphate,C00118,Glycolysis,GAP / DHAP,C00118,circle
+"D-Fructose-1,6P",metabolite,white,black,-950,0,0,NA,NA,,"D-Fructose-1,6P",C00354,Glycolysis,"F-1,6/2,6-DP",C00354 / C00665,circle
+nicotinamide riboside+,metabolite,white,black,-225,-550,0,NA,NA,,nicotinamide riboside+,C03150,NAD,nicotinamide riboside+,C03150,circle
+nicotinamide,metabolite,white,black,-225,-400,0,NA,NA,,nicotinamide,C00153,NAD,nicotinamide,C00153,circle
+nicotinic acid,metabolite,white,black,-225,-300,0,NA,NA,,nicotinic acid,C00253,NAD,nicotinic acid,C00253,circle
+NMN,metabolite,white,black,-75,-475,0,NA,NA,,NMN,C00455,NAD,NMN,C00455,circle
+NAMN,metabolite,white,black,-75,-300,0,NA,NA,,NAMN,C01185,NAD,NAMN,C01185,circle
+NADP+,metabolite,white,black,75,-625,0,NA,NA,,NADP+,C00006,NAD,NADP+,C00006,circle
+NAD+,metabolite,white,black,75,-475,0,NA,NA,,NAD+,C00003,NAD,NAD+,C00003,circle
+NAAD,metabolite,white,black,75,-300,0,NA,NA,,NAAD,C00857,NAD,NAAD,C00857,circle
+NADPH,metabolite,white,black,225,-625,0,NA,NA,,NADPH,C00005,NAD,NADPH,C00005,circle
+NADH,metabolite,white,black,225,-475,0,NA,NA,,NADH,C00004,NAD,NADH,C00004,circle
+tryptophan,metabolite,white,black,375,-200,0,NA,NA,,tryptophan,C00806,NAD,tryptophan,C00806,circle
+3-hydroxykynurenine,metabolite,white,black,-75,-200,0,NA,NA,,3-hydroxykynurenine,C02794,NAD,3-hydroxykynurenine,C02794,circle
+kynurenine,metabolite,white,black,75,-200,0,NA,NA,,kynurenine,C01718,NAD,kynurenine,C01718,circle
+kynurenic acid,metabolite,white,black,75,-100,0,NA,NA,,kynurenic acid,C01717,NAD,kynurenic acid,C01717,circle
+N-Formylkynurenine,metabolite,white,black,225,-200,0,NA,NA,,N-Formylkynurenine,C02700,NAD,N-Formylkynurenine,C02700,circle
+D-Glucose 1P,metabolite,white,black,-1100,-300,0,NA,NA,,D-Glucose 1P,C00103,Glycolysis,F6P / G1P / G6P,C00085 / C00103 / C00092,circle
+Glucose,metabolite,white,black,-1050,-450,0,NA,NA,,Glucose,C00267,Glycolysis,galactose / glucose,C00124 / C00267,circle
+beta-D-Glucose,metabolite,white,black,-950,-600,0,NA,NA,,beta-D-Glucose,C00221,Glycolysis,NA,NA,circle
+Glycerone-P,metabolite,white,black,-1100,150,0,NA,NA,,Glycerone-P,C00111,Glycolysis,GAP / DHAP,C00118 / C00111,circle
+"Glycerate-1,3P",metabolite,white,black,-950,300,0,NA,NA,,"Glycerate-1,3P",C00236,Glycolysis,"1,3-bisphospho-D-glycerate",C00236,circle
+Glycerate-3P,metabolite,white,black,-950,450,0,NA,NA,,Glycerate-3P,C00197,Glycolysis,2- / 3-phosphoglycerate,C00631 / C00197,circle
+"Glycerate-2,3P",metabolite,white,black,-1100,600,0,NA,NA,,"Glycerate-2,3P",C01159,Glycolysis,"2,3-bisphospho-D-glycerate C01159-C03339",C01159-C03339,circle
+Glycerate-2P,metabolite,white,black,-950,600,0,NA,NA,,Glycerate-2P,C00631,Glycolysis,2- / 3-phosphoglycerate,C00631 / C00197,circle
+phosphoenolpyruvate,metabolite,white,black,-950,750,0,NA,NA,,phosphoenolpyruvate,C00074,Glycolysis,phosphoenolpyruvate,C00074,circle
+Pyruvate,metabolite,white,black,-950,900,0,NA,NA,,Pyruvate,C00022,Glycolysis,pyruvic acid,C00022,circle
+Acetyl-CoA,metabolite,white,black,-950,1050,0,NA,NA,,Acetyl-CoA,C00024,Glycolysis,acetyl-CoA,C00024,circle
+Citrate,metabolite,white,black,-850,1225,0,NA,NA,,Citrate,C00158,TCA,citrate,C00158 / C00311,circle
+cis-Aconitate,metabolite,white,black,-700,1325,0,NA,NA,,cis-Aconitate,C00417,TCA,aconitic acid,C00417-C02341,circle
+Isocitrate,metabolite,white,black,-625,1475,0,NA,NA,,Isocitrate,C00311,TCA,citrate,C00158 / C00311,circle
+Oxalosuccinate,metabolite,white,black,-700,1625,0,NA,NA,,Oxalosuccinate,C05379,TCA,NA,NA,circle
+alpha-Ketoglutarate,metabolite,white,black,-850,1750,0,NA,NA,,alpha-Ketoglutarate,C00026,TCA,a-KG,C00026,circle
+Succinyl-CoA,metabolite,white,black,-1025,1750,0,NA,NA,,Succinyl-CoA,C00091,TCA,succinyl-CoA,C00091,circle
+Succinate,metabolite,white,black,-1175,1625,0,NA,NA,,Succinate,C00042,TCA,succinic acid,C00042,circle
+Fumarate,metabolite,white,black,-1250,1475,0,NA,NA,,Fumarate,C00122,TCA,fumaric acid,C00122,circle
+Malate,metabolite,white,black,-1175,1325,0,NA,NA,,Malate,C00149,TCA,NA,NA,circle
+Oxaloacetate,metabolite,white,black,-1025,1225,0,NA,NA,,Oxaloacetate,C00036,TCA,oxalacetic,C00036,circle

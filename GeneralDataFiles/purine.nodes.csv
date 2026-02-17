@@ -1,0 +1,48 @@
+,id,group,color.background,color.border,x,y,size,FC,pval,title,label,KEGG
+xanthine,xanthine,metabolite,white,black,675,600,0,NA,NA,,xanthine,C00385
+hypoxanthine,hypoxanthine,metabolite,white,black,825,600,0,NA,NA,,hypoxanthine,C00262
+xanthosine,xanthosine,metabolite,white,black,675,450,0,NA,NA,,xanthosine,C01762
+guanine,guanine,metabolite,white,black,525,525,0,NA,NA,,guanine,C00242
+XMP,XMP,metabolite,white,black,675,300,0,NA,NA,,XMP,C00655
+IMP,IMP,metabolite,white,black,825,300,0,NA,NA,,IMP,C00130
+IDP,IDP,metabolite,white,black,675,187.5,0,NA,NA,,IDP,C00104
+AMP,AMP,metabolite,white,black,1125,300,0,NA,NA,,AMP,C00020 / C00362
+adenosine,adenosine,metabolite,white,black,975,375,0,NA,NA,,adenosine,C00212
+deoxyadenosine,deoxyadenosine,metabolite,white,black,1125,600,0,NA,NA,,deoxyadenosine,C00559
+adenylosuccinate,adenylosuccinate,metabolite,white,black,975,187.5,0,NA,NA,,adenylosuccinate,C03794
+cAMP,cAMP,metabolite,white,black,1237.5,187.5,0,NA,NA,,cAMP,C02353 / C00575
+ATP,ATP,metabolite,white,black,1350,273.75,0,NA,NA,,ATP,C00002 / C00286
+ADP,ADP,metabolite,white,black,1237.5,375,0,NA,NA,,ADP,C00008
+dATP,dATP,metabolite,white,black,1387.5,525,0,NA,NA,,dATP,C00131
+dADP,dADP,metabolite,white,black,1275,450,0,NA,NA,,dADP,C00206
+adenine,adenine,metabolite,white,black,1125,450,0,NA,NA,,adenine,C00147
+dAMP,dAMP,metabolite,white,black,1275,600,0,NA,NA,,dAMP,C00360
+deoxyguanosine,deoxyguanosine,metabolite,white,black,412.5,637.5,0,NA,NA,,deoxyguanosine,C00330
+dGTP,dGTP,metabolite,white,black,112.5,562.5,0,NA,NA,,dGTP,C00286
+GDP,GDP,metabolite,white,black,262.5,337.5,0,NA,NA,,GDP,C00035
+GMP,GMP,metabolite,white,black,412.5,262.5,0,NA,NA,,GMP,C00144
+GTP,GTP,metabolite,white,black,112.5,225,0,NA,NA,,GTP,C00044
+dGDP,dGDP,metabolite,white,black,225,450,0,NA,NA,,dGDP,C00361
+uric acid,uric acid,metabolite,white,black,675,750,0,NA,NA,,uric acid,C00366
+FAICAR,FAICAR,metabolite,white,black,825,150,0,NA,NA,,FAICAR,C04734
+AICA ribonucleotide,AICA ribonucleotide,metabolite,white,black,825,0,0,NA,NA,,AICA ribonucleotide,C04677
+SAICAR,SAICAR,metabolite,white,black,675,37.5,0,NA,NA,,SAICAR,C04823
+CAIR,CAIR,metabolite,white,black,525,0,0,NA,NA,,CAIR,C04751
+AIR,AIR,metabolite,white,black,375,37.5,0,NA,NA,,AIR,C03373
+2-(Formamido)-N1-(5-phospho-D-ribosyl)acetamidine,2-(Formamido)-N1-(5-phospho-D-ribosyl)acetamidine,metabolite,white,black,225,0,0,NA,NA,,2-(Formamido)-N1-(5-phospho-D-ribosyl)acetamidine,C04640
+FGAR,FGAR,metabolite,white,black,75,37.5,0,NA,NA,,FGAR,C04376
+GAR,GAR,metabolite,white,black,-75,0,0,NA,NA,,GAR,C03838
+Ribosylamine-5p,Ribosylamine-5p,metabolite,white,black,-225,37.5,0,NA,NA,,Ribosylamine-5p,C03090
+PRPP,PRPP,metabolite,white,black,-375,0,0,NA,NA,,PRPP,C00119
+D-ribose-1/5-phosphate / D-ribulose 5-phosphate,D-ribose-1/5-phosphate / D-ribulose 5-phosphate,metabolite,white,black,-525,37.5,0,NA,NA,,D-ribose-1/5-phosphate / D-ribulose 5-phosphate,C00620 / C00117 / C00199
+inosine,inosine,metabolite,white,black,825,450,0,NA,NA,,inosine,C00294
+deoxyinosine,deoxyinosine,metabolite,white,black,975,675,0,NA,NA,,deoxyinosine,C05512
+guanosine,guanosine,metabolite,white,black,525,375,0,NA,NA,,guanosine,C00387
+dGMP,dGMP,metabolite,white,black,262.5,562.5,0,NA,NA,,dGMP,C00362
+Excretion,Excretion,Outside Path,white,black,675,900,0,NA,NA,,Excretion,NA
+DNA.A,DNA.A,Outside Path,white,black,1500,600,0,NA,NA,,DNA.A,NA
+DNA.G,DNA.G,Outside Path,white,black,0,675,0,NA,NA,,DNA.G,NA
+RNA.A,RNA.A,Outside Path,white,black,1500,273.75,0,NA,NA,,RNA.A,NA
+RNA.G,RNA.G,Outside Path,white,black,-37.5,150,0,NA,NA,,RNA.G,NA
+Riboflavin.Metabolism,Riboflavin.Metabolism,Outside Path,white,black,-37.5,300,0,NA,NA,,Riboflavin.Metabolism,NA
+Folate.Biosynthesis,Folate.Biosynthesis,Outside Path,white,black,-37.5,225,0,NA,NA,,Folate.Biosynthesis,NA
