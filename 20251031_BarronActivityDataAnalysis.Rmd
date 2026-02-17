@@ -1,0 +1,187 @@
+---
+title: "Jude activity assay"
+author: "John Santiago"
+date: "2025-08-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+library(kableExtra)
+library(beeswarm)
+library(plotly)
+
+sample.data = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/video--2025-10-27 12.59.06.csv")
+
+temp.file = sample.data
+IDs = unique(temp.file$TrackID)
+    
+plot.frames = c(1, c(1:floor(max(temp.file$Frame)/10))*10) #grabs every 10th frame for analysis
+temp.file = temp.file[temp.file$Frame %in% plot.frames,]
+
+all.data = data.frame(Frame = numeric(),
+                      ID = character(),
+                      X = numeric(),
+                      Y = numeric(),
+                      distance = numeric(),
+                      delta.distance = numeric())
+    
+i=1
+while(i<=length(IDs)){
+
+  temp.sampledata = temp.file[temp.file$TrackID == IDs[i],]
+  temp.all.data = data.frame(Frame = temp.sampledata$Frame,
+                             ID = i,
+                             X = temp.sampledata$CX,
+                             Y = temp.sampledata$CY,
+                             distance = 0,
+                             delta.distance = 0)
+
+  temp.all.data[1, "distance"] = 0
+  
+  f=2
+  while(f<=length(temp.sampledata$Frame)){
+    x1 = temp.sampledata[f-1,"CX"]
+    x2 = temp.sampledata[f,"CX"]
+    y1 = temp.sampledata[f-1,"CY"]
+    y2 = temp.sampledata[f,"CY"]
+    dx = x2 - x1
+    dy = y2 - y1
+    deltad =   (sqrt((dx^2)+(dy^2)))
+    pred = temp.all.data[f-1,
+                    "distance"]
+    temp.all.data[f, 
+             "distance"] = pred + deltad
+    temp.all.data[f, "delta.distance"] = deltad
+    f=f+1
+  }
+  all.data = rbind(all.data, temp.all.data)
+i=i+1
+}
+
+
+
+```
+
+
+```{r echo = F, fig.height=5, fig.width=5}
+
+FlyID = 3
+
+
+plot.data = all.data
+plot.data = plot.data[plot.data$ID == FlyID,]
+
+maxlim = max(c(plot.data$X, plot.data$Y))
+minlim = min(c(plot.data$X, plot.data$Y))
+
+color_function <- colorRampPalette(c("royalblue", "limegreen", "gold", "firebrick"))
+my_colors = color_function(nrow(plot.data))
+plot(x = plot.data$X,
+     y = plot.data$Y,
+     type = "l",
+     ylim = c(maxlim,minlim),
+     xlim = c(minlim,maxlim))
+
+points(x = plot.data$X,
+       y = plot.data$Y,
+       pch = 20,
+       cex = .5,
+       col = my_colors)
+
+
+
+```
+
+
+```{r echo = F, fig.width=15}
+par(mfrow=c(2,1))
+plot.data = all.data
+plot.data = plot.data[plot.data$ID == FlyID,]
+plot.data = plot.data
+plot(x = plot.data$Frame,
+     y = plot.data$delta.distance,
+     type = "l")
+
+par(new=T)
+plot(y=plot.data$distance,
+     x=plot.data$Frame,
+     type="l",
+     yaxt="n",
+     xaxt="n",
+     col="red3",
+     lty=2,
+     lwd=2,
+     xlab="",
+     ylab="",
+     ylim=c(0,max(plot.data$distance)))
+axis(side=4)
+
+hist(plot.data$delta.distance,
+     breaks = c(0:800)/8,
+     col = c(rep("firebrick",1),rep("gold",16),rep("steelblue",780)),
+     xlim = c(0,10))
+
+```
+
+
+
+
+
+
+```{r echo = F, fig.width=15}
+
+plot.data = all.data
+plot.data = plot.data[plot.data$ID == FlyID,]
+
+plot(x = plot.data$Frame,
+     y = plot.data$delta.distance,
+     type = "l")
+
+still.plot.data = plot.data[plot.data$delta.distance < .25,]
+
+points(x = still.plot.data$Frame,
+       y = still.plot.data$delta.distance,
+       type = "p",
+       col = "gold",
+       pch = 16)
+
+par(new=T)
+plot(y=plot.data$distance,
+     x=plot.data$Frame,
+     type="l",
+     yaxt="n",
+     xaxt="n",
+     col="red3",
+     lty=2,
+     lwd=2,
+     xlab="",
+     ylab="",
+     ylim=c(0,max(plot.data$distance)))
+axis(side=4)
+
+
+
+```
+
+
+```{r echo = F}
+FlyID = 3
+plot.data = all.data[all.data$ID == FlyID,]
+
+percent.still = (nrow(plot.data[plot.data$delta.distance<=.25,])/
+  nrow(plot.data))*100
+
+```
+
+
+
+
+
+
+
+

@@ -1,0 +1,1928 @@
+---
+title: "Jude activity assay"
+author: "John Santiago"
+date: "2025-08-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r echo = F, fig.height=7, fig.width= 7}
+library(kableExtra)
+library(beeswarm)
+library(plotly)
+
+video.dir = "/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/TrackedVideos/"
+files = list.files(video.dir)
+
+WTMG5.1 = files[grep("WTMG5.1", files)] 
+WTMG5.1 = WTMG5.1[grep(".csv", WTMG5.1)]
+
+A4VMG5.1 = files[grep("A4VMG5.1", files)] 
+A4VMG5.1 = A4VMG5.1[grep(".csv", A4VMG5.1)]
+
+WTMG5.2 = files[grep("WTMG5.2", files)] 
+WTMG5.2 = WTMG5.2[grep(".csv", WTMG5.2)]
+
+A4VMG5.2 = files[grep("A4VMG5.2", files)] 
+A4VMG5.2 = A4VMG5.2[grep(".csv", A4VMG5.2)]
+
+WTMG5.3 = files[grep("WTMG5.3", files)] 
+WTMG5.3 = WTMG5.3[grep(".csv", WTMG5.3)]
+
+A4VMG5.3 = files[grep("A4VMG5.3", files)] 
+A4VMG5.3 = A4VMG5.3[grep(".csv", A4VMG5.3)]
+
+WTMG6.1 = files[grep("WTMG6.1", files)] 
+WTMG6.1 = WTMG6.1[grep(".csv", WTMG6.1)]
+
+A4VMG6.1 = files[grep("A4VMG6.1", files)] 
+A4VMG6.1 = A4VMG6.1[grep(".csv", A4VMG6.1)]
+
+WTMG6.2 = files[grep("WTMG6.2", files)] 
+WTMG6.2 = WTMG6.2[grep(".csv", WTMG6.2)]
+
+A4VMG6.2 = files[grep("A4VMG6.2", files)] 
+A4VMG6.2 = A4VMG6.2[grep(".csv", A4VMG6.2)]
+
+WTMG6.3 = files[grep("WTMG6.3", files)] 
+WTMG6.3 = WTMG6.3[grep(".csv", WTMG6.3)]
+
+A4VMG6.3 = files[grep("A4VMG6.3", files)] 
+A4VMG6.3 = A4VMG6.3[grep(".csv", A4VMG6.3)]
+
+WTMG7.1 = files[grep("WTMG7.1", files)] 
+WTMG7.1 = WTMG7.1[grep(".csv", WTMG7.1)]
+
+A4VMG7.1 = files[grep("A4VMG7.1", files)] 
+A4VMG7.1 = A4VMG7.1[grep(".csv", A4VMG7.1)]
+
+WTMG7.2 = files[grep("WTMG7.2", files)] 
+WTMG7.2 = WTMG7.2[grep(".csv", WTMG7.2)]
+
+A4VMG7.2 = files[grep("A4VMG7.2", files)] 
+A4VMG7.2 = A4VMG7.2[grep(".csv", A4VMG7.2)]
+
+widths = setNames(c(rep(900, 18), 920, rep(980, 6)),
+                  c("20250827", "20250828", "20250829",
+                    "20250902", "20250903", "20250908",
+                    "20250909", "20250910", "20250911",
+                    "20250912", "20250913", "20250914",
+                    "20250915", "20250916", "20250917",
+                    "20250918", "20250919", "20250920",
+                    "20250924", "20250926", "20251001",
+                    "20251002", "20251003", "20251006",
+                    "20251008"))
+
+widths = 146/widths
+
+samples = c(list(WTMG5.1  = WTMG5.1,
+                 A4VMG5.1 = A4VMG5.1,
+                 WTMG5.2  = WTMG5.2,
+                 A4VMG5.2 = A4VMG5.2,
+                 WTMG5.3  = WTMG5.3,
+                 A4VMG5.3 = A4VMG5.3,
+                 WTMG6.1  = WTMG6.1,
+                 A4VMG6.1 = A4VMG6.1,
+                 WTMG6.2  = WTMG6.2,
+                 A4VMG6.2 = A4VMG6.2,
+                 WTMG6.3  = WTMG6.3,
+                 A4VMG6.3 = A4VMG6.3,
+                 WTMG7.1  = WTMG7.1,
+                 A4VMG7.1 = A4VMG7.1,
+                 WTMG7.2  = WTMG7.2,
+                 A4VMG7.2 = A4VMG7.2))
+
+process.activity = function(sample.data){
+
+  names.all.sample.data = strsplit(sample.data, split = "_")
+  
+  all.sample.data = as.list(1:length(sample.data))
+  n=1
+  while(n<=length(names.all.sample.data)){
+    day = names.all.sample.data[[n]][2]
+    temp.width = widths[names.all.sample.data[[n]][3]]
+    d = 1
+    while(d<=length(day)){
+      if(nchar(day[d])==2){
+        day[d] = paste0("d0", substr(day[d],2,2))
+      }
+      d=d+1
+    }
+    names(all.sample.data)[[n]] = day
+    n=n+1
+  }
+  
+  t = 1
+  while(t<= length(sample.data)){
+    temp.file = read.csv(paste0(video.dir, sample.data[t]))
+    IDs = unique(temp.file$TrackID)
+    
+    plot.frames = c(1, c(1:floor(max(temp.file$Frame)/10))*10)
+    temp.file = temp.file[temp.file$Frame %in% plot.frames,]
+  
+    sample = strsplit(sample.data[t], split = "_")[[1]]
+    all.data = data.frame(Frame = numeric(),
+                          ID = character(),
+                          X = numeric(),
+                          Y = numeric(),
+                          distance = numeric(),
+                          delta.distance = numeric())
+    
+    i=1
+    while(i<=length(IDs)){
+
+      temp.sampledata = temp.file[temp.file$TrackID == IDs[i],]
+      temp.all.data = data.frame(Frame = temp.sampledata$Frame,
+                                 ID = i,
+                                 X = temp.sampledata$CX,
+                                 Y = temp.sampledata$CY,
+                                 distance = 0,
+                                 delta.distance = 0)
+
+      temp.all.data[1, "distance"] = 0
+      
+      f=2
+      while(f<=length(temp.sampledata$Frame)){
+        x1 = temp.sampledata[f-1,"CX"]
+        x2 = temp.sampledata[f,"CX"]
+        y1 = temp.sampledata[f-1,"CY"]
+        y2 = temp.sampledata[f,"CY"]
+        dx = x2 - x1
+        dy = y2 - y1
+        deltad =   (sqrt((dx^2)+(dy^2)))*temp.width
+        pred = temp.all.data[f-1,
+                        "distance"]
+        temp.all.data[f, 
+                 "distance"] = pred + deltad
+        temp.all.data[f, "delta.distance"] = deltad
+        f=f+1
+      }
+      all.data = rbind(all.data, temp.all.data)
+    i=i+1
+    }
+    all.sample.data[[t]] = all.data
+    t=t+1
+  }
+  all.sample.data = all.sample.data[order(names(all.sample.data))]
+  return(all.sample.data)
+}
+
+
+processed.sample.data = samples
+run = 1
+while(run<=length(samples)){
+  processed.sample.data[[run]] = process.activity(samples[[run]])
+  run = run +1
+}
+
+gen.options = as.list(names(processed.sample.data))
+names(gen.options) = names(processed.sample.data)
+i = 1
+while(i<=length(gen.options)){
+  gen.options[[i]]=names(processed.sample.data[[i]])
+  i=i+1
+}
+
+
+all.total.dist=processed.sample.data
+all.total.frame=processed.sample.data
+all.Still=processed.sample.data
+all.Moving=processed.sample.data
+all.total.Still.dist=processed.sample.data
+all.total.Moving.dist=processed.sample.data
+i =1
+while(i<=length(processed.sample.data)){
+  j=1
+  while(j<=length(processed.sample.data[[i]])){
+    current.data = processed.sample.data[[i]][[j]]
+    temp.IDs = setNames(rep(0, length(unique(current.data$ID))), unique(current.data$ID))
+    all.total.dist[[i]][[j]]=temp.IDs
+    all.total.frame[[i]][[j]]=temp.IDs
+    all.Still[[i]][[j]]=temp.IDs
+    all.total.Still.dist[[i]][[j]]=temp.IDs
+    all.Moving[[i]][[j]]=temp.IDs
+    all.total.Moving.dist[[i]][[j]]=temp.IDs
+    k=1
+    while(k<= length(all.total.dist[[i]][[j]])){
+      temp.current.data = current.data[current.data$ID == unique(current.data$ID)[k],]
+      all.total.dist[[i]][[j]][k] = max(temp.current.data[, "distance"])
+      all.total.frame[[i]][[j]][k] = max(temp.current.data[, "Frame"])
+      temp.still = temp.current.data[temp.current.data$delta.distance <= .25,]
+      temp.moving = temp.current.data[temp.current.data$delta.distance > .25,]
+      all.Still[[i]][[j]][k] = nrow(temp.still)-1
+      all.total.Still.dist[[i]][[j]][k] = sum(temp.still$delta.distance)
+      all.Moving[[i]][[j]][k] = nrow(temp.moving)
+      all.total.Moving.dist[[i]][[j]][k] = sum(temp.moving$delta.distance)
+    k=k+1
+    }
+    j=j+1
+  }
+  i=i+1
+}
+
+
+
+
+data.summary = data.frame(Sample = names(unlist(all.total.frame)),
+                          Genotype = "",
+                          Generation = "",
+                          Day = "",
+                          ID = "",
+                          Distance = 0,
+                          Frame = 0,
+                          Still = 0,
+                          Still.dist = 0,
+                          Moving = 0,
+                          Moving.dist = 0)
+i=1
+while(i <= length(unlist(all.total.frame))){
+  data.summary[i,"Genotype"] = strsplit(names(unlist(all.total.frame)), "M")[[i]][1]
+  data.summary[i,"Generation"] = strsplit(names(unlist(all.total.frame)), "G")[[i]][2]
+  data.summary[i,"Generation"] = strsplit(data.summary[i,"Generation"], ".d")[[1]][1]
+  data.summary[i,"Day"] = strsplit(names(unlist(all.total.frame)), ".d")[[i]][2]
+  data.summary[i, c("Day", "ID")] = c(substr(data.summary[i,"Day"], 1,(nchar(data.summary[i,"Day"])-2)),
+                                      substr(data.summary[i,"Day"], nchar(data.summary[i,"Day"]),nchar(data.summary[i,"Day"])))
+  data.summary[i, "Distance"] = unlist(all.total.dist)[names(unlist(all.total.frame))[i]]
+  data.summary[i, "Frame"] = unlist(all.total.frame)[names(unlist(all.total.frame))[i]]
+  data.summary[i, "Still"] = unlist(all.Still)[names(unlist(all.Still))[i]]
+  data.summary[i, "Moving"] = unlist(all.Moving)[names(unlist(all.Moving))[i]]
+  data.summary[i, "Still.dist"] =
+    unlist(all.total.Still.dist)[names(unlist(all.total.Still.dist))[i]]
+  data.summary[i, "Moving.dist"] = 
+    unlist(all.total.Moving.dist)[names(unlist(all.total.Moving.dist))[i]]
+  i=i+1
+}
+
+data.summary$Velocity = (data.summary$Distance/data.summary$Frame)*30
+
+
+
+
+
+mean.data.summary = data.summary
+mean.data.summary$Group = paste0(data.summary[,"Genotype"],"G",data.summary[,"Generation"], "_d",data.summary[,"Day"])
+mean.data.summary = mean.data.summary[!duplicated(mean.data.summary$Group),]
+
+mean.data.summary = mean.data.summary[,c("Group", "Genotype", "Generation",
+                                         "Day", "Velocity")]
+
+i=1
+while(i<=nrow(mean.data.summary)){
+  temp = data.summary[data.summary$Genotype == mean.data.summary$Genotype[i],]
+  temp = temp[temp$Generation == mean.data.summary$Generation[i],]
+  temp = temp[temp$Day == mean.data.summary$Day[i],]
+  mean.data.summary$Velocity[i] = sum(temp$Velocity)/nrow(temp)
+  i=i+1
+}
+
+
+
+fulldataset.mean = data.summary
+fulldataset.mean$Group = paste0(data.summary[,"Genotype"], "_d",data.summary[,"Day"])
+fulldataset.mean = fulldataset.mean[!duplicated(fulldataset.mean$Group),]
+
+fulldataset.mean = fulldataset.mean[,c("Group", "Genotype",
+                                         "Day", "Velocity")]
+
+i=1
+while(i<=nrow(fulldataset.mean)){
+  temp = data.summary[data.summary$Genotype == fulldataset.mean$Genotype[i],]
+  temp = temp[temp$Day == fulldataset.mean$Day[i],]
+  fulldataset.mean$Velocity[i] = sum(temp$Velocity)/nrow(temp)
+  i=i+1
+}
+
+
+subset.mean = function(sub.data.summary){
+  subdataset.mean = sub.data.summary
+  subdataset.mean$Group = paste0(sub.data.summary[,"Genotype"], "_d",sub.data.summary[,"Day"])
+  subdataset.mean = subdataset.mean[!duplicated(subdataset.mean$Group),]
+  
+  subdataset.mean = subdataset.mean[,c("Group", "Genotype",
+                                       "Day", "Velocity")]
+  
+  i=1
+  while(i<=nrow(subdataset.mean)){
+    temp = sub.data.summary[sub.data.summary$Genotype == subdataset.mean$Genotype[i],]
+    temp = temp[temp$Day == subdataset.mean$Day[i],]
+    subdataset.mean$Velocity[i] = sum(temp$Velocity)/nrow(temp)
+    i=i+1
+  }
+  return(subdataset.mean)
+}
+
+
+
+geno.color = c("firebrick", "royalblue", "darkgreen", "goldenrod")
+
+plot.data = data.summary[data.summary$Generation == "5.1",]
+plot.data$level = "2"
+plot.data[plot.data$Genotype == "WT", "level"] = "1"
+plot.data$color = geno.color[2:1][as.numeric(plot.data$level)]
+plot.data$Group = paste(plot.data$Day, plot.data$level, plot.data$Genotype)
+
+all.days.groups = data.frame(Day = rep(unique(plot.data$Day), 2),
+                             level = c(rep("1", length(unique(plot.data$Day))),
+                                       rep("2", length(unique(plot.data$Day)))),
+                             Genotype = c(rep("WT", length(unique(plot.data$Day))),
+                                       rep("A4V", length(unique(plot.data$Day)))))
+all.days.groups = paste(all.days.groups$Day, 
+                        all.days.groups$level, 
+                        all.days.groups$Genotype)
+                             
+all.days.groups = all.days.groups[order(all.days.groups)]
+
+plot.data$Group = factor(plot.data$Group, levels = all.days.groups)
+
+plot.color = unique(plot.data[,c("Group", "color")])
+plot.color = plot.color[order(plot.color$Group),]
+mean.plot.data = mean.data.summary[mean.data.summary$Group 
+                                   %in%
+                                     paste0(plot.data[,"Genotype"],"G",plot.data[,"Generation"], "_d",plot.data[,"Day"]),]
+
+num.flies = data.frame(Genotype = character(),
+                       Generation = character(),
+                       Day = character(),
+                       TotalFlies = numeric())
+i = 1
+while(i<=length(names(processed.sample.data))){
+  j = 1
+  while(j<= length(names(processed.sample.data[[i]]))){
+    temp.geno = strsplit(names(processed.sample.data)[i], "MG")[[1]][1]
+    temp.gen = strsplit(names(processed.sample.data)[i], "MG")[[1]][2]
+    temp.day = names(processed.sample.data[[i]])[j]
+    temp.num = length(unique(processed.sample.data[[i]][[j]]$ID))
+    temp.num.flies = data.frame(Genotype = temp.geno,
+                                Generation = temp.gen,
+                                Day = substr(temp.day,2,3),
+                                TotalFlies = temp.num)
+    num.flies = rbind(num.flies, temp.num.flies)
+    j=j+1
+  }
+  i=i+1
+}
+
+
+i = 1
+while(i<=length(names(processed.sample.data))){
+  j=1
+  while(j<=length(names(processed.sample.data[[i]]))){
+    wv.data = processed.sample.data[[i]][[j]]
+    wv.data$windowed.velocity = NA
+    new.wv.data = data.frame(Frame = numeric(),
+                             ID = character(),
+                             X = numeric(),
+                             Y = numeric(),
+                             distance = numeric(),
+                             windowed.velocity = numeric())
+    k=1
+    while(k<=length(unique(processed.sample.data[[i]][[j]]$ID))){
+      temp.wv.data = wv.data[wv.data$ID == unique(wv.data$ID)[k],]
+ 
+      f=8
+      while((f+7)<=nrow(temp.wv.data)){
+        temp.wv = temp.wv.data[(f-7):(f+7),]
+        temp.wv.data$windowed.velocity[f] = lm(temp.wv$distance~temp.wv$Frame)[[1]][[2]]
+        f = f+1
+      }
+      new.wv.data = rbind(new.wv.data, temp.wv.data)
+      k=k+1
+    }
+    temp.day = names(processed.sample.data[[i]][j])
+    processed.sample.data[[i]][[j]] = new.wv.data
+    names(processed.sample.data[[i]][j]) = temp.day
+    j=j+1
+  }
+  i=i+1
+}
+  
+  
+```
+
+
+```{r echo = F}
+
+#distances:
+
+mm.per.pix = setNames(c(146/1030), 
+                      c("A4VFG1D1"))
+
+fps = 30
+
+speed.conversion = mm.per.pix*fps
+
+##Functions
+
+hex = function(color, alpha){
+  rgb2hex = color
+  i = 1
+  while(i <= length(color)){
+    rgbvals = col2rgb(color[i])
+    rgb2hex[i] = rgb(rgbvals[1]/255, rgbvals[2]/255, rgbvals[3]/255, alpha)
+    i = i+1
+  }
+  return(rgb2hex)
+}
+
+plot.dist= function(plot.gen,plot.day){
+  maxdist = 0
+  maxframe = 0
+  
+  
+  j=1
+  temp.plot.data = processed.sample.data[[plot.gen[1]]][[plot.day]]
+  
+  
+    fig = plot_ly(data = temp.plot.data,
+                  x = ~Frame,
+                  y = ~distance,
+                  type = 'scatter',
+                  mode = 'lines',
+                  name = ~ID,
+                  line = list(color = geno.color[j]),
+                  hoverinfo = "text",
+                  hovertext = paste("Fly ID: ", temp.plot.data$ID,
+                                    "\nFrame: ", temp.plot.data$Frame,
+                                    "\ndistance", temp.plot.data$distance))
+    fig1 = fig
+    
+    maxdist = max(maxdist, temp.plot.data$distance)
+    maxframe = max(maxframe, temp.plot.data$Frame)
+    j=j+1
+  
+    
+  
+  if(length(plot.gen)>1){
+    if(length(gen.options[[plot.gen[2]]])>=plot.day){
+      temp.plot.data = processed.sample.data[[plot.gen[2]]][[plot.day]]
+      fig = plot_ly(data = temp.plot.data,
+                    x = ~Frame,
+                    y = ~distance,
+                    type = 'scatter',
+                    mode = 'lines',
+                    name = ~ID,
+                    line = list(color = geno.color[j]),
+                    hoverinfo = "text",
+                    hovertext = paste("Fly ID: ", temp.plot.data$ID,
+                                      "\nFrame: ", temp.plot.data$Frame,
+                                      "\ndistance", temp.plot.data$distance))
+      fig2 = fig
+      
+      maxdist = max(maxdist, temp.plot.data$distance)
+      maxframe = max(maxframe, temp.plot.data$Frame)
+      
+      fig <- subplot(fig1, fig2, nrows = 1)
+      
+      annotations = list(list(text = paste0(names(processed.sample.data)[[plot.gen[1]]], " ",
+                                            names(processed.sample.data[[plot.gen[1]]])[plot.day]),
+                             xref = "paper",
+                             yref = "paper",
+                             xanchor = "center",
+                             yanchor = "bottom",
+                             showarrow = FALSE,
+                             x = 0.2,
+                             y = 1.0),
+                        list(text =  paste0(names(processed.sample.data)[[plot.gen[2]]], " ",
+                                            names(processed.sample.data[[plot.gen[2]]])[plot.day]),
+                             xref = "paper",
+                             yref = "paper",
+                             xanchor = "center",
+                             yanchor = "bottom",
+                             showarrow = FALSE,
+                             x = 0.8,
+                             y = 1.0))
+      
+    fig <- fig %>%layout(annotations = annotations) 
+      
+    fig <- fig %>% layout(showlegend = FALSE)
+    
+    fig <- fig %>% layout(
+      xaxis = list(range = c(0, maxframe)),
+      yaxis = list(range = c(0, maxdist)),
+      xaxis2 = list(range = c(0, maxframe)),
+      yaxis2 = list(range = c(0, maxdist))
+    )
+    }}
+    if(length(plot.gen)==1){
+    fig <- fig1
+        
+    fig <- fig %>% layout(showlegend = FALSE)
+      
+    fig <- fig %>% layout(
+      xaxis = list(range = c(0, maxframe)),
+      yaxis = list(range = c(0, maxdist)),
+      title = paste0(names(processed.sample.data)[[plot.gen[1]]], " ",
+                     names(processed.sample.data[[plot.gen[1]]])[plot.day])
+      )
+    }
+    if(length(plot.gen)==2){
+      if(plot.day>length(gen.options[[plot.gen[2]]])){
+      fig <- fig1
+          
+      fig <- fig %>% layout(showlegend = FALSE)
+        
+      fig <- fig %>% layout(
+        xaxis = list(range = c(0, maxframe)),
+        yaxis = list(range = c(0, maxdist)),
+        title = paste0(names(processed.sample.data)[[plot.gen[1]]], " ",
+                       names(processed.sample.data[[plot.gen[1]]])[plot.day])
+        )
+    }}
+    fig
+}
+
+plot.data = data.summary[data.summary$Generation == "6.1",]
+
+plot.gen = function(plot.data, main.title = ""){
+  plot.data$at = as.numeric(plot.data$Day)
+  plot.data[plot.data$Genotype == "WT", "at"] = 
+    plot.data$at[plot.data$Genotype == "WT"] - .15
+  plot.data[plot.data$Genotype == "A4V", "at"] = 
+    plot.data$at[plot.data$Genotype == "A4V"] + .15
+  
+  plot.data$Group = paste0(plot.data$at, plot.data$Genotype)
+  plot.data$Group = factor(plot.data$Group, levels =  unique(plot.data$Group)[order(unique(plot.data$at))])
+  
+  plot.data$color = "firebrick"
+  plot.data$color[plot.data$Genotype == "WT"] = "royalblue"
+  plot.color = unique(plot.data[,c("Group", "color")])
+  plot.color = plot.color[order(plot.color$Group),]
+  
+  ymax = ceiling(max(plot.data$Velocity)*10)/10
+  xmax = max(as.numeric(plot.data$Day))
+  
+  sub.data.summary = plot.data
+mean.plot.data = subset.mean(sub.data.summary)
+
+mean.plot.data = mean.plot.data[order(mean.plot.data$Day),]
+  
+if(nchar(main.title) == 0){
+  main.title = paste("Generation", plot.data$Generation[1])
+}
+
+
+  par(mar = c(2,2,3,4))
+  
+  plot(x = NA,
+       y= NA,
+       ylim = c(0,ymax),
+       xlim = c(1, xmax),
+       xaxt = 'none',
+       yaxt = 'none',
+       xlab = "",
+       col = hex(plot.color$color, .15),
+       ylab = "")
+  
+  abline(h = c(0:floor(ymax)),
+         lty = 2,
+         lwd = .5,
+         col = "grey80")
+  abline(v = c(0:xmax),
+         lty = 2,
+         lwd = .5,
+         col = "grey80")
+  
+  boxplot(plot.data$Velocity~plot.data$Group,
+          at = unique(plot.data$at)[order(unique(plot.data$at))],
+          col = "white",
+          las = 2,
+          boxwex = .25,
+          add = T,
+          xaxt = 'none',
+          yaxt = 'none')
+  
+  boxplot(plot.data$Velocity~plot.data$Group,
+          at = unique(plot.data$at)[order(unique(plot.data$at))],
+          col = hex(plot.color$color, .15),
+          las = 2,
+          boxwex = .25,
+          add = T,
+          xaxt = 'none',
+          yaxt = 'none')
+  
+  
+  beeswarm(plot.data$Velocity~plot.data$Group,
+           at = unique(plot.data$at)[order(unique(plot.data$at))],
+           pch = 21,
+           cex = 1.0,
+           xlim = c(0,30),
+           spacing = .250,
+           method = "swarm",
+           bg =hex(plot.color$color, .35),
+           add = T)
+  
+  
+  lines(x = mean.plot.data[mean.plot.data$Genotype == "WT", "Day"],
+        y = mean.plot.data[mean.plot.data$Genotype == "WT", "Velocity"],
+        col = "royalblue",
+        lwd = 2)
+  
+  lines(x = mean.plot.data[mean.plot.data$Genotype == "A4V", "Day"],
+        y = mean.plot.data[mean.plot.data$Genotype == "A4V", "Velocity"],
+        col = "firebrick",
+        lwd = 2)
+  
+  points(x = mean.plot.data[mean.plot.data$Genotype == "WT", "Day"],
+        y = mean.plot.data[mean.plot.data$Genotype == "WT", "Velocity"],
+        bg = "royalblue",
+        pch = 23)
+  
+  points(x = mean.plot.data[mean.plot.data$Genotype == "A4V", "Day"],
+        y = mean.plot.data[mean.plot.data$Genotype == "A4V", "Velocity"],
+        bg = "firebrick",
+        pch = 23)
+  
+  axis(side = 1,
+       at = c(1:xmax),
+       labels = c(1:xmax),
+       cex.axis = .5,
+       las = 1,
+       lwd = 0,
+       line = -.75)
+  
+  axis(side = 2,
+       at = c(0:floor(ymax)),
+       labels = c(0:floor(ymax)),
+       cex.axis = .5,
+       las = 1,
+       lwd = 0,
+       line = -.75)
+  
+  axis(side = 1,
+       at = xmax/2,
+       labels = c("Day"),
+       tick = F,
+       padj = 0,
+       cex.axis = .75)
+  
+  axis(side = 2,
+       at = ymax/2,
+       label = "Velocity (mm/s)",
+       tick = F,
+       padj = 0,
+       cex.axis = .75)
+  
+  axis(side = 3,
+       at = xmax/2,
+       label = main.title,
+       tick = F,
+       padj = 0,
+       cex.axis = 1)
+  
+  
+  
+2  legend("topright",
+         inset=c(-.1,0),
+         legend = c("WT", "A4V"), 
+         fill = hex(c("royalblue","firebrick"), .5),
+         cex = .75,
+         bty = 'n',
+         pt.cex = .75,
+         xpd = T)
+}
+
+
+plot.day = function(day){
+  ##Compare across replicate days
+  alldays = substr(unique(as.character(unlist(gen.options))),2,3)
+  alldays = alldays[order(as.numeric(alldays))]
+  
+  plot.data = data.summary[data.summary$Day == alldays[day],]
+  plot.data$Genotype = factor(plot.data$Genotype, levels = c("WT", "A4V"))
+  plot.data = plot.data[order(plot.data$Genotype),]
+  plot.data$Group = paste0(plot.data$Genotype, "_", plot.data$Generation)
+  plot.data$Group = factor(plot.data$Group, levels = unique(plot.data$Group))
+  
+  ymax = max(data.summary$Velocity)
+  xmax = length(unique(plot.data$Group))+1
+  
+  plot.data$at = as.numeric(plot.data$Group)
+  plot.data$at[plot.data$Genotype == "A4V"] = 
+    plot.data$at[plot.data$Genotype == "A4V"]+1
+  plot.data$color = "royalblue"
+  plot.data[plot.data$Genotype == "A4V", "color"] = "firebrick"
+  
+  plot.color = unique(plot.data[,c("Group", "color")])
+  
+  main.title = paste0(as.numeric(alldays[day]), " days post eclosion")
+  
+  par(mar = c(3,3,3,4))
+    
+    plot(x = NA,
+         y= NA,
+         ylim = c(0,ymax),
+         xlim = c(1, xmax),
+         xaxt = 'none',
+         yaxt = 'none',
+         xlab = "",
+         col = hex(plot.color$color, .15),
+         ylab = "")
+    
+    abline(h = c(0:(10*(ymax)))/10,
+           lty = 2,
+           lwd = .5,
+           col = "grey80")
+    abline(v = c(0:xmax),
+           lty = 2,
+           lwd = .5,
+           col = "grey80")
+    
+    boxplot(plot.data$Velocity~plot.data$Group,
+          at = unique(plot.data$at)[order(unique(plot.data$at))],
+          col = "white",
+          las = 2,
+          boxwex = .25,
+          add = T,
+          xaxt = 'none',
+          yaxt = 'none')
+    
+    
+    boxplot(plot.data$Velocity~plot.data$Group,
+          at = unique(plot.data$at)[order(unique(plot.data$at))],
+          col = hex(plot.color$color, .15),
+          las = 2,
+          boxwex = .25,
+          add = T,
+          xaxt = 'none',
+          yaxt = 'none')
+      
+    beeswarm(plot.data$Velocity~plot.data$Group,
+          at = unique(plot.data$at)[order(unique(plot.data$at))],
+          pch = 21,
+          cex = 1.0,
+          xlim = c(0,30),
+          spacing = .250,
+          method = "swarm",
+          bg =hex(plot.color$color, .35),
+          add = T)
+        
+    axis(side = 1,
+         at = unique(plot.data$at)[order(unique(plot.data$at))],
+         labels = unique(plot.data[,c("Group", "Generation")])[,"Generation"],
+         cex.axis = 1,
+         las = 1,
+         lwd = 0,
+         line = -.75)
+    
+    axis(side = 2,
+         at = c(0:(2*(ymax)))/2,
+         labels = c(0:(2*(ymax)))/2,
+         cex.axis = 1,
+         las = 1,
+         lwd = 0,
+         line = -.75)
+    
+    axis(side = 1,
+         at = (xmax/2)+.5,
+         labels = c("Generation"),
+         tick = F,
+         padj = 1,
+         cex.axis = 1.25)
+    
+    axis(side = 2,
+         at = ymax/2,
+         label = "Velocity",
+         tick = F,
+         padj = -1,
+         cex.axis = 1.25)
+    
+      axis(side = 3,
+         at = (xmax/2)+.5,
+         label = main.title,
+         tick = F,
+         padj = 0,
+         cex.axis = 1.25)
+    
+      legend("topright",
+           inset=c(-.1,0),
+           legend = c("WT", "A4V"), 
+           fill = hex(c("royalblue","firebrick"), .5),
+           cex = .75,
+           bty = 'n',
+           pt.cex = .75,
+           xpd = T)
+}
+
+plot.vel = function(plot.gen,plot.day){
+  maxdist = 0
+  maxframe = 0
+  
+  
+  j=1
+  temp.plot.data = processed.sample.data[[plot.gen[1]]][[plot.day]]
+  
+  
+    fig = plot_ly(data = temp.plot.data,
+                  x = ~Frame,
+                  y = ~windowed.velocity,
+                  type = 'scatter',
+                  mode = 'lines',
+                  name = ~ID,
+                  line = list(color = geno.color[j]),
+                  hoverinfo = "text",
+                  hovertext = paste("Fly ID: ", temp.plot.data$ID,
+                                    "\nFrame: ", temp.plot.data$Frame,
+                                    "\nVelocity", temp.plot.data$windowed.velocity))
+    fig1 = fig
+    
+    maxdist = max(maxdist, temp.plot.data$windowed.velocity)
+    maxframe = max(maxframe, temp.plot.data$Frame)
+    j=j+1
+  
+    
+  
+  if(length(plot.gen)>1){
+    if(length(gen.options[[plot.gen[2]]])>=plot.day){
+      temp.plot.data = processed.sample.data[[plot.gen[2]]][[plot.day]]
+      fig = plot_ly(data = temp.plot.data,
+                    x = ~Frame,
+                    y = ~windowed.velocity,
+                    type = 'scatter',
+                    mode = 'lines',
+                    name = ~ID,
+                    line = list(color = geno.color[j]),
+                    hoverinfo = "text",
+                    hovertext = paste("Fly ID: ", temp.plot.data$ID,
+                                      "\nFrame: ", temp.plot.data$Frame,
+                                      "\ndistance", temp.plot.data$windowed.velocity))
+      fig2 = fig
+      
+      maxdist = max(maxdist, temp.plot.data$windowed.velocity)
+      maxframe = max(maxframe, temp.plot.data$Frame)
+      
+      fig <- subplot(fig1, fig2, nrows = 1)
+      
+      annotations = list(list(text = paste0(names(processed.sample.data)[[plot.gen[1]]], " ",
+                                            names(processed.sample.data[[plot.gen[1]]])[plot.day]),
+                             xref = "paper",
+                             yref = "paper",
+                             xanchor = "center",
+                             yanchor = "bottom",
+                             showarrow = FALSE,
+                             x = 0.2,
+                             y = 1.0),
+                        list(text =  paste0(names(processed.sample.data)[[plot.gen[2]]], " ",
+                                            names(processed.sample.data[[plot.gen[2]]])[plot.day]),
+                             xref = "paper",
+                             yref = "paper",
+                             xanchor = "center",
+                             yanchor = "bottom",
+                             showarrow = FALSE,
+                             x = 0.8,
+                             y = 1.0))
+      
+    fig <- fig %>%layout(annotations = annotations) 
+      
+    fig <- fig %>% layout(showlegend = FALSE)
+    
+    fig <- fig %>% layout(
+      xaxis = list(range = c(0, maxframe)),
+      yaxis = list(range = c(0, maxdist)),
+      xaxis2 = list(range = c(0, maxframe)),
+      yaxis2 = list(range = c(0, maxdist))
+    )
+    }}
+    if(length(plot.gen)==1){
+    fig <- fig1
+        
+    fig <- fig %>% layout(showlegend = FALSE)
+      
+    fig <- fig %>% layout(
+      xaxis = list(range = c(0, maxframe)),
+      yaxis = list(range = c(0, maxdist)),
+      title = paste0(names(processed.sample.data)[[plot.gen[1]]], " ",
+                     names(processed.sample.data[[plot.gen[1]]])[plot.day])
+      )
+    }
+    if(length(plot.gen)==2){
+      if(plot.day>length(gen.options[[plot.gen[2]]])){
+      fig <- fig1
+          
+      fig <- fig %>% layout(showlegend = FALSE)
+        
+      fig <- fig %>% layout(
+        xaxis = list(range = c(0, maxframe)),
+        yaxis = list(range = c(0, maxdist)),
+        title = paste0(names(processed.sample.data)[[plot.gen[1]]], " ",
+                       names(processed.sample.data[[plot.gen[1]]])[plot.day])
+        )
+    }}
+    fig
+}
+```
+
+```{r echo = F, fig.height = 5, fig.width = 5.4, include = F}
+#plot the path of any specific fly
+sampledatatable = processed.sample.data$WTMG6.1$d13
+specificfly = 1
+
+x.limit = c(0,1080)
+y.limit = c(500, 1500)
+
+data = sampledatatable
+data=data[data$ID == specificfly,]
+plot(x = data$X,
+     y = 1920-data$Y,
+     col = "firebrick",
+     type = "l",
+     xlim = x.limit,
+     ylim = y.limit,
+     xlab = "",
+     ylab = "",
+     xaxt = 'n',
+     yaxt = 'n',
+     frame.plot = F)
+
+
+```
+
+
+
+```{r echo = F}
+##can pick 1 or 2 plot.gen samples by position (eg: c(1,2))
+##plot.gen optionsare names(processed.sample.data)
+##plot.day options are names(processed.sample.data[[plot.gen]])
+
+plot.gen = c(1,2)
+plot.day = 6
+
+plot.dist(plot.gen,plot.day)
+
+```
+
+
+```{r echo = F, fig.width = 8 , fig.height = 4}
+
+plot.data = data.summary[data.summary$Generation == "5.1",]
+plot.gen(plot.data)
+```
+
+
+```{r echo = F, fig.width = 8 , fig.height = 4}
+
+plot.data = data.summary[data.summary$Generation == "5.2",]
+plot.gen(plot.data)
+```
+
+
+```{r echo = F, fig.width = 8 , fig.height = 4}
+
+plot.data = data.summary[data.summary$Generation == "5.3",]
+plot.gen(plot.data)
+```
+
+```{r echo = F, fig.width = 8 , fig.height = 4}
+
+plot.data = data.summary[data.summary$Generation == "6.1",]
+plot.gen(plot.data)
+```
+
+
+```{r echo = F, fig.width = 8 , fig.height = 4}
+
+plot.data = data.summary[data.summary$Generation == "6.2",]
+plot.gen(plot.data)
+```
+
+
+```{r echo = F, fig.width = 8 , fig.height = 4}
+
+plot.data = data.summary[data.summary$Generation == "6.3",]
+plot.gen(plot.data)
+```
+
+
+```{r echo = F, fig.width = 8 , fig.height = 4}
+
+plot.data = data.summary[data.summary$Generation == "7.1",]
+plot.gen(plot.data)
+```
+
+
+```{r echo = F, fig.width = 8 , fig.height = 4}
+
+plot.data = data.summary[data.summary$Generation == "7.2",]
+plot.gen(plot.data)
+```
+
+```{r echo = F, fig.width = 8 , fig.height = 4}
+
+plot.data = data.summary
+plot.gen(plot.data, "All Samples")
+```
+
+
+```{r echo = F, fig.width = 8 , fig.height = 4}
+
+plot.data = data.summary
+
+single.flies = num.flies[num.flies$TotalFlies == 1,]
+i=1
+while(i<=nrow(single.flies)){
+  plot.data = plot.data[!(plot.data$Genotype == single.flies$Genotype[i] &
+                            plot.data$Generation == single.flies$Generation[i] &
+                            plot.data$Day == single.flies$Day[i]),]
+  i = i+1
+}
+
+
+
+
+plot.gen(plot.data, "All Samples")
+```
+
+
+```{r echo = F}
+
+t.data = plot.data
+t.data$Group = paste0(t.data$Day, t.data$Genotype)
+t.data = t.data[order(t.data$Group),]
+t.data$Group = paste0(t.data$Genotype, "_day", t.data$Day)
+groups = unique(t.data$Group)
+
+t.table = data.frame(Genotype1 = character(),
+                     Genotype2 = character(),
+                     pval = numeric())
+
+i=1
+while(i <= length(groups)){
+  j = i+1
+  while(j <= length(groups)){
+    t.temp = data.frame(Genotype1 = groups[i],
+                        Genotype2 = groups[j],
+                        pval = t.test(x = t.data[t.data$Group == groups[i],
+                                                 "Velocity"],
+                                      y = t.data[t.data$Group == groups[j],
+                                                 "Velocity"],
+                                      paired = F)[[3]])
+    t.table = rbind(t.table, t.temp)
+      j = j+1
+  }
+  i = i+1
+}
+
+
+t.stripe = t.table$pval <= .05
+knitr::kable(t.table,
+             caption = 'All t-tests for velocity data.')  %>%
+kable_styling() %>%
+row_spec(c(1:nrow(t.table))[t.table$pval <= .05], bold = T, color = "black", background = "gold")
+
+```
+
+
+```{r echo = F}
+
+par(mfrow = c(2,2))
+
+day = 1
+plot.day(day)
+
+day = 2
+plot.day(day)
+
+day = 3
+plot.day(day)
+
+day = 4
+plot.day(day)
+
+```
+
+```{r echo = F}
+
+par(mfrow = c(2,2))
+
+day = 5
+plot.day(day)
+
+day = 6
+plot.day(day)
+
+day = 7
+plot.day(day)
+
+day = 8
+plot.day(day)
+
+```
+
+
+```{r echo = F}
+
+par(mfrow = c(2,2))
+
+day = 9
+plot.day(day)
+
+day = 10
+plot.day(day)
+
+day = 11
+plot.day(day)
+
+day = 12
+plot.day(day)
+
+```
+
+
+```{r echo = F}
+
+day = 10
+plot.day(day)
+
+```
+
+```{r echo = F}
+##can pick 1 or 2 plot.gen samples by position (eg: c(1,2))
+##plot.gen optionsare names(processed.sample.data)
+##plot.day options are names(processed.sample.data[[plot.gen]])
+
+plot.gen = c(1,2)
+plot.day = 6
+
+plot.dist(plot.gen,plot.day)
+
+```
+
+```{r echo = F}
+##can pick 1 or 2 plot.gen samples by position (eg: c(1,2))
+##plot.gen optionsare names(processed.sample.data)
+##plot.day options are names(processed.sample.data[[plot.gen]])
+
+plot.gen = c(7,8)
+plot.day = 6
+
+plot.dist(plot.gen,plot.day)
+
+```
+
+```{r echo = F, fig.width=15}
+
+#plot.gen = c(7,8)
+#plot.day = 6
+
+#plot.vel(plot.gen,plot.day)
+
+plot.data = processed.sample.data[[8]][[6]]
+plot.data = plot.data[plot.data$ID == 4,]
+
+plot(x = plot.data$Frame,
+     y = plot.data$windowed.velocity,
+     type = "l")
+
+par(new=T)
+plot(y=plot.data$distance,
+     x=plot.data$Frame,
+     type="l",
+     yaxt="n",
+     xaxt="n",
+     col="red3",
+     lty=2,
+     lwd=2,
+     xlab="",
+     ylab="",
+     ylim=c(0,900))
+axis(side=4)
+
+```
+
+
+
+
+```{r echo = F, fig.width=15}
+
+#plot.gen = c(7,8)
+#plot.day = 6
+
+#plot.vel(plot.gen,plot.day)
+
+
+
+par(mfrow=c(2,1))
+plot.data = processed.sample.data[[7]][[6]]
+plot.data = plot.data[plot.data$ID == 4,]
+
+plot(x = plot.data$Frame,
+     y = plot.data$delta.distance,
+     type = "l")
+
+par(new=T)
+plot(y=plot.data$distance,
+     x=plot.data$Frame,
+     type="l",
+     yaxt="n",
+     xaxt="n",
+     col="red3",
+     lty=2,
+     lwd=2,
+     xlab="",
+     ylab="",
+     ylim=c(0,2500))
+axis(side=4)
+
+hist(plot.data$delta.distance,
+     breaks = c(0:20))
+
+```
+
+
+
+```{r echo = F, fig.width=15}
+
+#plot.gen = c(7,8)
+#plot.day = 6
+
+#plot.vel(plot.gen,plot.day)
+
+par(mfrow=c(2,1))
+plot.data = processed.sample.data[[7]][[6]]
+plot.data = plot.data[plot.data$ID == 4,]
+
+
+plot(x = plot.data$Frame,
+     y = plot.data$windowed.velocity,
+     type = "l")
+
+par(new=T)
+plot(y=plot.data$distance,
+     x=plot.data$Frame,
+     type="l",
+     yaxt="n",
+     xaxt="n",
+     col="red3",
+     lty=2,
+     lwd=2,
+     xlab="",
+     ylab="",
+     ylim=c(0,2200))
+axis(side=4)
+
+stopped.plot.data = plot.data[plot.data$windowed.velocity < .05,]
+
+points(x = stopped.plot.data$Frame,
+       y = stopped.plot.data$windowed.velocity,
+       type = "p",
+       col = "gold",
+       pch = 16)
+
+plot(x = plot.data$Frame,
+     y = plot.data$delta.distance,
+     type = "l")
+
+still.plot.data = plot.data[plot.data$delta.distance < .25,]
+
+points(x = still.plot.data$Frame,
+       y = still.plot.data$delta.distance,
+       type = "p",
+       col = "gold",
+       pch = 16)
+
+par(new=T)
+plot(y=plot.data$distance,
+     x=plot.data$Frame,
+     type="l",
+     yaxt="n",
+     xaxt="n",
+     col="red3",
+     lty=2,
+     lwd=2,
+     xlab="",
+     ylab="",
+     ylim=c(0,2200))
+axis(side=4)
+
+
+
+```
+
+
+
+```{r echo = F}
+
+hist(plot.data$windowed.velocity,
+     breaks = c(0:((80))/100),
+     probability = T)
+
+```
+
+
+```{r echo = F, fig.width=15}
+
+#plot.gen = c(7,8)
+#plot.day = 6
+
+#plot.vel(plot.gen,plot.day)
+
+par(mfrow=c(2,1))
+plot.data = processed.sample.data[[8]][[6]]
+plot.data = plot.data[plot.data$ID == 1,]
+
+
+plot(x = plot.data$Frame,
+     y = plot.data$windowed.velocity,
+     type = "l")
+
+par(new=T)
+plot(y=plot.data$distance,
+     x=plot.data$Frame,
+     type="l",
+     yaxt="n",
+     xaxt="n",
+     col="red3",
+     lty=2,
+     lwd=2,
+     xlab="",
+     ylab="",
+     ylim=c(0,900))
+axis(side=4)
+
+stopped.plot.data = plot.data[plot.data$windowed.velocity < .05,]
+
+points(x = stopped.plot.data$Frame,
+       y = stopped.plot.data$windowed.velocity,
+       type = "p",
+       col = "gold",
+       pch = 16)
+
+plot(x = plot.data$Frame,
+     y = plot.data$delta.distance,
+     type = "l")
+
+still.plot.data = plot.data[plot.data$delta.distance < .25,]
+
+points(x = still.plot.data$Frame,
+       y = still.plot.data$delta.distance,
+       type = "p",
+       col = "gold",
+       pch = 16)
+
+par(new=T)
+plot(y=plot.data$distance,
+     x=plot.data$Frame,
+     type="l",
+     yaxt="n",
+     xaxt="n",
+     col="red3",
+     lty=2,
+     lwd=2,
+     xlab="",
+     ylab="",
+     ylim=c(0,900))
+axis(side=4)
+
+
+
+```
+
+
+
+```{r echo = F}
+
+hist(plot.data$windowed.velocity,
+     breaks = c(0:((80))/100),
+     probability = T)
+
+```
+
+
+
+```{r echo = F, fig.width = 8 , fig.height = 8}
+
+par(mfrow=c(2,1))
+
+plot.data = data.summary[data.summary$Generation == "5.1",]
+single.flies = num.flies[num.flies$TotalFlies == 1,]
+i=1
+while(i<=nrow(single.flies)){
+  plot.data = plot.data[!(plot.data$Genotype == single.flies$Genotype[i] &
+                            plot.data$Generation == single.flies$Generation[i] &
+                            plot.data$Day == single.flies$Day[i]),]
+  i = i+1
+}
+plot.gen(plot.data)
+
+plot.data$Percent.still = (plot.data$Still/plot.data$Frame)*1000
+plot.data$Percent.moving = (plot.data$Moving/plot.data$Frame)*1000
+plot.data$at = as.numeric(plot.data$Day)-.2
+plot.data$color = "royalblue"
+plot.data$color[plot.data$Genotype=="A4V"] = "firebrick"
+plot.data$at[plot.data$Genotype=="A4V"] = plot.data$at[plot.data$Genotype=="A4V"]+.4
+plot.data$Moving.vel = 3*(plot.data$Moving.dist/plot.data$Moving)
+plot.data[plot.data$Moving == 0, "Moving.vel"] = 0
+
+plot.data$groups = paste0(plot.data$Genotype, plot.data$Day)
+
+mean.plot.data = plot.data[!duplicated(plot.data[,c("Genotype", "Day")]),]
+i=1
+while(i<=length(mean.plot.data$groups)){
+  temp.mean = plot.data[plot.data$groups == mean.plot.data$groups[i],]
+  mean.plot.data$Moving.vel[i] = mean(temp.mean$Moving.vel)
+  i=i+1
+}
+
+plot.wt = mean.plot.data[mean.plot.data$Genotype == "WT",]
+plot.a4v = mean.plot.data[mean.plot.data$Genotype == "A4V",]
+
+plot(x = plot.data$at,
+     y = plot.data$Moving.vel,
+     bg = hex(plot.data$color, .25),
+     pch = 21)
+
+
+
+lines(x = as.numeric(plot.wt$Day),
+      y = plot.wt$Moving.vel,
+      col = plot.wt$color[1])
+
+lines(x = as.numeric(plot.a4v$Day),
+      y = plot.a4v$Moving.vel,
+      col = plot.a4v$color[1])
+
+```
+
+```{r echo = F, fig.width = 8 , fig.height = 8}
+
+par(mfrow=c(2,1))
+
+plot.data = data.summary[data.summary$Generation == "5.2",]
+single.flies = num.flies[num.flies$TotalFlies == 1,]
+i=1
+while(i<=nrow(single.flies)){
+  plot.data = plot.data[!(plot.data$Genotype == single.flies$Genotype[i] &
+                            plot.data$Generation == single.flies$Generation[i] &
+                            plot.data$Day == single.flies$Day[i]),]
+  i = i+1
+}
+plot.gen(plot.data)
+
+plot.data$Percent.still = (plot.data$Still/plot.data$Frame)*1000
+plot.data$Percent.moving = (plot.data$Moving/plot.data$Frame)*1000
+plot.data$at = as.numeric(plot.data$Day)-.2
+plot.data$color = "royalblue"
+plot.data$color[plot.data$Genotype=="A4V"] = "firebrick"
+plot.data$at[plot.data$Genotype=="A4V"] = plot.data$at[plot.data$Genotype=="A4V"]+.4
+plot.data$Moving.vel = 3*(plot.data$Moving.dist/plot.data$Moving)
+plot.data[plot.data$Moving == 0, "Moving.vel"] = 0
+
+plot.data$groups = paste0(plot.data$Genotype, plot.data$Day)
+
+mean.plot.data = plot.data[!duplicated(plot.data[,c("Genotype", "Day")]),]
+i=1
+while(i<=length(mean.plot.data$groups)){
+  temp.mean = plot.data[plot.data$groups == mean.plot.data$groups[i],]
+  mean.plot.data$Moving.vel[i] = mean(temp.mean$Moving.vel)
+  i=i+1
+}
+
+plot.wt = mean.plot.data[mean.plot.data$Genotype == "WT",]
+plot.a4v = mean.plot.data[mean.plot.data$Genotype == "A4V",]
+
+plot(x = plot.data$at,
+     y = plot.data$Moving.vel,
+     bg = hex(plot.data$color, .25),
+     pch = 21)
+
+
+
+lines(x = as.numeric(plot.wt$Day),
+      y = plot.wt$Moving.vel,
+      col = plot.wt$color[1])
+
+lines(x = as.numeric(plot.a4v$Day),
+      y = plot.a4v$Moving.vel,
+      col = plot.a4v$color[1])
+
+```
+
+```{r echo = F, fig.width = 8 , fig.height = 8}
+
+par(mfrow=c(2,1))
+
+plot.data = data.summary[data.summary$Generation == "5.3",]
+single.flies = num.flies[num.flies$TotalFlies == 1,]
+i=1
+while(i<=nrow(single.flies)){
+  plot.data = plot.data[!(plot.data$Genotype == single.flies$Genotype[i] &
+                            plot.data$Generation == single.flies$Generation[i] &
+                            plot.data$Day == single.flies$Day[i]),]
+  i = i+1
+}
+plot.gen(plot.data)
+
+plot.data$Percent.still = (plot.data$Still/plot.data$Frame)*1000
+plot.data$Percent.moving = (plot.data$Moving/plot.data$Frame)*1000
+plot.data$at = as.numeric(plot.data$Day)-.2
+plot.data$color = "royalblue"
+plot.data$color[plot.data$Genotype=="A4V"] = "firebrick"
+plot.data$at[plot.data$Genotype=="A4V"] = plot.data$at[plot.data$Genotype=="A4V"]+.4
+plot.data$Moving.vel = 3*(plot.data$Moving.dist/plot.data$Moving)
+plot.data[plot.data$Moving == 0, "Moving.vel"] = 0
+
+plot.data$groups = paste0(plot.data$Genotype, plot.data$Day)
+
+mean.plot.data = plot.data[!duplicated(plot.data[,c("Genotype", "Day")]),]
+i=1
+while(i<=length(mean.plot.data$groups)){
+  temp.mean = plot.data[plot.data$groups == mean.plot.data$groups[i],]
+  mean.plot.data$Moving.vel[i] = mean(temp.mean$Moving.vel)
+  i=i+1
+}
+
+plot.wt = mean.plot.data[mean.plot.data$Genotype == "WT",]
+plot.a4v = mean.plot.data[mean.plot.data$Genotype == "A4V",]
+
+plot(x = plot.data$at,
+     y = plot.data$Moving.vel,
+     bg = hex(plot.data$color, .25),
+     pch = 21)
+
+
+
+lines(x = as.numeric(plot.wt$Day),
+      y = plot.wt$Moving.vel,
+      col = plot.wt$color[1])
+
+lines(x = as.numeric(plot.a4v$Day),
+      y = plot.a4v$Moving.vel,
+      col = plot.a4v$color[1])
+
+```
+
+```{r echo = F, fig.width = 8 , fig.height = 8}
+
+par(mfrow=c(2,1))
+
+plot.data = data.summary[data.summary$Generation == "6.1",]
+single.flies = num.flies[num.flies$TotalFlies == 1,]
+i=1
+while(i<=nrow(single.flies)){
+  plot.data = plot.data[!(plot.data$Genotype == single.flies$Genotype[i] &
+                            plot.data$Generation == single.flies$Generation[i] &
+                            plot.data$Day == single.flies$Day[i]),]
+  i = i+1
+}
+plot.gen(plot.data)
+
+plot.data$Percent.still = (plot.data$Still/plot.data$Frame)*1000
+plot.data$Percent.moving = (plot.data$Moving/plot.data$Frame)*1000
+plot.data$at = as.numeric(plot.data$Day)-.2
+plot.data$color = "royalblue"
+plot.data$color[plot.data$Genotype=="A4V"] = "firebrick"
+plot.data$at[plot.data$Genotype=="A4V"] = plot.data$at[plot.data$Genotype=="A4V"]+.4
+plot.data$Moving.vel = 3*(plot.data$Moving.dist/plot.data$Moving)
+plot.data[plot.data$Moving == 0, "Moving.vel"] = 0
+
+plot.data$groups = paste0(plot.data$Genotype, plot.data$Day)
+
+mean.plot.data = plot.data[!duplicated(plot.data[,c("Genotype", "Day")]),]
+i=1
+while(i<=length(mean.plot.data$groups)){
+  temp.mean = plot.data[plot.data$groups == mean.plot.data$groups[i],]
+  mean.plot.data$Moving.vel[i] = mean(temp.mean$Moving.vel)
+  i=i+1
+}
+
+plot.wt = mean.plot.data[mean.plot.data$Genotype == "WT",]
+plot.a4v = mean.plot.data[mean.plot.data$Genotype == "A4V",]
+
+plot(x = plot.data$at,
+     y = plot.data$Moving.vel,
+     bg = hex(plot.data$color, .25),
+     pch = 21)
+
+
+
+lines(x = as.numeric(plot.wt$Day),
+      y = plot.wt$Moving.vel,
+      col = plot.wt$color[1])
+
+lines(x = as.numeric(plot.a4v$Day),
+      y = plot.a4v$Moving.vel,
+      col = plot.a4v$color[1])
+
+```
+
+```{r echo = F, fig.width = 8 , fig.height = 8}
+
+par(mfrow=c(2,1))
+
+plot.data = data.summary[data.summary$Generation == "6.2",]
+single.flies = num.flies[num.flies$TotalFlies == 1,]
+i=1
+while(i<=nrow(single.flies)){
+  plot.data = plot.data[!(plot.data$Genotype == single.flies$Genotype[i] &
+                            plot.data$Generation == single.flies$Generation[i] &
+                            plot.data$Day == single.flies$Day[i]),]
+  i = i+1
+}
+plot.gen(plot.data)
+
+plot.data$Percent.still = (plot.data$Still/plot.data$Frame)*1000
+plot.data$Percent.moving = (plot.data$Moving/plot.data$Frame)*1000
+plot.data$at = as.numeric(plot.data$Day)-.2
+plot.data$color = "royalblue"
+plot.data$color[plot.data$Genotype=="A4V"] = "firebrick"
+plot.data$at[plot.data$Genotype=="A4V"] = plot.data$at[plot.data$Genotype=="A4V"]+.4
+plot.data$Moving.vel = 3*(plot.data$Moving.dist/plot.data$Moving)
+plot.data[plot.data$Moving == 0, "Moving.vel"] = 0
+
+plot.data$groups = paste0(plot.data$Genotype, plot.data$Day)
+
+mean.plot.data = plot.data[!duplicated(plot.data[,c("Genotype", "Day")]),]
+i=1
+while(i<=length(mean.plot.data$groups)){
+  temp.mean = plot.data[plot.data$groups == mean.plot.data$groups[i],]
+  mean.plot.data$Moving.vel[i] = mean(temp.mean$Moving.vel)
+  i=i+1
+}
+
+plot.wt = mean.plot.data[mean.plot.data$Genotype == "WT",]
+plot.a4v = mean.plot.data[mean.plot.data$Genotype == "A4V",]
+
+plot(x = plot.data$at,
+     y = plot.data$Moving.vel,
+     bg = hex(plot.data$color, .25),
+     pch = 21)
+
+
+
+lines(x = as.numeric(plot.wt$Day),
+      y = plot.wt$Moving.vel,
+      col = plot.wt$color[1])
+
+lines(x = as.numeric(plot.a4v$Day),
+      y = plot.a4v$Moving.vel,
+      col = plot.a4v$color[1])
+
+```
+
+```{r echo = F, fig.width = 8 , fig.height = 8}
+
+par(mfrow=c(2,1))
+
+plot.data = data.summary[data.summary$Generation == "6.3",]
+single.flies = num.flies[num.flies$TotalFlies == 1,]
+i=1
+while(i<=nrow(single.flies)){
+  plot.data = plot.data[!(plot.data$Genotype == single.flies$Genotype[i] &
+                            plot.data$Generation == single.flies$Generation[i] &
+                            plot.data$Day == single.flies$Day[i]),]
+  i = i+1
+}
+plot.gen(plot.data)
+
+plot.data$Percent.still = (plot.data$Still/plot.data$Frame)*1000
+plot.data$Percent.moving = (plot.data$Moving/plot.data$Frame)*1000
+plot.data$at = as.numeric(plot.data$Day)-.2
+plot.data$color = "royalblue"
+plot.data$color[plot.data$Genotype=="A4V"] = "firebrick"
+plot.data$at[plot.data$Genotype=="A4V"] = plot.data$at[plot.data$Genotype=="A4V"]+.4
+plot.data$Moving.vel = 3*(plot.data$Moving.dist/plot.data$Moving)
+plot.data[plot.data$Moving == 0, "Moving.vel"] = 0
+
+plot.data$groups = paste0(plot.data$Genotype, plot.data$Day)
+
+mean.plot.data = plot.data[!duplicated(plot.data[,c("Genotype", "Day")]),]
+i=1
+while(i<=length(mean.plot.data$groups)){
+  temp.mean = plot.data[plot.data$groups == mean.plot.data$groups[i],]
+  mean.plot.data$Moving.vel[i] = mean(temp.mean$Moving.vel)
+  i=i+1
+}
+
+plot.wt = mean.plot.data[mean.plot.data$Genotype == "WT",]
+plot.a4v = mean.plot.data[mean.plot.data$Genotype == "A4V",]
+
+plot(x = plot.data$at,
+     y = plot.data$Moving.vel,
+     bg = hex(plot.data$color, .25),
+     pch = 21)
+
+
+
+lines(x = as.numeric(plot.wt$Day),
+      y = plot.wt$Moving.vel,
+      col = plot.wt$color[1])
+
+lines(x = as.numeric(plot.a4v$Day),
+      y = plot.a4v$Moving.vel,
+      col = plot.a4v$color[1])
+
+```
+
+```{r echo = F, fig.width = 8 , fig.height = 8}
+
+par(mfrow=c(2,1))
+
+plot.data = data.summary[data.summary$Generation == "7.1",]
+single.flies = num.flies[num.flies$TotalFlies == 1,]
+i=1
+while(i<=nrow(single.flies)){
+  plot.data = plot.data[!(plot.data$Genotype == single.flies$Genotype[i] &
+                            plot.data$Generation == single.flies$Generation[i] &
+                            plot.data$Day == single.flies$Day[i]),]
+  i = i+1
+}
+plot.gen(plot.data)
+
+plot.data$Percent.still = (plot.data$Still/plot.data$Frame)*1000
+plot.data$Percent.moving = (plot.data$Moving/plot.data$Frame)*1000
+plot.data$at = as.numeric(plot.data$Day)-.2
+plot.data$color = "royalblue"
+plot.data$color[plot.data$Genotype=="A4V"] = "firebrick"
+plot.data$at[plot.data$Genotype=="A4V"] = plot.data$at[plot.data$Genotype=="A4V"]+.4
+plot.data$Moving.vel = 3*(plot.data$Moving.dist/plot.data$Moving)
+plot.data[plot.data$Moving == 0, "Moving.vel"] = 0
+
+plot.data$groups = paste0(plot.data$Genotype, plot.data$Day)
+
+mean.plot.data = plot.data[!duplicated(plot.data[,c("Genotype", "Day")]),]
+i=1
+while(i<=length(mean.plot.data$groups)){
+  temp.mean = plot.data[plot.data$groups == mean.plot.data$groups[i],]
+  mean.plot.data$Moving.vel[i] = mean(temp.mean$Moving.vel)
+  i=i+1
+}
+
+plot.wt = mean.plot.data[mean.plot.data$Genotype == "WT",]
+plot.a4v = mean.plot.data[mean.plot.data$Genotype == "A4V",]
+
+plot(x = plot.data$at,
+     y = plot.data$Moving.vel,
+     bg = hex(plot.data$color, .25),
+     pch = 21)
+
+
+
+lines(x = as.numeric(plot.wt$Day),
+      y = plot.wt$Moving.vel,
+      col = plot.wt$color[1])
+
+lines(x = as.numeric(plot.a4v$Day),
+      y = plot.a4v$Moving.vel,
+      col = plot.a4v$color[1])
+
+```
+
+```{r echo = F, fig.width = 8 , fig.height = 8}
+
+par(mfrow=c(2,1))
+
+plot.data = data.summary[data.summary$Generation == "7.2",]
+
+single.flies = num.flies[num.flies$TotalFlies == 1,]
+i=1
+while(i<=nrow(single.flies)){
+  plot.data = plot.data[!(plot.data$Genotype == single.flies$Genotype[i] &
+                            plot.data$Generation == single.flies$Generation[i] &
+                            plot.data$Day == single.flies$Day[i]),]
+  i = i+1
+}
+
+plot.gen(plot.data)
+
+plot.data$Percent.still = (plot.data$Still/plot.data$Frame)*1000
+plot.data$Percent.moving = (plot.data$Moving/plot.data$Frame)*1000
+plot.data$at = as.numeric(plot.data$Day)-.2
+plot.data$color = "royalblue"
+plot.data$color[plot.data$Genotype=="A4V"] = "firebrick"
+plot.data$at[plot.data$Genotype=="A4V"] = plot.data$at[plot.data$Genotype=="A4V"]+.4
+plot.data$Moving.vel = 3*(plot.data$Moving.dist/plot.data$Moving)
+plot.data[plot.data$Moving == 0, "Moving.vel"] = 0
+
+plot.data$groups = paste0(plot.data$Genotype, plot.data$Day)
+
+mean.plot.data = plot.data[!duplicated(plot.data[,c("Genotype", "Day")]),]
+i=1
+while(i<=length(mean.plot.data$groups)){
+  temp.mean = plot.data[plot.data$groups == mean.plot.data$groups[i],]
+  mean.plot.data$Moving.vel[i] = mean(temp.mean$Moving.vel)
+  i=i+1
+}
+
+plot.wt = mean.plot.data[mean.plot.data$Genotype == "WT",]
+plot.a4v = mean.plot.data[mean.plot.data$Genotype == "A4V",]
+
+plot(x = plot.data$at,
+     y = plot.data$Moving.vel,
+     bg = hex(plot.data$color, .25),
+     pch = 21)
+
+
+
+lines(x = as.numeric(plot.wt$Day),
+      y = plot.wt$Moving.vel,
+      col = plot.wt$color[1])
+
+lines(x = as.numeric(plot.a4v$Day),
+      y = plot.a4v$Moving.vel,
+      col = plot.a4v$color[1])
+
+```
+
+
+
+```{r echo = F, fig.width = 8 , fig.height = 12}
+
+par(mfrow=c(3,1))
+
+plot.data = data.summary
+
+single.flies = num.flies[num.flies$TotalFlies == 1,]
+i=1
+while(i<=nrow(single.flies)){
+  plot.data = plot.data[!(plot.data$Genotype == single.flies$Genotype[i] &
+                            plot.data$Generation == single.flies$Generation[i] &
+                            plot.data$Day == single.flies$Day[i]),]
+  i = i+1
+}
+
+plot.gen(plot.data)
+
+plot.data$Percent.still = (plot.data$Still/plot.data$Frame)*1000
+plot.data$Percent.moving = (plot.data$Moving/plot.data$Frame)*1000
+plot.data$at = as.numeric(plot.data$Day)-.2
+plot.data$color = "royalblue"
+plot.data$color[plot.data$Genotype=="A4V"] = "firebrick"
+plot.data$at[plot.data$Genotype=="A4V"] = plot.data$at[plot.data$Genotype=="A4V"]+.4
+plot.data$Moving.vel = 3*(plot.data$Moving.dist/plot.data$Moving)
+plot.data[plot.data$Moving == 0, "Moving.vel"] = 0
+
+plot.data$groups = paste0(plot.data$Genotype, plot.data$Day)
+
+mean.plot.data = plot.data[!duplicated(plot.data[,c("Genotype", "Day")]),]
+i=1
+while(i<=length(mean.plot.data$groups)){
+  temp.mean = plot.data[plot.data$groups == mean.plot.data$groups[i],]
+  mean.plot.data$Moving.vel[i] = mean(temp.mean$Moving.vel)
+  mean.plot.data$Percent.moving[i] = mean(temp.mean$Percent.moving)
+  i=i+1
+}
+
+mean.plot.data = mean.plot.data[order(mean.plot.data$Day),]
+mean.plot.data$norm.moving.vel = mean.plot.data$Moving.vel/mean.plot.data$Percent.moving
+
+
+plot.wt = mean.plot.data[mean.plot.data$Genotype == "WT",]
+plot.a4v = mean.plot.data[mean.plot.data$Genotype == "A4V",]
+
+par(mar = c(2,4,2,2))
+
+plot(x = plot.data$at,
+     y = plot.data$Moving.vel,
+     bg = hex(plot.data$color, .25),
+     pch = 21,
+     xlim = c(0,44),
+     ylim = c(0,10),
+     ylab = "Velocity while moving (mm/s)")
+
+
+
+lines(x = as.numeric(plot.wt$Day),
+      y = plot.wt$Moving.vel,
+      col = plot.wt$color[1])
+
+lines(x = as.numeric(plot.a4v$Day),
+      y = plot.a4v$Moving.vel,
+      col = plot.a4v$color[1])
+
+
+plot(x = NA,#plot.data$at,
+     y = NA,# plot.data$Moving.vel,
+     bg = NA,# hex(plot.data$color, .25),
+     pch = NA,# 21)
+     xlim = c(0,44),
+     ylim = c(0,70),
+     ylab = "Percent of time moving (frames moving/total frames)")
+
+
+lines(x = as.numeric(plot.wt$Day),
+      y = plot.wt$Percent.moving,
+      col = plot.wt$color[1])
+
+lines(x = as.numeric(plot.a4v$Day),
+      y = plot.a4v$Percent.moving,
+      col = plot.a4v$color[1])
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,183 @@
+---
+title: "flyclub"
+author: "John Santiago"
+date: "2026-02-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo=F}
+library(VennDiagram)
+
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/GeneralDataFiles/"
+
+G85R.geneFDR = read.csv(paste0(git.dir, "TKT.EdgeR.FDRTable2.csv"), row.names = 1)
+G85R.geneFC = read.csv(paste0(git.dir, "TKT.EdgeR.FCTable2.csv"), row.names = 1)
+
+A4V.geneFDR = read.csv(paste0(git.dir, "A4V.FDRdata.csv"), row.names = 1)
+A4V.geneFC = read.csv(paste0(git.dir, "A4V.FCdata.csv"), row.names = 1)
+
+```
+
+```{r echo = F}
+
+set1="A4VFH40"
+set2="A4VFT40"
+set3="A4VFA40"
+set4="G85RF"
+
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1=intersect(row.names(A4V.geneFDR[A4V.geneFDR$AvS40FH<.05,]),
+             row.names(A4V.geneFC[A4V.geneFC$AvS40FH<0,]))
+s2=intersect(row.names(A4V.geneFDR[A4V.geneFDR$AvS40FT<.05,]),
+             row.names(A4V.geneFC[A4V.geneFC$AvS40FT<0,]))
+s3=intersect(row.names(A4V.geneFDR[A4V.geneFDR$AvS40FA<.05,]),
+             row.names(A4V.geneFC[A4V.geneFC$AvS40FA<0,]))
+s4=intersect(row.names(G85R.geneFDR[G85R.geneFDR$GRxWT.FC<.05,]),
+             row.names(G85R.geneFC[G85R.geneFC$GRxWT.FC<0,]))
+
+main = "Female G85R vs 40 day A4V"
+
+grid.newpage()
+tempvenn=draw.quad.venn(area1=length(s1),area2=length(s2),area3=length(s3),area4=length(s4), n12=length(intersect(s1,s2)),n13 = length(intersect(s1,s3)),n14 = length(intersect(s1,s4)),n23 = length(intersect(s2,s3)),n24 = length(intersect(s2,s4)),n34 = length(intersect(s3,s4)),n123 =  length(intersect(s1,intersect(s2,s3))),n124 =  length(intersect(s1,intersect(s2,s4))), n134 = length(intersect(s1,intersect(s3,s4))),n234 = length(intersect(s2,intersect(s3,s4))),n1234 = length(intersect(s1,intersect(s2,intersect(s3,s4)))),category =c(set1,set2,set3,set4),fill = c("blue", "red","green","yellow"),cex=1,cat.cex = 0.75, title = "main")
+
+
+```
+
+```{r echo = F}
+
+set1="A4VFH40"
+set2="A4VFT40"
+set3="A4VFA40"
+set4="G85RF"
+
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1=intersect(row.names(A4V.geneFDR[A4V.geneFDR$AvS40FH<.05,]),
+             row.names(A4V.geneFC[A4V.geneFC$AvS40FH>0,]))
+s2=intersect(row.names(A4V.geneFDR[A4V.geneFDR$AvS40FT<.05,]),
+             row.names(A4V.geneFC[A4V.geneFC$AvS40FT>0,]))
+s3=intersect(row.names(A4V.geneFDR[A4V.geneFDR$AvS40FA<.05,]),
+             row.names(A4V.geneFC[A4V.geneFC$AvS40FA>0,]))
+s4=intersect(row.names(G85R.geneFDR[G85R.geneFDR$GRxWT.FC<.05,]),
+             row.names(G85R.geneFC[G85R.geneFC$GRxWT.FC>0,]))
+
+main = "Female G85R vs 9 day A4V"
+
+grid.newpage()
+tempvenn=draw.quad.venn(area1=length(s1),area2=length(s2),area3=length(s3),area4=length(s4), n12=length(intersect(s1,s2)),n13 = length(intersect(s1,s3)),n14 = length(intersect(s1,s4)),n23 = length(intersect(s2,s3)),n24 = length(intersect(s2,s4)),n34 = length(intersect(s3,s4)),n123 =  length(intersect(s1,intersect(s2,s3))),n124 =  length(intersect(s1,intersect(s2,s4))), n134 = length(intersect(s1,intersect(s3,s4))),n234 = length(intersect(s2,intersect(s3,s4))),n1234 = length(intersect(s1,intersect(s2,intersect(s3,s4)))),category =c(set1,set2,set3,set4),fill = c("blue", "red","green","yellow"),cex=1,cat.cex = 0.75, title = "main")
+
+
+```
+
+
+```{r echo = F}
+
+set1="A4VMH9"
+set2="A4VMT9"
+set3="A4VMA9"
+set4="G85RM"
+
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1=intersect(row.names(A4V.geneFDR[A4V.geneFDR$AvS9MH<.05,]),
+             row.names(A4V.geneFC[A4V.geneFC$AvS9MH<0,]))
+s2=intersect(row.names(A4V.geneFDR[A4V.geneFDR$AvS9MT<.05,]),
+             row.names(A4V.geneFC[A4V.geneFC$AvS9MT<0,]))
+s3=intersect(row.names(A4V.geneFDR[A4V.geneFDR$AvS9MA<.05,]),
+             row.names(A4V.geneFC[A4V.geneFC$AvS9MA<0,]))
+s4=intersect(row.names(G85R.geneFDR[G85R.geneFDR$GRxWT.MC<.05,]),
+             row.names(G85R.geneFC[G85R.geneFC$GRxWT.MC<0,]))
+
+main = "Female G85R vs 9 day A4V"
+
+grid.newpage()
+tempvenn=draw.quad.venn(area1=length(s1),area2=length(s2),area3=length(s3),area4=length(s4), n12=length(intersect(s1,s2)),n13 = length(intersect(s1,s3)),n14 = length(intersect(s1,s4)),n23 = length(intersect(s2,s3)),n24 = length(intersect(s2,s4)),n34 = length(intersect(s3,s4)),n123 =  length(intersect(s1,intersect(s2,s3))),n124 =  length(intersect(s1,intersect(s2,s4))), n134 = length(intersect(s1,intersect(s3,s4))),n234 = length(intersect(s2,intersect(s3,s4))),n1234 = length(intersect(s1,intersect(s2,intersect(s3,s4)))),category =c(set1,set2,set3,set4),fill = c("blue", "red","green","yellow"),cex=1,cat.cex = 0.75, title = "main")
+
+
+```
+
+```{r echo = F}
+
+set1="A4VMH9"
+set2="A4VMT9"
+set3="A4VMA9"
+set4="G85RF"
+
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1=intersect(row.names(A4V.geneFDR[A4V.geneFDR$AvS9MH<.05,]),
+             row.names(A4V.geneFC[A4V.geneFC$AvS9MH>0,]))
+s2=intersect(row.names(A4V.geneFDR[A4V.geneFDR$AvS9MT<.05,]),
+             row.names(A4V.geneFC[A4V.geneFC$AvS9MT>0,]))
+s3=intersect(row.names(A4V.geneFDR[A4V.geneFDR$AvS9MA<.05,]),
+             row.names(A4V.geneFC[A4V.geneFC$AvS9MA>0,]))
+s4=intersect(row.names(G85R.geneFDR[G85R.geneFDR$GRxWT.MC<.05,]),
+             row.names(G85R.geneFC[G85R.geneFC$GRxWT.MC>0,]))
+
+main = "Female G85R vs 9 day A4V"
+
+grid.newpage()
+tempvenn=draw.quad.venn(area1=length(s1),area2=length(s2),area3=length(s3),area4=length(s4), n12=length(intersect(s1,s2)),n13 = length(intersect(s1,s3)),n14 = length(intersect(s1,s4)),n23 = length(intersect(s2,s3)),n24 = length(intersect(s2,s4)),n34 = length(intersect(s3,s4)),n123 =  length(intersect(s1,intersect(s2,s3))),n124 =  length(intersect(s1,intersect(s2,s4))), n134 = length(intersect(s1,intersect(s3,s4))),n234 = length(intersect(s2,intersect(s3,s4))),n1234 = length(intersect(s1,intersect(s2,intersect(s3,s4)))),category =c(set1,set2,set3,set4),fill = c("blue", "red","green","yellow"),cex=1,cat.cex = 0.75, title = "main")
+
+
+```
+
+
+```{r echo = F}
+
+set1="A4VMH9"
+set2="A4VMT9"
+set3="A4VMA9"
+set4="G85RM"
+
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1=row.names(A4V.geneFDR[A4V.geneFDR$AvS9MH<.05,])
+s2=row.names(A4V.geneFDR[A4V.geneFDR$AvS9MT<.05,])
+s3=row.names(A4V.geneFDR[A4V.geneFDR$AvS9MA<.05,])
+s4=row.names(G85R.geneFDR[G85R.geneFDR$GRxWT.MC<.05,])
+
+main = "Male G85R vs 9 day A4V"
+
+grid.newpage()
+tempvenn=draw.quad.venn(area1=length(s1),area2=length(s2),area3=length(s3),area4=length(s4), n12=length(intersect(s1,s2)),n13 = length(intersect(s1,s3)),n14 = length(intersect(s1,s4)),n23 = length(intersect(s2,s3)),n24 = length(intersect(s2,s4)),n34 = length(intersect(s3,s4)),n123 =  length(intersect(s1,intersect(s2,s3))),n124 =  length(intersect(s1,intersect(s2,s4))), n134 = length(intersect(s1,intersect(s3,s4))),n234 = length(intersect(s2,intersect(s3,s4))),n1234 = length(intersect(s1,intersect(s2,intersect(s3,s4)))),category =c(set1,set2,set3,set4),fill = c("blue", "red","green","yellow"),cex=1,cat.cex = 0.75, title = "main")
+
+```
+
+
+```{r echo = F}
+
+barplot(height = c(length(s1), length(s2), length(s3)),
+        names = c("Head", "Thorax", "Abdomen"),
+        main = "A4V males 9 day")
+```
+
+
+```{r echo = F}
+
+set1="A4VMH9"
+set2="A4VFT9"
+set3="A4VFA9"
+set4="G85RF"
+
+##items to be compared (ex: gene names) as a 1 dimensional vectors. Only give inputs up to your number of selected categories
+s1=row.names(A4V.geneFDR[A4V.geneFDR$AvS9FH<.05,])
+s2=row.names(A4V.geneFDR[A4V.geneFDR$AvS9FT<.05,])
+s3=row.names(A4V.geneFDR[A4V.geneFDR$AvS9FA<.05,])
+s4=row.names(G85R.geneFDR[G85R.geneFDR$GRxWT.FC<.05,])
+
+main = "Male G85R vs 9 day A4V"
+
+grid.newpage()
+tempvenn=draw.quad.venn(area1=length(s1),area2=length(s2),area3=length(s3),area4=length(s4), n12=length(intersect(s1,s2)),n13 = length(intersect(s1,s3)),n14 = length(intersect(s1,s4)),n23 = length(intersect(s2,s3)),n24 = length(intersect(s2,s4)),n34 = length(intersect(s3,s4)),n123 =  length(intersect(s1,intersect(s2,s3))),n124 =  length(intersect(s1,intersect(s2,s4))), n134 = length(intersect(s1,intersect(s3,s4))),n234 = length(intersect(s2,intersect(s3,s4))),n1234 = length(intersect(s1,intersect(s2,intersect(s3,s4)))),category =c(set1,set2,set3,set4),fill = c("blue", "red","green","yellow"),cex=1,cat.cex = 0.75, title = "main")
+
+```
+
+
+```{r echo = F}
+
+barplot(height = c(length(s1), length(s2), length(s3)),
+        names = c("Head", "Thorax", "Abdomen"),
+        main = "A4V Females 40 day")
+
+```
