@@ -29,10 +29,10 @@ source('/Users/johncsantiago/Documents/GitHub/WhartonLab/GOandKEGGPlottingFuncti
 #                                   M or F for sex
 #                                   C, Df or OE for TKT modulation
 #                                   example: GRMOE
-Variable.Condition = "A9MT" 
-Control.Condition = "S9MT"
-secondary.Variable.Condition = "A9MH"
-secondary.Control.Condition = "S9MH"
+Variable.Condition = "GRFC" 
+Control.Condition = "WTFC"
+secondary.Variable.Condition = "GRFDf"
+secondary.Control.Condition = "WTMC"
 
 
 
@@ -141,7 +141,7 @@ KEGG20(cat.data, FC, FDR, usecats)
 ```{r echo = F, include = T}
 
 ##can be the exact name or 5 digit code in quotes
-specific.kegg = "04146"
+specific.kegg = "01232"
 
 plotkegg.genes(specific.kegg, FC, FDR, mean.data)
 
@@ -153,9 +153,9 @@ plotkegg.genes(specific.kegg, FC, FDR, mean.data)
 ```{r echo = F, include = F}
 
 ####Uses sigDEGs from primary comparison
-cat.data = Enrichment(FDR)
+cat.data = Enrichment(FDR[,2:1])
 
-cat.data = Subset.Enrichment(row.names(FDR), row.names(FDR)[FDR[,2]<=0.05])
+#cat.data = Subset.Enrichment(row.names(FDR), #row.names(FDR)[FDR[,2]<=0.05])
 
 
 
@@ -180,7 +180,7 @@ KEGG20(cat.data, FC[2:1], FDR[2:1], usecats)
 ```{r echo = F, include = T}
 
 ##can be the exact name or 5 digit code in quotes
-specific.kegg = "04146"
+specific.kegg = "00730"
 
 plotkegg.genes(specific.kegg, FC[,2:1], FDR[,2:1], mean.data[,c(3,4,1,2)])
 
@@ -189,7 +189,7 @@ plotkegg.genes(specific.kegg, FC[,2:1], FDR[,2:1], mean.data[,c(3,4,1,2)])
 ```{r echo = F, message=F, fig.width=7}
 
 ##5 digits from KEGG ID
-PathwayID = "04146"
+PathwayID = "00240"
 
 #options include 'primary' or 'both'
 use = 'both'
@@ -259,7 +259,7 @@ treemapPlot(rt)
 ```{r echo = F, warning = F}
 
 ##a parent category generated in the treemapPlot function
-parent.category = 'double-strand break repair via break-induced replication'
+parent.category = 'lipid metabolic process'
 
 plotparentcat.genes(parent.category, FC, FDR, mean.data)
 

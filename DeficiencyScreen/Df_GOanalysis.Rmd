@@ -136,7 +136,7 @@ plot.godf = data.frame(GO = character(),
                        total = numeric(),
                        gene.ratio = numeric(),
                        sig.Dfs.inCat = numeric(),
-                       all.Dfs.inCat = numeric(),
+                       notsig.Dfs.inCat = numeric(),
                        Df.ratio = numeric(),
                        sig.Df.meanlength = numeric(),
                        all.Df.meanlength = numeric(),
@@ -161,7 +161,7 @@ while(i <= nrow(sig.GO.terms)){
   
   sig.df.data = sig.df.data[sig.df.data$Df %in% tempfdk[tempfdk$MLE >= 2, "Deficiency"],]
   
-  notsig.df.data = sig.df.data[sig.df.data$Df %in% tempfdk[tempfdk$MLE < 2, "Deficiency"],]
+  notsig.df.data = notsig.df.data[notsig.df.data$Df %in% tempfdk[tempfdk$MLE < 2, "Deficiency"],]
   
   temp.plot.godf = data.frame(GO = sig.GO.terms$term[i],
                               GOid = sig.GO.terms$category[i],
@@ -172,7 +172,7 @@ while(i <= nrow(sig.GO.terms)){
                               gene.ratio = length(unique(sig.df.data$FBgn))/
                                 length(unique(all.df.data$FBgn)),
                               sig.Dfs.inCat = length(unique(sig.df.data$Df)),
-                              all.Dfs.inCat = length(unique(notsig.df.data$Df)),
+                              notsig.Dfs.inCat = length(unique(notsig.df.data$Df)),
                               Df.ratio = length(unique(sig.df.data$Df))/
                                 length(unique(notsig.df.data$Df)),
                               sig.Df.length = sum(tempfdk[unique(sig.df.data$Df),"length"]),
@@ -186,11 +186,11 @@ while(i <= nrow(sig.GO.terms)){
 
 plot.godf$sigGenetoDf.ratio = signif(plot.godf$totalsigs/plot.godf$sig.Dfs,3)
 plot.godf$notsigGenetoDf.ratio = signif((plot.godf$total - plot.godf$totalsigs)
-                                     /(plot.godf$all.Dfs - plot.godf$sig.Dfs),3)
+                                     /(plot.godf$notsig.Dfs - plot.godf$sig.Dfs),3)
  
 
 plot.godf$sigsperkb = signif(plot.godf$totalsigs/plot.godf$sig.Df.length,3)
-plot.godfgenesperkb = signif(plot.godf$total/plot.godf$all.Df.length ,3)
+plot.godfgenesperkb = signif(plot.godf$total/plot.godf$notsig.Df.length ,3)
 
 ```
 
@@ -248,7 +248,13 @@ plotly.godf = plot.godf
 plotly.godf$GO = factor(plot.godf$GO,
                      levels = plot.godf$GO[order(plot.godf$sig)])
 
-temp.color = colorRampPalette(c("steelblue", "gold", "deeppink"))(100)
+temp.color <- colorRampPalette(c("steelblue", "gold", "deeppink"))(100)
+
+temp.colorscale <- Map(
+  function(p, col) list(p, col),
+  seq(0, 1, length.out = length(temp.color)),
+  temp.color
+)
 
 fig2 <- plot_ly(data = plotly.godf,
                x = ~gene.ratio,
@@ -257,17 +263,19 @@ fig2 <- plot_ly(data = plotly.godf,
                #color = ~meanMLE,
                #name = ~GO,
                marker = list(color = ~meanMLE,
-                             colorscale = temp.color,
+                             colorscale = temp.colorscale,
                              line = list(color = "black", 
                                          width = 1.5),
                              showscale = TRUE,
-                             colorbar = list(title = "Heat Key"))),
+                             colorbar = list(title = "Heat Key")),
                hoverinfo = "text",
                hovertext = paste("Sample:", plotly.godf$GO,
                                  "\nGO ID: ", plotly.godf$GOid,
                                  "\nTotal DE genes: ", plotly.godf$totalsigs,
                                  "\nTotal genes in Cat.: ", plotly.godf$total,
-                                 "\nTotal sig Df: ", plotly.godf$sig.Dfs,
+                                 "\nTotal sig Df: ", plotly.godf$sig.Dfs.inCat,
+                                 "\nTotal non sig Df: ", plotly.godf$notsig.Dfs.inCat,
+                                 
                                  "\nmean MLE: ", plotly.godf$meanMLE,
                                  "\n-log2(FDR): ", signif(plotly.godf$sig, 3))) %>%
   layout(xaxis = list(title = "DEG ratio"),
@@ -279,6 +287,112 @@ fig2
 ```
 
 
+```{r echo = F}
+#new plot idea, scatterplot where we have:
+
+#x = DEG ratio, 
+#y = FDR, 
+#color = mean mle,
+#size = Df ratio
+
+fig  = plot_ly(data = plotly.godf, 
+               x = ~gene.ratio,
+               y = ~sig,
+               name = ~GO,
+               type = 'scatter',
+               mode = 'markers',
+               showlegend = F,
+               symbol = ~ont,
+               marker = list(color = ~meanMLE,
+                             colorscale = temp.colorscale,
+                             line = list(color = "black", 
+                                         width = 1.5),
+                             showscale = TRUE,
+                             colorbar = list(title = "Heat Key"),
+                             size = ~Df.ratio*10,
+                             line = list(color = "black", width = 1.5)),
+               #marker = list(size = ~Df.ratio*10,
+                #             line = list(color = "black", width = 1.5)),
+               hoverinfo = "text",
+               hovertext = paste("Term:", plot.godf$GO, 
+                                 "\nGO ID: ", plot.godf$GOid, 
+                                 "Ontology:", plot.godf$ont, 
+                                 "\nadj. p-value (-log2): ", plot.godf$sig,
+                                 "\ngenes in suppressors: ", plot.godf$totalsigs,
+                                 "\ngenes in cat: ", plot.godf$total,
+                                 "\nsuppressor Dfs: ", plot.godf$sig.Dfs.inCat,
+                                 "\nTotal Dfs in term: ", plot.godf$notsig.Dfs.inCat,
+                                 "\nsuppressors/kb Df: ", plot.godf$sigsperkb,
+                                 "\nmean MLE: ", plot.godf$meanMLE,
+                                 "\nmax MLE: ", plot.godf$maxMLE)) %>%
+  layout(xaxis = list(title = "Total Genes (log10)"),
+         yaxis = list(title = "sig.Dfs"),
+         title = "Enriched GO terms")
+         
+fig
+
+
+```
+
+
+
+
+```{r echo = F}
+
+other.suppressors = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/C9ORF-G4C2_DrosophilaModifers.csv")[,2]
+
+other.suppressors = intersect(other.suppressors, GeneIDKey$Symbol)
+
+id.validated.suppressors =read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/C9ORF-G4C2_DrosophilaModifers_IDvalidation.csv")[,2]
+id.validated.suppressors=GeneIDKey[GeneIDKey$FBgn %in% id.validated.suppressors, "Symbol"]
+
+other.suppressors = unique(c(other.suppressors, id.validated.suppressors))
+
+exelixis = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/ExelixisScreenTargets.csv")[,1]
+exelixis=GeneIDKey[exelixis,"Symbol"]
+
+other.suppressors = unique(c(other.suppressors, exelixis))
+
+other.suppressors = intersect(other.suppressors, GeneIDKey$Symbol)
+
+tested.other.suppressors = genesindf[genesindf$Symbol %in% other.suppressors,]
+
+untested.other.suppressors = setdiff(other.suppressors, tested.other.suppressors$Symbol)
+
+temp.dfkey = fullDfKey
+row.names(temp.dfkey) = temp.dfkey$Deficiency
+tested.other.suppressors$MLE = temp.dfkey[tested.other.suppressors$Df, "MLE"]
+
+##255 unique gene symbols in original table
+##I found FBgn data for 244
+##195 were tested
+##49 were not in Dfs
+untested.suppressors = data.frame(Df = NA,
+                                  FBgn = GeneIDKey[GeneIDKey$Symbol %in% untested.other.suppressors, "FBgn"],
+                                  Symbol = untested.other.suppressors,
+                                  MLE = NA)
+
+other.suppressors.comparison = rbind(tested.other.suppressors,
+                                     untested.suppressors)
+
+
+other.suppressors.comparison$MLE = floor(other.suppressors.comparison$MLE)
+
+other.suppressors.comparison$MLE = factor(other.suppressors.comparison$MLE, levels = unique(other.suppressors.comparison$MLE)[order(unique(other.suppressors.comparison$MLE))])
+plot.data = summary(other.suppressors.comparison$MLE)
+
+barplot(height = as.numeric(plot.data),
+        names.arg = names(plot.data),
+        xlab ="MLE",
+        ylab = "Number of genes",
+        ylim = c(0,80))
+abline(h = seq(0, 80, length.out = 17),
+       lty = 2,
+       col = hex("grey", .5))
+
+
+
+```
 
 
 

@@ -438,6 +438,8 @@ plot.metab = function(metabID){
 
 ID.row = row.names(norm.data)[grep(metabID, row.names(norm.data))]
 
+ID.row = metabID
+
 if(length(ID.row) < 500){
 if(length(ID.row) == 1){
 metab = ID.row
@@ -465,7 +467,7 @@ plot(x = NA,
      yaxt = "n",
      xlab = NA)
 
-rect(0, 0-(1.5*max(gene$cpm)), 13, 1.5*max(gene$cpm), col = 'gray95')
+#rect(0, 0-(1.5*max(gene$cpm)), 13, 1.5*max(gene$cpm), col = 'gray95')
 
 boxplot(metab$data~metab$group, 
         xlab="",
@@ -632,7 +634,7 @@ if(nrow(ID.row) != 1){
 ## Plot gene expression from G85R TKT RNAseq experiment
 ## ID needs to be the full or partial gene symbol or FBgn (case sensitive)
 
-ID = "FBgn0288846"
+ID = "Prat2"
 
 plot.G85R(ID)
 
@@ -650,12 +652,12 @@ plot.A4V(ID)
 ```
 
 
-```{r echo = F}
+```{r echo = F, fig.height= 4, fig.width=4}
 
 ## Plot metabolite levels from the G85R TKT metabolomics experiment
 ## metabID needs to be the full or partial metabolite name as listed in the table (case sensitive)
 
-metabID = 'uric'
+metabID = 'deoxyinosine'
 
 plot.metab(metabID)
 

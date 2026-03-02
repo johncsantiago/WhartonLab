@@ -77,12 +77,14 @@ METAB_CHOICES <- c(
   "GR.CxOE","WT.CxOE","GR.DfxWT.C","GR.OExWT.C","none"
 )
 
+
 ENZYME_CHOICES <- c(
   "GRF.CxDf","GRF.CxOE","WTF.CxDf","WTF.CxOE","GRxWT.FC",
   "GRxWT.FDf","GRxWT.FOE","GRDfxWT.F","GROExWT.F","GRM.CxDf",
   "GRM.CxOE","WTM.CxDf","WTM.CxOE","GRxWT.MC","GRxWT.MDf",
   "GRxWT.MOE","GRDfxWT.M","GROExWT.M","GR.FxM","WT.FxM"
 )
+
 
 metab.choice = setNames( METAB_CHOICES[c(4,6,5,7,1,
                                          2,3,8,9,4,
@@ -402,6 +404,26 @@ meansumcutoff = 5
 fullnetwork = function(enzyme,
                        fccutoff = 0, 
                        meansumcutoff = 0){
+  
+  enzyme.convert = setNames(
+    c(
+      "GRF.DfxC","GRF.OExC","WTF.DfxC","WTF.OExC",
+      "GRxWT.F", "GRxWT.FDf","GRxWT.FOE","GRDfxWT.F","GROExWT.F","GRM.DfxC",
+      "GRM.OExC","WTM.DfxC","WTM.OExC","GRxWT.M","GRxWT.MDf",
+      "GRxWT.MOE","GRDfxWT.M","GROExWT.M","GR.FxM","WT.FxM"
+    ),
+    c(
+      "GRF.CxDf","GRF.CxOE","WTF.CxDf","WTF.CxOE","GRxWT.FC",
+      "GRxWT.FDf","GRxWT.FOE","GRDfxWT.F","GROExWT.F","GRM.CxDf",
+      "GRM.CxOE","WTM.CxDf","WTM.CxOE","GRxWT.MC","GRxWT.MDf",
+      "GRxWT.MOE","GRDfxWT.M","GROExWT.M","GR.FxM","WT.FxM"
+    )
+  )
+  
+  main.title = enzyme
+  
+  enzyme = names(enzyme.convert)[enzyme.convert == enzyme]
+  
   metab = as.character(metab.choice[enzyme])
   nodes = raw.nodes
   edges = raw.edges
@@ -506,7 +528,7 @@ fullnetwork = function(enzyme,
   
   
   
-  visNetwork(nodes, edges, background = "white", main = enzyme)%>%
+  visNetwork(nodes, edges, background = "white", main = main.title)%>%
     visNodes(physics = F)%>%
     #visLayout(hierarchical=F, improvedLayout=T)%>%
     visOptions(highlightNearest = TRUE, nodesIdSelection = list(enabled = T, values = nodes[nodes$size > 0, "label"]))%>%

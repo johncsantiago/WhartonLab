@@ -144,13 +144,35 @@ Subset.Enrichment = function(bg, geneset){
   return(enrichment.data)
 }
 
+#tree = function(cat.data, GO.ontology){
+#  
+#  GO.data = cat.data$GO
+#  
+#  go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & 
+#                                   GO.data$ontology == GO.ontology]
+#  scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+  
+#  simMatrix <- calculateSimMatrix(go_analysis,
+#                                  orgdb="org.Dm.eg.db",
+#                                  ont=GO.ontology,
+#                                  method="Rel")
+  
+#  reducedTerms <- reduceSimMatrix(simMatrix,
+#                                  scores,
+#                                  threshold=0.7,
+#                                  orgdb="org.Dm.eg.db")
+  
+#  return(reducedTerms)
+#}
+
+
 tree = function(cat.data, GO.ontology){
   
   GO.data = cat.data$GO
   
-  go_analysis = GO.data$category[GO.data$over_represented_pvalue <= .005 & 
+  go_analysis = GO.data$category[GO.data$adjp <= .05 & 
                                    GO.data$ontology == GO.ontology]
-  scores = setNames(-log10(GO.data$over_represented_pvalue), go_analysis)
+  scores = setNames(-log10(GO.data[GO.data$category %in% go_analysis, "over_represented_pvalue"]), go_analysis)
   
   simMatrix <- calculateSimMatrix(go_analysis,
                                   orgdb="org.Dm.eg.db",
