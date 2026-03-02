@@ -5,6 +5,6 @@ account: johncsantiago
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 14547755
-bundleId: 11552298
+bundleId: 11648162
 url: https://johncsantiago.shinyapps.io/whartonomicsdataviewer/
 version: 1
