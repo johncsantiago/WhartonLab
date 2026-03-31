@@ -26,11 +26,17 @@ library(rrvgo)
 library(pathview)
 library(VennDiagram)
 
-A4V.cpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.cpmdata.csv", row.names = 1)
-A4V.meancpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.meancpmdata.csv", row.names = 1)
-A4V.FDR = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.FDRdata.csv", row.names = 1)
-A4V.FC = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.FCdata.csv", row.names = 1)
-A4V.meta = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/A4V_BodySections_RNAseq/A4V.metadata.csv", row.names = 1)
+
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/GeneralDataFiles/"
+
+A4V.cpm = read.csv(paste0(git.dir, "A4V.cpmdata.csv"), row.names = 1)
+A4V.meancpm = read.csv(paste0(git.dir, "A4V_BodySections_RNAseq/A4V.meancpmdata.csv"), row.names = 1)
+
+A4V.FDR = read.csv(paste0(git.dir, "A4V.FDRdata.csv"), row.names = 1)
+
+A4V.FC = read.csv(paste0(git.dir, "A4V.FCdata.csv"), row.names = 1)
+
+A4V.meta = read.csv(paste0(git.dir, "A4V.metadata.csv"), row.names = 1)
 
 A4V.comparekey = setNames(colnames(A4V.FDR),
                           c('A3FHvS3FH', 'A3MHvS3MH', 'A9FHvS9FH', 'A9MHvS9MH', 'A40FHvS40FH',
@@ -50,16 +56,22 @@ A4V.comparekey = setNames(colnames(A4V.FDR),
                             'A3FTvA3MT', 'S3FTvS3MT', 'A9FTvA9MT', 'S9FTvS9MT',
                             'A3FAvA3MA', 'S3FAvS3MA', 'A9FAvA9MA', 'S9FAvS9MA'))
 
-G85R.cpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT_cpmdata.csv",row.names = 1)
+G85R.cpm = read.csv(paste0(git.dir, "TKT_cpmdata.csv"),row.names = 1)
+
 G85R.cpm = G85R.cpm[grep('FBgn', row.names(G85R.cpm)),]
-G85R.meancpm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT_meancpmdata.csv", row.names = 1)
+
+G85R.meancpm = read.csv(paste0(git.dir, "TKT_meancpmdata.csv"), row.names = 1)
+
 colnames(G85R.meancpm) = c('GRFC', 'GRMC', 
                            'GRFDf', 'GRMDf', 'WTFDf', 'WTMDf',
                            'GRFOE', 'GRMOE', 'WTFOE', 'WTMOE',
                            'WTFC', 'WTMC')
-G85R.FDR = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT.EdgeR.FDRTable.csv",row.names = 1)
-G85R.FC = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT.EdgeR.FCTable.csv", row.names = 1)
-G85R.meta  = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/TKT_RNAseq/CountTables/TKT.metadata.csv",row.names = 1)
+
+G85R.FDR = read.csv(paste0(git.dir, "TKT.EdgeR.FDRTable.csv"),row.names = 1)
+
+G85R.FC = read.csv(paste0(git.dir, "TKT.EdgeR.FCTable.csv"), row.names = 1)
+
+G85R.meta = read.csv(paste0(git.dir, "TKT.metadata.csv"),row.names = 1)
 
 G85R.comparekey = setNames(colnames(G85R.FDR),
                            c('GRFCvGRFDf', 'GRFCvGRFOE', 'WTFCvWTFDf', 'WTFCvWTFOE', 
@@ -73,23 +85,32 @@ G85R.metab.comparekey = setNames(c("GR.CxDf", "GR.CxOE", "WT.CxDf", "WT.CxOE",
                                    "GR.CxDf", "GR.CxOE", "WT.CxDf", "WT.CxOE",
                                    "GRxWT.C", "GRxWT.Df", "GRxWT.OE"), names(G85R.comparekey)[1:14])
 
-G85R.metabnorm = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/NormalizedMetabolomicData.csv", row.names = 1)
-G85R.metabmean = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/MeanNormalizedMetabolomicData.csv", row.names = 1)
-metab.id = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/MetaboliteMultiKEGGIDKey.csv", row.names = 1)
+G85R.metabnorm = read.csv(paste0(git.dir, "NormalizedMetabolomicData.csv"), row.names = 1)
+
+G85R.metabmean = read.csv(paste0(git.dir, "MeanNormalizedMetabolomicData.csv"), row.names = 1)
+
+metab.id = read.csv(paste0(git.dir, "MetaboliteMultiKEGGIDKey.csv"), row.names = 1)
+
 metab.id = setNames(metab.id$metab, metab.id$KEGG)
-G85R.metabFC = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/MetaboliteFCs.csv", row.names = 1)
-G85R.metabFDR = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/MetaboliteFDRs.csv", row.names = 1)
-G85R.metabp = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/Metabolitepvals.csv", row.names = 1)
 
-GeneIDKey = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GeneIDKey.csv", row.names = 1)
-KEGG.MetabKey = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/Metabolomics/RawMetabolomicData.csv", row.names = 1)
+G85R.metabFC = read.csv(paste0(git.dir, "MetaboliteFCs.csv"), row.names = 1)
+
+G85R.metabFDR = read.csv(paste0(git.dir, "MetaboliteFDRs.csv"), row.names = 1)
+
+G85R.metabp = read.csv(paste0(git.dir, "Metabolitepvals.csv"), row.names = 1)
+
+GeneIDKey = read.csv(paste0(git.dir, "GeneIDKey.csv"), row.names = 1)
+
+KEGG.MetabKey = read.csv(paste0(git.dir, "RawMetabolomicData.csv"), row.names = 1)
+
 KEGG.MetabKey = setNames(KEGG.MetabKey[-c(1:2), 2], row.names(KEGG.MetabKey)[-c(1:2)])
-genesingo = readRDS("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/genesingo.RData")
-GenesInKegg = readRDS("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/kegg.symbol2path.RData")
-KEGG.Names = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/KEGG.names.csv", row.names = 1)
-GO.Names = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/GeneralDataFiles/GO.names.csv", row.names = 1)
 
+genesingo = readRDS(gzcon(url(paste0(git.dir, "genesingo.RData"))))
+GenesInKegg = readRDS(gzcon(url(paste0(git.dir, "kegg.symbol2path.RData"))))
+KEGG.Names = read.csv(paste0(git.dir, "KEGG.names.csv"), row.names = 1)
+GO.Names = read.csv(paste0(git.dir, "GO.names.csv"), row.names = 1)
 
+genesingo = 
 
 Enrichment = function(FDR){
   
