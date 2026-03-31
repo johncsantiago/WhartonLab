@@ -1,0 +1,62 @@
+---
+title: "SpecificGO Genes"
+author: "John Santiago"
+date: "2026-03-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+```
+
+
+
+```{r echo = F, message = F}
+
+source('/Users/johncsantiago/Documents/GitHub/WhartonLab/GOandKEGGPlottingFunctions.R')
+
+```
+
+
+
+
+```{r}
+
+##The comparison is the DEG analysis between 2 groups
+##G85R options are:
+##    "GRF.CxDf"  "GRF.CxOE"  "GRM.CxDf"  "GRM.CxOE"
+##    "WTF.CxDf"  "WTF.CxOE"  "WTM.CxDf"  "WTM.CxOE"
+##    "GRxWT.FC"  "GRxWT.FDf" "GRxWT.FOE"
+##    "GRxWT.MC"  "GRxWT.MDf" "GRxWT.MOE" 
+##    "GR.FxM"    "WT.FxM" 
+
+##A4V options are:
+##  "AvS3FH"  "AvS3MH"  "AvS3FT"  "AvS3MT"  "AvS3FA"  "AvS3MA"
+##  "AvS9FH"  "AvS9MH"  "AvS9FT"  "AvS9MT"  "AvS9FA"  "AvS9MA"
+##  "AvS40FH" "AvS40FT" "AvS40FA"
+##  "A3v9FH"  "A3v9MH"  "A3v9FT"  "A3v9MT"  "A3v9FA"  "A3v9MA"
+##  "S3v9FH"  "S3v9MH"  "S3v9FT"  "S3v9MT"  "S3v9FA"  "S3v9MA"
+##
+
+   
+    "A9v40FH" "S9v40FH" "A3v40FH" "S3v40FH" "AvS3FT" 
+"AvS3MT"        
+[22]   "A9v40FT" "S9v40FT" "A3v40FT" "S3v40FT" 
+[29]       
+[36] "A9v40FA" "S9v40FA" "A3v40FA" "S3v40FA" "A3FvMH"  "S3FvMH"  "A9FvMH" 
+[43] "S9FvMH"  "A3FvMT"  "S3FvMT"  "A9FvMT"  "S9FvMT"  "A3FvMA"  "S3FvMA" 
+[50] "A9FvMA"  "S9FvMA" 
+
+
+group1 = "GRMC"
+group2 = "WTMC"
+comparison = "GRxWT.MC"
+keyword = "mito"
+sig.only = T
+
+plot.multipleGOterms(group1, group2, comparison, keyword, sig.only)
+
+```
+
+
+

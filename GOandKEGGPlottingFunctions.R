@@ -2330,10 +2330,13 @@ G85R.compareparent.genes = function(parent.category, plot.data){
 }
 
 
-plot.multipleGOterms = function(group1, group2, comparison, 
+plot.multipleGOterms = function(comparison, 
                                 keyword, sig.only = TRUE){
   
   all.specific.terms = GO.Names[grep(keyword, GO.Names$term),]
+  
+  group1 = strsplit(names(G85R.comparekey)[1], split = "v")[[1]][1]
+  group2 =  strsplit(names(G85R.comparekey)[1], split = "v")[[1]][2]
   
   if(group1 %in% colnames(G85R.meancpm) &
      group2 %in% colnames(G85R.meancpm) &
