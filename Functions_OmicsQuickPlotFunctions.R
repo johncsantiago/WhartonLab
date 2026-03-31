@@ -23,7 +23,13 @@ TKT.groups = TKT.groups[colnames(TKT.cpm),]
 
 A4V.cpm = read.csv(paste0(git.dir, "A4V.cpmdata.csv"), row.names = 1)
 
+TKT.FDR = read.csv("https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/GeneralDataFiles/TKT.EdgeR.FDRTable.csv", row.names = 1)
 
+TKT.FC = read.csv("https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/GeneralDataFiles/TKT.EdgeR.FCTable.csv", row.names = 1)
+
+A4V.FDR = read.csv("https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/GeneralDataFiles/A4V.FDRdata.csv", row.names = 1)
+
+A4V.FC = read.csv("https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/GeneralDataFiles/A4V.FCdata.csv", row.names = 1)
 
 gbbOE.cpmdata = read.csv(paste0(git.dir, "gbbOE_CountTable.csv"), row.names = 1)
 

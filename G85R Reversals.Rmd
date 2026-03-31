@@ -24,8 +24,14 @@ fly = useMart("ensembl", dataset = "dmelanogaster_gene_ensembl")
 # Get attributes (Fly Gene ID, Human Gene ID, Human Symbol)
 ortho_bm <- getBM(attributes = c("ensembl_gene_id", 
                                  "hsapiens_homolog_ensembl_gene",
-                                 "hsapiens_homolog_associated_gene_name"),
+                                 "hsapiens_homolog_associated_gene_name",
+                                 "hsapiens_homolog_orthology_confidence",
+                                 "hsapiens_homolog_perc_id",
+                                 "hsapiens_homolog_perc_id_r1"),
                   mart = fly)
+
+##DIOPT data at: https://fgr.hms.harvard.edu/diopt
+
 
 
 git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/GeneralDataFiles/"
@@ -199,7 +205,7 @@ gene.set = row.names(FC.data)
 
 gene.set = intersect(gene.set,row.names(mean.data)[apply(mean.data, MARGIN = 1, sum)>5])
 
-gene.set = intersect(gene.set, row.names(FDR.data)[FDR.data$GRxWT.FC < .05])
+gene.set = intersect(gene.set, row.names(FDR.data)[FDR.data$GRxWT.FC < .05 &  FDR.data$GRDfxWT.F < .05])
 
 down.reversals = FC.data[FC.data$GRxWT.FC<0 & FC.data$GRDfxWT.F > FC.data$GRxWT.FC,]
 
@@ -224,7 +230,7 @@ gene.set = row.names(FC.data)
 
 gene.set = intersect(gene.set,row.names(mean.data)[apply(mean.data, MARGIN = 1, sum)>5])
 
-gene.set = intersect(gene.set, row.names(FDR.data)[FDR.data$GRxWT.MC < .05])
+gene.set = intersect(gene.set, row.names(FDR.data)[FDR.data$GRxWT.MC < .05 &  FDR.data$GRDfxWT.M < .05])
 
 down.reversals = FC.data[FC.data$GRxWT.MC<0 & FC.data$GRDfxWT.M > FC.data$GRxWT.MC,]
 
@@ -250,7 +256,7 @@ gene.set = row.names(FC.data)
 
 gene.set = intersect(gene.set,row.names(mean.data)[apply(mean.data, MARGIN = 1, sum)>5])
 
-gene.set = intersect(gene.set, row.names(FDR.data)[FDR.data$GRxWT.FC < .05])
+gene.set = intersect(gene.set, row.names(FDR.data)[FDR.data$GRxWT.FC < .05 &  FDR.data$GROExWT.F < .05])
 
 down.reversals = FC.data[FC.data$GRxWT.FC<0 & FC.data$GROExWT.F > FC.data$GRxWT.FC,]
 
@@ -275,7 +281,7 @@ gene.set = row.names(FC.data)
 
 gene.set = intersect(gene.set,row.names(mean.data)[apply(mean.data, MARGIN = 1, sum)>5])
 
-gene.set = intersect(gene.set, row.names(FDR.data)[FDR.data$GRxWT.MC < .05])
+gene.set = intersect(gene.set, row.names(FDR.data)[FDR.data$GRxWT.MC < .05 &  FDR.data$GROExWT.M < .05])
 
 down.reversals = FC.data[FC.data$GRxWT.MC<0 & FC.data$GROExWT.M > FC.data$GRxWT.MC,]
 
@@ -372,7 +378,7 @@ draw.pairwise.venn(area1=length(s1),area2=length(s2),cross.area=length(intersect
 
 ```
 
-```{r echo = F}
+```{r echo = F, fig.height=9, fig.width=9}
 
 
 
@@ -387,7 +393,7 @@ while(i<=9){
 ```
 
 
-```{r echo = F}
+```{r echo = F, fig.height=9, fig.width=12}
 
 par(mfrow = c(3,4))
 i=1
@@ -401,7 +407,7 @@ while(i<=12){
 
 
 
-```{r echo = F}
+```{r echo = F, fig.height=9, fig.width=9}
 
 par(mfrow = c(3,3))
 i=1
@@ -436,16 +442,64 @@ library(VennDiagram)
 
 ```
 
-```{r}
 
-GeneIDKey[intersect(s1, intersect(s2, intersect(s3,s4))),"Symbol"]
-GeneIDKey[setdiff(setdiff(intersect(s3,s4), s1),s2),"Symbol"]
+###Upset of reversal genes
+```{r echo = F, fig.width=10, fig.height=5}
 
-GeneIDKey[setdiff(setdiff(intersect(s1,s2), s3),s4),"Symbol"]
+library(UpSetR)
+
+reversals = list(s1,s2,s3,s4)
+names(reversals) = c(set1,set2,set3,set4)
+
+temp = upset(fromList(reversals))
+
+temp
 
 
+genes = unique(c(s1,s2,s3,s4))
+upset.df = temp$New_data
+row.names(upset.df) = genes
+
+
+
+
+reversal.overlap = matrix(rep("", 15*nrow(upset.df)), ncol = 15)
+row.names(reversal.overlap) = genes
+colnames(reversal.overlap) = 1:15
+
+comparison.df = matrix(rep(0,60), ncol = 4)
+colnames(comparison.df) = colnames(upset.df)
+row.names(comparison.df) = 1:15
+
+
+comparison.df[c(4,6,8,10:12,14:15), "Male TKT-OE"] = 1
+comparison.df[c(3,6:7,9,11,13:15), "Male TKT-Df"] = 1
+comparison.df[c(2,5,8:9,12:15), "Female TKT-OE"] = 1
+comparison.df[c(1,5,7,10:13,15), "Female TKT-Df"] = 1
+
+i=1
+while(i<=ncol(reversal.overlap)){
+  reversals.seti = upset.df[colnames(comparison.df)[comparison.df[i,]==1]]
+  reversals.seti = row.names(reversals.seti)[apply(reversals.seti, MARGIN = 1, sum) == sum(comparison.df[i,]==1)]
+  not.reversals.seti = upset.df[colnames(comparison.df)[comparison.df[i,]==0]]
+  not.reversals.seti = row.names(not.reversals.seti)[apply(not.reversals.seti, MARGIN = 1, sum) == 0]  
+  reversal.overlap[intersect(reversals.seti, not.reversals.seti),i] = intersect(reversals.seti, not.reversals.seti)
+  temp.colname = colnames(comparison.df)[comparison.df[i,]==1][1]
+  j=2
+  while(j<=length(colnames(comparison.df)[comparison.df[i,]==1])){
+    temp.colname = paste0(temp.colname, ",", colnames(comparison.df)[comparison.df[i,]==1][j])
+    j=j+1
+  }
+  colnames(reversal.overlap)[i] = temp.colname
+  reversal.overlap[,i] = reversal.overlap[order(reversal.overlap[,i], decreasing = T),i]
+  i=i+1
+}
+
+
+#write.csv(reversal.overlap, "/Users/johncsantiago/Desktop/Reversal.Intersect.GeneList.csv")
 
 ```
+
 
 
 ##Enrichement
@@ -1260,7 +1314,65 @@ tempvenn=draw.quad.venn(area1=length(s1),area2=length(s2),area3=length(s3),area4
 
 
 
+```{r echo = F, fig.width=10, fig.height=5}
 
+head.list = list(G85RFxWTF = GRF,
+                 G85RMxWTM = GRM,
+                 A4VF.3HxWTF.3H = A4V.3FH,
+                 A4VM.3HxWTM.3H = A4V.3MH,
+                 A4VF.9HxWTF.9H = A4V.9FH,
+                 A4VM.9HxWTM.9H = A4V.9MH,
+                 A4VF.40HxWTF.40H = A4V.40FH)
+
+upset(fromList(head.list), nsets = 7, nintersects = NA)
+
+
+combination.matrix = matrix(rep(1, length(names(head.list))))
+row.names(combination.matrix) = names(head.list)
+
+n = 6
+while(n>0){
+  temp = combn(row.names(combination.matrix), n)
+  i=1
+  while(i<=ncol(temp)){
+    combo = combination.matrix[,1]-1
+    combo[temp[,i]] = 1
+    combination.matrix = cbind(combination.matrix, combo)
+    colnames(combination.matrix) = c(1:ncol(combination.matrix))
+    i=i+1
+  }
+  n=n-1
+}
+
+
+gene.list = c(head.list[[1]])
+i=1
+while(i<8){
+  gene.list = c(gene.location, 
+              setdiff(head.list[[i]], gene.list))
+  i=i+1
+}
+
+unique.genes = matrix(rep(0, ncol(combination.matrix) *
+                            length(gene.list)), 
+                      ncol = ncol(combination.matrix))
+row.names(unique.genes) = gene.list
+
+i=1
+while(i<=ncol(combination.matrix)){
+  combo = row.names(combination.matrix)[combination.matrix[,i]==1]
+  common.genes = head.list[[1]]
+  j=2
+  while(j<=length(combo)){
+    common.genes = intersect(common.genes, head.list[[j]])
+    j=j+1
+  }
+  unique.genes[common.genes,i] = 1
+  i=i+1
+}
+
+
+```
 
 
 ```{r echo = F}

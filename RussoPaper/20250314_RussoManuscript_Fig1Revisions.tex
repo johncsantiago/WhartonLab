@@ -1,0 +1,291 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={Russo Fig1 Replots},
+  pdfauthor={John Santiago},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Russo Fig1 Replots}
+\author{John Santiago}
+\date{2025-03-14}
+
+\begin{document}
+\maketitle
+
+\includegraphics{20250314_RussoManuscript_Fig1Revisions_files/figure-latex/unnamed-chunk-3-1.pdf}
+
+\begin{longtable}[t]{llrlrr}
+\caption{\label{tab:unnamed-chunk-5}All t-tests for figure 1B eclosion data.}\\
+\toprule
+ & Genotype1 & Genotype1.n & Genotype2 & Genotype2.n & pval\\
+\midrule
+\cellcolor{gold}{\textcolor{black}{\textbf{13}}} & \cellcolor{gold}{\textcolor{black}{\textbf{WT(LoxP)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{192}}} & \cellcolor{gold}{\textcolor{black}{\textbf{G85R(hr)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{124}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0000026}}}\\
+\cellcolor{gold}{\textcolor{black}{\textbf{30}}} & \cellcolor{gold}{\textcolor{black}{\textbf{WT(cr)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{576}}} & \cellcolor{gold}{\textcolor{black}{\textbf{G85R(cr)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{165}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0000000}}}\\
+34 & WT(cr) & 576 & A4V & 154 & 0.1000122\\
+\cellcolor{gold}{\textcolor{black}{\textbf{38}}} & \cellcolor{gold}{\textcolor{black}{\textbf{G85R(cr)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{165}}} & \cellcolor{gold}{\textcolor{black}{\textbf{G85R(cr)/Sod1null}}} & \cellcolor{gold}{\textcolor{black}{\textbf{72}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0001377}}}\\
+\cellcolor{gold}{\textcolor{black}{\textbf{40}}} & \cellcolor{gold}{\textcolor{black}{\textbf{G85R(cr)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{165}}} & \cellcolor{gold}{\textcolor{black}{\textbf{Sod1null}}} & \cellcolor{gold}{\textcolor{black}{\textbf{73}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0000068}}}\\
+\addlinespace
+55 & Sod1null & 73 & A4V & 154 & 0.9233251\\
+\cellcolor{gold}{\textcolor{black}{\textbf{59}}} & \cellcolor{gold}{\textcolor{black}{\textbf{A4V}}} & \cellcolor{gold}{\textcolor{black}{\textbf{154}}} & \cellcolor{gold}{\textcolor{black}{\textbf{A4V/Sod1null}}} & \cellcolor{gold}{\textcolor{black}{\textbf{79}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0242878}}}\\
+\bottomrule
+\end{longtable}
+
+\includegraphics{20250314_RussoManuscript_Fig1Revisions_files/figure-latex/unnamed-chunk-7-1.pdf}
+
+\includegraphics{20250314_RussoManuscript_Fig1Revisions_files/figure-latex/unnamed-chunk-9-1.pdf}
+
+\includegraphics{20250314_RussoManuscript_Fig1Revisions_files/figure-latex/unnamed-chunk-14-1.pdf}
+
+\begin{longtable}[t]{llr}
+\caption{\label{tab:unnamed-chunk-15}All t-tests for figure 1E larval locomotion data.}\\
+\toprule
+Sample1 & Sample2 & pval\\
+\midrule
+\cellcolor{gold}{\textcolor{black}{\textbf{WT(LoxP)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{G85R(hr)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0000000}}}\\
+\cellcolor{gold}{\textcolor{black}{\textbf{WT(LoxP)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{WT(cr)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0264549}}}\\
+\cellcolor{gold}{\textcolor{black}{\textbf{WT(LoxP)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{G85R(cr)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0107469}}}\\
+WT(LoxP) & A4V & 0.9919393\\
+\cellcolor{gold}{\textcolor{black}{\textbf{G85R(hr)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{WT(cr)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0196455}}}\\
+\addlinespace
+\cellcolor{gold}{\textcolor{black}{\textbf{G85R(hr)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{G85R(cr)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0011007}}}\\
+\cellcolor{gold}{\textcolor{black}{\textbf{G85R(hr)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{A4V}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0000072}}}\\
+WT(cr) & G85R(cr) & 0.8137426\\
+WT(cr) & A4V & 0.0602576\\
+G85R(cr) & A4V & 0.0504400\\
+\bottomrule
+\end{longtable}
+
+\includegraphics{20250314_RussoManuscript_Fig1Revisions_files/figure-latex/unnamed-chunk-18-1.pdf}
+
+\begin{longtable}[t]{llr}
+\caption{\label{tab:unnamed-chunk-19}All t-tests for figure 2a climbing data.}\\
+\toprule
+Sample1 & Sample2 & pval\\
+\midrule
+\cellcolor{gold}{\textcolor{black}{\textbf{WT(cr) 3}}} & \cellcolor{gold}{\textcolor{black}{\textbf{A4V 3}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0178558}}}\\
+\cellcolor{gold}{\textcolor{black}{\textbf{WT(cr) 10}}} & \cellcolor{gold}{\textcolor{black}{\textbf{A4V 10}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0029606}}}\\
+WT(cr) 22 & A4V 22 & 0.0728859\\
+\cellcolor{gold}{\textcolor{black}{\textbf{WT(cr) 28}}} & \cellcolor{gold}{\textcolor{black}{\textbf{A4V 28}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0011139}}}\\
+\cellcolor{gold}{\textcolor{black}{\textbf{WT(cr) 35}}} & \cellcolor{gold}{\textcolor{black}{\textbf{A4V 35}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0000863}}}\\
+\bottomrule
+\end{longtable}
+
+\includegraphics{20250314_RussoManuscript_Fig1Revisions_files/figure-latex/unnamed-chunk-21-1.pdf}
+
+\begin{longtable}[t]{llr}
+\caption{\label{tab:unnamed-chunk-22}All t-tests for figure 2b climbing data.}\\
+\toprule
+Sample1 & Sample2 & pval\\
+\midrule
+WT(cr) 3 & A4V 3 & 0.0557858\\
+\cellcolor{gold}{\textcolor{black}{\textbf{WT(cr) 10}}} & \cellcolor{gold}{\textcolor{black}{\textbf{A4V 10}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0033212}}}\\
+\cellcolor{gold}{\textcolor{black}{\textbf{WT(cr) 14}}} & \cellcolor{gold}{\textcolor{black}{\textbf{A4V 14}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0000018}}}\\
+\bottomrule
+\end{longtable}
+
+\includegraphics{20250314_RussoManuscript_Fig1Revisions_files/figure-latex/unnamed-chunk-27-1.pdf}
+
+\begin{longtable}[t]{llr}
+\caption{\label{tab:unnamed-chunk-28}All t-tests for figure 1B eclosion data.}\\
+\toprule
+Genotype1 & Genotype2 & pval\\
+\midrule
+\cellcolor{gold}{\textcolor{black}{\textbf{WT(LoxP/cr)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{G85R(hr/cr)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0131238}}}\\
+G85R(hr/cr) & OK371-gbb; G85R(hr/cr) & 0.0689184\\
+G85R(hr/cr) & OK371-SaxA; G85R(hr/cr) & 0.1845525\\
+\bottomrule
+\end{longtable}
+
+\includegraphics{20250314_RussoManuscript_Fig1Revisions_files/figure-latex/unnamed-chunk-29-1.pdf}
+
+\begin{verbatim}
+## Warning: package 'ggplot2' was built under R version 4.3.3
+\end{verbatim}
+
+\begin{verbatim}
+## Picking joint bandwidth of 0.283
+\end{verbatim}
+
+\includegraphics{20250314_RussoManuscript_Fig1Revisions_files/figure-latex/unnamed-chunk-30-1.pdf}
+
+\includegraphics{20250314_RussoManuscript_Fig1Revisions_files/figure-latex/unnamed-chunk-31-1.pdf}
+
+\includegraphics{20250314_RussoManuscript_Fig1Revisions_files/figure-latex/unnamed-chunk-33-1.pdf}
+
+\begin{longtable}[t]{llr}
+\caption{\label{tab:unnamed-chunk-34}All t-tests for VNC data.}\\
+\toprule
+Genotype1 & Genotype2 & pval\\
+\midrule
+\cellcolor{gold}{\textcolor{black}{\textbf{WT(cr/LoxP)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{G85R(cr/hr)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0167346}}}\\
+WT(cr/LoxP) & OK371-gbb; WT(cr/LoxP) & 0.0940970\\
+WT(cr/LoxP) & OK371-gbb; G85R(cr/hr) & 0.4464767\\
+WT(cr/LoxP) & OK371-saxA; WT(cr/LoxP) & 0.7449811\\
+WT(cr/LoxP) & OK371-saxA; G85R(cr/hr) & 0.3910250\\
+\addlinespace
+G85R(cr/hr) & OK371-gbb; WT(cr/LoxP) & 0.0582908\\
+\cellcolor{gold}{\textcolor{black}{\textbf{G85R(cr/hr)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{OK371-gbb; G85R(cr/hr)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0391079}}}\\
+\cellcolor{gold}{\textcolor{black}{\textbf{G85R(cr/hr)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{OK371-saxA; WT(cr/LoxP)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0077605}}}\\
+\cellcolor{gold}{\textcolor{black}{\textbf{G85R(cr/hr)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{OK371-saxA; G85R(cr/hr)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0422873}}}\\
+OK371-gbb; WT(cr/LoxP) & OK371-gbb; G85R(cr/hr) & 0.3069587\\
+\addlinespace
+\cellcolor{gold}{\textcolor{black}{\textbf{OK371-gbb; WT(cr/LoxP)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{OK371-saxA; WT(cr/LoxP)}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0387761}}}\\
+OK371-gbb; WT(cr/LoxP) & OK371-saxA; G85R(cr/hr) & 0.0838166\\
+OK371-gbb; G85R(cr/hr) & OK371-saxA; WT(cr/LoxP) & 0.2534842\\
+OK371-gbb; G85R(cr/hr) & OK371-saxA; G85R(cr/hr) & 0.1815848\\
+OK371-saxA; WT(cr/LoxP) & OK371-saxA; G85R(cr/hr) & 0.5097745\\
+\bottomrule
+\end{longtable}
+
+\includegraphics{20250314_RussoManuscript_Fig1Revisions_files/figure-latex/unnamed-chunk-38-1.pdf}
+
+\includegraphics{20250314_RussoManuscript_Fig1Revisions_files/figure-latex/unnamed-chunk-39-1.pdf}
+
+\includegraphics{20250314_RussoManuscript_Fig1Revisions_files/figure-latex/unnamed-chunk-40-1.pdf}
+
+\includegraphics{20250314_RussoManuscript_Fig1Revisions_files/figure-latex/unnamed-chunk-41-1.pdf}
+
+\includegraphics{20250314_RussoManuscript_Fig1Revisions_files/figure-latex/unnamed-chunk-42-1.pdf}
+
+\includegraphics{20250314_RussoManuscript_Fig1Revisions_files/figure-latex/unnamed-chunk-46-1.pdf}
+
+\includegraphics{20250314_RussoManuscript_Fig1Revisions_files/figure-latex/unnamed-chunk-47-1.pdf}
+
+\includegraphics{20250314_RussoManuscript_Fig1Revisions_files/figure-latex/unnamed-chunk-48-1.pdf}
+
+\includegraphics{20250314_RussoManuscript_Fig1Revisions_files/figure-latex/fig-1.pdf}
+
+\includegraphics{20250314_RussoManuscript_Fig1Revisions_files/figure-latex/unnamed-chunk-49-1.pdf}
+
+\includegraphics{20250314_RussoManuscript_Fig1Revisions_files/figure-latex/unnamed-chunk-50-1.pdf}
+
+\includegraphics{20250314_RussoManuscript_Fig1Revisions_files/figure-latex/unnamed-chunk-51-1.pdf}
+
+\begin{longtable}[t]{llr}
+\caption{\label{tab:unnamed-chunk-52}All t-tests for otal bouton data.}\\
+\toprule
+Genotype1 & Genotype2 & pval\\
+\midrule
+WTcr/LoxP & G85Rcr/hr & 0.2657202\\
+WTcr/LoxP & OK371>gbb, WTcr/Loxp & 0.5065710\\
+WTcr/LoxP & OK371>gbb, G85R & 0.1053737\\
+WTcr/LoxP & OK371>SaxA, WT & 0.6824942\\
+\cellcolor{gold}{\textcolor{black}{\textbf{WTcr/LoxP}}} & \cellcolor{gold}{\textcolor{black}{\textbf{OK371>SaxA, G85R}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0403275}}}\\
+\addlinespace
+G85Rcr/hr & OK371>gbb, WTcr/Loxp & 0.4987873\\
+G85Rcr/hr & OK371>gbb, G85R & 0.8417636\\
+G85Rcr/hr & OK371>SaxA, WT & 0.3713008\\
+\cellcolor{gold}{\textcolor{black}{\textbf{G85Rcr/hr}}} & \cellcolor{gold}{\textcolor{black}{\textbf{OK371>SaxA, G85R}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0193467}}}\\
+OK371>gbb, WTcr/Loxp & OK371>gbb, G85R & 0.4386866\\
+\addlinespace
+OK371>gbb, WTcr/Loxp & OK371>SaxA, WT & 0.7610803\\
+\cellcolor{gold}{\textcolor{black}{\textbf{OK371>gbb, WTcr/Loxp}}} & \cellcolor{gold}{\textcolor{black}{\textbf{OK371>SaxA, G85R}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0194836}}}\\
+OK371>gbb, G85R & OK371>SaxA, WT & 0.2263890\\
+\cellcolor{gold}{\textcolor{black}{\textbf{OK371>gbb, G85R}}} & \cellcolor{gold}{\textcolor{black}{\textbf{OK371>SaxA, G85R}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0044417}}}\\
+\cellcolor{gold}{\textcolor{black}{\textbf{OK371>SaxA, WT}}} & \cellcolor{gold}{\textcolor{black}{\textbf{OK371>SaxA, G85R}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0246433}}}\\
+\bottomrule
+\end{longtable}
+
+\includegraphics{20250314_RussoManuscript_Fig1Revisions_files/figure-latex/unnamed-chunk-53-1.pdf}
+
+\begin{longtable}[t]{llr}
+\caption{\label{tab:unnamed-chunk-54}All t-tests for otal bouton data.}\\
+\toprule
+Genotype1 & Genotype2 & pval\\
+\midrule
+\cellcolor{gold}{\textcolor{black}{\textbf{WTcr/LoxP}}} & \cellcolor{gold}{\textcolor{black}{\textbf{G85Rcr/hr}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0092464}}}\\
+\cellcolor{gold}{\textcolor{black}{\textbf{WTcr/LoxP}}} & \cellcolor{gold}{\textcolor{black}{\textbf{OK371>gbb, WTcr/Loxp}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0082729}}}\\
+\cellcolor{gold}{\textcolor{black}{\textbf{WTcr/LoxP}}} & \cellcolor{gold}{\textcolor{black}{\textbf{OK371>gbb G85R}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0224725}}}\\
+\cellcolor{gold}{\textcolor{black}{\textbf{WTcr/LoxP}}} & \cellcolor{gold}{\textcolor{black}{\textbf{OK371>SaxA WT}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0370409}}}\\
+WTcr/LoxP & OK371>SaxA G85R & 0.9102793\\
+\addlinespace
+G85Rcr/hr & OK371>gbb, WTcr/Loxp & 0.9529024\\
+G85Rcr/hr & OK371>gbb G85R & 0.3566556\\
+G85Rcr/hr & OK371>SaxA WT & 0.6360428\\
+\cellcolor{gold}{\textcolor{black}{\textbf{G85Rcr/hr}}} & \cellcolor{gold}{\textcolor{black}{\textbf{OK371>SaxA G85R}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0180731}}}\\
+OK371>gbb, WTcr/Loxp & OK371>gbb G85R & 0.3159361\\
+\addlinespace
+OK371>gbb, WTcr/Loxp & OK371>SaxA WT & 0.5943470\\
+\cellcolor{gold}{\textcolor{black}{\textbf{OK371>gbb, WTcr/Loxp}}} & \cellcolor{gold}{\textcolor{black}{\textbf{OK371>SaxA G85R}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0162012}}}\\
+OK371>gbb G85R & OK371>SaxA WT & 0.7820205\\
+\cellcolor{gold}{\textcolor{black}{\textbf{OK371>gbb G85R}}} & \cellcolor{gold}{\textcolor{black}{\textbf{OK371>SaxA G85R}}} & \cellcolor{gold}{\textcolor{black}{\textbf{0.0454089}}}\\
+OK371>SaxA WT & OK371>SaxA G85R & 0.0581551\\
+\bottomrule
+\end{longtable}
+
+\end{document}

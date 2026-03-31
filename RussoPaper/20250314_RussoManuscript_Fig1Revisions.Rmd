@@ -36,12 +36,13 @@ hex = function(color, alpha){
 ```{r echo = F}
 
 B = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Russo Fig 1 eclosion.csv")
-B.labels = c("w1118",
-             "WT(LoxP)", "G85R(hr)",
-             "WT(cr)", "G85R(cr)",
-             "G85R(cr)/Sod1null", "WT(cr)/Sod1null", "Sod1null", 
-             "A4V", "A4V/Sod1null","A4V/X16", "A4V/G85R(cr)")
-              
+B.totalflies = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Russo Fig 1 eclosion totalflies.csv")
+B.labels = c("w1118", "WTloxP", "G85Rhr",
+             "WTcr", "G85Rcr",
+             "G85R/X16", "WTcr/X16",
+             "A4V", "A4V/X16", "A4V/G85Rcr")
+
+
 colnames(B) = B.labels
 
 mean.B = setNames(rep(0, ncol(B)), colnames(B))
@@ -50,6 +51,11 @@ while(i<=ncol(B)){
   mean.B[i] = mean(na.omit(B[,i]))
   i=i+1
 }
+
+##Comparisons for pval 
+#WTloxpvG85Rhr
+#WTcrvG85RcrvG85R/X16vWT/X16
+#A4VvsWTcrvsA4V/X16vs
 
 
 ```
@@ -67,7 +73,7 @@ barplot(height = mean.B,
         xaxt = "n",
         yaxt = "n")
 axis(side = 1,
-     at = c(.7 + (c(0:11)*1.2)),
+     at = c(.7 + (c(0:9)*1.2)),
      lwd = 3,
      line = 0,
      labels = B.labels,
@@ -94,9 +100,7 @@ lines(x = c(1.9,3.1),
 lines(x = c(1.9,1.9),
       y = c(105, 102),
       lwd = 3)
-lines(x = c(3.1, 3.1),
-      y = c(105, 40),
-      lwd = 3)
+
 
 text(x = 3.1,
      y = 109,
@@ -104,52 +108,35 @@ text(x = 3.1,
     cex = 2)
 
 
-lines(x = c(4.3,9.1),
+lines(x = c(4.3,11.5),
       y = c(105, 105),
       lwd = 3)
 
 lines(x = c(4.3,4.3),
       y = c(105, 102),
       lwd = 3)
-lines(x = c(5.5, 5.5),
-      y = c(105, 40),
-      lwd = 3)
-lines(x = c(6.7, 6.7),
-      y = c(105, 95),
-      lwd = 3)
-lines(x = c(9.1, 9.1),
-      y = c(105, 95),
-      lwd = 3)
+
 
 text(x = 5.5,
      y = 109,
     labels = "*",
     cex = 2)
 
+text(x = 6.7,
+     y = 109,
+    labels = "*",
+    cex = 2)
 
-lines(x = c(5.5,11.5),
-      y = c(116, 116),
-      lwd = 3)
-
-lines(x = c(5.5, 5.5),
-      y = c(116, 113),
-      lwd = 3)
-lines(x = c(10.3, 10.3),
-      y = c(116, 100),
-      lwd = 3)
-lines(x = c(11.5, 11.5),
-      y = c(116, 102),
-      lwd = 3)
-
-
-text(x = 10.3,
-     y = 120,
+text(x = 11.5,
+     y = 109,
     labels = "*",
     cex = 2,
     xpd = t)
 
 
 ```
+
+
 
 ```{r echo = F, include = F}
 
@@ -170,6 +157,14 @@ text(x = 10.3,
 
 #head(TukeyHSD(B.aov))
 
+n = setNames(rep(0, ncol(B.totalflies)),B.labels)
+i=1
+while(i<=length(n)){
+  n[i] = sum(na.omit(B.totalflies[,i]))
+  i=i+1
+}
+
+
 t.table = data.frame(Genotype1 = B.labels[1],
                      Genotype2 = B.labels[2],
                      pval = t.test(x = na.omit(B[,1]),
@@ -183,6 +178,7 @@ while(i <= ncol(B)){
     if(length(unique(na.omit(B[,i]))) == 1 &
        length(unique(na.omit(B[,j]))) == 1){
       t.temp = data.frame(Genotype1 = B.labels[i],
+                          Genotype1.n = n[B.labels[i]],
                           Genotype2 = B.labels[j],
                           pval = 0)
       j = j+1
@@ -203,6 +199,11 @@ while(i <= ncol(B)){
 }
 
 
+t.table$Genotype1.n = n[t.table$Genotype1]
+t.table$Genotype2.n = n[t.table$Genotype2]
+
+t.table = t.table[,c("Genotype1","Genotype1.n", "Genotype2", "Genotype2.n", "pval")]
+
 t.stripe = t.table$pval <= .05
 #row.names(t.table) = c(1:nrow(t.table))
 
@@ -214,9 +215,9 @@ row_spec(c(1:nrow(t.table))[t.table$pval <= .05], bold = T, color = "black", bac
 ```
 
 
-```{r echo = F}
+```{r echo = F, include = F}
 
-target.pvals = t.table[c(13, 30, 34, 38, 40, 55, 59),]
+target.pvals = t.table[c(11, 24:29, 31, 27, 41),]
 
 knitr::kable(target.pvals,
              caption = 'All t-tests for figure 1B eclosion data.')  %>%
@@ -224,6 +225,219 @@ kable_styling() %>%
 row_spec(c(1:nrow(target.pvals))[target.pvals$pval <= .05], bold = T, color = "black", background = "gold")
 
 ```
+
+
+
+```{r echo = F, fig.width=10, fig.height=7}
+
+
+fig1b.data = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Russo Fig 1 eclosion full data.csv")
+
+percent.fig1b = setNames(rep(NA_real_,length(unique(fig1b.data$Genotype))),
+                         unique(fig1b.data$Genotype))
+i=1
+while(i<=length(percent.fig1b)){
+  tempEclosed = sum(fig1b.data[fig1b.data == names(percent.fig1b)[i], "Eclosed"])
+  tempNotEclosed = sum(fig1b.data[fig1b.data == names(percent.fig1b)[i], "NotEclosed"])
+  tempTotal = tempEclosed+tempNotEclosed
+  percent.fig1b[i] = signif(100*(tempEclosed/tempTotal),3)
+  i=i+1
+}
+
+
+par(mar = c(9,4,4,2))
+
+barplot(height = percent.fig1b,
+        ylim = c(0, 120),
+        col = "black",
+        las = 2,
+        ylab = "Eclosion frequency (%)",
+        main = "Eclosion from the pupal case",
+        xaxt = "n",
+        yaxt = "n")
+axis(side = 1,
+     at = c(.7 + (c(0:9)*1.2)),
+     lwd = 3,
+     line = 0,
+     labels = B.labels,
+     xpd = T,
+     las = 2)
+axis(side = 2,
+     at = c(0,20,40,60,80,100),
+     lwd = 3,
+     line = 0,
+     labels = T,
+     xpd = T,
+     las = 2)
+
+lines(x = c(-0.5,13.5),
+     y = c(0,0),
+     lwd = 3,
+     xpd = T)
+
+
+lines(x = c(1.9,3.1),
+      y = c(105, 105),
+      lwd = 3)
+
+lines(x = c(1.9,1.9),
+      y = c(105, 102),
+      lwd = 3)
+
+
+text(x = 3.1,
+     y = 109,
+    labels = "*",
+    cex = 2)
+
+
+lines(x = c(4.3,11.5),
+      y = c(105, 105),
+      lwd = 3)
+
+lines(x = c(4.3,4.3),
+      y = c(105, 102),
+      lwd = 3)
+
+
+text(x = 5.5,
+     y = 109,
+    labels = "*",
+    cex = 2)
+
+text(x = 6.7,
+     y = 109,
+    labels = "*",
+    cex = 2)
+
+text(x = 9.1,
+     y = 109,
+    labels = "*",
+    cex = 2)
+
+text(x = 11.5,
+     y = 109,
+    labels = "*",
+    cex = 2,
+    xpd = t)
+
+```
+
+
+```{r echo = F, include=FALSE}
+
+library(lme4)
+library(lmerTest)
+
+
+fig1b.data$Replicate = paste0(fig1b.data$Genotype,"_", fig1b.data$Replicate)
+
+subset_data <- fig1b.data[fig1b.data$Genotype %in% c("WTcr", "G85Rcr"),]
+subset_data$Genotype = factor(subset_data$Genotype, levels = c("WTcr", "G85Rcr"))
+
+#Generalized Linear Mixed Model
+##“Does Genotype change the probability of eclosion, accounting for replicate (vial)?”
+
+fullmodel = glmer(
+  cbind(Eclosed, NotEclosed) ~ Genotype + (1 | Replicate),
+  family = binomial,
+  data = subset_data
+)
+
+reducedmodel = glmer(
+  cbind(Eclosed, NotEclosed) ~ (1 | Replicate),
+  family = binomial,
+  data = subset_data
+)
+
+##Likelihood Ratio Test (LRT)
+anova(reducedmodel, fullmodel, test = "Chisq")
+
+##Crispr samples
+subset_data <- fig1b.data[fig1b.data$Genotype %in% c("WTcr", "G85Rcr", "G85R/X16", "WTcr/X16",
+  "A4V", "A4V/X16", "A4V/G85Rcr"),]
+
+
+subset_data$Genotype = factor(subset_data$Genotype,
+                              levels = c("WTcr", "G85Rcr", "G85R/X16", "WTcr/X16",
+  "A4V", "A4V/X16", "A4V/G85Rcr"))
+
+#Generalized Linear Mixed Model
+##“Does Genotype change the probability of eclosion, accounting for replicate (vial)?”
+
+fullmodel = glmer(
+  cbind(Eclosed, NotEclosed) ~ Genotype + (1 | Replicate),
+  family = binomial,
+  data = subset_data
+)
+
+reducedmodel = glmer(
+  cbind(Eclosed, NotEclosed) ~ (1 | Replicate),
+  family = binomial,
+  data = subset_data
+)
+
+##Likelihood Ratio Test (LRT)
+anova(reducedmodel, fullmodel, test = "Chisq")
+
+```
+
+
+```{r echo = F}
+##Fishers Exact Test
+Totals = data.frame(Genotype = unique(fig1b.data$Genotype),
+                    Eclosed = 0,
+                    NotEclosed = 0)
+i=1
+while(i<=nrow(Totals)){
+  temp = fig1b.data[fig1b.data$Genotype == Totals$Genotype[i],]
+  Totals$Eclosed[i] = sum(temp$Eclosed)
+  Totals$NotEclosed[i] = sum(temp$NotEclosed)
+  i=i+1
+}
+
+
+
+
+wtgrhr = fisher.test(as.matrix(Totals[Totals$Genotype %in% c(Totals$Genotype[2], Totals$Genotype[3]), c("Eclosed","NotEclosed")]), alternative = "two.sided")[1]
+
+stats1b = data.frame(Genotype1 = Totals$Genotype[2],
+                     n1 = sum(Totals[2,c("Eclosed", "NotEclosed")]),
+                     Genotype2 = Totals$Genotype[3],
+                     n2 = sum(Totals[3,c("Eclosed", "NotEclosed")]),
+                     p = wtgrhr)
+
+i=5
+while(i<=nrow(Totals)){
+  stats1b[i-3, ] = c(
+    Totals$Genotype[4],
+    sum(Totals[4,c("Eclosed", "NotEclosed")]),
+    Totals$Genotype[i],
+    sum(Totals[i,c("Eclosed", "NotEclosed")]),
+    fisher.test(as.matrix(Totals[Totals$Genotype %in% c(Totals$Genotype[4], Totals$Genotype[i]), c("Eclosed","NotEclosed")]), alternative = "two.sided")[1]
+  )
+  i=i+1
+}
+
+rawp = stats1b$p.value
+stats1b$p.value = format(stats1b$p.value,
+                         scientific = T)
+
+
+
+
+```
+
+```{r echo = F, include = T}
+
+knitr::kable(stats1b,
+             caption = 'All t-tests for figure 1B eclosion data.')  %>%
+kable_styling() %>%
+row_spec(c(1:nrow(stats1b))[rawp <= .05], bold = T, color = "black", background = "gold")
+
+```
+
+
 
 
 ```{r echo = F}
@@ -1781,7 +1995,7 @@ boxplot(VNC$CTCF~VNC$Genotype,
         xlab = NA,
         col = hex(std.colors[unique(VNC$Genotype)], .25),
         ylab = "RFU",
-        main = "Larval VNC fluorescence",
+        main = "Larval A3 MN nuclei pMad fluorescence",
         ylim = c(0,1800))
 
 beeswarm(VNC$CTCF~as.numeric(VNC$Genotype),
@@ -3761,6 +3975,125 @@ kable_styling() %>%
 row_spec(c(1:nrow(t.table))[t.table$pval <= .05], bold = T, color = "black", background = "gold")
 
 ```
+
+
+
+```{r echo = F, fig.width=5, fig.height=5}
+
+##Embryo survival data
+embryo = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/AleahEmbryoSurvivalData.csv")
+
+embryo$Percent = 100*(embryo$Dead/embryo$Total)
+plot.embryo = data.frame(WT = embryo$Percent[embryo$Genotype == "Wtcr/loxP"],
+                         G85R = embryo$Percent[embryo$Genotype == "G85Rcr/hr"])
+
+
+embryo.labels = c("WTcr/loxP", "G85Rcr/hr")
+
+embryo.cols = std.colors[c("WT(cr)","G85R(cr)")]
+
+n.embryo = setNames(rep(0, ncol(plot.embryo)), colnames(plot.embryo))
+mean.embryo = n.embryo
+sd.embryo = n.embryo
+
+i=1
+while(i<= ncol(plot.embryo)){
+  mean.embryo[i] = mean(na.omit(plot.embryo[,i]))
+  sd.embryo[i] = sd(na.omit(plot.embryo[,i]))
+  n.embryo[i] = (length(na.omit(plot.embryo[,i])))
+  i=i+1
+}
+
+stderr.embryo = sd.embryo/(sqrt(n.embryo))
+
+bar.colors = hex(embryo.cols, .75)
+
+border.colors = embryo.cols
+
+tick.x = c(.7 + (c(0:1)*1.2))
+
+par(mar = c(8,4,4,2), lwd = 3)
+
+barplot(height = mean.embryo,
+        ylim = c(0, 20),
+        col = border.colors,
+        las = 2,
+        ylab = "% Dead",
+        main = "Embryo Survival",
+        border = "black",
+        xaxt = "n")
+
+axis(side = 1,
+     at = tick.x,
+     lwd = 3,
+     line = 0,
+     labels = embryo.labels,
+     xpd = T)
+
+axis(side = 2,
+     at = c(0,5,10,15,20),
+     lwd = 3,
+     line = 0,
+     labels = F,
+     xpd = T)
+lines(x = c(0.1, 2.5),
+     y = c(0,0),
+     lwd = 3,
+     xpd = T)
+
+i = 1
+while(i <= length(stderr.embryo)){
+  lines(x = tick.x[c(i,i)],
+        y = c(mean.embryo[i], (mean.embryo[i] + stderr.embryo[i])),
+        lwd = 3,
+        col = "black")
+  
+  lines(x = c((tick.x[i] - .25), (tick.x[i] + .25)),
+        y = c((mean.embryo[i] + stderr.embryo[i]), (mean.embryo[i] + stderr.embryo[i])),
+        lwd = 3,
+        col = "black")
+  
+  i = i +1
+}
+
+lines(x = tick.x[1:2],
+      y =  c( 15,15),
+      lwd = 3)
+
+lines(x = c(1.9,3.1),
+      y = c(63, 63),
+      lwd = 3)
+
+text(x = 1.3,
+     y = 17,
+    labels = "*",
+    cex = 2,
+    xpd = t)
+
+
+
+wilcox.test(plot.embryo$WT, 
+            plot.embryo$G85R, 
+            exact = TRUE)
+
+##Stats advice from chatgpt:
+##A classic Student’s t-test assumes:
+##  Normal distribution (hard to justify with n=4)
+##  Similar variances
+##  No strong outliers
+
+##Your data violates at least #1 (and maybe #2). With such a small sample, the t-test becomes very unstable — a single value (like that 0) can heavily influence the result.
+
+##Wilcoxon rank-sum test (recommended)
+##  Non-parametric → no normality assumption
+##  Works well with small n
+##  Tests whether one group tends to be larger than the other
+
+##This uses the exact distribution, which is more appropriate than approximations at small n.
+
+```
+
+
 
 
 

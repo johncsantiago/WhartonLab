@@ -1,0 +1,134 @@
+---
+title: "Target ALS Data"
+author: "John Santiago"
+date: "2026-02-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F, message = F, warning = F)
+```
+
+```{r}
+
+TALSmeta = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/collections.postmortem_tissue_core.rnaseq_counts/collections.postmortem_tissue_core.rnaseq_metadata.csv")
+TALSmeta$A4V = ""
+TALSmeta$C9orf72 = ""
+TALSmeta$Tdp43 = ""
+mutations = TALSmeta$reported_genomic_mutations
+TALSmeta$A4V[grep("A4V", mutations)] = "A4V"
+TALSmeta$C9orf72[grep("Positive for C9orf72", mutations)] = "C9orf72"
+TALSmeta$C9orf72[grep("Positive for Co9rf72", mutations)] = "C9orf72"
+TALSmeta$Tdp43[grep("TARDBP", mutations)] = "Tdp43"
+
+
+
+
+TALSmultidata = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/collections.postmortem_tissue_core.rnaseq_counts/collections.postmortem_tissue_core.als_cases_with_multiple_datasets.csv")
+
+TALStdp43 = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/collections.postmortem_tissue_core.rnaseq_counts/collections.postmortem_tissue_core.semiquantitative_tdp43.csv")
+
+AllTALS.files = list.files("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/collections.postmortem_tissue_core.rnaseq_counts/")
+
+i=4
+dim(read.csv(paste0("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/collections.postmortem_tissue_core.rnaseq_counts/", AllTALS.files[i])))
+i=i+1
+
+temp = table(factor(TALSmeta$externalsubjectid))
+
+
+plot(table(temp),
+     xlab = "Number of Libraries",
+     ylab = "Number of Samples")
+
+temp = table(factor(paste(TALSmeta$externalsubjectid, TALSmeta$tissue)))
+
+plot(table(temp),
+     xlab = "Number of Replicates",
+     ylab = "Number of Samples*Tissue Combinations")
+
+neuronaltdp = table(TALStdp43$tdp43_neuronal)
+pie(neuronaltdp,
+    main = "Neuronal Tdp43",
+    col = pie.colors)
+
+pie.colors = c("red", "red", "orange", "lightgrey", "lightgrey","yellow")
+
+neuronaltdp = table(TALStdp43$tdp43_neuronal)
+pie(neuronaltdp,
+    main = "Neuronal Tdp43",
+    col = pie.colors)
+
+
+pie.colors = c("red", "red", "orange", "lightgrey", "lightgrey","yellow")
+
+
+pie.colors = c("red", "orange", "lightgrey", "lightgrey","yellow")
+glialtdp = table(TALStdp43$tdp43_glial)
+pie(glialtdp,
+    main = "Glial Tdp43",
+    col = pie.colors)
+
+
+pie.colors = c("red", "orange", "lightgrey", "lightgrey","yellow")
+tau = TALStdp43$tau
+tau[tau == "frequent"] = "Frequent"
+tau[tau == "N/E "] = "NE"
+tau[tau == "N/E"] = "NE"
+tau[tau == ""] = "NE"
+tau[tau == "none"] = "None"
+tau[tau == "sparse"] = "Sparse"
+tau[tau == "moderate"] = "Moderate"
+tau[tau == "N/E (but note mod tau in hippocampus)" ] = "NE"
+tau[tau == "N/E (but note mod-severe tau in hippocampus)" ] = "NE"
+tau[tau == "sparse superficially, frequent in deep sulcus, believed CTE related"] = "Sparse"
+tau = table(tau)
+
+pie(tau,
+    main = "tau",
+    col = pie.colors,
+    cex = .5)
+
+
+```
+
+```{r}
+
+NEUAL503EPH = TALSmeta[TALSmeta$externalsubjectid == "NEUAL503EPH",]
+
+NEUAL503EPH[,c("tissue", "disease_duration_in_months")]
+
+
+```
+
+
+```{r}
+count.folder = "/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/collections.postmortem_tissue_core.rnaseq_counts/AllCountTables/"
+TempHumanData = read.csv(paste0(count.folder,list.files(count.folder)[1]))
+
+FullHumanData = data.frame(gene = TempHumanData$gene,
+                           count = TempHumanData$count)
+colnames(FullHumanData)[2] = TempHumanData$data_file_id[1]
+row.names(FullHumanData) = FullHumanData$gene
+
+i = 2
+while(i<=length(list.files(count.folder))){
+  TempHumanData = read.csv(paste0(count.folder,list.files(count.folder)[i]))
+  TempHumanData = TempHumanData[,c("gene", "count", "data_file_id")]
+  colnames(TempHumanData)[2] = TempHumanData$data_file_id[1]
+  row.names(TempHumanData) = TempHumanData$gene
+  if(length(setdiff(FullHumanData$gene, TempHumanData$gene))>0){
+    FullHumanData[setdiff(FullHumanData$gene, TempHumanData$gene), ] = NA
+  }
+  TempHumanData = TempHumanData[row.names(FullHumanData),]
+  FullHumanData = cbind(FullHumanData, TempHumanData[,TempHumanData$data_file_id[1]])
+  i = i+1
+}
+
+```
+
+
+##notes
+compare brain data (finish analysis)
+
+diopt score in human gene conversion table?

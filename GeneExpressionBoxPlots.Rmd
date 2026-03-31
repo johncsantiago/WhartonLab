@@ -107,6 +107,38 @@ DEout=G_X_E$table
 G85R_gbb.LL3xML3=DEout
 sG85R_gbb.LL3xML3=DEout[DEout$FDR<.05,]
 
+compare = makeContrasts(G85R_gbb_LL3-LoxP_LL3, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+G85R_gbbxWT.LL3=DEout
+sG85R_gbbxWT.LL3=DEout[DEout$FDR<.05,]
+
+compare = makeContrasts(G85R_gbb_LL3-G85R_LL3, levels=design)
+lrt = glmQLFTest(fit,contrast=as.vector(compare))
+G_X_E<-topTags(lrt,adjust.method="BH",n = nrow(z$counts), sort.by="PValue")
+DEout=G_X_E$table
+G85R_gbbxG85R.LL3=DEout
+sG85R_gbbxG85R.LL3=DEout[DEout$FDR<.05,]
+
+
+sGRxWT.LL3=GRxWT.LL3[GRxWT.LL3$FDR<.1,]
+upGR = sGRxWT.LL3[sGRxWT.LL3$logFC>0,]
+downGR = sGRxWT.LL3[sGRxWT.LL3$logFC<0,]
+
+sG85R_gbbxG85R.LL3=G85R_gbbxG85R.LL3[G85R_gbbxG85R.LL3<.1,]
+down.gbb = sG85R_gbbxG85R.LL3[sG85R_gbbxG85R.LL3$logFC<0,]
+
+up.gbb = sG85R_gbbxG85R.LL3[sG85R_gbbxG85R.LL3$logFC>0,]
+
+GeneIDKey[intersect(row.names(upGR), row.names(down.gbb)),"Symbol"]
+GeneIDKey[intersect(row.names(downGR), row.names(up.gbb)),"Symbol"]
+
+
+
+
+
+
 gbbKO = read.csv(paste0(git.dir, "gbbKO_CountTable.csv"), row.names = 1)
 
 gbbKO.groups = read.csv(paste0(git.dir, "gbbKO_Metadata.csv"), row.names = 1)
@@ -670,7 +702,7 @@ plot.metab(metabID)
 ## gene name needs to be the full or partial gene symbol as listed in the table (case sensitive)
 
 gene.name = 'RapGAP1'
-gene.name = 'VGlut'
+gene.name = 'Zip71B'
 
 plot.SC(gene.name)
 
@@ -727,7 +759,7 @@ if(nrow(ID.row) != 1){
 
 ```{r echo = F}
 ##Plot expression levels for a specific gene in the gbbOE dataset
-ID = "FBgn0003023"
+ID = "FBgn0267025"
   
 ID.row = GeneIDKey[grep(ID, GeneIDKey$FBgn),]
 
