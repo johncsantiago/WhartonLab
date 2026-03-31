@@ -2310,4 +2310,136 @@ G85R.compareparent.genes = function(parent.category, plot.data){
 }
 
 
+plot.multipleGOterms = function(group1, group2, comparison, 
+                                keyword, sig.only = TRUE){
+  
+  all.specific.terms = GO.Names[grep(keyword, GO.Names$term),]
+  
+  if(group1 %in% colnames(G85R.meancpm) &
+     group2 %in% colnames(G85R.meancpm) &
+     comparison %in% colnames(G85R.FDR)){
+    GO.genes =  GeneIDKey[GeneIDKey$ensembl %in%  unique(unlist(genesingo[all.specific.terms$category])),
+                          "FBgn"]
+    GO.genes = intersect(unique(c(row.names(G85R.FDR), row.names(A4V.FDR))), GO.genes)
+    GO.genes = GeneIDKey[GeneIDKey$FBgn %in% GO.genes, c("FBgn", "Symbol")]
+    
+    GO.genes$FDR = G85R.FDR[GO.genes$FBgn,comparison]
+    GO.genes$FC = G85R.FC[GO.genes$FBgn,comparison]
+    GO.genes$mean1 = G85R.meancpm[GO.genes$FBgn, group1]
+    GO.genes$mean2 = G85R.meancpm[GO.genes$FBgn, group2]
+    GO.genes = na.omit(GO.genes)
+    
+    ##insert cutoff filters here if wanted:
+    if(sig.only == TRUE){
+      GO.genes = GO.genes[GO.genes$FDR <= 0.05,]
+    }
+    
+    volcano.data = GO.genes
+    max.mean = max(na.omit(c(volcano.data$mean1, volcano.data$mean2)))
+    volcano.data$size = apply(volcano.data[,c("mean1", "mean2")], MARGIN = 1, max)
+    if(max.mean>200){
+      volcano.data$size[volcano.data$size > 200] = 200
+      max.mean = 200
+    }  
+    volcano.data$size = ((volcano.data$size/max.mean)+.5)*20
+    volcano.data$FDR = -log2(volcano.data$FDR)
+    volcano.data.color = volcano.data$FDR
+    volcano.data.color[abs(volcano.data.color) < -log2(.05)] = 0
+    volcano.data.color = 100*(volcano.data.color/max(na.omit(volcano.data.color)))
+    volcano.data.color = 101+(volcano.data$FC/abs(volcano.data$FC))*volcano.data.color
+    
+    volcano.color <- colorRampPalette(c("royalblue", "deepskyblue", "lightblue",
+                                        "white",
+                                        "lightpink", "deeppink", "firebrick"))(201)
+    volcano.color[101] = "lightgrey"
+    volcano.data$Color = volcano.color[volcano.data.color]
+    
+    
+    fig = plot_ly(data = volcano.data,
+                  x = ~FC,
+                  y = ~FDR,
+                  type = 'scatter',
+                  mode = 'markers',
+                  marker = list(color = ~Color, colors = ~Color, size = volcano.data$size,
+                                line = list(color = 'black', width = .5)),
+                  hoverinfo = "text",
+                  hovertext = paste("Gene:", volcano.data$FBgn,
+                                    "\nSymbol:", volcano.data$Symbol,
+                                    "\n-log2(FDR): ", round(volcano.data$FDR,2),
+                                    "\nFC: ", round(volcano.data$FC,2),
+                                    "\n", group1, "mean cpm: ",
+                                    round(volcano.data$mean1, 1),
+                                    "\n", group2, "mean cpm: ",
+                                    round(volcano.data$mean2, 1)))
+    fig = fig %>% layout(title = paste0(group1, " vs. ", group2))
+    
+    #fig
+  }
+  
+  
+  if(group1 %in% colnames(A4V.meancpm) &
+     group2 %in% colnames(A4V.meancpm) &
+     comparison %in% colnames(A4V.FDR)){
+    
+    GO.genes =  GeneIDKey[GeneIDKey$ensembl %in% 
+                            unique(unlist(genesingo[all.specific.terms$category])),
+                          "FBgn"]
+    GO.genes = intersect(unique(c(row.names(G85R.FDR), row.names(A4V.FDR))), GO.genes)
+    GO.genes = GeneIDKey[GeneIDKey$FBgn %in% GO.genes, c("FBgn", "Symbol")]
+    
+    GO.genes$FDR = A4V.FDR[GO.genes$FBgn,comparison]
+    GO.genes$FC = A4V.FC[GO.genes$FBgn,comparison]
+    GO.genes$mean1 = A4V.meancpm[GO.genes$FBgn, group1]
+    GO.genes$mean2 = A4V.meancpm[GO.genes$FBgn, group2]
+    GO.genes = na.omit(GO.genes)
+    
+    ##insert cutoff filters here if wanted:
+    if(sig.only == TRUE){
+      GO.genes = GO.genes[GO.genes$FDR <= 0.05,]
+    }
+    
+    volcano.data = GO.genes
+    max.mean = max(na.omit(c(volcano.data$mean1, volcano.data$mean2)))
+    volcano.data$size = apply(volcano.data[,c("mean1", "mean2")], MARGIN = 1, max)
+    if(max.mean>200){
+      volcano.data$size[volcano.data$size > 200] = 200
+      max.mean = 200
+    }  
+    volcano.data$size = ((volcano.data$size/max.mean)+.5)*20
+    volcano.data$FDR = -log2(volcano.data$FDR)
+    volcano.data.color = volcano.data$FDR
+    volcano.data.color[abs(volcano.data.color) < -log2(.05)] = 0
+    volcano.data.color = 100*(volcano.data.color/max(na.omit(volcano.data.color)))
+    volcano.data.color = 101+(volcano.data$FC/abs(volcano.data$FC))*volcano.data.color
+    
+    volcano.color <- colorRampPalette(c("royalblue", "deepskyblue", "lightblue",
+                                        "white",
+                                        "lightpink", "deeppink", "firebrick"))(201)
+    volcano.color[101] = "lightgrey"
+    volcano.data$Color = volcano.color[volcano.data.color]
+    
+    
+    fig = plot_ly(data = volcano.data,
+                  x = ~FC,
+                  y = ~FDR,
+                  type = 'scatter',
+                  mode = 'markers',
+                  marker = list(color = ~Color, colors = ~Color, size = volcano.data$size,
+                                line = list(color = 'black', width = .5)),
+                  hoverinfo = "text",
+                  hovertext = paste("Gene:", volcano.data$FBgn,
+                                    "\nSymbol:", volcano.data$Symbol,
+                                    "\n-log2(FDR): ", round(volcano.data$FDR,2),
+                                    "\nFC: ", round(volcano.data$FC,2),
+                                    "\n", group1, "mean cpm: ",
+                                    round(volcano.data$mean1, 1),
+                                    "\n", group2, "mean cpm: ",
+                                    round(volcano.data$mean2, 1)))
+    fig = fig %>% layout(title = paste0(group1, " vs. ", group2))
+    
+    #fig
+  }
+  fig
+  
+}
 
