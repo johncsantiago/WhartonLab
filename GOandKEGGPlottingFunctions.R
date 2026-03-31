@@ -30,7 +30,7 @@ library(VennDiagram)
 git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/GeneralDataFiles/"
 
 A4V.cpm = read.csv(paste0(git.dir, "A4V.cpmdata.csv"), row.names = 1)
-A4V.meancpm = read.csv(paste0(git.dir, "A4V_BodySections_RNAseq/A4V.meancpmdata.csv"), row.names = 1)
+A4V.meancpm = read.csv(paste0(git.dir, "A4V.meancpmdata.csv"), row.names = 1)
 
 A4V.FDR = read.csv(paste0(git.dir, "A4V.FDRdata.csv"), row.names = 1)
 
