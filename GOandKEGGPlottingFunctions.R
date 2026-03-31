@@ -110,7 +110,6 @@ GenesInKegg = readRDS(gzcon(url(paste0(git.dir, "kegg.symbol2path.RData"))))
 KEGG.Names = read.csv(paste0(git.dir, "KEGG.names.csv"), row.names = 1)
 GO.Names = read.csv(paste0(git.dir, "GO.names.csv"), row.names = 1)
 
-genesingo = 
 
 Enrichment = function(FDR){
   
