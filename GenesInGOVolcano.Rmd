@@ -1,7 +1,7 @@
 ---
 title: "SpecificGO Genes"
 author: "John Santiago"
-date: "2026-03-27"
+date: "2026-04-01"
 output: html_document
 ---
 
@@ -11,9 +11,9 @@ knitr::opts_chunk$set(echo = F)
 
 
 
-```{r echo = F, message = F}
+```{r echo = F, message = F, warning = FALSE}
 
-source('/Users/johncsantiago/Documents/GitHub/WhartonLab/GOandKEGGPlottingFunctions.R')
+source('https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/GenesInGOVolcano_functions.R')
 
 ```
 
@@ -36,25 +36,24 @@ source('/Users/johncsantiago/Documents/GitHub/WhartonLab/GOandKEGGPlottingFuncti
 ##  "AvS40FH" "AvS40FT" "AvS40FA"
 ##  "A3v9FH"  "A3v9MH"  "A3v9FT"  "A3v9MT"  "A3v9FA"  "A3v9MA"
 ##  "S3v9FH"  "S3v9MH"  "S3v9FT"  "S3v9MT"  "S3v9FA"  "S3v9MA"
-##
+##  "A3v40FH" "A3v40FT" "A3v40FA"
+##  "S3v40FH" "S3v40FT" "S3v40FA"
+##  "A9v40FH" "A9v40FT" "A9v40FA"
+##  "S9v40FH" "S9v40FT" "S9v40FA"
+##  "A3FvMH"  "A3FvMT"  "A3FvMA"
+##  "S3FvMH"  "S3FvMT"  "S3FvMA"
+##  "A9FvMH"  "A9FvMT"  "A9FvMA"
+##  "S9FvMH"  "S9FvMT"  "S9FvMA" 
 
-   
-    "A9v40FH" "S9v40FH" "A3v40FH" "S3v40FH" "AvS3FT" 
-"AvS3MT"        
-[22]   "A9v40FT" "S9v40FT" "A3v40FT" "S3v40FT" 
-[29]       
-[36] "A9v40FA" "S9v40FA" "A3v40FA" "S3v40FA" "A3FvMH"  "S3FvMH"  "A9FvMH" 
-[43] "S9FvMH"  "A3FvMT"  "S3FvMT"  "A9FvMT"  "S9FvMT"  "A3FvMA"  "S3FvMA" 
-[50] "A9FvMA"  "S9FvMA" 
+comparison = "S3v9FT"
+keyword = "lipid"
 
 
-group1 = "GRMC"
-group2 = "WTMC"
-comparison = "GRxWT.MC"
-keyword = "mito"
-sig.only = T
 
-plot.multipleGOterms(group1, group2, comparison, keyword, sig.only)
+plot.multipleGOterms(comparison, 
+                     keyword, 
+                     sig.only = TRUE, 
+                     printallcategories = FALSE)
 
 ```
 

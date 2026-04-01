@@ -93,8 +93,8 @@ plot.multipleGOterms = function(comparison,
   
   if(comparison %in% colnames(G85R.FDR)){
     
-    group1 = strsplit(names(G85R.comparekey)[1], split = "v")[[1]][1]
-    group2 =  strsplit(names(G85R.comparekey)[1], split = "v")[[1]][2]
+    group1 = strsplit(names(G85R.comparekey[G85R.comparekey==comparison]), split = "v")[[1]][1]
+    group2 =  strsplit(names(G85R.comparekey[G85R.comparekey==comparison]), split = "v")[[1]][2]
     
     GO.genes =  GeneIDKey[GeneIDKey$ensembl %in%  unique(unlist(genesingo[all.specific.terms$category])),
                           "FBgn"]
@@ -157,8 +157,8 @@ plot.multipleGOterms = function(comparison,
   if(comparison %in% colnames(A4V.FDR)){
     
     
-    group1 = strsplit(names(A4V.comparekey)[1], split = "v")[[1]][1]
-    group2 =  strsplit(names(A4V.comparekey)[1], split = "v")[[1]][2]
+    group1 = strsplit(names(A4V.comparekey[A4V.comparekey==comparison]), split = "v")[[1]][1]
+    group2 =  strsplit(names(A4V.comparekey[A4V.comparekey==comparison]), split = "v")[[1]][2]
     
     GO.genes =  GeneIDKey[GeneIDKey$ensembl %in% 
                             unique(unlist(genesingo[all.specific.terms$category])),
