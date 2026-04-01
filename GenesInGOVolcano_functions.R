@@ -219,7 +219,7 @@ plot.multipleGOterms = function(comparison,
   }
   
   if(printallcategories == TRUE){
-    all.specific.terms
+    print(all.specific.terms[,"term"])
   }
   
   fig
