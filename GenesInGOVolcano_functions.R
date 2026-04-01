@@ -218,7 +218,7 @@ plot.multipleGOterms = function(comparison,
 
   }
   
-  if(printallcategories = TRUE){
+  if(printallcategories == TRUE){
     all.specific.terms
   }
   
