@@ -323,13 +323,33 @@ MLE.volcano = function(MLEcomparison, main.title = "", top = 20000){
 ```
 
 
-```{r echo = F}
+```{r echo = F, fig.width=7, fig.height=7}
+par(mfrow=c(3,2))
 
-plot.MLE("FBgn0003996")
+plot.MLE("FBgn0014861")
+plot.MLE("FBgn0284442")
+plot.MLE("FBgn0017577")
+plot.MLE("FBgn0025815")
+plot.MLE("FBgn0030716")
+plot.MLE("FBgn0266916")
 
 ```
 
+```{r}
 
+FDR = data.frame(Gene = c("FBgn0014861",
+                          "FBgn0284442",
+                          "FBgn0017577",
+                          "FBgn0025815",
+                          "FBgn0030716",
+                          "FBgn0266916"))
+i=1
+while(i<= 6){
+  FDR[,names(all.comparisons)[i]] = all.comparisons[[i]][FDR$Gene, "FDR"]
+  i=i+1
+}
+
+```
 
 ```{r echo = F}
 ##choose an option (input in quotes so it is a string and not a variable)

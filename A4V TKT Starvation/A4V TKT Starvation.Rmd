@@ -1,0 +1,781 @@
+---
+title: "A4VTKT_StarvationSurvival"
+author: "John Santiago"
+date: "2026-04-12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+```
+
+
+```{r}
+library(beeswarm)
+survival = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/20260412_StarvationSurvivalData.csv")
+
+survival$ID = paste0(survival$Genotype,"_", survival$Group)
+
+
+plot(x=NA,
+     y=NA,
+     ylim = c(0,100),
+     xlim = c(0,150))
+
+i=1
+while(i<=4){
+  sub.survival = survival[survival$Genotype == "WTM",]
+  plot.data = sub.survival[sub.survival$ID == unique(sub.survival$ID)[i],]
+  lines(x = plot.data$Hourssurvived,
+        y = plot.data$PercentAlive,
+        col = "royalblue",
+        lwd = 2)
+  i=i+1
+}
+
+
+i=1
+while(i<=4){
+  sub.survival = survival[survival$Genotype == "WTM TKT",]
+  plot.data = sub.survival[sub.survival$ID == unique(sub.survival$ID)[i],]
+  lines(x = plot.data$Hourssurvived,
+        y = plot.data$PercentAlive,
+        col = "royalblue",
+        lwd = 2,
+        lty = 2)
+  i=i+1
+}
+
+
+
+i=1
+while(i<=4){
+  sub.survival = survival[survival$Genotype == "A4VM",]
+  plot.data = sub.survival[sub.survival$ID == unique(sub.survival$ID)[i],]
+  lines(x = plot.data$Hourssurvived,
+        y = plot.data$PercentAlive,
+        col = "firebrick",
+        lwd = 2)
+  i=i+1
+}
+
+
+i=1
+while(i<=4){
+  sub.survival = survival[survival$Genotype == "A4VM TKT",]
+  plot.data = sub.survival[sub.survival$ID == unique(sub.survival$ID)[i],]
+  lines(x = plot.data$Hourssurvived,
+        y = plot.data$PercentAlive,
+        col = "firebrick",
+        lwd = 2,
+        lty = 2)
+  i=i+1
+}
+
+
+
+i=1
+while(i<=4){
+  sub.survival = survival[survival$Genotype == "WTF",]
+  plot.data = sub.survival[sub.survival$ID == unique(sub.survival$ID)[i],]
+  lines(x = plot.data$Hourssurvived,
+        y = plot.data$PercentAlive,
+        col = "deepskyblue",
+        lwd = 2)
+  i=i+1
+}
+
+
+i=1
+while(i<=4){
+  sub.survival = survival[survival$Genotype == "WTF TKT",]
+  plot.data = sub.survival[sub.survival$ID == unique(sub.survival$ID)[i],]
+  lines(x = plot.data$Hourssurvived,
+        y = plot.data$PercentAlive,
+        col = "deepskyblue",
+        lwd = 2,
+        lty = 2)
+  i=i+1
+}
+
+
+
+i=1
+while(i<=4){
+  sub.survival = survival[survival$Genotype == "A4VF",]
+  plot.data = sub.survival[sub.survival$ID == unique(sub.survival$ID)[i],]
+  lines(x = plot.data$Hourssurvived,
+        y = plot.data$PercentAlive,
+        col = "deeppink",
+        lwd = 2)
+  i=i+1
+}
+
+
+i=1
+while(i<=4){
+  sub.survival = survival[survival$Genotype == "A4VF TKT",]
+  plot.data = sub.survival[sub.survival$ID == unique(sub.survival$ID)[i],]
+  lines(x = plot.data$Hourssurvived,
+        y = plot.data$PercentAlive,
+        col = "deeppink",
+        lwd = 2,
+        lty = 2)
+  i=i+1
+}
+
+abline(h = 50,
+       lty = 2)
+
+```
+
+```{r}
+
+med.life = unique(survival[,c("Genotype", "Group", "ID")])
+med.life$med.lifespan = NA
+i= 1
+while(i<=nrow(med.life)){
+  sub.survival = survival[survival$ID == med.life$ID[i],]
+  if(min(sub.survival$PercentAlive)<50){
+    med.life$med.lifespan[i] = min(sub.survival[sub.survival$PercentAlive <50,
+                                                "Hourssurvived"])
+  }
+  i=i+1
+}
+
+
+
+x1=max(sub.survival[sub.survival$PercentAlive >50, "Hourssurvived"])
+y1=min(sub.survival[sub.survival$PercentAlive >50, "PercentAlive"])
+x2=min(sub.survival[sub.survival$PercentAlive <50, "Hourssurvived"])
+y2=max(sub.survival[sub.survival$PercentAlive <50, "PercentAlive"])
+
+dx = x2-x1
+dy = y2-y1
+slope = dy/dx
+b = y1-x1*slope
+est = (50-b)/slope
+
+
+
+plot(x = c(x1,x2),
+     y = c(y1,y2),
+     type = "l")
+points(x = est,
+       y = 50,
+       bg = "green",
+       pch = 21)
+
+med.life$Genotype = factor(med.life$Genotype,
+                           levels = c("WTF", "WTF TKT",
+                                      "A4VF", "A4VF TKT",
+                                      "WTM", "WTM TKT",
+                                      "A4VM", "A4VM TKT"))
+
+```
+
+```{r}
+
+boxplot(med.life$med.lifespan~med.life$Genotype,
+        cex = .5,
+        boxwex = .5,
+        cex.axis = .75,
+        xlab = "Genotype",
+        ylab = "Median Survival Time (hours)",
+        ylim = c(0, max(na.omit(med.life$med.lifespan))),
+        border = c("steelblue", "cyan",
+              "gold", "yellow",
+              "darkgreen", "limegreen",
+              "firebrick", "red"))
+
+beeswarm(med.life$med.lifespan
+         ~med.life$Genotype,
+         add = T,
+       pch = 21,
+       cex = 1,
+       spacing = 1,
+       bg = c("steelblue", "cyan",
+              "gold", "yellow",
+              "forestgreen", "green",
+              "firebrick", "red"))
+
+
+       
+
+
+```
+
+
+
+```{r}
+
+survival = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/20260412_StarvationSurvivalData.csv")
+
+survival$ID = paste0(survival$Genotype,"_", survival$Group)
+
+
+plot(x=NA,
+     y=NA,
+     ylim = c(0,100),
+     xlim = c(0,150))
+
+i=1
+while(i<=4){
+  sub.survival = survival[survival$Genotype == "WTF",]
+  plot.data = sub.survival[sub.survival$ID == unique(sub.survival$ID)[i],]
+  lines(x = plot.data$Hourssurvived,
+        y = plot.data$PercentAlive,
+        col = "deepskyblue",
+        lwd = 2)
+  i=i+1
+}
+
+
+i=1
+while(i<=4){
+  sub.survival = survival[survival$Genotype == "WTF TKT",]
+  plot.data = sub.survival[sub.survival$ID == unique(sub.survival$ID)[i],]
+  lines(x = plot.data$Hourssurvived,
+        y = plot.data$PercentAlive,
+        col = "deepskyblue",
+        lwd = 2,
+        lty = 2)
+  i=i+1
+}
+
+
+```
+
+
+
+
+```{r}
+
+distance.traveled = function(temp){
+  use.frames = c(1, 1:(max(temp$Frame)/10)*10)
+  
+  temp = temp[temp$Frame %in% use.frames,]
+  
+  key <- paste(temp$Genotype, temp$TrackID, sep = "_")
+  spl <- split(temp, key)
+  
+  total.dist = data.frame(FlyID = names(spl),
+                          DistTrav = 0)
+    
+  i = 1
+  while(i<=length(spl)){
+    spl[[i]] = data.frame(Frame = spl[[i]]$Frame,
+                 TrackID = spl[[i]]$TrackID,
+                 Arena = spl[[i]]$Arena,
+                 CX = spl[[i]]$CX,
+                 CY = spl[[i]]$CY,
+                 dx = c(NA, diff(spl[[i]]$CX)),
+                 dy = c(NA, diff(spl[[i]]$CY)))
+    spl[[i]]$step_px = sqrt(spl[[i]]$dx^2 + spl[[i]]$dy^2)
+    spl[[i]]$totaldistance = c(NA, cumsum(spl[[i]]$step_px[-1]))
+    total.dist$DistTrav[i] = max(na.omit(spl[[i]]$totaldistance))/max(spl[[i]]$Frame)
+    
+    i=i+1
+  }
+  
+  
+  ##distance traveled
+  dt = do.call(rbind, spl)
+  row.names(dt) = 1:nrow(dt)
+  
+  
+  
+  
+  plot(x = NA,
+       y = NA,
+       xlim = c(0, max(dt$Frame)),
+       ylim = c(0, max(na.omit(dt$totaldistance))),
+       xlab = "Frame",
+       ylab = "Total distance traveled")
+  
+  dt$color = "royalblue"
+  dt$color[dt$Arena == 1] = "firebrick"
+  
+  i=1
+  while(i <+ length(unique(dt$TrackID))){
+    temp.dt = dt[dt$TrackID == unique(dt$TrackID)[i],]
+    lines(x = temp.dt$Frame,
+          y = temp.dt$totaldistance,
+          col = temp.dt$color[1],
+          lwd = .5)
+    i = i + 1
+  }
+  
+  return(total.dist)
+}
+
+```
+
+```{r}
+
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/202604_A4VTKT_Starvation.TrackedVideos/20260407_19.5_Starvation_WTF_A4VF.csv")
+temp$Genotype = "WTF"
+temp$Genotype[temp$Arena == 1] = "A4VF"
+temp$Hourssurvived = 9
+
+WTFA4VF.9 = distance.traveled(temp)
+
+```
+
+
+```{r}
+
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/202604_A4VTKT_Starvation.TrackedVideos/20260407_19.5_Starvation_WTM_A4VM.csv")
+temp$Genotype = "WTM"
+temp$Genotype[temp$Arena == 1] = "A4VM"
+temp$Hourssurvived = 9
+
+WTMA4VM.9 = distance.traveled(temp)
+
+```
+
+
+
+```{r}
+
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/202604_A4VTKT_Starvation.TrackedVideos/20260407_19.5_Starvation_WTFTKT_A4VFTKT.csv")
+temp$Genotype = "WTF TKT
+temp$Genotype[temp$Arena == 1] = ""A4VF TKT
+temp$Hourssurvived = 9
+
+WTFTKTA4VFTKT.9 = distance.traveled(temp)
+
+```
+
+
+
+
+
+
+```{r}
+
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/202604_A4VTKT_Starvation.TrackedVideos/20260407_19.5_Starvation_WTMTKT_A4VMTKT.csv")
+temp$Genotype = "WTM TKT
+temp$Genotype[temp$Arena == 1] = ""A4VM TKT
+temp$Hourssurvived = 9
+
+WTMTKTA4VMTKT.9 = distance.traveled(temp)
+
+```
+
+
+```{r}
+
+activity.data = rbind(rbind(WTMA4VM.9,WTFA4VF.9),
+                      rbind(WTMTKTA4VMTKT.9,WTFTKTA4VFTKT.9))
+
+activity.data$Group = do.call(rbind, strsplit(activity.data$FlyID,
+                                               split = "_"))[,1]
+
+activity.data$Group = factor(activity.data$Group,
+                             levels = c("WTF", "WTF TKT,
+                                        "A4VF", ""A4VF TKT,
+                                        "WTM", "WTM TKT,
+                                        "A4VM", ""A4VM TKT))
+
+boxplot(activity.data$DistTrav~activity.data$Group,
+        cex = .5,
+        boxwex = .5,
+        xlab = "Genotype",
+        ylab = "Distance Traveled",
+        main = "9 Hours",
+        ylim = c(0, max(na.omit(activity.data$DistTrav))),
+        border = c("steelblue", "cyan",
+              "gold", "yellow",
+              "darkgreen", "limegreen",
+              "firebrick", "red"))
+beeswarm(activity.data$DistTrav~activity.data$Group,
+         add = T,
+       pch = 21,
+       cex = .5,
+       spacing = .5,
+       bg = c("steelblue", "cyan",
+              "gold", "yellow",
+              "forestgreen", "green",
+              "firebrick", "red"))
+
+```
+
+
+
+```{r}
+
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/202604_A4VTKT_Starvation.TrackedVideos/20260407_0H_Starvation_WTF_A4VF.csv")
+temp$Genotype = "WTF"
+temp$Genotype[temp$Arena == 0] = "A4VF"
+temp$Hourssurvived = 0
+
+
+WTFA4VF.0 = distance.traveled(temp)
+
+```
+
+
+```{r}
+
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/202604_A4VTKT_Starvation.TrackedVideos/20260407_0H_Starvation_WTM_A4VM.csv")
+temp$Genotype = "WTM"
+temp$Genotype[temp$Arena == 0] = "A4VM"
+temp$Hourssurvived = 0
+
+
+WTMA4VM.0 = distance.traveled(temp)
+
+```
+
+
+```{r}
+
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/202604_A4VTKT_Starvation.TrackedVideos/20260407_0H_Starvation_WTFTKT_A4VFTKT.csv")
+temp$Genotype = "WTF TKT
+temp$Genotype[temp$Arena == 0] = ""A4VF TKT
+temp$Hourssurvived = 0
+
+WTFTKTA4VFTKT.0 = distance.traveled(temp)
+
+```
+
+
+```{r}
+
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/202604_A4VTKT_Starvation.TrackedVideos/20260407_0H_Starvation_WTMTKT_A4VMTKT.csv")
+temp$Genotype = "WTM TKT
+temp$Genotype[temp$Arena == 0] = ""A4VM TKT
+temp$Hourssurvived = 0
+
+WTMTKTA4VMTKT.0 = distance.traveled(temp)
+
+```
+
+
+
+
+```{r}
+
+activity.data = rbind(rbind(WTMA4VM.0,WTFA4VF.0),
+                      rbind(WTMTKTA4VMTKT.0,WTFTKTA4VFTKT.0))
+
+activity.data$Group = do.call(rbind, strsplit(activity.data$FlyID,
+                                               split = "_"))[,1]
+
+activity.data$Group = factor(activity.data$Group,
+                             levels = c("WTF", "WTF TKT,
+                                        "A4VF", ""A4VF TKT,
+                                        "WTM", "WTM TKT,
+                                        "A4VM", ""A4VM TKT))
+
+boxplot(activity.data$DistTrav~activity.data$Group,
+        cex = .5,
+        boxwex = .5,
+        xlab = "Genotype",
+        ylab = "Distance Traveled",
+        main = "0 Hours",
+        ylim = c(0, max(na.omit(activity.data$DistTrav))),
+        border = c("steelblue", "cyan",
+              "gold", "yellow",
+              "darkgreen", "limegreen",
+              "firebrick", "red"))
+beeswarm(activity.data$DistTrav~activity.data$Group,
+         add = T,
+       pch = 21,
+       cex = .5,
+       spacing = .5,
+       bg = c("steelblue", "cyan",
+              "gold", "yellow",
+              "forestgreen", "green",
+              "firebrick", "red"))
+
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/202604_A4VTKT_Starvation.TrackedVideos/20260407_2.5H_Starvation_WTF_A4VF.csv")
+temp$Genotype = "WTF"
+temp$Genotype[temp$Arena == 0] = "A4VF"
+temp$Hourssurvived = 0
+
+WTFA4VF.2.5 = distance.traveled(temp)
+
+```
+
+
+```{r}
+
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/202604_A4VTKT_Starvation.TrackedVideos/20260407_2.5H_Starvation_WTM_A4VM.csv")
+temp$Genotype = "WTM"
+temp$Genotype[temp$Arena == 0] = "A4VM"
+temp$Hourssurvived = 0
+
+WTMA4VM.2.5 = distance.traveled(temp)
+
+```
+
+
+```{r}
+
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/202604_A4VTKT_Starvation.TrackedVideos/20260407_2.5H_Starvation_WTFTKT_A4VFTKT.csv")
+temp$Genotype = "WTF TKT
+temp$Genotype[temp$Arena == 0] = ""A4VF TKT
+temp$Hourssurvived = 0
+
+WTFTKTA4VFTKT.2.5 = distance.traveled(temp)
+
+```
+
+
+```{r}
+
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/202604_A4VTKT_Starvation.TrackedVideos/20260407_2.5H_Starvation_WTMTKT_A4VMTKT.csv")
+temp$Genotype = "WTM TKT
+temp$Genotype[temp$Arena == 0] = ""A4VM TKT
+temp$Hourssurvived = 0
+
+WTMTKTA4VMTKT.2.5 = distance.traveled(temp)
+
+```
+
+
+
+
+```{r}
+
+activity.data = rbind(rbind(WTMA4VM.2.5,WTFA4VF.2.5),
+                      rbind(WTMTKTA4VMTKT.2.5,WTFTKTA4VFTKT.2.5))
+
+activity.data$Group = do.call(rbind, strsplit(activity.data$FlyID,
+                                               split = "_"))[,1]
+
+activity.data$Group = factor(activity.data$Group,
+                             levels = c("WTF", "WTF TKT,
+                                        "A4VF", ""A4VF TKT,
+                                        "WTM", "WTM TKT,
+                                        "A4VM", ""A4VM TKT))
+
+boxplot(activity.data$DistTrav~activity.data$Group,
+        cex = .5,
+        boxwex = .5,
+        xlab = "Genotype",
+        ylab = "Distance Traveled",
+        main = "2.5 Hours",
+        ylim = c(0, max(na.omit(activity.data$DistTrav))),
+        border = c("steelblue", "cyan",
+              "gold", "yellow",
+              "darkgreen", "limegreen",
+              "firebrick", "red"))
+beeswarm(activity.data$DistTrav~activity.data$Group,
+         add = T,
+       pch = 21,
+       cex = .5,
+       spacing = .5,
+       bg = c("steelblue", "cyan",
+              "gold", "yellow",
+              "forestgreen", "green",
+              "firebrick", "red"))
+
+```
+
+
+
+
+
+
+```{r}
+
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/202604_A4VTKT_Starvation.TrackedVideos/20260408_22_Starvation_WTF_A4VF.csv")
+temp$Genotype = "WTF"
+temp$Genotype[temp$Arena == 0] = "A4VF"
+temp$Hourssurvived = 0
+
+WTFA4VF.35.5 = distance.traveled(temp)
+
+```
+
+
+```{r}
+
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/202604_A4VTKT_Starvation.TrackedVideos/20260408_22_Starvation_WTM_A4VM.csv")
+temp$Genotype = "WTM"
+temp$Genotype[temp$Arena == 1] = "A4VM"
+temp$Hourssurvived = 0
+
+WTMA4VM.35.5 = distance.traveled(temp)
+
+```
+
+
+```{r}
+
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/202604_A4VTKT_Starvation.TrackedVideos/20260408_22_Starvation_WTFTKT_A4VFTKT.csv")
+temp$Genotype = "WTF TKT
+temp$Genotype[temp$Arena == 0] = ""A4VF TKT
+temp$Hourssurvived = 0
+
+WTFTKTA4VFTKT.35.5 = distance.traveled(temp)
+
+```
+
+
+```{r}
+
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/202604_A4VTKT_Starvation.TrackedVideos/20260408_22_Starvation_WTMTKT_A4VMTKT.csv")
+temp$Genotype = "WTM TKT
+temp$Genotype[temp$Arena == 0] = ""A4VM TKT
+temp$Hourssurvived = 0
+
+WTMTKTA4VMTKT.35.5 = distance.traveled(temp)
+
+```
+
+
+
+
+```{r}
+
+TotalAlive = survival[survival$Group == 2 &
+                        survival$Hourssurvived == "35.5",]
+
+
+
+activity.data = rbind(rbind(WTMA4VM.35.5,WTFA4VF.35.5),
+                      rbind(WTMTKTA4VMTKT.35.5,WTFTKTA4VFTKT.35.5))
+
+activity.data$Group = do.call(rbind, strsplit(activity.data$FlyID,
+                                               split = "_"))[,1]
+
+activity.data$Group = factor(activity.data$Group,
+                             levels = c("WTF", "WTF TKT,
+                                        "A4VF", ""A4VF TKT,
+                                        "WTM", "WTM TKT,
+                                        "A4VM", ""A4VM TKT))
+
+boxplot(activity.data$DistTrav~activity.data$Group,
+        cex = .5,
+        boxwex = .5,
+        xlab = "Genotype",
+        ylab = "Distance Traveled",
+        main = "35.5 Hours",
+        ylim = c(0, max(na.omit(activity.data$DistTrav))),
+        border = c("steelblue", "cyan",
+              "gold", "yellow",
+              "darkgreen", "limegreen",
+              "firebrick", "red"))
+beeswarm(activity.data$DistTrav~activity.data$Group,
+         add = T,
+       pch = 21,
+       cex = .5,
+       spacing = .5,
+       bg = c("steelblue", "cyan",
+              "gold", "yellow",
+              "forestgreen", "green",
+              "firebrick", "red"))
+
+```
+
+
+
+
+
+
+
+```{r}
+
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/202604_A4VTKT_Starvation.TrackedVideos/20260408_23H_Starvation_WTF_A4VF.csv")
+temp$Genotype = "WTF"
+temp$Genotype[temp$Arena == 0] = "A4VF"
+temp$Hourssurvived = 0
+
+WTFA4VF.23 = distance.traveled(temp)
+
+```
+
+
+```{r}
+
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/202604_A4VTKT_Starvation.TrackedVideos/20260408_23H_Starvation_WTM_A4VM.csv")
+temp$Genotype = "WTM"
+temp$Genotype[temp$Arena == 0] = "A4VM"
+temp$Hourssurvived = 0
+
+WTMA4VM.23 = distance.traveled(temp)
+
+```
+
+
+```{r}
+
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/202604_A4VTKT_Starvation.TrackedVideos/20260408_23H_Starvation_WTFTKT_A4VFTKT.csv")
+temp$Genotype = "WTF TKT
+temp$Genotype[temp$Arena == 0] = ""A4VF TKT
+temp$Hourssurvived = 0
+
+WTFTKTA4VFTKT.23 = distance.traveled(temp)
+
+```
+
+
+```{r}
+
+temp = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/202604_A4VTKT_Starvation.TrackedVideos/20260408_23H_Starvation_WTMTKT_A4VMTKT.csv")
+temp$Genotype = "WTM TKT
+temp$Genotype[temp$Arena == 0] = ""A4VM TKT
+temp$Hourssurvived = 0
+
+WTMTKTA4VMTKT.23 = distance.traveled(temp)
+
+```
+
+
+
+
+```{r}
+
+
+activity.data = rbind(rbind(WTMA4VM.23,WTFA4VF.23),
+                      rbind(WTMTKTA4VMTKT.23,WTFTKTA4VFTKT.23))
+
+activity.data$Group = do.call(rbind, strsplit(activity.data$FlyID,
+                                               split = "_"))[,1]
+
+activity.data$Group = factor(activity.data$Group,
+                             levels = c("WTF", "WTF TKT,
+                                        "A4VF", ""A4VF TKT,
+                                        "WTM", "WTM TKT,
+                                        "A4VM", ""A4VM TKT))
+
+boxplot(activity.data$DistTrav~activity.data$Group,
+        cex = .25,
+        boxwex = .5,
+        xlab = "Genotype",
+        ylab = "Distance Traveled",
+        main = "23 Hours",
+        cex.axis = .75,
+        ylim = c(0, max(na.omit(activity.data$DistTrav))),
+        border = c("steelblue", "cyan",
+              "gold", "yellow",
+              "darkgreen", "limegreen",
+              "firebrick", "red"))
+beeswarm(activity.data$DistTrav~activity.data$Group,
+         add = T,
+       pch = 21,
+       cex = .5,
+       spacing = .5,
+       bg = c("steelblue", "cyan",
+              "gold", "yellow",
+              "forestgreen", "green",
+              "firebrick", "red"))
+
+```

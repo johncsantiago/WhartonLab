@@ -1,0 +1,292 @@
+---
+title: "FullMetabolicPathway"
+author: "John Santiago"
+date: "2026-05-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r}
+
+library(plotly)
+
+#dme01100 <- xmlToDataFrame("/Users/johncsantiago/Documents/GitHub/WhartonLab/dme01100.xml",collectNames = F)
+
+
+dme01100 <- read.delim("/Users/johncsantiago/Documents/GitHub/WhartonLab/dme01100.txt", row.names = NULL, header = F, sep = " ")
+
+start = grep("</entry>", dme01100$V5)
+
+cpds = grep("compound", dme01100$V8)
+cpd.names = substring(dme01100[cpds,"V7"],6, nchar(dme01100[cpds,"V7"]))
+cpd.names = gsub("cpd:", "", cpd.names)
+cpd.names = gsub("gl:", "", cpd.names)
+
+cpd.info = as.list(cpd.names)
+names(cpd.info) = cpd.names
+
+i=1
+while(i<=length(cpds)){
+  cpd.info[[i]] =dme01100[(max(start[start<cpds[i]])+1):(min(start[start>cpds[i]])-1),5:18]
+  i=i+1
+}
+
+cpd.coords = data.frame(Metab = NA_character_,
+                        x = NA_integer_,
+                        y = NA_integer_)
+
+i=1
+while(i<=length(cpd.info)){
+  name = names(cpd.info)[i]
+  coords = cpd.info[[i]]
+  coords = coords[grep("type", coords$V14),]
+  j=1
+  while(j<=nrow(coords)){
+    x = as.numeric(substring(coords[j,"V15"], 3, nchar(coords[j,"V15"])))
+    y = as.numeric(substring(coords[j,"V16"], 3, nchar(coords[j,"V16"])))
+    temp.cpd.coords = data.frame(Metab = name, 
+                                 x = x, 
+                                 y = y)
+    cpd.coords = rbind(cpd.coords, temp.cpd.coords)
+    j=j+1
+  }
+  i=i+1
+}
+cpd.coords = cpd.coords[-1,]
+row.names(cpd.coords) = 1:nrow(cpd.coords)
+
+
+
+metab.ids = unlist(strsplit(as.character(KEGG.Key), split = " / "))
+metab.ids = unlist(strsplit(as.character(metab.ids), split = "-"))
+metab.ids = intersect(metab.ids, names(cpd.info))
+
+cpd.coords$bg = "lightgrey"
+cpd.coords[cpd.coords$Metab %in% metab.ids, "bg"] = "firebrick"
+
+
+start = grep("</reaction>", dme01100$V5)
+
+reacts = dme01100[min(start):max(start),]
+substrates = reacts[grep("substrate", reacts$V9), "V11"]
+products = reacts[grep("product", reacts$V9), "V11"]
+
+snp = unique(c(substrates,products))
+snp = gsub("name=cpd:", "", snp)
+snp = gsub("name=gl:", "", snp)
+snp = gsub("/>", "", snp)
+
+
+all.cpd.coords = cpd.coords
+
+
+xtras = c("C00080")
+
+extra.metab = all.cpd.coords[all.cpd.coords$Metab %in% xtras,]
+extra.metab$bg = "black"
+
+remove.extra = data.frame(Metab = c("C00080", "C00080", "C00080", "C00080", "C00080"),
+                          x =c(1772, 1772, 1631, 1702, 1702),
+                          y=c(3133, 3018, 3133, 3133, 3018))
+
+extra.metab$ID = paste(extra.metab$Metab, extra.metab$x,extra.metab$y)
+remove.extra$ID = paste(remove.extra$Metab, remove.extra$x,remove.extra$y)
+
+extra.metab = extra.metab[!(extra.metab$ID %in% remove.extra$ID), ]
+
+extra.metab = extra.metab[,c("Metab", "x", "y", "bg")]
+
+
+cpd.coords = cpd.coords[cpd.coords$Metab %in% snp,]
+
+remove.nodes = data.frame(Metab = c("C00156", "C00008", "C00002", "C00006"),
+                          x = c(1377, 1820, 1810,
+                                1676),
+                          y = c(2765, 3050, 3108,
+                                2960))
+
+cpd.coords$ID = paste(cpd.coords$Metab,cpd.coords$x,cpd.coords$y)
+remove.nodes$ID = paste(remove.nodes$Metab, remove.nodes$x,remove.nodes$y)
+cpd.coords = cpd.coords[!(cpd.coords$ID %in% remove.nodes$ID), ]
+
+cpd.coords = cpd.coords[,c("Metab", "x", "y", "bg")]
+
+start = grep("</entry>", dme01100$V5)
+
+genes = grep("gene", dme01100$V8)
+gene.names = substring(dme01100[genes,"V7"],6, nchar(dme01100[genes,"V7"]))
+gene.info = as.list(gene.names)
+names(gene.info) = gene.names
+
+i=1
+while(i<=length(genes)){
+  gene.info[[i]] =dme01100[(max(start[start<genes[i]])+1):(min(start[start>genes[i]])-1),5:18]
+  i=i+1
+}
+
+gene.coords = data.frame(Gene = NA_character_,
+                         coords = NA_integer_,
+                         reaction = NA_character_)
+
+i=1
+while(i<=length(gene.info)){
+  name = names(gene.info)[i]
+  coords = gene.info[[i]]
+  reaction = substring(coords[1,"V9"], 10, nchar(coords[1,"V9"]))
+  coords = coords[grep("type", coords$V14),]
+
+  j=1
+  while(j<=nrow(coords)){
+    temp.coords = substring(coords[j,"V15"], 8, (nchar(coords[j,"V15"])-2))
+    temp.gene.coords = data.frame(Gene = name,
+                                  coords = temp.coords,
+                                  reaction = reaction)
+    gene.coords = rbind(gene.coords, temp.gene.coords)
+    j=j+1
+  }
+  i=i+1
+}
+gene.coords = gene.coords[-1,]
+row.names(gene.coords) = 1:nrow(gene.coords)
+
+gene.reactions = unique(unlist(strsplit(gene.coords$reaction,
+                          split = " ")))
+
+
+
+
+
+
+
+
+
+```
+
+
+```{r}
+
+par(mar = c(1.25,0,0,0))
+
+
+plot(x = cpd.coords$x,
+     y = -cpd.coords$y,
+     cex = .2,
+     pch = 21,
+     col = cpd.coords$bg,
+     bg = cpd.coords$bg,
+     axes = F,
+     ylab = "",
+     xlab = "")
+
+i=1
+while(i<=nrow(gene.coords)){
+  temp.coords <-gene.coords[i, "coords"]
+  nums <- as.numeric(strsplit(temp.coords, ",")[[1]])
+  
+  line_df <- data.frame(
+    x = nums[c(TRUE, FALSE)],
+    y = nums[c(FALSE, TRUE)]
+    )
+  
+  lines(line_df$x, -line_df$y, col = "grey")
+  points(line_df$x, -line_df$y, pch = 16, 
+         cex = 0.1,
+         col = "grey") 
+  i=i+1
+}
+
+temp.coords <- "2358,806,2195,806,2195,806,2192,806,2189,805,2186,803,2184,801,2182,799,2180,797,2178,794,2177,791,2177,788,2177,788,2177,720,2177,720,2177,717,2178,714,2180,711,2182,709,2184,707,2186,705,2189,703,2192,702,2195,702,2195,702,2414,702,2414,702,2417,702,2420,703,2423,705,2425,707,2427,709,2429,711,2431,714,2432,717,2432,720,2432,720,2432,743"
+
+nums <- as.numeric(strsplit(temp.coords, ",")[[1]])
+
+line_df <- data.frame(
+  x = nums[c(TRUE, FALSE)],
+  y = nums[c(FALSE, TRUE)]
+)
+
+temp.coords2 <- "2177,827,2177,759,2177,759,2177,756,2176,754,2175,751,2173,749,2171,747,2169,745,2166,744,2164,743,2161,743,2161,743,2127,743"
+
+nums2 <- as.numeric(strsplit(temp.coords2, ",")[[1]])
+
+line_df2 <- data.frame(
+  x = nums2[c(TRUE, FALSE)],
+  y = nums2[c(FALSE, TRUE)]
+)
+
+
+lines(line_df$x, -line_df$y, col = "green")
+points(line_df$x, -line_df$y, pch = 16, cex = 0.1,
+       col = "green")
+
+lines(line_df2$x, -line_df2$y, col = "deeppink")
+points(line_df2$x, -line_df2$y, pch = 16, cex = 0.1,
+       col = "deeppink")
+
+
+points(x = cpd.coords$x[cpd.coords$bg == "lightgrey"],
+       y = -cpd.coords$y[cpd.coords$bg == "lightgrey"],
+       cex = .5,
+       col = "grey",
+       pch = 21,
+       bg = "grey")
+
+points(x = extra.metab$x,
+       y = -extra.metab$y,
+       cex = .5,
+       col = "black",
+       pch = 21,
+       bg = "black")
+
+points(x = cpd.coords$x[cpd.coords$bg == "firebrick"],
+       y = -cpd.coords$y[cpd.coords$bg == "firebrick"],
+       cex = .5,
+       pch = 21,
+       bg = "firebrick")
+
+
+
+points(x=1000,
+       y=-3000,
+       pch =21,
+       bg = "green")
+
+```
+
+
+
+```{r}
+
+fig = plot_ly(data = cpd.coords,
+              x = ~x,
+              y = ~y,
+              type = 'scatter',
+              mode = 'markers')
+
+fig = plot_ly(data = gene.coords,
+              x = ~x,
+              y = ~y,
+              type = 'scatter',
+              mode = 'lines')
+
+
+,
+              ,
+              mode = 'points',
+              name = ~Metab)#,
+              hoverinfo = "text")#,
+              hovertext = paste("Fly ID: ", f.temp$ObjectID,
+                                "\nFrame: ", f.temp$Frame,
+                                "\ndistance", f.temp$distance))
+
+
+```
+
+
+```{r}
+fig
+
+```
+

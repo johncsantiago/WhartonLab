@@ -29,10 +29,10 @@ source('/Users/johncsantiago/Documents/GitHub/WhartonLab/GOandKEGGPlottingFuncti
 #                                   M or F for sex
 #                                   C, Df or OE for TKT modulation
 #                                   example: GRMOE
-Variable.Condition = "GRFC" 
-Control.Condition = "WTFC"
-secondary.Variable.Condition = "GRFDf"
-secondary.Control.Condition = "WTMC"
+Variable.Condition = "A9FA" 
+Control.Condition = "S9FA"
+secondary.Variable.Condition = "A9FT"
+secondary.Control.Condition = "S9FT"
 
 
 
@@ -108,16 +108,16 @@ DEG.venn(FDR, FC)
 
 ```
 
-```{r echo = F, include = F}
+```{r echo = F, include = T}
 
 ####Uses sigDEGs from primary comparison
 cat.data = Enrichment(FDR)
 
-cat.data = Subset.Enrichment(row.names(FDR), row.names(FDR)[FDR[,1]<=0.05 & FDR[,2]<=0.05])
+#cat.data = Subset.Enrichment(row.names(FDR), row.names(FDR)[FDR[,1]<=0.05 & FDR[,2]<=0.05])
 
-cat.data = Subset.Enrichment(row.names(FDR), row.names(FDR)[FDR[,1]>0.05 & FDR[,2]<=0.05])
+#cat.data = Subset.Enrichment(row.names(FDR), row.names(FDR)[FDR[,1]>0.05 & FDR[,2]<=0.05])
 
-cat.data = Subset.Enrichment(row.names(FDR), row.names(FDR)[FDR[,1]<=0.05 & FDR[,2]>0.05])
+#cat.data = Subset.Enrichment(row.names(FDR), row.names(FDR)[FDR[,1]<=0.05 & FDR[,2]>0.05])
 
 
 ```
