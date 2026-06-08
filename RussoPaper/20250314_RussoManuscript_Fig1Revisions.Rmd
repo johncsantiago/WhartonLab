@@ -60,7 +60,7 @@ while(i<=ncol(B)){
 
 ```
 
-```{r echo = F, fig.width=10, fig.height=7}
+```{r echo = F, include=FALSE, fig.width=10, fig.height=7}
 
 par(mar = c(9,4,4,2))
 
@@ -428,7 +428,9 @@ stats1b$p.value = format(stats1b$p.value,
 
 ```
 
-```{r echo = F, include = T}
+
+
+```{r echo = F, include = F}
 
 knitr::kable(stats1b,
              caption = 'All t-tests for figure 1B eclosion data.')  %>%
@@ -437,7 +439,90 @@ row_spec(c(1:nrow(stats1b))[rawp <= .05], bold = T, color = "black", background 
 
 ```
 
+```{r, echo = F}
 
+#Why Fisher’s exact test is the right choice for the situation:
+
+#Binomial outcome (eclosed vs not) 
+#Comparing pairs of genotypes (mutant vs matched control) 
+#Unequal sample sizes 
+#Extreme values (0% / 100%) 
+#Moderate number of replicates (4–9 vials) 
+#Clear biological grouping (not all comparisons meaningful) 
+
+#This is exactly the kind of scenario Fisher’s test was designed for.
+
+##Another Fishers Test
+rawB = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Russo Fig 1 eclosion Raw Data.csv")
+
+
+rawB <- aggregate(cbind(eclosed, not.eclosed) ~ genotype, data = rawB, sum)
+
+# total and proportion
+rawB$total <- rawB$eclosed + rawB$not.eclosed
+rawB$prop  <- rawB$eclosed / rawB$total
+
+comparisons <- list(
+  c("WTloxP", "G85Rhr"),
+  c("WTcr", "G85Rcr"),
+  c("WTcr", "G85R/X16"),
+  c("WTcr", "WTcr/X16"),
+  c("WTcr", "A4V"),
+  c("WTcr", "A4V/X16"),
+  c("WTcr", "A4V/G85Rcr")
+)
+
+results <- data.frame()
+
+
+#pair is like i, it starts at 1 and increases until it is larger than the length of comparisons
+for (pair in comparisons) {
+  
+  g1 <- pair[1]
+  g2 <- pair[2]
+  
+  d1 <- rawB[rawB$genotype == g1, ]
+  d2 <- rawB[rawB$genotype == g2, ]
+  
+  mat <- matrix(c(
+    d1$eclosed, d1$not.eclosed,
+    d2$eclosed, d2$not.eclosed
+  ), nrow = 2, byrow = TRUE)
+  
+  ft <- fisher.test(mat)
+  
+  results <- rbind(results, data.frame(
+    Genotype1 = g1,
+    n1 = d1$total,
+    prop1 = d1$prop,
+    Genotype2 = g2,
+    n2 = d2$total,
+    prop2 = d2$prop,
+    diff = d1$prop - d2$prop,
+    p.value = ft$p.value
+  ))
+}
+
+results$padj <- p.adjust(results$p.value, method = "BH")
+
+results$prop1 <- round(results$prop1 * 100, 1)
+results$prop2 <- round(results$prop2 * 100, 1)
+results$diff  <- round(results$diff * 100, 1)
+results$p.value <- signif(results$p.value, 3)
+results$padj    <- signif(results$padj, 3)
+
+results1b = results
+
+```
+
+```{r echo = F, include = T}
+
+knitr::kable(results1b,
+             caption = 'All fishers exact tests for figure 1B eclosion data.')  %>%
+kable_styling() %>%
+row_spec(c(1:nrow(results1b))[results$padj <= .05], bold = T, color = "black", background = "gold")
+
+```
 
 
 ```{r echo = F}
@@ -577,6 +662,34 @@ text(x = 3,
 
 ```
 
+
+```{r echo = F, warning=F}
+
+#Kruskal-Wallis test
+#Non-parametric → no normality assumption
+#Works well for small sample sizes
+#Robust to unequal variance
+#Standard for this kind of biological data
+
+SummaryStatsC = aggregate(Boutons ~ Genotype, data = C, function(x) {
+  c(n = length(x),
+    median = median(x),
+    mean = mean(x),
+    sd = sd(x))
+})
+
+Summary =  data.frame(SummaryStatsC$Boutons)
+
+row.names(Summary) = SummaryStatsC$Genotype
+
+Summary
+
+kruskal.test(Boutons ~ Genotype, data = C)
+
+pairwise.wilcox.test(C$Boutons, C$Genotype, p.adjust.method = "BH")
+
+
+```
 
 ```{r echo = F}
 
@@ -1688,6 +1801,96 @@ while(i <= length(stderr.gbbEcl)){
 
 ```
 
+```{r echo = F, fig.width=10, fig.height=7}
+
+gbbEcl = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/Ana_gbbEclosionData.csv")
+
+gbbEcl.labels = unique(gbbEcl$Genotype)
+
+gbbEcl.totals = data.frame(Genotype = gbbEcl.labels,
+                           Male = 0,
+                           Female = 0,
+                           total.eclosed = 0,
+                           total.pupae = 0,
+                           Percent.M = 0,
+                           Percent.F = 0,
+                           Percent.total = 0)
+
+i = 1
+while(i<=length(gbbEcl.labels)){
+  gbbEcl.totals[i, "Male"] = sum(gbbEcl$Male[gbbEcl$Genotype == gbbEcl.labels[i]])
+  
+  gbbEcl.totals[i, "Female"] = sum(gbbEcl$Female[gbbEcl$Genotype == gbbEcl.labels[i]])
+  
+  gbbEcl.totals[i, "total.eclosed"] = sum(gbbEcl$TotalEclosed[gbbEcl$Genotype == gbbEcl.labels[i]])
+  
+  gbbEcl.totals[i, "total.pupae"] = sum(gbbEcl$TotalPupae[gbbEcl$Genotype == gbbEcl.labels[i]])
+  i = i+1
+}
+
+gbbEcl.totals$Percent.M = 100*(gbbEcl.totals$Male/gbbEcl.totals$total.pupae)
+
+gbbEcl.totals$Percent.F = 100*(gbbEcl.totals$Female/gbbEcl.totals$total.pupae)
+
+gbbEcl.totals$Percent.total = 100*(gbbEcl.totals$total.eclosed/gbbEcl.totals$total.pupae)
+
+
+stderr.gbbEcl = setNames(c(sd(gbbEcl[gbbEcl==gbbEcl.labels[1],"PercentEclosion"])/4,
+                           sd(gbbEcl[gbbEcl==gbbEcl.labels[2],"PercentEclosion"])/4,
+                           sd(gbbEcl[gbbEcl==gbbEcl.labels[3],"PercentEclosion"])/4,
+                           sd(gbbEcl[gbbEcl==gbbEcl.labels[4],"PercentEclosion"])/4,
+                           sd(gbbEcl[gbbEcl==gbbEcl.labels[5],"PercentEclosion"])/4,
+                           sd(gbbEcl[gbbEcl==gbbEcl.labels[6],"PercentEclosion"])/4),
+                         gbbEcl.labels)
+
+
+
+par(mar = c(12,4,4,2))
+
+barplot(height = gbbEcl.means,
+        ylim = c(0, 120),
+        col = "black",
+        las = 2,
+        ylab = "Eclosion frequency (%)",
+        main = "Eclosion from the pupal case",
+        xaxt = "n",
+        yaxt = "n")
+axis(side = 1,
+     at = c(.7 + (c(0:5)*1.2)),
+     lwd = 3,
+     line = 0,
+     labels = gbbEcl.labels,
+     xpd = T,
+     las = 2)
+axis(side = 2,
+     at = c(0,20,40,60,80,100),
+     lwd = 3,
+     line = 0,
+     labels = T,
+     xpd = T,
+     las = 2)
+
+
+tick.x = c(.7 + (c(0:5)*1.2))
+
+i = 1
+while(i <= length(stderr.gbbEcl)){
+  if(stderr.gbbEcl[i] > 0){
+    lines(x = tick.x[c(i,i)],
+          y = c(gbbEcl.means[i], (gbbEcl.means[i] + stderr.gbbEcl[i])),
+          lwd = 3,
+          col = "black")
+    
+    lines(x = c((tick.x[i] - .25), (tick.x[i] + .25)),
+          y = c((gbbEcl.means[i] + stderr.gbbEcl[i]), (gbbEcl.means[i] + stderr.gbbEcl[i])),
+          lwd = 3,
+          col = "black")  
+  }
+  i = i +1
+}
+
+
+```
 
 
 
@@ -1944,7 +2147,7 @@ legend(x= 100,
 
 
 
-```{r echo = F, fig.show=F}
+```{r echo = F, fig.show=T}
 
 library(beeswarm)
 
@@ -4096,7 +4299,120 @@ wilcox.test(plot.embryo$WT,
 
 
 
+```{r echo = F, fig.width=5, fig.height=5}
 
+##Embryo survival data
+NMJ4 = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/RussoPaper/AS - NMJ - Analysis AS3 (II) NMJ 4Fluorescence analysis Jun.csv.csv")
+
+embryo$Percent = 100*(embryo$Dead/embryo$Total)
+plot.embryo = data.frame(WT = embryo$Percent[embryo$Genotype == "Wtcr/loxP"],
+                         G85R = embryo$Percent[embryo$Genotype == "G85Rcr/hr"])
+
+
+embryo.labels = c("WTcr/loxP", "G85Rcr/hr")
+
+embryo.cols = std.colors[c("WT(cr)","G85R(cr)")]
+
+n.embryo = setNames(rep(0, ncol(plot.embryo)), colnames(plot.embryo))
+mean.embryo = n.embryo
+sd.embryo = n.embryo
+
+i=1
+while(i<= ncol(plot.embryo)){
+  mean.embryo[i] = mean(na.omit(plot.embryo[,i]))
+  sd.embryo[i] = sd(na.omit(plot.embryo[,i]))
+  n.embryo[i] = (length(na.omit(plot.embryo[,i])))
+  i=i+1
+}
+
+stderr.embryo = sd.embryo/(sqrt(n.embryo))
+
+bar.colors = hex(embryo.cols, .75)
+
+border.colors = embryo.cols
+
+tick.x = c(.7 + (c(0:1)*1.2))
+
+par(mar = c(8,4,4,2), lwd = 3)
+
+barplot(height = mean.embryo,
+        ylim = c(0, 20),
+        col = border.colors,
+        las = 2,
+        ylab = "% Dead",
+        main = "Embryo Survival",
+        border = "black",
+        xaxt = "n")
+
+axis(side = 1,
+     at = tick.x,
+     lwd = 3,
+     line = 0,
+     labels = embryo.labels,
+     xpd = T)
+
+axis(side = 2,
+     at = c(0,5,10,15,20),
+     lwd = 3,
+     line = 0,
+     labels = F,
+     xpd = T)
+lines(x = c(0.1, 2.5),
+     y = c(0,0),
+     lwd = 3,
+     xpd = T)
+
+i = 1
+while(i <= length(stderr.embryo)){
+  lines(x = tick.x[c(i,i)],
+        y = c(mean.embryo[i], (mean.embryo[i] + stderr.embryo[i])),
+        lwd = 3,
+        col = "black")
+  
+  lines(x = c((tick.x[i] - .25), (tick.x[i] + .25)),
+        y = c((mean.embryo[i] + stderr.embryo[i]), (mean.embryo[i] + stderr.embryo[i])),
+        lwd = 3,
+        col = "black")
+  
+  i = i +1
+}
+
+lines(x = tick.x[1:2],
+      y =  c( 15,15),
+      lwd = 3)
+
+lines(x = c(1.9,3.1),
+      y = c(63, 63),
+      lwd = 3)
+
+text(x = 1.3,
+     y = 17,
+    labels = "*",
+    cex = 2,
+    xpd = t)
+
+
+
+wilcox.test(plot.embryo$WT, 
+            plot.embryo$G85R, 
+            exact = TRUE)
+
+##Stats advice from chatgpt:
+##A classic Student’s t-test assumes:
+##  Normal distribution (hard to justify with n=4)
+##  Similar variances
+##  No strong outliers
+
+##Your data violates at least #1 (and maybe #2). With such a small sample, the t-test becomes very unstable — a single value (like that 0) can heavily influence the result.
+
+##Wilcoxon rank-sum test (recommended)
+##  Non-parametric → no normality assumption
+##  Works well with small n
+##  Tests whether one group tends to be larger than the other
+
+##This uses the exact distribution, which is more appropriate than approximations at small n.
+
+```
 
 
 

@@ -1,0 +1,156 @@
+---
+title: "G85R TKT Rescue Sex Specific Eclosion and Survival"
+author: "John Santiago"
+date: "2026-05-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+```{r}
+library(beeswarm)
+
+eclosion.data = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/G85R TKT Sex Specific Eclosion/20260518 Eclosion.csv")
+
+eclosion.data$Genotype = factor(eclosion.data$Genotype,
+                                levels = c("WT", "G85R",
+                                           "WT, TKT-Df", "G85R, TKT-Df",
+                                           "WT, TKT-OE", "G85R, TKT-OE"))
+
+boxplot(eclosion.data$X..Eclosed~eclosion.data$Genotype,
+        cex = .5,
+        boxwex = .5,
+        cex.axis = .75,
+        xlab = "Genotype",
+        ylab = "Percent Eclosed",
+        ylim = c(0, 100),
+        border = c("steelblue", "cyan",
+              "gold", "yellow",
+              "darkgreen", "limegreen",
+              "firebrick", "red"))
+
+beeswarm(eclosion.data$X..Eclosed
+         ~eclosion.data$Genotype,
+         add = T,
+       pch = 21,
+       cex = 1,
+       spacing = 1,
+       bg = c("steelblue", "cyan",
+              "gold", "yellow",
+              "forestgreen", "green",
+              "firebrick", "red"))
+
+
+```
+
+
+```{r}
+library(beeswarm)
+
+eclosion.data = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/G85R TKT Sex Specific Eclosion/20260518 Eclosion.csv")
+
+
+eclosion.data$Genotype = factor(eclosion.data$Genotype,
+                                levels = c("WT", "G85R",
+                                           "WT, TKT-Df", "G85R, TKT-Df",
+                                           "WT, TKT-OE", "G85R, TKT-OE"))
+
+
+boxplot(eclosion.data$X..Partial~eclosion.data$Genotype,
+        cex = .5,
+        boxwex = .5,
+        cex.axis = .75,
+        xlab = "Genotype",
+        ylab = "Percent partially eclosed",
+        ylim = c(0, 100),
+        border = c("steelblue", "cyan",
+              "gold", "yellow",
+              "darkgreen", "limegreen",
+              "firebrick", "red"))
+
+beeswarm(eclosion.data$X..Partial
+         ~eclosion.data$Genotype,
+         add = T,
+       pch = 21,
+       cex = 1,
+       spacing = 1,
+       bg = c("steelblue", "cyan",
+              "gold", "yellow",
+              "forestgreen", "green",
+              "firebrick", "red"))
+
+
+```
+
+```{r fig.width=15, fig.height=9}
+
+ss.eclosion.data = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/G85R TKT Sex Specific Eclosion/20260518 Sex Specific Eclosion.csv")
+
+temp.ssed = ss.eclosion.data[,c("Genotype", "total", "F.", "M.")]
+temp.ssed = t(temp.ssed)
+colnames(temp.ssed) = temp.ssed["Genotype",]
+temp.ssed = temp.ssed[c("total", "F.", "M."),]
+temp.ssed["total",] = paste0("n = ", temp.ssed["total",]) 
+
+barplot(height = temp.ssed[c("F.", "M."),],
+        cex.axis = .5)
+
+text(x = c(.7, 1.9, 3.1, 4.3, 5.5, 6.7, 7.9), y = 105, labels = c(temp.ssed["total", ]), xpd = T)
+
+abline(h = 50, lty = 2, lwd =2, col = "red")
+
+```
+
+
+```{r fig.width=15, fig.height=9}
+
+pe.eclosion.data = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/G85R TKT Sex Specific Eclosion/20260518 Partial Eclosion Summary.csv", row.names =1, header = F)
+pe.eclosion.data = as.matrix(pe.eclosion.data)
+
+barplot(height = pe.eclosion.data[c("Eclosed", "Partially Eclosed", "Not Eclosed"),],
+        names.arg = pe.eclosion.data["Genotype",],
+        cex.axis = .5)
+
+
+
+```
+
+
+
+```{r fig.width=8, fig.height=6}
+
+
+##trying survminer
+library(survival)
+library(survminer)
+
+sse.surv.data = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/G85R TKT Sex Specific Eclosion/20260518 Survdata.csv")
+
+sse.surv.data$Group <- interaction(sse.surv.data$Genotype, sse.surv.data$Sex, sse.surv.data$TKT)
+
+fit <- survfit(
+  Surv(time, status) ~ Group,
+  data = sse.surv.data
+)
+
+```
+
+
+```{r fig.width=8, fig.height=6}
+
+
+my_palette = c("green", "cyan",
+               "forestgreen","steelblue",
+               "deeppink", "gold",
+               "firebrick", "yellow")
+
+
+palette(my_palette) 
+
+ggsurvplot(fit,
+           palette = my_palette)
+
+```
