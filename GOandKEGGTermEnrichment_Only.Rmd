@@ -29,8 +29,8 @@ source('/Users/johncsantiago/Documents/GitHub/WhartonLab/GOandKEGGPlottingFuncti
 #                                   M or F for sex
 #                                   C, Df or OE for TKT modulation
 #                                   example: GRMOE
-Variable.Condition = "A9FA" 
-Control.Condition = "S9FA"
+Variable.Condition = "A3MT" 
+Control.Condition = "A9FT"
 secondary.Variable.Condition = "A9FT"
 secondary.Control.Condition = "S9FT"
 
@@ -68,143 +68,10 @@ if(subset == T){
 
 ```
 
-
-```{r echo = F}
-
-##Uses data from primary comparison
-##point size is relative to mean expression in variable condition
-volcano(FC, FDR, mean.data)
-
-```
-
-
-```{r echo = F}
-
-##Uses data from primary comparison
-##point size is relative to mean expression in variable condition
-compare.genes(FC, FDR, mean.data)
-
-```
-
-
-```{r echo = F}
-#library(heatmaply)
-#hmdata = mean.data[geneset,]
-#row.names(hmdata) = GeneIDKey[geneset, 'Symbol']
-#hmdata = na.omit(hmdata)
-
-#heatmaply(hmdata,
-#          scale = 'row',
-#          Colv = F)
-
-```
-
-
-```{r echo = F}
-
-##Uses data from primary comparison
-##point size is relative to mean expression in variable condition
-DEG.venn(FDR, FC)
-
-```
-
 ```{r echo = F, include = T}
 
 ####Uses sigDEGs from primary comparison
 cat.data = Enrichment(FDR)
-
-#cat.data = Subset.Enrichment(row.names(FDR), row.names(FDR)[FDR[,1]<=0.05 & FDR[,2]<=0.05])
-
-#cat.data = Subset.Enrichment(row.names(FDR), row.names(FDR)[FDR[,1]>0.05 & FDR[,2]<=0.05])
-
-#cat.data = Subset.Enrichment(row.names(FDR), row.names(FDR)[FDR[,1]<=0.05 & FDR[,2]>0.05])
-
-
-```
-
-
-```{r echo = F}
-
-
-##which ranks of categories to use
-##a vector of numbers specifying which ranks to use
-##eg. c(1, 5:6) will use the first, fifth and sixth most sig. cats.
-##can also just type 'sigs.only' 
-usecats=c(1:20)
-#usecats = 'sigs.only'  
-
-KEGG20(cat.data, FC, FDR, usecats)
-
-```
-
-
-```{r echo = F, include = T}
-
-##can be the exact name or 5 digit code in quotes
-specific.kegg = "01232"
-
-plotkegg.genes(specific.kegg, FC, FDR, mean.data)
-
-```
-
-
-
-
-```{r echo = F, include = F}
-
-####Uses sigDEGs from primary comparison
-cat.data = Enrichment(FDR[,2:1])
-
-#cat.data = Subset.Enrichment(row.names(FDR), #row.names(FDR)[FDR[,2]<=0.05])
-
-
-
-```
-
-
-```{r echo = F}
-
-
-##which ranks of categories to use
-##a vector of numbers specifying which ranks to use
-##eg. c(1, 5:6) will use the first, fifth and sixth most sig. cats.
-##can also just type 'sigs.only' 
-usecats=c(1:20)
-#usecats = 'sigs.only'  
-
-KEGG20(cat.data, FC[2:1], FDR[2:1], usecats)
-
-```
-
-
-```{r echo = F, include = T}
-
-##can be the exact name or 5 digit code in quotes
-specific.kegg = "00730"
-
-plotkegg.genes(specific.kegg, FC[,2:1], FDR[,2:1], mean.data[,c(3,4,1,2)])
-
-```
-
-```{r echo = F, message=F, fig.width=7}
-
-##5 digits from KEGG ID
-PathwayID = "00240"
-
-#options include 'primary' or 'both'
-use = 'both'
-
-KEGG.diagram(PathwayID, FC, use, metab.data)
-
-```
-
-
-```{r echo = F, include = T, warnings = F}
-
-##can be the exact name or 5 digit code in quotes
-specific.kegg = "04146"
-
-comparekegg.genes(specific.kegg, FC, FDR, mean.data)
 
 ```
 
@@ -221,67 +88,3 @@ usecats=c(1:20)
 GO20(cat.data, GO.ontology, FC, FDR, usecats)
 
 ```
-
-
-```{r echo = F}
-
-##the 7 digits of a GOterm id or the exact term name
-specific.go = '0043228'
-
-plotgo.genes(specific.go, FC, FDR, mean.data)
-
-```
-
-
-```{r echo = F, warning = F}
-
-##the 7 digits of a GOterm id or the exact term name
-specific.go = '0005811'
-
-comparego.genes(specific.go, FC, FDR, mean.data)
-
-```
-
-
-```{r echo = F, warning = F, message = F}
-
-
-## BP, CC, or MF
-GO.ontology = 'BP'
-
-rt = tree(cat.data, GO.ontology)
-  
-treemapPlot(rt)
-
-```
-
-
-```{r echo = F, warning = F}
-
-##a parent category generated in the treemapPlot function
-parent.category = 'lipid metabolic process'
-
-plotparentcat.genes(parent.category, FC, FDR, mean.data)
-
-```
-
-
-```{r echo = F}
-
-##a parent category generated in the treemapPlot function
-##parent.category = 'small molecule biosynthetic process'
-
-compareparent.genes(parent.category, FC, FDR, mean.data)
-##dot size is relative to the max FDR of either condition
-
-
-```  
-
-
-
-
-
-
-
-
-

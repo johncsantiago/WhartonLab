@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = FALSE)
 ```{r}
 library(beeswarm)
 
-eclosion.data = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/G85R TKT Sex Specific Eclosion/20260518 Eclosion.csv")
+eclosion.data = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/G85R TKT Sex Specific Eclosion/20260527 Final Eclosion.csv")
 
 eclosion.data$Genotype = factor(eclosion.data$Genotype,
                                 levels = c("WT", "G85R",
@@ -37,7 +37,7 @@ beeswarm(eclosion.data$X..Eclosed
          add = T,
        pch = 21,
        cex = 1,
-       spacing = 1,
+       spacing = .5,
        bg = c("steelblue", "cyan",
               "gold", "yellow",
               "forestgreen", "green",
@@ -50,7 +50,7 @@ beeswarm(eclosion.data$X..Eclosed
 ```{r}
 library(beeswarm)
 
-eclosion.data = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/G85R TKT Sex Specific Eclosion/20260518 Eclosion.csv")
+eclosion.data = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/G85R TKT Sex Specific Eclosion/20260527 Final Eclosion.csv")
 
 
 eclosion.data$Genotype = factor(eclosion.data$Genotype,
@@ -76,7 +76,7 @@ beeswarm(eclosion.data$X..Partial
          add = T,
        pch = 21,
        cex = 1,
-       spacing = 1,
+       spacing = .5,
        bg = c("steelblue", "cyan",
               "gold", "yellow",
               "forestgreen", "green",
@@ -87,15 +87,61 @@ beeswarm(eclosion.data$X..Partial
 
 ```{r fig.width=15, fig.height=9}
 
-ss.eclosion.data = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/G85R TKT Sex Specific Eclosion/20260518 Sex Specific Eclosion.csv")
+ss.eclosion.data = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/G85R TKT Sex Specific Eclosion/20260527 Final Sex Specific Eclosion.csv")
 
-temp.ssed = ss.eclosion.data[,c("Genotype", "total", "F.", "M.")]
+ss.eclosion.data$Genotype[ss.eclosion.data$Genotype == "G85R, TKT-OE Cy/Cy?"] = "G85R, TKT-OE" 
+
+ss.eclosion.data = ss.eclosion.data[ss.eclosion.data$Genotype != "WT, TKT-OE Cy",]
+
+ss.eclosion.data$Group = paste(ss.eclosion.data$Genotype, ss.eclosion.data$Sex)
+
+
+groups = unique(ss.eclosion.data$Group)
+
+totals = rep(0, length(groups))
+i=1
+while(i<=length(totals)){
+  totals[i] = sum(ss.eclosion.data[ss.eclosion.data$Group == groups[i], "total"])
+  i=i+1
+}
+
+temp.ssed = data.frame(Group = groups,
+                       Genotype = "WT",
+                       Sex = "F",
+                       Total = totals)
+
+temp.ssed$Genotype = substr(temp.ssed$Group, 1, nchar(temp.ssed$Group)-2)
+
+temp.ssed$Sex = substr(temp.ssed$Group, 
+                       nchar(temp.ssed$Group),
+                       nchar(temp.ssed$Group))
+
+temp.ssed.F = temp.ssed[temp.ssed$Sex == "F",]
+temp.ssed.M = temp.ssed[temp.ssed$Sex == "M",]
+
+temp.ssed.M = temp.ssed.M[temp.ssed.M$Genotype %in% temp.ssed.F$Genotype,]
+
+temp.ssed = data.frame(Genotype = temp.ssed.F$Genotype,
+                       Female = temp.ssed.F$Total,
+                       Male = temp.ssed.M$Total,
+                       total = temp.ssed.F$Total+temp.ssed.M$Total)
+temp.ssed$Female = signif(100* temp.ssed$Female/temp.ssed$total,4)
+temp.ssed$Male = signif(100* temp.ssed$Male/temp.ssed$total,4)
+
+temp.ssed$Genotype = factor(temp.ssed$Genotype,
+                            levels = c("WT", "G85R",
+                                       "WT, TKT-Df", "G85R, TKT-Df",
+                                       "WT, TKT-OE", "G85R, TKT-OE"))
+
+temp.ssed = temp.ssed[order(temp.ssed$Genotype),]
+
 temp.ssed = t(temp.ssed)
+
 colnames(temp.ssed) = temp.ssed["Genotype",]
-temp.ssed = temp.ssed[c("total", "F.", "M."),]
+temp.ssed = temp.ssed[c("total", "Female", "Male"),]
 temp.ssed["total",] = paste0("n = ", temp.ssed["total",]) 
 
-barplot(height = temp.ssed[c("F.", "M."),],
+barplot(height = temp.ssed[c("Female", "Male"),],
         cex.axis = .5)
 
 text(x = c(.7, 1.9, 3.1, 4.3, 5.5, 6.7, 7.9), y = 105, labels = c(temp.ssed["total", ]), xpd = T)
@@ -107,11 +153,38 @@ abline(h = 50, lty = 2, lwd =2, col = "red")
 
 ```{r fig.width=15, fig.height=9}
 
-pe.eclosion.data = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/G85R TKT Sex Specific Eclosion/20260518 Partial Eclosion Summary.csv", row.names =1, header = F)
-pe.eclosion.data = as.matrix(pe.eclosion.data)
+pe.eclosion.data = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/G85R TKT Sex Specific Eclosion/20260527 Final Eclosion.csv")
+
+pe.eclosion.data$Genotype = factor(pe.eclosion.data$Genotype,
+                                   levels = c("WT", "G85R",
+                                              "WT, TKT-Df", "G85R, TKT-Df",
+                                              "WT, TKT-OE", "G85R, TKT-OE"))
+
+pe.genotype = unique(pe.eclosion.data$Genotype[order(pe.eclosion.data$Genotype)])
+
+pe.eclosed = rep(0, length(pe.genotype))
+pe.partial = rep(0, length(pe.genotype))
+pe.failed = rep(0, length(pe.genotype))
+pe.total = rep(0, length(pe.genotype))
+i=1
+while(i <= length(pe.genotype)){
+  temp = pe.eclosion.data[pe.eclosion.data$Genotype == pe.genotype[i],]
+  pe.total[i] = sum(temp$Total.Pupae)
+  pe.eclosed[i] = 100*(sum(temp$Eclosed)/pe.total[i])
+  pe.partial[i] = 100*(sum(temp$Partial)/pe.total[i])
+  pe.failed[i] = 100*(sum(temp$Failed)/pe.total[i])
+  i=i+1
+}
+
+pe.eclosion.data = rbind(pe.eclosed, rbind(pe.partial, pe.failed))
+
+
+
+row.names(pe.eclosion.data) = c("Eclosed", "Partially Eclosed", "Not Eclosed")
+
 
 barplot(height = pe.eclosion.data[c("Eclosed", "Partially Eclosed", "Not Eclosed"),],
-        names.arg = pe.eclosion.data["Genotype",],
+        names.arg = pe.genotype,
         cex.axis = .5)
 
 
@@ -127,7 +200,7 @@ barplot(height = pe.eclosion.data[c("Eclosed", "Partially Eclosed", "Not Eclosed
 library(survival)
 library(survminer)
 
-sse.surv.data = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/G85R TKT Sex Specific Eclosion/20260518 Survdata.csv")
+sse.surv.data = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/G85R TKT Sex Specific Eclosion/20260527 Survdata.csv")
 
 sse.surv.data$Group <- interaction(sse.surv.data$Genotype, sse.surv.data$Sex, sse.surv.data$TKT)
 
@@ -136,13 +209,104 @@ fit <- survfit(
   data = sse.surv.data
 )
 
+
+alive.totals = data.frame(
+  Group = c("G85R.M.Df", "G85R.M.OE",
+            "G85R.F.Df", "G85R.F.OE",
+            "WT.M.Control", "WT.M.Df", "WT.M.OE",
+            "WT.F.Control", "WT.F.Df", "WT.F.OE"),
+Alive = c(nrow(sse.surv.data[sse.surv.data$Group == "G85R.M.Df" &
+                     sse.surv.data$status ==0,]),
+          nrow(sse.surv.data[sse.surv.data$Group == "G85R.M.OE"&
+                     sse.surv.data$status ==0,]),
+          nrow(sse.surv.data[sse.surv.data$Group == "G85R.F.Df"&
+                     sse.surv.data$status ==0,]),
+          nrow(sse.surv.data[sse.surv.data$Group == "G85R.F.OE"&
+                     sse.surv.data$status ==0,]),
+          nrow(sse.surv.data[sse.surv.data$Group == "WT.M.Control"&
+                     sse.surv.data$status ==0,]),
+          nrow(sse.surv.data[sse.surv.data$Group == "WT.M.Df"&
+                     sse.surv.data$status ==0,]),
+          nrow(sse.surv.data[sse.surv.data$Group == "WT.M.OE"&
+                     sse.surv.data$status ==0,]),
+          nrow(sse.surv.data[sse.surv.data$Group == "WT.F.Control"&
+                     sse.surv.data$status ==0,]),
+          nrow(sse.surv.data[sse.surv.data$Group == "WT.F.Df"&
+                     sse.surv.data$status ==0,]),
+          nrow(sse.surv.data[sse.surv.data$Group == "WT.F.OE"&
+                     sse.surv.data$status ==0,])),
+Dead = c(nrow(sse.surv.data[sse.surv.data$Group == "G85R.M.Df" &
+                     sse.surv.data$status ==1,]),
+          nrow(sse.surv.data[sse.surv.data$Group == "G85R.M.OE"&
+                     sse.surv.data$status ==1,]),
+          nrow(sse.surv.data[sse.surv.data$Group == "G85R.F.Df"&
+                     sse.surv.data$status ==1,]),
+          nrow(sse.surv.data[sse.surv.data$Group == "G85R.F.OE"&
+                     sse.surv.data$status ==1,]),
+          nrow(sse.surv.data[sse.surv.data$Group == "WT.M.Control"&
+                     sse.surv.data$status ==1,]),
+          nrow(sse.surv.data[sse.surv.data$Group == "WT.M.Df"&
+                     sse.surv.data$status ==1,]),
+          nrow(sse.surv.data[sse.surv.data$Group == "WT.M.OE"&
+                     sse.surv.data$status ==1,]),
+          nrow(sse.surv.data[sse.surv.data$Group == "WT.F.Control"&
+                     sse.surv.data$status ==1,]),
+          nrow(sse.surv.data[sse.surv.data$Group == "WT.F.Df"&
+                     sse.surv.data$status ==1,]),
+          nrow(sse.surv.data[sse.surv.data$Group == "WT.F.OE"&
+                     sse.surv.data$status ==1,])),
+total = c(nrow(sse.surv.data[sse.surv.data$Group == "G85R.M.Df",]),
+          nrow(sse.surv.data[sse.surv.data$Group == "G85R.M.OE",]),
+          nrow(sse.surv.data[sse.surv.data$Group == "G85R.F.Df",]),
+          nrow(sse.surv.data[sse.surv.data$Group == "G85R.F.OE",]),
+          nrow(sse.surv.data[sse.surv.data$Group == "WT.M.Control",]),
+          nrow(sse.surv.data[sse.surv.data$Group == "WT.M.Df",]),
+          nrow(sse.surv.data[sse.surv.data$Group == "WT.M.OE",]),
+          nrow(sse.surv.data[sse.surv.data$Group == "WT.F.Control",]),
+          nrow(sse.surv.data[sse.surv.data$Group == "WT.F.Df",]),
+          nrow(sse.surv.data[sse.surv.data$Group == "WT.F.OE",]))
+)
+
+sse.surv.data$vial = paste(sse.surv.data$Genotype,
+                           sse.surv.data$TKT,
+                           sse.surv.data$DOB)
+
+vials = unique(sse.surv.data$vial)
+vial.total.M = nrow(sse.surv.data[sse.surv.data$status ==0 & sse.surv.data$vial == vials[1] & sse.surv.data$Sex == "M",]) 
+vial.total.F = nrow(sse.surv.data[sse.surv.data$status ==0 & sse.surv.data$vial == vials[1] & sse.surv.data$Sex == "F",]) 
+i=2
+while(i<=length(vials)){
+  vial.total.M = c(vial.total.M,
+                   nrow(sse.surv.data[sse.surv.data$status ==0 & sse.surv.data$vial == vials[i] & sse.surv.data$Sex == "M",]) )
+    vial.total.F = c(vial.total.F,
+                   nrow(sse.surv.data[sse.surv.data$status ==0 & sse.surv.data$vial == vials[i] & sse.surv.data$Sex == "F",]) )
+    i=i+1
+}
+
+alive.flies = data.frame(vials = vials,
+                         Female = vial.total.F,
+                         Male = vial.total.M)
+
+alive.flies$Genotype = "WT TKT-Df"
+alive.flies$Genotype[grep("G85R Df", alive.flies$vials)] = "G85R TKT-Df"
+alive.flies$Genotype[grep("WT OE", alive.flies$vials)] = "WT TKT-OE"
+alive.flies$Genotype[grep("G85R OE", alive.flies$vials)] = "G85R TKT-OE"
+alive.flies$Age = 522-as.numeric(substr(alive.flies$vials, nchar(alive.flies$vials)-3, nchar(alive.flies$vials)))
+alive.flies = alive.flies[(alive.flies$Female +
+                             alive.flies$Male) > 0,]
+alive.flies = alive.flies[order(alive.flies$Genotype),
+                          c("Genotype", "Age", "Female", "Male")]
+
+alive.totals
+
 ```
 
 
-```{r fig.width=8, fig.height=6}
+```{r fig.width=14, fig.height=6}
 
 
-my_palette = c("green", "cyan",
+my_palette = c("black", "grey",
+               "green", "cyan",
                "forestgreen","steelblue",
                "deeppink", "gold",
                "firebrick", "yellow")
@@ -151,6 +315,138 @@ my_palette = c("green", "cyan",
 palette(my_palette) 
 
 ggsurvplot(fit,
-           palette = my_palette)
+           palette = my_palette,
+           linetype = c(1,2,
+                        1,1,
+                        2,2,
+                        1,1,
+                        2,2))
 
 ```
+
+
+```{r}
+sse.surv.data = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/G85R TKT Sex Specific Eclosion/20260527 Survdata.csv")
+
+temp.surv = sse.surv.data
+
+temp.surv$Group = paste(temp.surv$Genotype,
+                        temp.surv$Sex,
+                        temp.surv$TKT,
+                        temp.surv$DOB)
+
+group = unique(temp.surv$Group)[1]
+temp = temp.surv[temp.surv$Group == group,]
+temp.deaths = temp[temp$status ==1,]
+total.temp = rep(nrow(temp), length(unique(temp$time))+1)
+time.points = c(0,unique(temp$time)[order(unique(temp$time))])
+i=2
+while(i<=length(time.points)){
+  total.temp[i] = total.temp[i] - nrow(temp.deaths[temp.deaths$time<=time.points[i],])
+  i=i+1
+}
+
+total.temp = 100*(total.temp/nrow(temp))
+
+group.data = unlist(strsplit(group, split = " "))
+
+survival.data = data.frame(Group = group,
+                           Genotype = group.data[1],
+                           Sex = group.data[2],
+                           TKT = group.data[3],
+                           DOB = group.data[4],
+                           Time = time.points,
+                           Alive = total.temp)
+
+j=2
+while(j <= length(unique(temp.surv$Group))){
+  group = unique(temp.surv$Group)[j]
+  temp = temp.surv[temp.surv$Group == group,]
+  temp.deaths = temp[temp$status ==1,]
+  total.temp = rep(nrow(temp), length(unique(temp$time))+1)
+  time.points = c(0,unique(temp$time)[order(unique(temp$time))])
+  i=2
+  while(i<=length(time.points)){
+    total.temp[i] = total.temp[i] - nrow(temp.deaths[temp.deaths$time<=time.points[i],])
+    i=i+1
+  }
+  total.temp = 100*(total.temp/nrow(temp))
+  group.data = unlist(strsplit(group, split = " "))
+  temp.survival.data = data.frame(Group = group,
+                                  Genotype = group.data[1],
+                                  Sex = group.data[2],
+                                  TKT = group.data[3],
+                                  DOB = group.data[4],
+                                  Time = time.points,
+                                  Alive = total.temp)
+  survival.data = rbind(survival.data, temp.survival.data)
+  j=j+1
+}
+
+survival.data$lty = 1
+survival.data$lty[survival.data$Sex == "M"] = 2
+survival.data$color = "black"
+survival.data$color[survival.data$Genotype == "WT" & 
+                    survival.data$Sex == "M" & 
+                    survival.data$TKT == "Control"] = "grey"
+survival.data$color[survival.data$Genotype == "G85R"] = "green"
+survival.data$color[survival.data$Genotype == "G85R" & 
+                    survival.data$Sex == "M"] = "forestgreen"
+survival.data$color[survival.data$Genotype == "G85R" & 
+                    survival.data$Sex == "F" & 
+                    survival.data$TKT == "OE"] = "deeppink"
+survival.data$color[survival.data$Genotype == "G85R" & 
+                    survival.data$Sex == "M" & 
+                    survival.data$TKT == "OE"] = "firebrick"
+survival.data$color[survival.data$Genotype == "WT" & 
+                    survival.data$Sex == "F" & 
+                    survival.data$TKT == "OE"] = "gold"
+survival.data$color[survival.data$Genotype == "WT" & 
+                    survival.data$Sex == "M" & 
+                    survival.data$TKT == "OE"] = "yellow"
+survival.data$color[survival.data$Genotype == "WT" & 
+                    survival.data$Sex == "F" & 
+                    survival.data$TKT == "Df"] = "cyan"
+survival.data$color[survival.data$Genotype == "WT" & 
+                    survival.data$Sex == "M" & 
+                    survival.data$TKT == "Df"] = "steelblue"
+
+```
+
+```{r fig.width=14, fig.height=8}
+
+all.tsd = unique(survival.data$color)
+
+par(mfrow =c(3,4))
+
+t=1
+while(t<=length(all.tsd)){
+  
+
+tsd = survival.data[survival.data$color == all.tsd[t],]
+
+plot(x = NA,
+     y = NA,
+     ylim = c(0,100),
+     xlim = c(0,16),
+     ylab = NA,
+     xlab = NA,
+     main = paste(tsd$Genotype[1], tsd$TKT[1], tsd$Sex[1]))
+
+i=1
+
+groups = unique(tsd$Group)
+
+while(i<=length(groups)){
+  temp = tsd[tsd$Group == groups[i],]
+  lines(x = temp$Time,
+        y = temp$Alive,
+        lty = temp$lty[1],
+        col = temp$color[1])
+  i=i+1
+}
+abline(h = 50, lty = 2)
+t=t+1
+}
+```
+

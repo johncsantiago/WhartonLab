@@ -72,8 +72,8 @@ i.edges$FC = 0
 i.edges$FC = G85R.geneFC[i.edges$FBgn, enzyme]
 i.edges$FC[is.na(i.edges$FC)] = 0
 i.edges$color = "gray50"
-i.edges$color[i.edges$FC > 0] = "tomato"
-i.edges$color[i.edges$FC < 0] = "steelblue"
+#i.edges$color[i.edges$FC > 0] = "tomato"
+#i.edges$color[i.edges$FC < 0] = "steelblue"
 
 i.nodes$FC = 0
 
@@ -87,8 +87,8 @@ i.nodes$size = (abs(i.nodes$FC)+1.5)*2
 
 colrs = hex(c("brown", "gold", "royalblue", "darkgreen", "violet"), .1)
 i.nodes$color = "gray50"
-i.nodes[i.nodes$FC > 0, "color"] = "brown"
-i.nodes[i.nodes$FC < 0, "color"] = "steelblue"
+#i.nodes[i.nodes$FC > 0, "color"] = "brown"
+#i.nodes[i.nodes$FC < 0, "color"] = "steelblue"
 
 #i.nodes$x = -i.nodes$x
 i.nodes$y = -i.nodes$y

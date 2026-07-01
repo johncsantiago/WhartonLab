@@ -15,13 +15,6 @@ knitr::opts_chunk$set(echo = F)
 
 source('https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/GenesInGOVolcano_functions.R')
 
-```
-
-
-
-
-```{r}
-
 ##The comparison is the DEG analysis between 2 groups
 ##G85R options are:
 ##    "GRF.CxDf"  "GRF.CxOE"  "GRM.CxDf"  "GRM.CxOE"
@@ -45,7 +38,12 @@ source('https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/ma
 ##  "A9FvMH"  "A9FvMT"  "A9FvMA"
 ##  "S9FvMH"  "S9FvMT"  "S9FvMA" 
 
-comparison = "S3v9FT"
+```
+
+
+```{r}
+
+comparison = "GRxWT.MC"
 keyword = "lipid"
 
 
@@ -53,9 +51,9 @@ keyword = "lipid"
 plot.multipleGOterms(comparison, 
                      keyword, 
                      sig.only = TRUE, 
-                     printallcategories = FALSE)
+                     printallcategories = T)
 
 ```
 
 
-
+##put a heatmap function here for entire data sets

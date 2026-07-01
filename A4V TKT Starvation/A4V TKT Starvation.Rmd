@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = F)
 
 ```{r}
 library(beeswarm)
-survival = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/20260412_StarvationSurvivalData.csv")
+survival = read.csv("/Users/johncsantiago/Documents/GitHub/WhartonLab/20260426_StarvationSurvivalData.csv")
 
 survival$ID = paste0(survival$Genotype,"_", survival$Group)
 
@@ -172,9 +172,11 @@ med.life$Genotype = factor(med.life$Genotype,
                                       "WTM", "WTM TKT",
                                       "A4VM", "A4VM TKT"))
 
+
 ```
 
 ```{r}
+
 
 boxplot(med.life$med.lifespan~med.life$Genotype,
         cex = .5,
@@ -206,6 +208,86 @@ beeswarm(med.life$med.lifespan
 ```
 
 
+```{r fig.width=8, fig.height=6}
+
+
+##trying survminer
+library(survival)
+library(survminer)
+
+
+temp.survdata = survival
+temp.survdata$Sex = "M"
+temp.survdata$Sex[grep("F", temp.survdata$Genotype)] = "F"
+temp.survdata$TKT = "NoTKT"
+temp.survdata$TKT[grep("TKT", temp.survdata$Genotype)] = "TKT"
+temp.survdata$Replicate = temp.survdata$Group
+temp.survdata$time = temp.survdata$Hourssurvived
+temp.survdata$Genotype = substr(temp.survdata$Genotype,1,3)
+temp.survdata$Genotype[temp.survdata$Genotype == "WTM" |
+                  temp.survdata$Genotype == "WTF"] = "WT"
+temp.survdata$status = 1
+temp.survdata = temp.survdata[temp.survdata$Dead>0,]
+survdata = temp.survdata[rep(1,temp.survdata$Dead[1]),c("time", "status", "Genotype", "Sex", "TKT", "Replicate")]
+
+
+i=2
+while(i<= nrow(temp.survdata)){
+  survdata = rbind(survdata,
+                  temp.survdata[rep(i,temp.survdata$Dead[i]),
+                                c("time", "status", "Genotype", "Sex", "TKT", "Replicate")])
+  i=i+1
+}
+
+
+row.names(survdata)
+
+survdata$Group <- interaction(survdata$Genotype, survdata$Sex, survdata$TKT)
+
+fit <- survfit(
+  Surv(time, status) ~ Group,
+  data = survdata
+)
+
+```
+
+
+```{r fig.width=8, fig.height=6}
+
+my_palette = c("gold", "steelblue",
+  "firebrick", "forestgreen",
+  "yellow", "cyan",
+  "red", "green")
+
+
+palette(my_palette) 
+
+ggsurvplot(fit,
+           palette = my_palette)
+
+```
+
+
+```{r}
+
+summary(fit)$table
+
+
+fit_cox <- coxph(
+  Surv(time, status) ~ Genotype * Sex * TKT + cluster(Replicate),
+  data = survdata
+)
+
+
+summary(fit_cox)
+
+
+library(emmeans)
+
+emm <- emmeans(fit_cox, ~ Genotype * Sex * TKT)
+pairs(emm)
+
+```
 
 ```{r}
 
@@ -260,7 +342,8 @@ distance.traveled = function(temp){
   spl <- split(temp, key)
   
   total.dist = data.frame(FlyID = names(spl),
-                          DistTrav = 0)
+                          DistTrav = 0,
+                          Alive = 0)
     
   i = 1
   while(i<=length(spl)){
@@ -270,10 +353,15 @@ distance.traveled = function(temp){
                  CX = spl[[i]]$CX,
                  CY = spl[[i]]$CY,
                  dx = c(NA, diff(spl[[i]]$CX)),
-                 dy = c(NA, diff(spl[[i]]$CY)))
+                 dy = c(NA, diff(spl[[i]]$CY)),
+                 ID = spl[[i]]$ID,
+                 Genotype = strsplit(names(spl)[i], split = "_")[[1]][1])
     spl[[i]]$step_px = sqrt(spl[[i]]$dx^2 + spl[[i]]$dy^2)
     spl[[i]]$totaldistance = c(NA, cumsum(spl[[i]]$step_px[-1]))
+    
     total.dist$DistTrav[i] = max(na.omit(spl[[i]]$totaldistance))/max(spl[[i]]$Frame)
+    total.dist$Alive[i] = survival[survival$ID == spl[[i]]$ID[1] &
+                                     survival$Hourssurvived == temp$Hourssurvived[1], "TotalAlive"]
     
     i=i+1
   }
@@ -293,8 +381,16 @@ distance.traveled = function(temp){
        xlab = "Frame",
        ylab = "Total distance traveled")
   
-  dt$color = "royalblue"
-  dt$color[dt$Arena == 1] = "firebrick"
+  dt$color = "forestgreen"
+  dt$color[dt$Genotype == "WTF"] = "steelblue"
+  dt$color[dt$Genotype == "A4VM"] = "firebrick"
+  dt$color[dt$Genotype == "A4VF"] = "gold"  
+  
+  dt$color[dt$Genotype == "WTM TKT"] = "green"
+  dt$color[dt$Genotype == "WTF TKT"] = "deepskyblue"
+  dt$color[dt$Genotype == "A4VM TKT"] = "red"
+  dt$color[dt$Genotype == "A4VF TKT"] = "yellow"  
+
   
   i=1
   while(i <+ length(unique(dt$TrackID))){
@@ -306,29 +402,36 @@ distance.traveled = function(temp){
     i = i + 1
   }
   
+  legend("topleft", 
+         legend = unique(dt[,c("Genotype", "color")])$Genotype,
+         fill = unique(dt[,c("Genotype", "color")])$color,
+         bty = "n")
+  
   return(total.dist)
 }
 
 ```
 
-```{r}
+```{r, fig.height=5, fig.width=7}
 
 temp = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/202604_A4VTKT_Starvation.TrackedVideos/20260407_19.5_Starvation_WTF_A4VF.csv")
 temp$Genotype = "WTF"
 temp$Genotype[temp$Arena == 1] = "A4VF"
 temp$Hourssurvived = 9
+temp$ID = paste0(temp$Genotype, "_2")
 
 WTFA4VF.9 = distance.traveled(temp)
 
 ```
 
 
-```{r}
+```{r, fig.height=5, fig.width=7}
 
 temp = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/202604_A4VTKT_Starvation.TrackedVideos/20260407_19.5_Starvation_WTM_A4VM.csv")
 temp$Genotype = "WTM"
 temp$Genotype[temp$Arena == 1] = "A4VM"
 temp$Hourssurvived = 9
+temp$ID = paste0(temp$Genotype, "_2")
 
 WTMA4VM.9 = distance.traveled(temp)
 
@@ -336,12 +439,13 @@ WTMA4VM.9 = distance.traveled(temp)
 
 
 
-```{r}
+```{r, fig.height=5, fig.width=7}
 
 temp = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/202604_A4VTKT_Starvation.TrackedVideos/20260407_19.5_Starvation_WTFTKT_A4VFTKT.csv")
-temp$Genotype = "WTF TKT
-temp$Genotype[temp$Arena == 1] = ""A4VF TKT
+temp$Genotype = "WTF TKT"
+temp$Genotype[temp$Arena == 1] = "A4VF TKT"
 temp$Hourssurvived = 9
+temp$ID = paste0(temp$Genotype, "_2")
 
 WTFTKTA4VFTKT.9 = distance.traveled(temp)
 
@@ -352,12 +456,13 @@ WTFTKTA4VFTKT.9 = distance.traveled(temp)
 
 
 
-```{r}
+```{r, fig.height=5, fig.width=7}
 
 temp = read.csv("/Users/johncsantiago/Documents/GitHub/Python/LarvalLocomotion/PreliminaryCode/202604_A4VTKT_Starvation.TrackedVideos/20260407_19.5_Starvation_WTMTKT_A4VMTKT.csv")
-temp$Genotype = "WTM TKT
-temp$Genotype[temp$Arena == 1] = ""A4VM TKT
+temp$Genotype = "WTM TKT"
+temp$Genotype[temp$Arena == 1] = "A4VM TKT"
 temp$Hourssurvived = 9
+temp$ID = paste0(temp$Genotype, "_2")
 
 WTMTKTA4VMTKT.9 = distance.traveled(temp)
 
@@ -373,10 +478,10 @@ activity.data$Group = do.call(rbind, strsplit(activity.data$FlyID,
                                                split = "_"))[,1]
 
 activity.data$Group = factor(activity.data$Group,
-                             levels = c("WTF", "WTF TKT,
-                                        "A4VF", ""A4VF TKT,
-                                        "WTM", "WTM TKT,
-                                        "A4VM", ""A4VM TKT))
+                             levels = c("WTF", "WTF TKT",
+                                        "A4VF", "A4VF TKT",
+                                        "WTM", "WTM TKT",
+                                        "A4VM", "A4VM TKT"))
 
 boxplot(activity.data$DistTrav~activity.data$Group,
         cex = .5,
@@ -385,7 +490,7 @@ boxplot(activity.data$DistTrav~activity.data$Group,
         ylab = "Distance Traveled",
         main = "9 Hours",
         ylim = c(0, max(na.omit(activity.data$DistTrav))),
-        border = c("steelblue", "cyan",
+        border = c("steelblue", "deepskyblue",
               "gold", "yellow",
               "darkgreen", "limegreen",
               "firebrick", "red"))
@@ -394,7 +499,7 @@ beeswarm(activity.data$DistTrav~activity.data$Group,
        pch = 21,
        cex = .5,
        spacing = .5,
-       bg = c("steelblue", "cyan",
+       bg = c("steelblue", "deepskyblue",
               "gold", "yellow",
               "forestgreen", "green",
               "firebrick", "red"))

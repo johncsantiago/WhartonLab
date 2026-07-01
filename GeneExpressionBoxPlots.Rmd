@@ -567,6 +567,7 @@ ID.row = SCdata[grep(gene.name, SCdata$Gene.name),]
 if(nrow(ID.row) < 500){
 if(nrow(ID.row) == 1){
   
+  
   gene.name = ID.row$Gene.name
   gene.levels = setNames(as.numeric(ID.row[,colnames(ID.row) != "Gene.name"]), colnames(ID.row)[colnames(ID.row) != "Gene.name"]) 
   gene.levels = gene.levels[18:1]
@@ -661,14 +662,43 @@ if(nrow(ID.row) != 1){
 ```
 
 
-```{r echo = F}
+```{r echo = F, fig.height=7, fig.width=7}
 
 ## Plot gene expression from G85R TKT RNAseq experiment
 ## ID needs to be the full or partial gene symbol or FBgn (case sensitive)
 
-ID = "Prat2"
+ID = "FBgn0023511"#Edem1
+#ID = "FBgn0032480"#Edem2
+ID = "FBgn0028325"
+ID = "CG13603"
+ID = "sick"
+#d = dachs
+#m = miniature
 
+ID = "tko"
+ID = "CG13603"
+ID = "FBgn0037164"
+ID = "FBgn0259170"
+ID = "FBgn0015360"
+ID = "FBgn0032586"
+ID = "dco"
+
+ID="FBgn0283451"
+ID="FBgn0003023"
+ID="FBgn0037637"
+ID="CG10362"
+ID="hob"
+ID="CG9005"
+ID="FBgn0037607"
+
+par(mfrow=c(2,2))
+ID="RnrL"
 plot.G85R(ID)
+ID="RnrS"
+plot.G85R(ID)
+ID="FBgn0035371"
+plot.G85R("Nab2")
+
 
 ```
 
@@ -678,9 +708,14 @@ plot.G85R(ID)
 ## Plot gene expression from A4V RNAseq experiment
 ## ID needs to be the full or partial gene symbol or FBgn (case sensitive)
 
-ID = "FBgn0288846"
-  
+#ID = "FBgn0023511"
+ID = "CG16758"
+
 plot.A4V(ID)
+
+plot.A4V("FBgn0260945")
+
+
 ```
 
 
@@ -689,7 +724,7 @@ plot.A4V(ID)
 ## Plot metabolite levels from the G85R TKT metabolomics experiment
 ## metabID needs to be the full or partial metabolite name as listed in the table (case sensitive)
 
-metabID = 'deoxyinosine'
+metabID = "urea"
 
 plot.metab(metabID)
 
@@ -702,17 +737,19 @@ plot.metab(metabID)
 ## gene name needs to be the full or partial gene symbol as listed in the table (case sensitive)
 
 gene.name = 'RapGAP1'
-gene.name = 'Zip71B'
+gene.name = 'otu'
 
 plot.SC(gene.name)
 
 ```
+
+
 ```{r echo = F}
 
 ## Plot gene expression from Single Cell RNAseq experiment
 ## gene name needs to be the full or partial gene symbol as listed in the table (case sensitive)
 
-gene.name = 'RapGAP1'
+gene.name = 'mle'
 
 plot.SC(gene.name)
 
@@ -759,7 +796,8 @@ if(nrow(ID.row) != 1){
 
 ```{r echo = F}
 ##Plot expression levels for a specific gene in the gbbOE dataset
-ID = "FBgn0267025"
+ID = "FBgn0035348"
+ID = "FBgn0035954"
   
 ID.row = GeneIDKey[grep(ID, GeneIDKey$FBgn),]
 
@@ -798,7 +836,7 @@ if(nrow(ID.row) != 1){
 ## Aaron and Catherine legend for RNAseq
 ## Whole larvae
 
-##ID = "0000018"
+ID = "FBgn0003023"
   
 ID.row = GeneIDKey[grep(ID, GeneIDKey$FBgn),]
 

@@ -84,6 +84,208 @@ genesingo$Symbol = setNames(GeneIDKey$Symbol, GeneIDKey$ensembl)[genesingo$gene_
 ```
 
 
+```{r echo = F}
+
+##Veronica genes: code to update data table
+
+ver=read.csv("/Users/johncsantiago/Desktop/VeronicaGenes.csv")
+i=1
+while(i<=nrow(ver)){
+  ver.def = genesindf[genesindf$FBgn == ver$FBgn[i],"Df"]
+  ver.mle = fullDfKey[fullDfKey$Deficiency %in% ver.def, "MLE"]
+  ver$MLE[i] = ver.mle[1]
+  j=2
+  while(j<=length(ver.mle)){
+    ver$MLE[i] = paste0(ver$MLE[i], ", ", ver.mle[j])
+    j=j+1
+  }
+  i=i+1
+}
+
+#write.csv(ver,"/Users/johncsantiago/Desktop/VeronicaGenes.csv", row.names=T)
+  
+
+ver=read.csv("/Users/johncsantiago/Desktop/VeronicaGenes.csv", row.names = 1)
+
+ver$Fsig = G85R.geneFDR[ver$FBgn, "GRxWT.FC"]<.05
+
+ver$Fsig[ver$Fsig == TRUE] = "sig." 
+ver$Fsig[ver$Fsig == FALSE] = "not sig." 
+
+ver$Fdir = G85R.geneFC[ver$FBgn, "GRxWT.FC"]
+ver$Fdir[G85R.geneFC[ver$FBgn, "GRxWT.FC"] >0] = "Up"
+ver$Fdir[G85R.geneFC[ver$FBgn, "GRxWT.FC"] <0] = "Down"
+ver$G85R.Female = paste(ver$Fsig, ver$Fdir)
+
+ver$Msig = G85R.geneFDR[ver$FBgn, "GRxWT.MC"]<.05
+
+ver$Msig[ver$Msig == TRUE] = "sig." 
+ver$Msig[ver$Msig == FALSE] = "not sig." 
+
+ver$Mdir = G85R.geneFC[ver$FBgn, "GRxWT.MC"]
+ver$Mdir[G85R.geneFC[ver$FBgn, "GRxWT.MC"] >0] = "Up"
+ver$Mdir[G85R.geneFC[ver$FBgn, "GRxWT.MC"] <0] = "Down"
+ver$G85R.Male = paste(ver$Msig, ver$Fdir)
+
+#write.csv(ver,"/Users/johncsantiago/Desktop/VeronicaGenes.csv", row.names=T)
+
+
+G85R.geneFDR[ver$FBgn[ver$G85R.Female == "sig. Up"],
+            c("GRF.CxDf", "GRF.CxOE")]
+
+G85R.geneFDR[ver$FBgn[ver$G85R.Female == "sig. Down"],
+            c("GRF.CxDf", "GRF.CxOE")]
+
+G85R.geneFDR[ver$FBgn[ver$G85R.Male == "sig. Up"],
+            c("GRM.CxDf", "GRM.CxOE")]
+
+G85R.geneFC[ver$FBgn[ver$G85R.Male == "sig. Up"],
+            c("GRM.CxDf", "GRM.CxOE")]
+
+G85R.geneFDR[ver$FBgn[ver$G85R.Male == "sig. Down"],
+            c("GRM.CxDf", "GRM.CxOE")]
+
+G85R.geneFC[ver$FBgn[ver$G85R.Male == "sig. Down"],
+            c("GRM.CxDf", "GRM.CxOE")]
+
+
+ver=read.csv("/Users/johncsantiago/Desktop/VeronicaGenes.csv", row.names = 1)
+
+ver.sig = A4V.FDR[ver$FBgn, "AvS3FH"]  
+ver.fc = A4V.FC[ver$FBgn, "AvS3FH"] 
+ver$A4V.Female.Head.sig.FC = "-"
+ver$A4V.Female.Head.sig.FC[ver.sig <.05 & ver.fc >0] = "Up"
+ver$A4V.Female.Head.sig.FC[ver.sig <.05 & ver.fc <0] = "Down"
+
+
+ver.sig = A4V.FDR[ver$FBgn, "AvS3FT"]  
+ver.fc = A4V.FC[ver$FBgn, "AvS3FT"] 
+ver$A4V.Female.Thorax.sig.FC = "-"
+ver$A4V.Female.Thorax.sig.FC[ver.sig <.05 & ver.fc >0] = "Up"
+ver$A4V.Female.Thorax.sig.FC[ver.sig <.05 & ver.fc <0] = "Down"
+
+ver.sig = A4V.FDR[ver$FBgn, "AvS3FA"]  
+ver.fc = A4V.FC[ver$FBgn, "AvS3FA"] 
+ver$A4V.Female.Abdomen.sig.FC = "-"
+ver$A4V.Female.Abdomen.sig.FC[ver.sig <.05 & ver.fc >0] = "Up"
+ver$A4V.Female.Abdomen.sig.FC[ver.sig <.05 & ver.fc <0] = "Down"
+
+
+ver.sig = A4V.FDR[ver$FBgn, "AvS9FH"]  
+ver.fc = A4V.FC[ver$FBgn, "AvS9FH"] 
+ver.sfc = rep("-", nrow(ver))
+ver.sfc[ver.sig <.05 & ver.fc >0] = "Up"
+ver.sfc[ver.sig <.05 & ver.fc <0] = "Down"
+ver$A4V.Female.Head.sig.FC =
+  paste0(ver$A4V.Female.Head.sig.FC,
+        "/",ver.sfc)
+
+ver.sig = A4V.FDR[ver$FBgn, "AvS9FT"]  
+ver.fc = A4V.FC[ver$FBgn, "AvS9FT"] 
+ver.sfc = rep("-", nrow(ver))
+ver.sfc[ver.sig <.05 & ver.fc >0] = "Up"
+ver.sfc[ver.sig <.05 & ver.fc <0] = "Down"
+ver$A4V.Female.Thorax.sig.FC =
+  paste0(ver$A4V.Female.Thorax.sig.FC,
+        "/",ver.sfc)
+
+
+ver.sig = A4V.FDR[ver$FBgn, "AvS9FA"]  
+ver.fc = A4V.FC[ver$FBgn, "AvS9FA"] 
+ver.sfc = rep("-", nrow(ver))
+ver.sfc[ver.sig <.05 & ver.fc >0] = "Up"
+ver.sfc[ver.sig <.05 & ver.fc <0] = "Down"
+ver$A4V.Female.Abdomen.sig.FC =
+  paste0(ver$A4V.Female.Abdomen.sig.FC,
+        "/",ver.sfc)
+
+
+ver.sig = A4V.FDR[ver$FBgn, "AvS40FH"]  
+ver.fc = A4V.FC[ver$FBgn, "AvS40FH"] 
+ver.sfc = rep("-", nrow(ver))
+ver.sfc[ver.sig <.05 & ver.fc >0] = "Up"
+ver.sfc[ver.sig <.05 & ver.fc <0] = "Down"
+ver$A4V.Female.Head.sig.FC =
+  paste0(ver$A4V.Female.Head.sig.FC,
+        "/",ver.sfc)
+
+ver.sig = A4V.FDR[ver$FBgn, "AvS40FT"]  
+ver.fc = A4V.FC[ver$FBgn, "AvS40FT"] 
+ver.sfc = rep("-", nrow(ver))
+ver.sfc[ver.sig <.05 & ver.fc >0] = "Up"
+ver.sfc[ver.sig <.05 & ver.fc <0] = "Down"
+ver$A4V.Female.Thorax.sig.FC =
+  paste0(ver$A4V.Female.Thorax.sig.FC,
+        "/",ver.sfc)
+
+
+ver.sig = A4V.FDR[ver$FBgn, "AvS40FA"]  
+ver.fc = A4V.FC[ver$FBgn, "AvS40FA"] 
+ver.sfc = rep("-", nrow(ver))
+ver.sfc[ver.sig <.05 & ver.fc >0] = "Up"
+ver.sfc[ver.sig <.05 & ver.fc <0] = "Down"
+ver$A4V.Female.Abdomen.sig.FC =
+  paste0(ver$A4V.Female.Abdomen.sig.FC,
+        "/",ver.sfc)
+
+#write.csv(ver,"/Users/johncsantiago/Desktop/VeronicaGenes.csv", row.names=T)
+
+
+ver=read.csv("/Users/johncsantiago/Desktop/VeronicaGenes.csv", row.names = 1)
+
+ver.sig = A4V.FDR[ver$FBgn, "AvS3MH"]  
+ver.fc = A4V.FC[ver$FBgn, "AvS3MH"] 
+ver$A4V.Male.Head.sig.FC = "-"
+ver$A4V.Male.Head.sig.FC[ver.sig <.05 & ver.fc >0] = "Up"
+ver$A4V.Male.Head.sig.FC[ver.sig <.05 & ver.fc <0] = "Down"
+
+
+ver.sig = A4V.FDR[ver$FBgn, "AvS3MT"]  
+ver.fc = A4V.FC[ver$FBgn, "AvS3MT"] 
+ver$A4V.Male.Thorax.sig.FC = "-"
+ver$A4V.Male.Thorax.sig.FC[ver.sig <.05 & ver.fc >0] = "Up"
+ver$A4V.Male.Thorax.sig.FC[ver.sig <.05 & ver.fc <0] = "Down"
+
+ver.sig = A4V.FDR[ver$FBgn, "AvS3MA"]  
+ver.fc = A4V.FC[ver$FBgn, "AvS3MA"] 
+ver$A4V.Male.Abdomen.sig.FC = "-"
+ver$A4V.Male.Abdomen.sig.FC[ver.sig <.05 & ver.fc >0] = "Up"
+ver$A4V.Male.Abdomen.sig.FC[ver.sig <.05 & ver.fc <0] = "Down"
+
+
+ver.sig = A4V.FDR[ver$FBgn, "AvS9MH"]  
+ver.fc = A4V.FC[ver$FBgn, "AvS9MH"] 
+ver.sfc = rep("-", nrow(ver))
+ver.sfc[ver.sig <.05 & ver.fc >0] = "Up"
+ver.sfc[ver.sig <.05 & ver.fc <0] = "Down"
+ver$A4V.Male.Head.sig.FC =
+  paste0(ver$A4V.Male.Head.sig.FC,
+        "/",ver.sfc)
+
+ver.sig = A4V.FDR[ver$FBgn, "AvS9MT"]  
+ver.fc = A4V.FC[ver$FBgn, "AvS9MT"] 
+ver.sfc = rep("-", nrow(ver))
+ver.sfc[ver.sig <.05 & ver.fc >0] = "Up"
+ver.sfc[ver.sig <.05 & ver.fc <0] = "Down"
+ver$A4V.Male.Thorax.sig.FC =
+  paste0(ver$A4V.Male.Thorax.sig.FC,
+        "/",ver.sfc)
+
+
+ver.sig = A4V.FDR[ver$FBgn, "AvS9MA"]  
+ver.fc = A4V.FC[ver$FBgn, "AvS9MA"] 
+ver.sfc = rep("-", nrow(ver))
+ver.sfc[ver.sig <.05 & ver.fc >0] = "Up"
+ver.sfc[ver.sig <.05 & ver.fc <0] = "Down"
+ver$A4V.Male.Abdomen.sig.FC =
+  paste0(ver$A4V.Male.Abdomen.sig.FC,
+        "/",ver.sfc)
+
+#write.csv(ver,"/Users/johncsantiago/Desktop/VeronicaGenes.csv", row.names=T)
+
+```
+
+
 ```{r echo = F, warning = F}
 
 trimmed = fullDfKey#[fullDfKey$Omit == "FALSE",] ##removes omitted Dfs,] 

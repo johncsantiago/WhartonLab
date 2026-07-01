@@ -12,8 +12,45 @@ knitr::opts_chunk$set(echo = FALSE)
 ```{r}
 
 library(plotly)
+git.dir = "https://raw.githubusercontent.com/johncsantiago/WhartonLab/refs/heads/master/GeneralDataFiles/"
+metabFDR = read.csv(paste0(git.dir, "MetaboliteFDRs2.csv"), row.names = 1)
+metabFC = read.csv(paste0(git.dir, "MetaboliteFCs2.csv"), row.names = 1)
+metabFC$Metab = row.names(metabFC)
+metabFDR$Metab = row.names(metabFDR)
 
-#dme01100 <- xmlToDataFrame("/Users/johncsantiago/Documents/GitHub/WhartonLab/dme01100.xml",collectNames = F)
+temp.metab.ids = metabFC$KEGG
+temp.metab.ids = unlist(strsplit(temp.metab.ids, split = " / "))
+temp.metab.ids = unlist(strsplit(temp.metab.ids, split = "-"))
+temp.metab.ids = temp.metab.ids[temp.metab.ids != "n/a"]
+
+temp.FC = metabFC[metabFC$KEGG %in% intersect(temp.metab.ids, metabFC$KEGG),]
+temp.FDR = metabFDR[metabFDR$KEGG %in% intersect(temp.metab.ids, metabFDR$KEGG),]
+
+temp.FC$rowID = temp.FC$KEGG
+temp.FDR$rowID = temp.FDR$KEGG
+temp.metab.ids = setdiff(temp.metab.ids, temp.FC$KEGG)
+
+
+i=1
+while(i<=length(temp.metab.ids)){
+  tempFC = metabFC[grep(temp.metab.ids[i], metabFC$KEGG),]
+  tempFDR = metabFDR[grep(temp.metab.ids[i], metabFDR$KEGG),]
+  
+  tempFC$rowID = metabFC.ids[i]
+  tempFDR$rowID = metabFC.ids[i]
+  
+  temp.FC = rbind(temp.FC, tempFC)
+  temp.FDR = rbind(temp.FDR, tempFDR)
+  i=i+1
+}
+
+row.names(temp.FC) = temp.FC$rowID
+row.names(temp.FDR) = temp.FDR$rowID
+
+metabFC = temp.FC[,c((ncol(temp.FC)-1),2:(ncol(temp.FC)-2))]
+metabFDR = temp.FDR[,c((ncol(temp.FDR)-1),2:(ncol(temp.FDR)-2))]
+
+
 
 
 dme01100 <- read.delim("/Users/johncsantiago/Documents/GitHub/WhartonLab/dme01100.txt", row.names = NULL, header = F, sep = " ")
@@ -36,12 +73,14 @@ while(i<=length(cpds)){
 
 cpd.coords = data.frame(Metab = NA_character_,
                         x = NA_integer_,
-                        y = NA_integer_)
+                        y = NA_integer_,
+                        link = NA_character_)
 
 i=1
 while(i<=length(cpd.info)){
   name = names(cpd.info)[i]
   coords = cpd.info[[i]]
+  link = coords[grep("link", coords$V9),"V9"]
   coords = coords[grep("type", coords$V14),]
   j=1
   while(j<=nrow(coords)){
@@ -49,7 +88,8 @@ while(i<=length(cpd.info)){
     y = as.numeric(substring(coords[j,"V16"], 3, nchar(coords[j,"V16"])))
     temp.cpd.coords = data.frame(Metab = name, 
                                  x = x, 
-                                 y = y)
+                                 y = y,
+                                 link = link)
     cpd.coords = rbind(cpd.coords, temp.cpd.coords)
     j=j+1
   }
@@ -64,7 +104,7 @@ metab.ids = unlist(strsplit(as.character(KEGG.Key), split = " / "))
 metab.ids = unlist(strsplit(as.character(metab.ids), split = "-"))
 metab.ids = intersect(metab.ids, names(cpd.info))
 
-cpd.coords$bg = "lightgrey"
+cpd.coords$bg = "grey"
 cpd.coords[cpd.coords$Metab %in% metab.ids, "bg"] = "firebrick"
 
 
@@ -83,36 +123,65 @@ snp = gsub("/>", "", snp)
 all.cpd.coords = cpd.coords
 
 
-xtras = c("C00080")
+xtras = c("C00080", "C00007", "C00001", "G00872",
+          "C02075 C02588", "C02050", "C16163", "C16169",
+          "C16168", "C21959", "C21967", "C16172",
+          "C16173", "C03035", "G00169", "G00113",
+          "G00170", "G00118", "G13354", "G13355", 
+          "G13356", "G13046 C22963", "G13150 C22970",
+          "G00142 C22972", "G13151 C22971",
+          "G00124", "G13046 C22965", "C00004")
+
 
 extra.metab = all.cpd.coords[all.cpd.coords$Metab %in% xtras,]
-extra.metab$bg = "black"
+extra.metab$bg = "grey"
 
-remove.extra = data.frame(Metab = c("C00080", "C00080", "C00080", "C00080", "C00080"),
-                          x =c(1772, 1772, 1631, 1702, 1702),
-                          y=c(3133, 3018, 3133, 3133, 3018))
+remove.extra = 
+  data.frame(Metab = 
+               c("C00080", "C00080", "C00080",
+                 "C00080", "C00080", "C00007",
+                 "C00001"),
+             x =c(1772, 1772, 1631, 1702, 1702,
+                  1596, 1596),
+             y=c(3133, 3018, 3133, 3133, 3018,
+                 3115, 3045))
 
 extra.metab$ID = paste(extra.metab$Metab, extra.metab$x,extra.metab$y)
 remove.extra$ID = paste(remove.extra$Metab, remove.extra$x,remove.extra$y)
 
 extra.metab = extra.metab[!(extra.metab$ID %in% remove.extra$ID), ]
 
-extra.metab = extra.metab[,c("Metab", "x", "y", "bg")]
+extra.metab = extra.metab[,c("Metab", "x", "y", "link", "bg")]
 
 
 cpd.coords = cpd.coords[cpd.coords$Metab %in% snp,]
 
-remove.nodes = data.frame(Metab = c("C00156", "C00008", "C00002", "C00006"),
+remove.nodes = 
+  data.frame(Metab = 
+               c("C00156", "C00008", "C00002", 
+                 "C00006", "C02051", "C15972",
+                 "C00031", "C00630", "C05223",
+                 "C00288", "C00011", "C03771"),
                           x = c(1377, 1820, 1810,
-                                1676),
+                                1676, 1487, 1453,
+                                823, 4511, 4148, 
+                                4133, 4134, 4159),
                           y = c(2765, 3050, 3108,
-                                2960))
+                                2960, 2013, 1989,
+                                1745, 1258, 2450, 
+                                1957, 1988, 2199))
 
 cpd.coords$ID = paste(cpd.coords$Metab,cpd.coords$x,cpd.coords$y)
 remove.nodes$ID = paste(remove.nodes$Metab, remove.nodes$x,remove.nodes$y)
 cpd.coords = cpd.coords[!(cpd.coords$ID %in% remove.nodes$ID), ]
 
-cpd.coords = cpd.coords[,c("Metab", "x", "y", "bg")]
+cpd.coords = cpd.coords[,c("Metab", "x", "y", "link", "bg")]
+
+
+cpd.coords = rbind(cpd.coords,extra.metab)
+cpd.coords$link =gsub("link=", "", cpd.coords$link) 
+cpd.coords$link =gsub(">", "", cpd.coords$link) 
+
 
 start = grep("</entry>", dme01100$V5)
 
@@ -255,37 +324,154 @@ points(x=1000,
 
 ```
 
-
-
 ```{r}
 
-fig = plot_ly(data = cpd.coords,
-              x = ~x,
-              y = ~y,
-              type = 'scatter',
-              mode = 'markers')
+library(KEGGREST)
 
-fig = plot_ly(data = gene.coords,
-              x = ~x,
-              y = ~y,
-              type = 'scatter',
-              mode = 'lines')
+my.cpds <- c(
+  "C00303","C02794","C00815","C07446","C16435","C00768","C00466",
+  "C16438","C01718","C00542","C01073","C02571","C03145","C05984",
+  "C02385","C00716","C03884","C01996","C01602","C00806","C00849",
+  "C05198","C02057","C00943","C01551","C16433","C12269","C01420",
+  "C02214","C02037","C17349","C01432","C03404","C00711","C02567",
+  "C01536","C02470","C02455","C06255","C11695","C05330","C01817",
+  "C00248","C01736","C02721","C04227","C02735","C15587","C03030",
+  "C03672","C03339","C00736","C03783","C16436","C01799","C02979",
+  "C01507","C01481","C02230","C02242","C03570","C02261","C03665",
+  "C05145","C01074","C16439","C16434","C01933","C00612","C01029",
+  "C01984","C07441","C04548"
+)
+
+my.cpds.full <- paste0("cpd:", my.cpds)
+
+cpd.pathways <- keggLink("pathway", my.cpds.full)
+
+pathway.df <- data.frame(
+  compound = sub("cpd:", "", names(cpd.pathways)),
+  pathway = sub("path:", "", cpd.pathways)
+)
+
+head(pathway.df)
 
 
-,
-              ,
-              mode = 'points',
-              name = ~Metab)#,
-              hoverinfo = "text")#,
-              hovertext = paste("Fly ID: ", f.temp$ObjectID,
-                                "\nFrame: ", f.temp$Frame,
-                                "\ndistance", f.temp$distance))
+cpds <- cpd.coords$Metab
 
+
+all_compounds <- keggList("compound")
+
+names_df <- data.frame(
+  id = cpds,
+  name = unname(all_compounds[cpds]),
+  stringsAsFactors = FALSE
+)
+
+names_df
+
+cpd.coords$Names[cpd.coords$Metab %in% names_df$id] = names_df$name
 
 ```
 
 
 ```{r}
+
+temp = intersect(cpd.coords$Metab, metab.FC$KEGG)
+
+temp = na.omit(metab.FC[metab.FC$KEGG %in% temp, c("KEGG", "GRxWT.C")])
+cpd.coords$bg[cpd.coords$bg == "firebrick"] = "gold"
+
+vdown = temp[temp$GRxWT.C< (-1), "KEGG"] 
+down = temp[temp$GRxWT.C<0, "KEGG"] 
+vup = temp[temp$GRxWT.C>1, "KEGG"] 
+up = temp[temp$GRxWT.C>0, "KEGG"] 
+
+cpd.coords$size = 4
+cpd.coords[cpd.coords$Metab %in% down, "size"] = 6
+
+cpd.coords[cpd.coords$Metab %in% vdown, "size"] = 12
+cpd.coords[cpd.coords$Metab %in% up, "size"] = 6
+
+cpd.coords[cpd.coords$Metab %in% vup, "size"] = 12
+
+cpd.coords[cpd.coords$Metab %in% down, "bg"] = "deepskyblue"
+
+cpd.coords[cpd.coords$Metab %in% vdown, "bg"] = "navy"
+cpd.coords[cpd.coords$Metab %in% up, "bg"] = "deeppink"
+
+cpd.coords[cpd.coords$Metab %in% vup, "bg"] = "firebrick"
+
+# Convert gene.coords$coords into one long line dataframe
+line_list <- lapply(seq_len(nrow(gene.coords)), function(i) {
+  nums <- as.numeric(strsplit(gene.coords$coords[i], ",")[[1]])
+
+  d <- data.frame(
+    x = nums[c(TRUE, FALSE)],
+    y = -nums[c(FALSE, TRUE)],
+    line_id = gene.coords$Gene[i]
+  )
+
+  # NA row breaks the line before the next one
+  rbind(d, data.frame(x = NA, y = NA, line_id = i))
+})
+
+lines_plot <- do.call(rbind, line_list)
+
+fig <- plot_ly() %>%
+  add_trace(
+    data = lines_plot,
+    x = ~x,
+    y = ~y,
+    type = "scattergl",
+    mode = "lines",
+    line = list(color = "black", width = 1),
+    hoverinfo = "none",#"text",
+    text = ~paste0("",
+      "Name: ", line_id
+      #"<br>ID: ", id,
+      #"<br>Type: ", type
+    ),
+    showlegend = FALSE
+  ) %>%
+  add_trace(
+    data = cpd.coords,
+    x = ~x,
+    y = ~-y,
+    type = "scattergl",
+    mode = "markers",
+    marker = list(
+      size = ~size,
+      color = ~bg,
+      line = list(color = ~bg, width = 1)
+    ),
+    text = ~paste0("",
+      "Name: ", Names,
+      "<br>x: ", x,
+      "<br>y: ", y
+    ),
+    hoverinfo = "text",
+    showlegend = FALSE
+  ) %>%
+  layout(
+    xaxis = list(title = "", showgrid = FALSE, zeroline = FALSE),
+    yaxis = list(
+      title = "",
+      showgrid = FALSE,
+      zeroline = FALSE,
+      scaleanchor = "x",
+      scaleratio = 1
+    ),
+    plot_bgcolor = "white"
+  )
+fig <- fig %>%
+  layout(
+    xaxis = list(
+      visible = FALSE
+    ),
+    yaxis = list(
+      visible = FALSE
+    )
+  )
+
+
 fig
 
 ```

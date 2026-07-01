@@ -122,8 +122,8 @@ G85R.plotkegg.genes(specific.kegg, plot.data)
 ##Color is relative to Fold Change
 
 ##5 digits from KEGG ID
+PathwayID = "00240"
 PathwayID = "00230"
-
 #options include 'primary' or 'both'
 use = 'both'
 
@@ -142,7 +142,7 @@ G85R.KEGG.diagram(PathwayID, plot.data, use, sigs.only = F)
 
 
 ##can be the exact name or 5 digit code in quotes
-specific.kegg = "00230"
+specific.kegg = "00240"
 
 G85R.comparekegg.genes(specific.kegg, plot.data)
 

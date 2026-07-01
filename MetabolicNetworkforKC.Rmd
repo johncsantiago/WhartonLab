@@ -276,32 +276,34 @@ nodes = raw.nodes
     edges[grep("CG8036", edges$title), "width"] = 3
   }
   
-  edges$color[edges$FBgn == "FBgn0039254"] = "deeppink"
-  edges$width[edges$FBgn == "FBgn0039254"] = 3
+  ##nebu/glut8 f-allele = no change, e-allele = no change
   
-  edges$color[edges$FBgn == "FBgn0036030"] = "deeppink"
-  edges$width[edges$FBgn == "FBgn0036030"] = 3
+  ##sdhbl rnai = rescue
   
-  edges$color[edges$FBgn == "FBgn0020513"] = "deeppink"
-  edges$width[edges$FBgn == "FBgn0020513"] = 3
   
+  
+  #zw
+  edges$color[edges$FBgn == "FBgn0004057"] = "gold"
+  edges$width[edges$FBgn == "FBgn0004057"] = 5
+  
+  #Gapdh1
+  edges$color[edges$FBgn == "FBgn0001091"] = "gold"
+  edges$width[edges$FBgn == "FBgn0001091"] = 5
+  
+  #tkt
   edges$color[edges$FBgn == "FBgn0037607"] = "deeppink"
-  edges$width[edges$FBgn == "FBgn0037607"] = 3
+  edges$width[edges$FBgn == "FBgn0037607"] = 5
   
-  edges$color[edges$FBgn == "FBgn0050499"] = "deeppink"
-  edges$width[edges$FBgn == "FBgn0050499"] = 3
+  #taldo
+  edges$color[edges$FBgn == "FBgn0023477"] = "deepskyblue"
+  edges$width[edges$FBgn == "FBgn0023477"] = 5
   
-  edges$color[edges$FBgn == "FBgn0050410"] = "deeppink"
-  edges$width[edges$FBgn == "FBgn0050410"] = 3
+  #SdhBL
+  edges$color[edges$FBgn == "FBgn0030975"] = "deepskyblue"
+  edges$width[edges$FBgn == "FBgn0030975"] = 5
+
   
-  edges$color[edges$FBgn == "FBgn0033853"] = "deeppink"
-  edges$width[edges$FBgn == "FBgn0033853"] = 3
-  
-  
-  
-  
-  
-  visNetwork(nodes, edges, background = "white", main = enzyme)%>%
+  visNetwork(nodes, edges, background = "white", main = "")%>%
     visNodes(physics = F)%>%
     #visLayout(hierarchical=F, improvedLayout=T)%>%
     visOptions(highlightNearest = TRUE, nodesIdSelection = list(enabled = T, values = nodes[nodes$size > 0, "label"]))%>%

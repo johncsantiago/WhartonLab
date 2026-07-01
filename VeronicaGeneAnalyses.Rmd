@@ -799,7 +799,110 @@ while(i<=length(up.reverse.genes)){
 ```{r echo = F}
 
 GRF = row.names(G85R.geneFDR)[G85R.FDR$GRxWT.FC <.05]
-GRM = row.names(G85R.geneFDR)[G85R.FDR$GRxWT.FC <.05]
+GRM = row.names(G85R.geneFDR)[G85R.FDR$GRxWT.MC <.05]
+mean.cutoff = row.names(G85R.meancpm)[apply(
+  G85R.meancpm[,c("GR.F", "GR.M", "WT.F", "WT.M")],
+  MARGIN = 1,
+  max) >=20]
+
+GR = intersect(mean.cutoff,unique(GRF,GRM))
+GR = intersect(GR, row.names(A4V.cpm))
+
+plotly.data = data.frame(GRF = G85R.geneFC[GR, "GRxWT.FC"],
+                         GRM = G85R.geneFC[GR, "GRxWT.MC"],
+                         Symbol = GeneIDKey[GR, "Symbol"])
+row.names(plotly.data) = GR
+
+plotly.data$mean.GR = apply(plotly.data[,1:2], MARGIN = 1, mean)
+
+temp.color <- colorRampPalette(c("cyan", "gold", "deeppink"))(100)
+temp.colorscale <- Map(
+  function(p, col) list(p, col),
+  seq(0, 1, length.out = length(temp.color)),
+  temp.color
+)
+
+plot_ly(data = plotly.data,
+               x = ~GRF,
+               y = ~GRM,
+        type = "scatter",
+        marker = list(color = ~mean.GR,
+                             colorscale = temp.colorscale,
+                             line = list(color = "black", 
+                                         width = 1.5),
+                             showscale = TRUE,
+                             colorbar = list(title = "Heat Key")),
+               hoverinfo = "text",
+               hovertext = paste("Symbol:", plotly.data$Symbol,
+                                 "\nFBgn: ", row.names(plotly.data)))
+
+
+```
+
+```{r echo = F}
+ID = "FBgn0037167"
+plot.G85R(ID)
+plot.A4V(ID)
+
+```
+
+
+```{r echo = F}
+
+GRF = row.names(G85R.geneFDR)[G85R.FDR$GRxWT.FC <.05]
+GRM = row.names(G85R.geneFDR)[G85R.FDR$GRxWT.MC <.05]
+mean.cutoff = row.names(G85R.meancpm)[apply(
+  G85R.meancpm[,c("GR.F", "GR.M", "WT.F", "WT.M")],
+  MARGIN = 1,
+  max) >=20]
+
+GR = intersect(mean.cutoff,unique(GRF,GRM))
+GR = intersect(GR, row.names(A4V.cpm))
+
+hm.data = G85R.meancpm[GR, c("WT.F", "TktDfWT.F", "TktOEWT.F",
+                             "GR.F", "TktDfGR.F", "TktOEGR.F",
+                             "WT.M", "TktDfWT.M", "TktOEWT.M",
+                             "GR.M", "TktDfGR.M", "TktOEGR.M")]
+row.names(hm.data) = GeneIDKey[GR, "Symbol"]
+temp.color <- colorRampPalette(c("steelblue", "white", "firebrick"))(100)
+heatmap(as.matrix(hm.data),
+        Colv = NA,
+        #Rowv = NA,
+        add.expr = abline(v=c(3.5,6.5,9.5)),
+        col = temp.color)
+
+
+```
+
+
+```{r echo = F}
+
+GRF = row.names(G85R.geneFDR)[G85R.FDR$GRxWT.FC <.05]
+GRM = row.names(G85R.geneFDR)[G85R.FDR$GRxWT.MC <.05]
+mean.cutoff = row.names(G85R.meancpm)[apply(
+  G85R.meancpm[,c("GR.F", "GR.M", "WT.F", "WT.M")],
+  MARGIN = 1,
+  max) >=20]
+
+GR = intersect(mean.cutoff,intersect(GRF,GRM))
+GR = intersect(GR, row.names(A4V.cpm))
+
+hm.data = G85R.meancpm[GR, c("WT.F", "WT.M","GR.F", "GR.M")]
+
+hm.data = hm.data[order(hm.data[,"WT.F"]/ hm.data[,"WT.M"]),]
+
+
+
+row.names(hm.data) = GeneIDKey[row.names(hm.data), "Symbol"]
+temp.color <- colorRampPalette(c("steelblue", "white", "firebrick"))(100)
+heatmap(as.matrix(hm.data),
+        Colv = NA,
+        #Rowv = NA,
+        add.expr = abline(v=c(2.5)),
+        col = temp.color,
+          distfun = function(hm.data) as.dist(1-cor(t(hm.data))),
+          hclustfun = function(hm.data) hclust(hm.data, method="average"),
+        c)
 
 
 ```

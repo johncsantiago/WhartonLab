@@ -29,7 +29,7 @@ row.names(Data.Key) = paste0(Data.Key$DataID, ".csv")
 
 all.files = list.files(raw.data.dir)
 
-all.activity.data = readRDS("/Users/johncsantiago/Documents/GitHub/WhartonLab/Activity Tracking Data/WTA4V_TKTDf/R/all.activity.data.rds")
+all.activity.data = readRDS("/Users/johncsantiago/Documents/GitHub/Activity Tracking Data/WTA4V_TKTDf/R/all.activity.data.rds")
 
 if(length(setdiff(all.files, names(all.activity.data[["raw.data"]]))) > 0){
   
@@ -7466,3 +7466,10 @@ row_spec(c(1:nrow(t.table))[t.table$pval <= .05], bold = T, color = "black", bac
 
 
 
+```{r echo = F}
+
+#all.activity.data = readRDS("/Users/johncsantiago/Documents/GitHub/Activity Tracking Data/WTA4V_TKTDf/R/all.activity.data.rds")
+
+
+
+```

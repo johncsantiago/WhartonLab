@@ -2194,7 +2194,8 @@ par(mar=c(11.25, 4.1, 4.1, 2))
 
 
 boxplot(VNC$CTCF~VNC$Genotype,
-        xaxt = 'none',
+        #xaxt = 'none',
+        cex.axis =.5,
         xlab = NA,
         col = hex(std.colors[unique(VNC$Genotype)], .25),
         ylab = "RFU",
